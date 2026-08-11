@@ -1,0 +1,51 @@
+# === Segredos (NUNCA commitar — spec 04: usar secrets manager do CI) ===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# === Node / JS (web, mobile, packages) ===
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+*.tsbuildinfo
+.expo/
+.expo-shared/
+web-build/
+
+# === Java / core-api ===
+target/
+*.class
+.gradle/
+build/
+!**/src/**/build/
+
+# === Python / geo-api ===
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env.python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# === Banco / dados locais ===
+*.db
+*.sqlite
+pgdata/
+osm-data/
+
+# === IDEs (JetBrains) ===
+.idea/
+*.iml
+.vscode/
+
+# === OS ===
+.DS_Store
+Thumbs.db

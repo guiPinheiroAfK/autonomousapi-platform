@@ -1,0 +1,24 @@
+# CODEOWNERS — quem revisa o quê por padrão (spec 04).
+# TODO: substituir os placeholders @time-* pelos handles reais do GitHub.
+#   Time: Guilherme H., Guilherme G. (@guiPinheiroAfK), Kamilly.
+#   Defina 1 dono principal por área — mesmo em time de 3, isso roteia a review.
+
+# Frontend web
+/apps/web/            @guiPinheiroAfK
+
+# App mobile
+/apps/mobile/         @guiPinheiroAfK
+
+# Backend de orquestração (Java / Spring Boot)
+/services/core-api/   @guiPinheiroAfK
+
+# Backend geoespacial (Python / FastAPI)
+/services/geo-api/    @guiPinheiroAfK
+
+# Contratos e specs — revisão do líder técnico (mudança aqui afeta todos os serviços)
+/packages/contracts/  @guiPinheiroAfK
+/specs/               @guiPinheiroAfK
+
+# Infra e CI
+/infra/               @guiPinheiroAfK
+/.github/             @guiPinheiroAfK

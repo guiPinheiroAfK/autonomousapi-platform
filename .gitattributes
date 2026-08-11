@@ -1,0 +1,21 @@
+# Normaliza line endings: LF no repositório, independente do SO do dev.
+* text=auto eol=lf
+
+# Binários — nunca normalizar
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.jar binary
+*.keystore binary
+*.db binary
+
+# Scripts que exigem CRLF (Windows)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Scripts que exigem LF (shell, gradlew)
+*.sh text eol=lf
+gradlew text eol=lf
