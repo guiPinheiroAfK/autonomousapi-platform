@@ -91,6 +91,13 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: maven
+      # `cache: maven` acima só cobre ~/.m2/repository (dependências). A distribuição
+      # do Maven Wrapper baixada do Maven Central fica em ~/.m2/wrapper/dists — sem
+      # cachear isso, todo run bate no Maven Central e pode pegar rate limit (HTTP 429).
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: maven-wrapper-${{ hashFiles('services/core-api/.mvn/wrapper/maven-wrapper.properties') }}
       - run: ./mvnw -B verify
 
   geo-api:
