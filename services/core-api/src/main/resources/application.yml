@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: core-api
+  datasource:
+    url: ${CORE_DB_URL:jdbc:postgresql://localhost:5432/autonomousapi}
+    username: ${CORE_DB_USER:autonomousapi}
+    password: ${CORE_DB_PASSWORD:autonomousapi}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway é a fonte de verdade do schema (ADR 0004). Hibernate só valida.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: core
+  flyway:
+    enabled: true
+    schemas: core
+    default-schema: core
+    create-schemas: true
+    locations: classpath:db/migration
+
+# core-api é dono EXCLUSIVO do schema core; NUNCA cria/altera objeto do schema geo (ADR 0004).
+
+app:
+  jwt:
+    # Mínimo 32 bytes para HS256. Em produção, injetar via secrets manager (spec 04). NUNCA commitar.
+    secret: ${CORE_JWT_SECRET:dev-only-secret-change-me-please-0123456789abcdef}
+    access-ttl-minutes: ${CORE_JWT_ACCESS_TTL_MIN:15}
+    refresh-ttl-days: ${CORE_JWT_REFRESH_TTL_DAYS:30}
+  geo-api:
+    # core-api é o ÚNICO chamador do geo-api (spec 01). Token de serviço != token de usuário.
+    base-url: ${GEO_API_URL:http://localhost:8000}
+    service-token: ${GEO_SERVICE_TOKEN:dev-service-token-change-me}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
