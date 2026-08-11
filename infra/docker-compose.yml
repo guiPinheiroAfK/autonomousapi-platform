@@ -1,0 +1,61 @@
+name: autonomousapi
+
+# Ambiente local: um Postgres+PostGIS compartilhado (schemas core + geo) e os dois serviços.
+# Sobe com: docker compose -f infra/docker-compose.yml up --build
+#
+# O web (apps/web) roda via `npm run dev:web` (proxy /api -> core-api), fora do compose,
+# para preservar hot-reload — ver infra/README.md.
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: autonomousapi
+      POSTGRES_PASSWORD: autonomousapi
+      POSTGRES_DB: autonomousapi
+    ports:
+      # Publica em 5433 no host para não colidir com um Postgres local (que usa 5432).
+      # A comunicação entre serviços é interna (db:5432) e não depende deste publish.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autonomousapi -d autonomousapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  geo-api:
+    build:
+      context: ../services/geo-api
+    environment:
+      GEO_DB_URL: postgresql+psycopg://autonomousapi:autonomousapi@db:5432/autonomousapi
+      GEO_SERVICE_TOKEN: ${GEO_SERVICE_TOKEN:-dev-service-token-change-me}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Sem publish de porta no host: o geo-api é INTERNO (spec 01). Só o core-api o
+    # acessa, pela rede do compose (http://geo-api:8000). Não é exposto para fora.
+    expose:
+      - "8000"
+
+  core-api:
+    build:
+      context: ../services/core-api
+    environment:
+      CORE_DB_URL: jdbc:postgresql://db:5432/autonomousapi
+      CORE_DB_USER: autonomousapi
+      CORE_DB_PASSWORD: autonomousapi
+      CORE_JWT_SECRET: ${CORE_JWT_SECRET:-dev-only-secret-change-me-please-0123456789abcdef}
+      GEO_API_URL: http://geo-api:8000
+      GEO_SERVICE_TOKEN: ${GEO_SERVICE_TOKEN:-dev-service-token-change-me}
+    depends_on:
+      db:
+        condition: service_healthy
+      geo-api:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
