@@ -14,7 +14,9 @@ services:
       POSTGRES_PASSWORD: autonomousapi
       POSTGRES_DB: autonomousapi
     ports:
-      - "5432:5432"
+      # Publica em 5433 no host para não colidir com um Postgres local (que usa 5432).
+      # A comunicação entre serviços é interna (db:5432) e não depende deste publish.
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -32,8 +34,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8000:8000"
+    # Sem publish de porta no host: o geo-api é INTERNO (spec 01). Só o core-api o
+    # acessa, pela rede do compose (http://geo-api:8000). Não é exposto para fora.
+    expose:
+      - "8000"
 
   core-api:
     build:
