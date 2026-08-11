@@ -11,6 +11,9 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_CORE_API_URL ?? 'http://localhost:8080',
         changeOrigin: true,
+        // O core-api não conhece o prefixo /api (ele expõe /v1/...) — sem isso,
+        // toda chamada cai fora dos matchers públicos do SecurityConfig e vira 401.
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
