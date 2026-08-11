@@ -1,0 +1,12 @@
+{
+  "name": "@autonomousapi/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contratos OpenAPI: interno core-api<->geo-api (code-first) e API pública de parceiros (spec-first).",
+  "scripts": {
+    "validate": "swagger-cli validate public/road-readiness.openapi.yaml"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-cli": "^4.0.4"
+  }
+}

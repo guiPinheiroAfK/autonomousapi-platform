@@ -1,0 +1,94 @@
+openapi: 3.1.0
+info:
+  title: AutonomousAPI — Road Readiness (Public Partner API)
+  version: 1.0.0
+  license:
+    name: Proprietary — AutonomousAPI
+    url: https://autonomousapi.com.br/licenca
+  description: >
+    API pública de prontidão viária para parceiros de mobilidade autônoma (AV).
+    Contrato SPEC-FIRST e versionado (ADR 0002): mudança incompatível exige nova
+    major version no path (/public/v2/...), nunca quebra em cima de /public/v1.
+    Autenticação por chave de API; rate limit e billing centralizados no core-api.
+    STATUS: stub de contrato — implementação real é Fase 4 (specs/05-roadmap-fases.md).
+servers:
+  - url: https://api.autonomousapi.com.br/public/v1
+    description: Produção (futuro)
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: road-readiness
+    description: Índice de prontidão viária por trecho (sempre valor pré-agregado).
+paths:
+  /road-readiness/segments/{osmWayId}:
+    get:
+      tags: [road-readiness]
+      operationId: getRoadReadinessBySegment
+      summary: Score de prontidão viária de um trecho (OSM way).
+      description: >
+        Retorna o score já agregado do trecho. O score NUNCA é calculado em tempo
+        real na requisição (spec 02) — é sempre o último valor consolidado por job.
+      parameters:
+        - name: osmWayId
+          in: path
+          required: true
+          description: Identificador do trecho na malha do OpenStreetMap.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Score encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoadReadinessScore'
+        '404':
+          description: Trecho sem score consolidado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit excedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    RoadReadinessScore:
+      type: object
+      required: [osmWayId, score, observationCount, updatedAt, algorithmVersion]
+      properties:
+        osmWayId:
+          type: integer
+          format: int64
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Score normalizado de prontidão viária (0 = não pronto, 1 = pronto).
+        observationCount:
+          type: integer
+          description: Quantidade de observações que sustentam o score (confiança).
+        updatedAt:
+          type: string
+          format: date-time
+        algorithmVersion:
+          type: string
+          description: Versão do algoritmo que gerou o score (rastreabilidade).
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
