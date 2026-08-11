@@ -15,6 +15,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("email_already_used", ex.getMessage()));
     }
 
+    @ExceptionHandler(PlateAlreadyUsedException.class)
+    public ResponseEntity<ApiError> handlePlateUsed(PlateAlreadyUsedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("plate_already_used", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
