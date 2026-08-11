@@ -26,10 +26,21 @@ export type SignupRequest = Schemas['SignupRequest'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
+let onUnauthorized: (() => void) | null = null;
 
 /** Chamado pelo AuthContext ao logar/deslogar — mantém o client sem depender de React. */
 export function setAuthToken(token: string | null): void {
   authToken = token;
+}
+
+/**
+ * Chamado pelo AuthContext para reagir a 401 (token expirado/inválido) limpando a
+ * sessão automaticamente. O access token dura 15min (app.jwt.access-ttl-minutes no
+ * core-api) e o front ainda não implementa refresh silencioso — sem isso, uma tela
+ * ficava com erro vermelho em vez de simplesmente voltar pro login.
+ */
+export function setUnauthorizedHandler(fn: (() => void) | null): void {
+  onUnauthorized = fn;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,6 +50,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
 
   if (!res.ok) {
+    if (res.status === 401) onUnauthorized?.();
     const body = (await res.json().catch(() => null)) as ApiError | null;
     throw new Error(body?.message ?? `core-api ${res.status} em ${path}`);
   }

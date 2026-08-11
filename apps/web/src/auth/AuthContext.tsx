@@ -1,5 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { coreApi, setAuthToken, type LoginRequest, type SignupRequest, type UserResponse } from '../api/client';
+import {
+  coreApi,
+  setAuthToken,
+  setUnauthorizedHandler,
+  type LoginRequest,
+  type SignupRequest,
+  type UserResponse,
+} from '../api/client';
 
 const STORAGE_KEY = 'autonomousapi.accessToken';
 
@@ -21,6 +28,13 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Registrado antes do efeito de restauração de sessão abaixo, para que um 401
+  // já disparado durante a própria restauração (token salvo expirado) seja coberto.
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
