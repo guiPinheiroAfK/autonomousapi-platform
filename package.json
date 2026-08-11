@@ -5,6 +5,7 @@
   "description": "Monorepo da plataforma AutonomousAPI (workspaces JS: web, mobile, packages).",
   "workspaces": [
     "apps/web",
+    "apps/mobile",
     "packages/shared-types",
     "packages/contracts"
   ],
