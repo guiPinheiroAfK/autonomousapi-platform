@@ -1,0 +1,26 @@
+{
+  "name": "autonomousapi-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo da plataforma AutonomousAPI (workspaces JS: web, mobile, packages).",
+  "workspaces": [
+    "apps/web",
+    "packages/shared-types",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @autonomousapi/web",
+    "build:web": "npm run build --workspace @autonomousapi/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "gen:types": "npm run generate --workspace @autonomousapi/shared-types",
+    "contracts:validate": "npm run validate --workspace @autonomousapi/contracts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}
