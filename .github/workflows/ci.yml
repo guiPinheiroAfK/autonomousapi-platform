@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+# Pipeline por escopo (spec 04): um job de detecção decide o que mudou e só os
+# jobs afetados rodam — evita build lento em monorepo.
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      core-api: ${{ steps.filter.outputs.core-api }}
+      geo-api: ${{ steps.filter.outputs.geo-api }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/shared-types/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.base.json'
+            core-api:
+              - 'services/core-api/**'
+            geo-api:
+              - 'services/geo-api/**'
+            contracts:
+              - 'packages/contracts/**'
+
+  web:
+    needs: changes
+    if: ${{ needs.changes.outputs.web == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint --workspace @autonomousapi/web
+      - run: npm run typecheck
+      - run: npm run build:web
+
+  core-api:
+    needs: changes
+    if: ${{ needs.changes.outputs.core-api == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/core-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - run: ./mvnw -B verify
+
+  geo-api:
+    needs: changes
+    if: ${{ needs.changes.outputs.geo-api == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/geo-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: pytest -q
+      # Contrato interno code-first (ADR 0002): gera o OpenAPI do código e publica
+      # como artefato. O drift-check estrito contra o snapshot commitado entra quando
+      # o snapshot canônico for gerado no ambiente 3.12 (junto do Checkpoint E).
+      - name: Gerar OpenAPI interno do geo-api
+        run: python scripts/export_openapi.py /tmp/geo-api.openapi.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: geo-api-openapi
+          path: /tmp/geo-api.openapi.json
+
+  contracts:
+    needs: changes
+    if: ${{ needs.changes.outputs.contracts == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run contracts:validate
