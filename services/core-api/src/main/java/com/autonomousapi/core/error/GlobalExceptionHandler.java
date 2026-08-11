@@ -21,6 +21,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("plate_already_used", ex.getMessage()));
     }
 
+    @ExceptionHandler(CnhAlreadyUsedException.class)
+    public ResponseEntity<ApiError> handleCnhUsed(CnhAlreadyUsedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("cnh_already_used", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
