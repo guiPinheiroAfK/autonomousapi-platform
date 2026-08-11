@@ -1,0 +1,45 @@
+# core-api
+
+Backend de orquestração (Java 17 / Spring Boot). Auth, billing, regras de negócio e
+gateway para o `geo-api`. **Único ponto de entrada** dos clientes (spec 01).
+
+Abrir no **IntelliJ IDEA** apontando para esta pasta (`services/core-api`).
+
+## Rodar local
+
+Precisa de um Postgres com o schema `core` (o Flyway cria as tabelas). O jeito
+recomendado é subir tudo junto via `infra/docker-compose.yml` (Checkpoint E). Para rodar
+só este serviço contra um Postgres existente:
+
+```bash
+export CORE_DB_URL=jdbc:postgresql://localhost:5432/autonomousapi
+export CORE_DB_USER=autonomousapi
+export CORE_DB_PASSWORD=autonomousapi
+export CORE_JWT_SECRET=um-segredo-com-no-minimo-32-bytes-aqui-123456
+./mvnw spring-boot:run
+```
+
+Não precisa de Maven instalado — o wrapper (`./mvnw`) baixa o Maven 3.9.9. Precisa de
+JDK 17+ (`JAVA_HOME`).
+
+## Build e testes
+
+```bash
+./mvnw clean package
+```
+
+## Endpoints (Fase 1, fundação)
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| POST | `/v1/auth/signup` | pública | Cria tenant + gestor de frota, devolve tokens |
+| POST | `/v1/auth/login` | pública | Login por e-mail/senha, devolve tokens |
+| POST | `/v1/auth/refresh` | pública | Rotaciona o refresh token, devolve novo par |
+| GET  | `/v1/auth/me` | Bearer | Usuário autenticado atual |
+| GET  | `/v1/health` | pública | Health agregado (checa o geo-api internamente) |
+| GET  | `/v3/api-docs` | pública | OpenAPI (fonte do `packages/shared-types`, ADR 0003) |
+
+## Migrations
+
+Flyway, em `src/main/resources/db/migration`. É dono **exclusivo** do schema `core`
+(ADR 0004) — nunca toca no schema `geo`.
