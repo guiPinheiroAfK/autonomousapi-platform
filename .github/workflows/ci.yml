@@ -6,6 +6,13 @@ on:
   push:
     branches: [develop, main]
 
+# paths-filter, em pull_request, lista os arquivos alterados via API do GitHub —
+# precisa de pull-requests:read (senão dá "Resource not accessible by integration"
+# em repo privado). No push ele usa git diff e não precisaria, mas manter aqui é seguro.
+permissions:
+  contents: read
+  pull-requests: read
+
 # Pipeline por escopo (spec 04): um job de detecção decide o que mudou e só os
 # jobs afetados rodam — evita build lento em monorepo.
 jobs:
