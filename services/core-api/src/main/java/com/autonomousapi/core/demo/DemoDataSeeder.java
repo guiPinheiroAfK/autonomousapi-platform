@@ -1,0 +1,166 @@
+package com.autonomousapi.core.demo;
+
+import com.autonomousapi.core.driver.Driver;
+import com.autonomousapi.core.driver.DriverRepository;
+import com.autonomousapi.core.driver.DriverStatus;
+import com.autonomousapi.core.tenant.Tenant;
+import com.autonomousapi.core.tenant.TenantRepository;
+import com.autonomousapi.core.user.Role;
+import com.autonomousapi.core.user.User;
+import com.autonomousapi.core.user.UserRepository;
+import com.autonomousapi.core.vehicle.Vehicle;
+import com.autonomousapi.core.vehicle.VehicleRepository;
+import com.autonomousapi.core.vehicle.VehicleStatus;
+import com.autonomousapi.core.vehicle.cost.VehicleCostCategory;
+import com.autonomousapi.core.vehicle.cost.VehicleCostEntry;
+import com.autonomousapi.core.vehicle.cost.VehicleCostEntryRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+/**
+ * Dado de demonstração — evolução do pitch (specs/00-visao-geral.md): a primeira
+ * frota real na plataforma é o segmento #2 do pitch, "empresas de entrega/locação/
+ * transporte" (cliente pagante, hoje), aqui personificado como a RotaCerta.
+ *
+ * PARA REMOVER TUDO ISSO: apague este arquivo (pacote inteiro {@code demo/}). Não
+ * há nenhum outro ponto do código que dependa dele — só roda com o profile Spring
+ * "demo" explicitamente ativado (nunca em produção nem no dev padrão):
+ *
+ *   SPRING_PROFILES_ACTIVE=demo ./mvnw spring-boot:run
+ *   # ou, via docker-compose: CORE_PROFILES=demo docker compose ... up
+ *
+ * Idempotente: não roda de novo se já existir algum tenant (evita duplicar ao reiniciar).
+ */
+@Component
+@Profile("demo")
+public class DemoDataSeeder implements ApplicationRunner {
+
+    private final TenantRepository tenants;
+    private final UserRepository users;
+    private final VehicleRepository vehicles;
+    private final DriverRepository drivers;
+    private final VehicleCostEntryRepository costs;
+    private final PasswordEncoder passwordEncoder;
+
+    public DemoDataSeeder(
+            TenantRepository tenants,
+            UserRepository users,
+            VehicleRepository vehicles,
+            DriverRepository drivers,
+            VehicleCostEntryRepository costs,
+            PasswordEncoder passwordEncoder) {
+        this.tenants = tenants;
+        this.users = users;
+        this.vehicles = vehicles;
+        this.drivers = drivers;
+        this.costs = costs;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    public void run(ApplicationArguments args) {
+        if (tenants.count() > 0) return;
+
+        Tenant rotaCerta = tenants.save(new Tenant("RotaCerta Entregas Expressas"));
+
+        users.save(new User(
+                rotaCerta.getId(), "demo@rotacerta.com.br",
+                passwordEncoder.encode("demo12345"), Role.GESTOR_FROTA));
+
+        seedVehicles(rotaCerta.getId());
+        seedDrivers(rotaCerta.getId());
+    }
+
+    private void seedVehicles(UUID tenantId) {
+        // plate, brand, model, ano, odômetro, status
+        record V(String plate, String brand, String model, int year, int km, VehicleStatus status) {}
+
+        List<V> defs = List.of(
+                new V("RTC1A23", "Fiat", "Fiorino", 2022, 32000, VehicleStatus.ATIVO),
+                new V("RTC1B45", "Fiat", "Strada", 2023, 18500, VehicleStatus.ATIVO),
+                new V("RTC1C67", "Volkswagen", "Saveiro", 2021, 54200, VehicleStatus.ATIVO),
+                new V("RTC1D89", "Renault", "Kangoo", 2020, 71300, VehicleStatus.ATIVO),
+                new V("RTC1E12", "Fiat", "Doblo", 2019, 88900, VehicleStatus.MANUTENCAO),
+                new V("RTC1F34", "Hyundai", "HR", 2022, 41200, VehicleStatus.ATIVO),
+                new V("RTC1G56", "Iveco", "Daily", 2021, 62700, VehicleStatus.ATIVO),
+                new V("RTC1H78", "Volkswagen", "Delivery Express", 2023, 15400, VehicleStatus.ATIVO),
+                new V("RTC1I90", "Mercedes-Benz", "Sprinter", 2020, 95600, VehicleStatus.MANUTENCAO),
+                new V("RTC1J12", "Honda", "CG 160", 2023, 8700, VehicleStatus.ATIVO),
+                new V("RTC1K34", "Yamaha", "Factor 125", 2022, 21300, VehicleStatus.ATIVO),
+                new V("RTC1L56", "Fiat", "Fiorino", 2018, 132000, VehicleStatus.INATIVO));
+
+        for (V d : defs) {
+            Vehicle v = new Vehicle(tenantId, d.plate(), d.brand(), d.model(), d.year(), d.km());
+            if (d.status() != VehicleStatus.ATIVO) {
+                v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status());
+            }
+            vehicles.save(v);
+
+            // Histórico de custo só nos veículos operacionais (ATIVO/MANUTENCAO) — reflete
+            // custo real de operação, não de um veículo já desativado da frota.
+            if (d.status() != VehicleStatus.INATIVO) {
+                seedCostHistory(v.getId(), d.plate(), d.km());
+            }
+        }
+    }
+
+    /**
+     * Cada veículo recebe uma quantidade e um valor de lançamento diferentes — derivados
+     * do próprio odômetro/placa (determinístico, sem lib de aleatoriedade) — para o
+     * histórico não parecer um template copiado igual em todo veículo.
+     */
+    private void seedCostHistory(UUID vehicleId, String plate, int odometerKm) {
+        record C(int diasAtras, VehicleCostCategory categoria, String valor, String descricao) {}
+
+        List<C> pool = List.of(
+                new C(88, VehicleCostCategory.COMBUSTIVEL, "215.40", "Abastecimento Posto Ipiranga"),
+                new C(74, VehicleCostCategory.COMBUSTIVEL, "198.90", "Abastecimento Posto Shell BR-116"),
+                new C(61, VehicleCostCategory.MANUTENCAO, "380.00", "Troca de óleo e filtro"),
+                new C(49, VehicleCostCategory.OUTRO, "48.50", "Pedágio Rodovia Anhanguera"),
+                new C(37, VehicleCostCategory.COMBUSTIVEL, "227.60", "Abastecimento Posto Ipiranga"),
+                new C(26, VehicleCostCategory.MANUTENCAO, "165.00", "Alinhamento e balanceamento"),
+                new C(14, VehicleCostCategory.OUTRO, "35.00", "Lavagem e higienização"),
+                new C(4, VehicleCostCategory.COMBUSTIVEL, "241.10", "Abastecimento Posto Shell BR-116"));
+
+        // Fator de custo proporcional ao uso (~0.7x a 1.2x) e quantidade de lançamentos
+        // (4 a 8) variando por veículo — mesma ideia, números diferentes por veículo.
+        double factor = 0.7 + (odometerKm % 50_000) / 100_000.0;
+        int count = 4 + Math.abs(plate.hashCode()) % (pool.size() - 3);
+
+        for (C c : pool.subList(pool.size() - count, pool.size())) {
+            BigDecimal amount = new BigDecimal(c.valor())
+                    .multiply(BigDecimal.valueOf(factor))
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+            costs.save(new VehicleCostEntry(
+                    vehicleId, c.categoria(), amount, c.descricao(), LocalDate.now().minusDays(c.diasAtras())));
+        }
+    }
+
+    private void seedDrivers(UUID tenantId) {
+        record D(String name, String cnh, String phone, DriverStatus status) {}
+
+        List<D> defs = List.of(
+                new D("Eduardo Ramos", "11223344556", "11987651234", DriverStatus.ATIVO),
+                new D("Juliana Martins", "22334455667", "11987652345", DriverStatus.ATIVO),
+                new D("Anderson Souza", "33445566778", "11987653456", DriverStatus.ATIVO),
+                new D("Patrícia Lima", "44556677889", "11987654567", DriverStatus.ATIVO),
+                new D("Thiago Nogueira", "55667788990", "11987655678", DriverStatus.ATIVO),
+                new D("Camila Duarte", "66778899001", "11987656789", DriverStatus.ATIVO),
+                new D("Roberto Alves", "77889900112", "11987657890", DriverStatus.INATIVO));
+
+        for (D d : defs) {
+            Driver driver = new Driver(tenantId, d.name(), d.cnh(), d.phone());
+            if (d.status() != DriverStatus.ATIVO) {
+                driver.update(d.name(), d.cnh(), d.phone(), d.status());
+            }
+            drivers.save(driver);
+        }
+    }
+}
