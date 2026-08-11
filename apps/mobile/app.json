@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "AutonomousAPI",
+    "slug": "autonomousapi-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localização para registrar as viagens da frota.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "A localização em segundo plano registra o trajeto durante a operação, mesmo com o app minimizado. Você consente nisso no onboarding (spec 03)."
+      }
+    },
+    "android": {
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
+    }
+  }
+}

@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       web: ${{ steps.filter.outputs.web }}
+      mobile: ${{ steps.filter.outputs.mobile }}
       core-api: ${{ steps.filter.outputs.core-api }}
       geo-api: ${{ steps.filter.outputs.geo-api }}
       contracts: ${{ steps.filter.outputs.contracts }}
@@ -24,6 +25,12 @@ jobs:
           filters: |
             web:
               - 'apps/web/**'
+              - 'packages/shared-types/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.base.json'
+            mobile:
+              - 'apps/mobile/**'
               - 'packages/shared-types/**'
               - 'package.json'
               - 'package-lock.json'
@@ -49,6 +56,19 @@ jobs:
       - run: npm run lint --workspace @autonomousapi/web
       - run: npm run typecheck
       - run: npm run build:web
+
+  mobile:
+    needs: changes
+    if: ${{ needs.changes.outputs.mobile == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck --workspace @autonomousapi/mobile
 
   core-api:
     needs: changes
