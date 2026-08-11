@@ -49,6 +49,9 @@ services:
       CORE_JWT_SECRET: ${CORE_JWT_SECRET:-dev-only-secret-change-me-please-0123456789abcdef}
       GEO_API_URL: http://geo-api:8000
       GEO_SERVICE_TOKEN: ${GEO_SERVICE_TOKEN:-dev-service-token-change-me}
+      # Vazio por padrão (sem seed). Rode `CORE_PROFILES=demo docker compose ... up`
+      # para popular dado de demonstração (com.autonomousapi.core.demo.DemoDataSeeder).
+      SPRING_PROFILES_ACTIVE: ${CORE_PROFILES:-}
     depends_on:
       db:
         condition: service_healthy

@@ -43,3 +43,22 @@ JDK 17+ (`JAVA_HOME`).
 
 Flyway, em `src/main/resources/db/migration`. É dono **exclusivo** do schema `core`
 (ADR 0004) — nunca toca no schema `geo`.
+
+## Dado de demonstração (opcional)
+
+`com.autonomousapi.core.demo.DemoDataSeeder` popula uma frota fictícia completa
+(tenant "RotaCerta Entregas Expressas", 1 gestor, 12 veículos, 7 motoristas, histórico
+de custo) — útil para ver telas com dado real sem cadastrar tudo na mão. **Desligado
+por padrão**, só roda com o profile Spring `demo` ativo:
+
+```bash
+SPRING_PROFILES_ACTIVE=demo ./mvnw spring-boot:run
+# ou, via docker-compose (na raiz do monorepo):
+CORE_PROFILES=demo docker compose -f infra/docker-compose.yml up --build
+```
+
+Login de demo: `demo@rotacerta.com.br` / `demo12345`.
+
+Idempotente (não duplica ao reiniciar) e **fácil de remover por completo**: é um
+único arquivo, sem nenhum outro ponto do código dependendo dele — basta apagar
+`src/main/java/com/autonomousapi/core/demo/`.
