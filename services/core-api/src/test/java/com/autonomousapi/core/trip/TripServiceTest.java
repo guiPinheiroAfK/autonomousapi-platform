@@ -3,8 +3,10 @@ package com.autonomousapi.core.trip;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +20,7 @@ import com.autonomousapi.core.trip.dto.TripResponse;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -81,6 +84,46 @@ class TripServiceTest {
                 ArgumentCaptor.forClass(com.autonomousapi.core.geo.dto.GpsPingRequest.class);
         verify(geoApiClient).ingestGpsPing(captor.capture());
         assertEquals(vehicleId, captor.getValue().vehicleId());
+    }
+
+    @Test
+    void loteDePingsEncaminhaTodosQuandoGeoApiResponde() {
+        Trip trip = new Trip(tenantId, principal.userId(), UUID.randomUUID());
+        when(tripRepo.findByIdAndTenantIdAndUserId(trip.getId(), tenantId, principal.userId()))
+                .thenReturn(Optional.of(trip));
+
+        var lote = List.of(
+                new SubmitPingRequest(Instant.now(), -25.1, -54.1, null, null, null),
+                new SubmitPingRequest(Instant.now(), -25.2, -54.2, null, null, null),
+                new SubmitPingRequest(Instant.now(), -25.3, -54.3, null, null, null));
+
+        var resposta = service.submitPings(principal, trip.getId(), lote);
+
+        assertEquals(3, resposta.accepted());
+        assertEquals(3, resposta.received());
+        verify(geoApiClient, times(3)).ingestGpsPing(any());
+    }
+
+    @Test
+    void loteParaNoPrimeiroErroEDevolveQuantosEntraram() {
+        Trip trip = new Trip(tenantId, principal.userId(), UUID.randomUUID());
+        when(tripRepo.findByIdAndTenantIdAndUserId(trip.getId(), tenantId, principal.userId()))
+                .thenReturn(Optional.of(trip));
+        // Primeiro ping passa, segundo falha (geo-api fora do ar no meio do lote).
+        doNothing().doThrow(new RuntimeException("geo-api indisponível"))
+                .when(geoApiClient).ingestGpsPing(any());
+
+        var lote = List.of(
+                new SubmitPingRequest(Instant.now(), -25.1, -54.1, null, null, null),
+                new SubmitPingRequest(Instant.now(), -25.2, -54.2, null, null, null),
+                new SubmitPingRequest(Instant.now(), -25.3, -54.3, null, null, null));
+
+        var resposta = service.submitPings(principal, trip.getId(), lote);
+
+        // O app descarta 1 da fila e mantém os outros 2 para nova tentativa.
+        assertEquals(1, resposta.accepted());
+        assertEquals(3, resposta.received());
+        verify(geoApiClient, times(2)).ingestGpsPing(any());
     }
 
     @Test

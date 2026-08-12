@@ -1,5 +1,6 @@
 package com.autonomousapi.core.vehicle.cost;
 
+import com.autonomousapi.core.vehicle.cost.dto.FleetCostEntryResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,4 +25,24 @@ public interface VehicleCostEntryRepository extends JpaRepository<VehicleCostEnt
             + "order by c.occurredAt")
     List<VehicleCostEntry> findAllByTenantIdSince(
             @Param("tenantId") UUID tenantId, @Param("since") LocalDate since);
+
+    /**
+     * Custos da frota inteira já com os dados do veículo, em UMA query — o front antes
+     * resolvia isso com 1+N requisições (lista de veículos, depois custos de cada um).
+     */
+    @Query("select new com.autonomousapi.core.vehicle.cost.dto.FleetCostEntryResponse("
+            + "c.id, v.id, v.plate, v.brand, v.model, c.category, c.amount, c.description, c.occurredAt) "
+            + "from VehicleCostEntry c, com.autonomousapi.core.vehicle.Vehicle v "
+            + "where v.id = c.vehicleId and v.tenantId = :tenantId "
+            + "order by c.occurredAt desc")
+    List<FleetCostEntryResponse> findFleetCosts(@Param("tenantId") UUID tenantId);
+
+    /** Idem, filtrando categoria (ex.: só MANUTENCAO, para a tela de Manutenção). */
+    @Query("select new com.autonomousapi.core.vehicle.cost.dto.FleetCostEntryResponse("
+            + "c.id, v.id, v.plate, v.brand, v.model, c.category, c.amount, c.description, c.occurredAt) "
+            + "from VehicleCostEntry c, com.autonomousapi.core.vehicle.Vehicle v "
+            + "where v.id = c.vehicleId and v.tenantId = :tenantId and c.category = :category "
+            + "order by c.occurredAt desc")
+    List<FleetCostEntryResponse> findFleetCostsByCategory(
+            @Param("tenantId") UUID tenantId, @Param("category") VehicleCostCategory category);
 }

@@ -435,6 +435,47 @@
                 }
             }
         },
+        "/v1/trips/{id}/pings/batch": {
+            "post": {
+                "tags": [
+                    "trip-controller"
+                ],
+                "operationId": "submitPingBatch",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitPingBatchRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubmitPingBatchResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/drivers": {
             "get": {
                 "tags": [
@@ -675,6 +716,44 @@
                                     "type": "array",
                                     "items": {
                                         "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/vehicles/costs": {
+            "get": {
+                "tags": [
+                    "vehicle-controller"
+                ],
+                "operationId": "fleetCosts",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "COMBUSTIVEL",
+                                "MANUTENCAO",
+                                "OUTRO"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/FleetCostEntryResponse"
                                     }
                                 }
                             }
@@ -1150,6 +1229,35 @@
                     }
                 }
             },
+            "SubmitPingBatchRequest": {
+                "required": [
+                    "pings"
+                ],
+                "type": "object",
+                "properties": {
+                    "pings": {
+                        "maxItems": 500,
+                        "minItems": 0,
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SubmitPingRequest"
+                        }
+                    }
+                }
+            },
+            "SubmitPingBatchResponse": {
+                "type": "object",
+                "properties": {
+                    "accepted": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "received": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
             "CheckoutSessionResponse": {
                 "type": "object",
                 "properties": {
@@ -1275,6 +1383,46 @@
                     "kmRestante": {
                         "type": "integer",
                         "format": "int32"
+                    }
+                }
+            },
+            "FleetCostEntryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "vehicleId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "plate": {
+                        "type": "string"
+                    },
+                    "brand": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "COMBUSTIVEL",
+                            "MANUTENCAO",
+                            "OUTRO"
+                        ]
+                    },
+                    "amount": {
+                        "type": "number"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "occurredAt": {
+                        "type": "string",
+                        "format": "date"
                     }
                 }
             },

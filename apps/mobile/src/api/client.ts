@@ -39,6 +39,11 @@ export interface SubmitPingRequest {
   accuracy?: number;
 }
 
+export interface SubmitPingBatchResponse {
+  accepted: number;
+  received: number;
+}
+
 let authToken: string | null = null;
 
 /** Chamado pelo App ao logar/restaurar sessão/deslogar — client sem depender de estado React. */
@@ -81,5 +86,11 @@ export const coreApi = {
     list: () => request<TripResponse[]>('/v1/trips'),
     submitPing: (tripId: string, ping: SubmitPingRequest) =>
       request<void>(`/v1/trips/${tripId}/pings`, { method: 'POST', body: JSON.stringify(ping) }),
+    /** Manda a fila inteira em uma requisição; devolve quantos foram aceitos. */
+    submitPingBatch: (tripId: string, pings: SubmitPingRequest[]) =>
+      request<SubmitPingBatchResponse>(`/v1/trips/${tripId}/pings/batch`, {
+        method: 'POST',
+        body: JSON.stringify({ pings }),
+      }),
   },
 };

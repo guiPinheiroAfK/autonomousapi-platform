@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/trips/{id}/pings/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submitPingBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/drivers": {
         parameters: {
             query?: never;
@@ -236,6 +252,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["maintenanceDue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/vehicles/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["fleetCosts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -466,6 +498,15 @@ export interface components {
             /** Format: double */
             accuracy?: number;
         };
+        SubmitPingBatchRequest: {
+            pings: components["schemas"]["SubmitPingRequest"][];
+        };
+        SubmitPingBatchResponse: {
+            /** Format: int32 */
+            accepted?: number;
+            /** Format: int32 */
+            received?: number;
+        };
         CheckoutSessionResponse: {
             checkoutUrl?: string;
         };
@@ -510,6 +551,21 @@ export interface components {
             proximaManutencaoKm?: number;
             /** Format: int32 */
             kmRestante?: number;
+        };
+        FleetCostEntryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            plate?: string;
+            brand?: string;
+            model?: string;
+            /** @enum {string} */
+            category?: "COMBUSTIVEL" | "MANUTENCAO" | "OUTRO";
+            amount?: number;
+            description?: string;
+            /** Format: date */
+            occurredAt?: string;
         };
         MonthlyCostResponse: {
             month?: string;
@@ -866,6 +922,32 @@ export interface operations {
             };
         };
     };
+    submitPingBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitPingBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SubmitPingBatchResponse"];
+                };
+            };
+        };
+    };
     list_3: {
         parameters: {
             query?: never;
@@ -1064,6 +1146,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleMaintenanceAlertResponse"][];
+                };
+            };
+        };
+    };
+    fleetCosts: {
+        parameters: {
+            query?: {
+                category?: "COMBUSTIVEL" | "MANUTENCAO" | "OUTRO";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FleetCostEntryResponse"][];
                 };
             };
         };

@@ -2,6 +2,8 @@ package com.autonomousapi.core.trip;
 
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.trip.dto.StartTripRequest;
+import com.autonomousapi.core.trip.dto.SubmitPingBatchRequest;
+import com.autonomousapi.core.trip.dto.SubmitPingBatchResponse;
 import com.autonomousapi.core.trip.dto.SubmitPingRequest;
 import com.autonomousapi.core.trip.dto.TripResponse;
 import jakarta.validation.Valid;
@@ -51,6 +53,14 @@ public class TripController {
     public void submitPing(
             @PathVariable UUID id, @Valid @RequestBody SubmitPingRequest req, Authentication auth) {
         tripService.submitPing(principal(auth), id, req);
+    }
+
+    /** Lote da fila offline do app — uma requisição em vez de uma por ping. */
+    @PostMapping("/{id}/pings/batch")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public SubmitPingBatchResponse submitPingBatch(
+            @PathVariable UUID id, @Valid @RequestBody SubmitPingBatchRequest req, Authentication auth) {
+        return tripService.submitPings(principal(auth), id, req.pings());
     }
 
     private JwtPrincipal principal(Authentication auth) {

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { coreApi, type TripResponse, type VehicleResponse } from '../api/client';
-import { enqueue, flush, pendingCount, type GpsPing } from '../offline/pingQueue';
+import { enqueue, flushBatch, pendingCount, type GpsPing } from '../offline/pingQueue';
 
 interface Props {
   onLogout: () => void;
@@ -118,9 +118,19 @@ export function TripScreen({ onLogout }: Props) {
     if (!trip) return;
     setStatus('sincronizando...');
     try {
-      await flush((ping) => coreApi.trips.submitPing(trip.id, ping));
-      setPending(await pendingCount());
-      setStatus('sincronizado');
+      // Em lote: uma requisição por lote em vez de uma por ping. Um motorista voltando
+      // de uma hora sem sinal tinha ~240 pings na fila = 240 chamadas sequenciais antes.
+      const enviados = await flushBatch(async (pings) => {
+        const { accepted } = await coreApi.trips.submitPingBatch(trip.id, pings);
+        return accepted;
+      });
+      const restantes = await pendingCount();
+      setPending(restantes);
+      setStatus(
+        restantes === 0
+          ? `sincronizado (${enviados} pings)`
+          : `${enviados} enviados, ${restantes} na fila para nova tentativa`,
+      );
     } catch (e) {
       setPending(await pendingCount());
       setStatus(`falha ao sincronizar (${e instanceof Error ? e.message : 'erro'}) — pings mantidos na fila`);
