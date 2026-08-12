@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap");
+/* As fontes (IBM Plex Sans/Mono, Inter, Fraunces) são carregadas uma vez só, via <link>
+   em index.html — @import aqui duplicaria a requisição e foi a causa provável do 404 de
+   woff2 visto no console (duas resoluções de hash disputando o mesmo cache). */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -261,6 +263,11 @@ body {
   font-optical-sizing: auto;
   font-weight: 600;
   letter-spacing: -0.01em;
+  /* SOFT arredonda as curvas da letra (0 = desenho padrão, 100 = bem macio) — é o eixo
+     variável que dá o "gordinho e confortável" pedido, sem trocar de peso. WONK em 0
+     mantém as formas alternativas desligadas: aqui é título de produto, não convite de
+     casamento. */
+  font-variation-settings: "SOFT" 40, "WONK" 0;
 }
 
 /* Sublinhado que nasce do texto ao passar o mouse, em vez de aparecer inteiro. */
