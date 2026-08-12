@@ -370,6 +370,59 @@
                 }
             }
         },
+        "/v1/billing/webhook": {
+            "post": {
+                "tags": [
+                    "billing-controller"
+                ],
+                "operationId": "webhook",
+                "parameters": [
+                    {
+                        "name": "Stripe-Signature",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/v1/billing/checkout": {
+            "post": {
+                "tags": [
+                    "billing-controller"
+                ],
+                "operationId": "checkout",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckoutSessionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/auth/signup": {
             "post": {
                 "tags": [
@@ -597,6 +650,26 @@
                                     "items": {
                                         "$ref": "#/components/schemas/DriverLicenseAlertResponse"
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/billing/subscription": {
+            "get": {
+                "tags": [
+                    "billing-controller"
+                ],
+                "operationId": "subscription",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubscriptionResponse"
                                 }
                             }
                         }
@@ -883,6 +956,14 @@
                     }
                 }
             },
+            "CheckoutSessionResponse": {
+                "type": "object",
+                "properties": {
+                    "checkoutUrl": {
+                        "type": "string"
+                    }
+                }
+            },
             "SignupRequest": {
                 "required": [
                     "email",
@@ -1031,6 +1112,24 @@
                     "diasRestantes": {
                         "type": "integer",
                         "format": "int64"
+                    }
+                }
+            },
+            "SubscriptionResponse": {
+                "type": "object",
+                "properties": {
+                    "hasSubscription": {
+                        "type": "boolean"
+                    },
+                    "billingSource": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "currentPeriodEnd": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 }
             },

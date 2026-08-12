@@ -21,6 +21,8 @@ export type VehicleCostEntryRequest = Schemas['VehicleCostEntryRequest'];
 export type VehicleCostSummaryResponse = Schemas['VehicleCostSummaryResponse'];
 export type VehicleMaintenanceAlertResponse = Schemas['VehicleMaintenanceAlertResponse'];
 export type MonthlyCostResponse = Schemas['MonthlyCostResponse'];
+export type SubscriptionResponse = Schemas['SubscriptionResponse'];
+export type CheckoutSessionResponse = Schemas['CheckoutSessionResponse'];
 export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
 export type TokenResponse = Schemas['TokenResponse'];
 export type UserResponse = Schemas['UserResponse'];
@@ -129,5 +131,10 @@ export const coreApi = {
 
   reports: {
     exportCostsCsv: () => downloadFile('/v1/reports/costs.csv', 'relatorio-custos.csv'),
+  },
+
+  billing: {
+    subscription: () => request<SubscriptionResponse>('/v1/billing/subscription'),
+    checkout: () => request<CheckoutSessionResponse>('/v1/billing/checkout', { method: 'POST' }),
   },
 };

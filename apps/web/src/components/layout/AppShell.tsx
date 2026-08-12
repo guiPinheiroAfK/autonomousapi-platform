@@ -3,7 +3,15 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import type { UserResponse } from '../../api/client';
 
-export type View = 'dashboard' | 'vehicles' | 'drivers' | 'costs' | 'work-orders' | 'maintenance' | 'reports';
+export type View =
+  | 'dashboard'
+  | 'vehicles'
+  | 'drivers'
+  | 'costs'
+  | 'work-orders'
+  | 'maintenance'
+  | 'reports'
+  | 'billing';
 
 const TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -13,6 +21,7 @@ const TITLES: Record<View, string> = {
   'work-orders': 'Ordens de Serviço',
   maintenance: 'Manutenção',
   reports: 'Relatórios & Financeiro',
+  billing: 'Assinatura',
 };
 
 interface AppShellProps {

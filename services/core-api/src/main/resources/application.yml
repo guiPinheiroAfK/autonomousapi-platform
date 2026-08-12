@@ -35,6 +35,13 @@ app:
     # core-api é o ÚNICO chamador do geo-api (spec 01). Token de serviço != token de usuário.
     base-url: ${GEO_API_URL:http://localhost:8000}
     service-token: ${GEO_SERVICE_TOKEN:dev-service-token-change-me}
+  billing:
+    # Billing web-first via Stripe Checkout (spec 03). Sem chave configurada (padrão dev/demo),
+    # o endpoint de checkout responde 503 com mensagem clara em vez de tentar chamar a Stripe.
+    stripe-secret-key: ${STRIPE_SECRET_KEY:}
+    stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    stripe-price-id: ${STRIPE_PRICE_ID:}
+    web-app-url: ${WEB_APP_URL:http://localhost:5180}
 
 springdoc:
   api-docs:

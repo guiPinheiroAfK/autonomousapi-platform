@@ -24,7 +24,9 @@ public class SecurityConfig {
             "/v1/health",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            // A própria Stripe chama isso, sem JWT — a assinatura HMAC do payload é a segurança.
+            "/v1/billing/webhook"
     };
 
     @Bean
