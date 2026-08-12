@@ -1,16 +1,58 @@
-import { Car, LayoutDashboard, Truck, Users } from 'lucide-react';
+import { BarChart3, Car, ClipboardList, LayoutDashboard, Truck, Users, Wrench } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { View } from './AppShell';
 
 const NAV_OPERACAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { view: 'vehicles', label: 'Veículos', icon: Car },
+  { view: 'vehicles', label: 'Frota', icon: Car },
+  { view: 'work-orders', label: 'Ordens de Serviço', icon: ClipboardList },
   { view: 'drivers', label: 'Motoristas', icon: Users },
+];
+
+const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
+  { view: 'maintenance', label: 'Manutenção', icon: Wrench },
+  { view: 'reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
 interface SidebarProps {
   activeView: View;
   onNavigate: (view: View) => void;
+}
+
+function NavSection({
+  title,
+  items,
+  activeView,
+  onNavigate,
+}: {
+  title: string;
+  items: { view: View; label: string; icon: typeof Car }[];
+  activeView: View;
+  onNavigate: (view: View) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
+        {title}
+      </span>
+      {items.map(({ view, label, icon: Icon }) => (
+        <button
+          key={view}
+          type="button"
+          onClick={() => onNavigate(view)}
+          className={cn(
+            'flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors',
+            activeView === view
+              ? 'bg-sidebar-active text-white'
+              : 'text-sidebar-foreground hover:bg-white/5 hover:text-white',
+          )}
+        >
+          <Icon className="size-[16px] shrink-0" />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function Sidebar({ activeView, onNavigate }: SidebarProps) {
@@ -29,27 +71,8 @@ export function Sidebar({ activeView, onNavigate }: SidebarProps) {
       <div className="mx-4 mb-3 h-px bg-sidebar-border" />
 
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4">
-        <div className="flex flex-col gap-0.5">
-          <span className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
-            Operação
-          </span>
-          {NAV_OPERACAO.map(({ view, label, icon: Icon }) => (
-            <button
-              key={view}
-              type="button"
-              onClick={() => onNavigate(view)}
-              className={cn(
-                'flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors',
-                activeView === view
-                  ? 'bg-sidebar-active text-white'
-                  : 'text-sidebar-foreground hover:bg-white/5 hover:text-white',
-              )}
-            >
-              <Icon className="size-[16px] shrink-0" />
-              {label}
-            </button>
-          ))}
-        </div>
+        <NavSection title="Operação" items={NAV_OPERACAO} activeView={activeView} onNavigate={onNavigate} />
+        <NavSection title="Gestão" items={NAV_GESTAO} activeView={activeView} onNavigate={onNavigate} />
       </nav>
 
       <div className="mx-4 mb-3 h-px bg-sidebar-border" />

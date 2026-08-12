@@ -1,17 +1,30 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { coreApi, type DriverRequest, type DriverResponse } from '../api/client';
 import { StatusBadgeMotorista } from '../components/shared/StatusBadge';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
+import { cn } from '../lib/utils';
+import { diasAteVencer, iniciais } from '../lib/format';
 
 const STATUS_OPTIONS = ['ATIVO', 'INATIVO'] as const;
 
 const EMPTY_FORM: DriverRequest = { name: '', cnh: '', phone: '', status: 'ATIVO', cnhValidade: undefined };
+
+/** Categoria da CNH é campo só-visual (não existe no backend ainda) — atribuída
+ *  deterministicamente a partir do próprio número da CNH. */
+const CNH_CATEGORIAS = ['B', 'D', 'E'];
+function categoriaCnh(cnh: string): string {
+  let hash = 0;
+  for (let i = 0; i < cnh.length; i++) hash = (hash * 31 + cnh.charCodeAt(i)) >>> 0;
+  return CNH_CATEGORIAS[hash % CNH_CATEGORIAS.length];
+}
 
 export function DriversPage() {
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
@@ -20,6 +33,9 @@ export function DriversPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState<(typeof STATUS_OPTIONS)[number] | 'todos'>('todos');
 
   function refresh() {
     coreApi.drivers
@@ -77,6 +93,18 @@ export function DriversPage() {
     }
   }
 
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return drivers.filter((d) => {
+      if (statusFiltro !== 'todos' && d.status !== statusFiltro) return false;
+      if (term) {
+        const haystack = `${d.name} ${d.cnh}`.toLowerCase();
+        if (!haystack.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [drivers, search, statusFiltro]);
+
   return (
     <div className="p-5">
       <div className="mb-5 flex items-center justify-between">
@@ -95,6 +123,30 @@ export function DriversPage() {
         </div>
       )}
 
+      <Card className="mb-5">
+        <div className="flex flex-wrap items-center gap-3 p-4">
+          <Input
+            placeholder="Buscar por nome ou CNH..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs"
+          />
+          <Select
+            value={statusFiltro}
+            onChange={(e) => setStatusFiltro(e.target.value as (typeof STATUS_OPTIONS)[number] | 'todos')}
+            className="w-44"
+          >
+            <option value="todos">Todos os status</option>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </Select>
+          <span className="ml-auto text-xs text-muted-foreground">{filtered.length} motorista(s)</span>
+        </div>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Todos os motoristas</CardTitle>
@@ -107,10 +159,13 @@ export function DriversPage() {
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Nome
+                    Motorista
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     CNH
+                  </th>
+                  <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Validade
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Telefone
@@ -122,35 +177,65 @@ export function DriversPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {drivers.map((d) => (
-                  <tr key={d.id} className="hover:bg-muted/50">
-                    <td className="px-5 py-2.5 font-medium text-foreground">{d.name}</td>
-                    <td className="px-5 py-2.5 font-data text-muted-foreground">{d.cnh}</td>
-                    <td className="px-5 py-2.5 font-data text-muted-foreground">{d.phone ?? '—'}</td>
-                    <td className="px-5 py-2.5">
-                      <StatusBadgeMotorista status={d.status} />
-                    </td>
-                    <td className="px-5 py-2.5">
-                      <div className="flex gap-4">
-                        <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(d)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="h-auto p-0 text-destructive"
-                          onClick={() => handleDelete(d.id!)}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {drivers.length === 0 && (
+                {filtered.map((d) => {
+                  const dias = d.cnhValidade ? diasAteVencer(d.cnhValidade) : null;
+                  return (
+                    <tr key={d.id} className="hover:bg-muted/50">
+                      <td className="px-5 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="size-7">
+                            <AvatarFallback>{iniciais(d.name!)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-foreground">{d.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <Badge variant="outline" className="font-data">
+                          Cat. {categoriaCnh(d.cnh!)}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-2.5">
+                        {d.cnhValidade ? (
+                          <div>
+                            <span className="font-data text-muted-foreground">
+                              {d.cnhValidade.split('-').reverse().join('/')}
+                            </span>
+                            {dias != null && dias <= 45 && (
+                              <span className={cn('ml-2 text-[11px]', dias < 0 ? 'text-status-danger' : 'text-status-warning')}>
+                                {dias < 0 ? 'vencida' : `vence em ${dias}d`}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-2.5 font-data text-muted-foreground">{d.phone ?? '—'}</td>
+                      <td className="px-5 py-2.5">
+                        <StatusBadgeMotorista status={d.status} />
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <div className="flex gap-4">
+                          <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(d)}>
+                            Editar
+                          </Button>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-destructive"
+                            onClick={() => handleDelete(d.id!)}
+                          >
+                            Excluir
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhum motorista cadastrado ainda.
+                    <td colSpan={6} className="px-5 py-8 text-center text-xs text-muted-foreground">
+                      Nenhum motorista encontrado.
                     </td>
                   </tr>
                 )}
