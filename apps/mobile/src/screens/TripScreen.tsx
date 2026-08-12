@@ -1,61 +1,187 @@
-import { useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import * as Location from 'expo-location';
+import {
+  ActivityIndicator,
+  Alert,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { type GpsPing, enqueue, flush, pendingCount } from '../offline/pingQueue';
+import { coreApi, type TripResponse, type VehicleResponse } from '../api/client';
+import { enqueue, flush, pendingCount, type GpsPing } from '../offline/pingQueue';
 
 interface Props {
   onLogout: () => void;
 }
 
 export function TripScreen({ onLogout }: Props) {
+  const [loading, setLoading] = useState(true);
+  const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [trip, setTrip] = useState<TripResponse | null>(null);
   const [pending, setPending] = useState(0);
   const [status, setStatus] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  function registrarPing() {
-    // Simula um ping de GPS (na Fase 1 real, vem do expo-location em background).
-    const ping: GpsPing = {
-      vehicleId: '00000000-0000-0000-0000-000000000000',
-      recordedAt: new Date().toISOString(),
-      lat: -23.55 + Math.random() * 0.01,
-      lon: -46.63 + Math.random() * 0.01,
+  const watchSubscription = useRef<Location.LocationSubscription | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [vehicleList, trips] = await Promise.all([coreApi.vehicles.list(), coreApi.trips.list()]);
+        setVehicles(vehicleList);
+        const emAndamento = trips.find((t) => t.status === 'EM_ANDAMENTO') ?? null;
+        setTrip(emAndamento);
+        if (emAndamento) {
+          setSelectedVehicleId(emAndamento.vehicleId);
+          startWatchingLocation();
+        }
+        setPending(await pendingCount());
+      } catch (e) {
+        Alert.alert('Erro ao carregar', e instanceof Error ? e.message : 'Erro desconhecido');
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      watchSubscription.current?.remove();
     };
-    enqueue(ping);
-    setPending(pendingCount());
-    setStatus('ping na fila local (offline-first)');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function startWatchingLocation() {
+    const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+    if (fgStatus !== 'granted') {
+      Alert.alert('Permissão negada', 'Sem acesso à localização não é possível registrar a viagem.');
+      return;
+    }
+    // Pede background também (spec 03) — sem ela, o trajeto só é gravado com o app aberto.
+    await Location.requestBackgroundPermissionsAsync();
+
+    watchSubscription.current = await Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.Balanced, timeInterval: 15_000, distanceInterval: 50 },
+      async (position) => {
+        const ping: GpsPing = {
+          recordedAt: new Date(position.timestamp).toISOString(),
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          speed: position.coords.speed ?? undefined,
+          heading: position.coords.heading ?? undefined,
+          accuracy: position.coords.accuracy ?? undefined,
+        };
+        await enqueue(ping);
+        setPending(await pendingCount());
+      },
+    );
   }
 
-  async function sincronizar() {
-    setStatus('sincronizando...');
+  async function handleStart() {
+    if (!selectedVehicleId) {
+      Alert.alert('Selecione um veículo', 'Escolha o veículo antes de iniciar a viagem.');
+      return;
+    }
+    setBusy(true);
     try {
-      // TODO Fase 1/2: enviar cada ping ao core-api (que orquestra o geo-api).
-      await flush(async () => {
-        /* placeholder de envio — mobile fala só com o core-api */
-      });
-      setPending(pendingCount());
-      setStatus('sincronizado');
-    } catch {
-      setPending(pendingCount());
-      setStatus('falha — pings mantidos na fila para reenvio');
+      const started = await coreApi.trips.start(selectedVehicleId);
+      setTrip(started);
+      setStatus('viagem iniciada');
+      await startWatchingLocation();
+    } catch (e) {
+      Alert.alert('Falha ao iniciar viagem', e instanceof Error ? e.message : 'Erro desconhecido');
+    } finally {
+      setBusy(false);
     }
   }
 
+  async function handleStop() {
+    if (!trip) return;
+    setBusy(true);
+    try {
+      watchSubscription.current?.remove();
+      watchSubscription.current = null;
+      const finished = await coreApi.trips.stop(trip.id);
+      setTrip(finished.status === 'FINALIZADA' ? null : finished);
+      setStatus('viagem finalizada');
+    } catch (e) {
+      Alert.alert('Falha ao finalizar viagem', e instanceof Error ? e.message : 'Erro desconhecido');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSync() {
+    if (!trip) return;
+    setStatus('sincronizando...');
+    try {
+      await flush((ping) => coreApi.trips.submitPing(trip.id, ping));
+      setPending(await pendingCount());
+      setStatus('sincronizado');
+    } catch (e) {
+      setPending(await pendingCount());
+      setStatus(`falha ao sincronizar (${e instanceof Error ? e.message : 'erro'}) — pings mantidos na fila`);
+    }
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Viagem</Text>
-      <Text style={styles.info}>Pings na fila: {pending}</Text>
-      {status !== '' && <Text style={styles.status}>{status}</Text>}
-      <Button title="Registrar ping" onPress={registrarPing} />
-      <Button title="Sincronizar" onPress={sincronizar} />
+
+      {trip ? (
+        <>
+          <Text style={styles.info}>
+            Em andamento desde {new Date(trip.startedAt).toLocaleTimeString('pt-BR')}
+          </Text>
+          <Text style={styles.info}>Pings na fila: {pending}</Text>
+          {status !== '' && <Text style={styles.status}>{status}</Text>}
+          <Button title="Sincronizar" onPress={handleSync} disabled={busy} />
+          <Button title="Finalizar viagem" color="#a00" onPress={handleStop} disabled={busy} />
+        </>
+      ) : (
+        <>
+          <Text style={styles.subtitle}>Selecione o veículo</Text>
+          {vehicles.map((v) => (
+            <TouchableOpacity
+              key={v.id}
+              style={[styles.vehicleOption, selectedVehicleId === v.id && styles.vehicleOptionSelected]}
+              onPress={() => setSelectedVehicleId(v.id)}
+            >
+              <Text style={styles.vehicleLabel}>
+                {v.plate} — {v.brand} {v.model}
+              </Text>
+            </TouchableOpacity>
+          ))}
+          {status !== '' && <Text style={styles.status}>{status}</Text>}
+          <Button title="Iniciar viagem" onPress={handleStart} disabled={busy || !selectedVehicleId} />
+        </>
+      )}
+
       <View style={styles.spacer} />
       <Button title="Sair" color="#a00" onPress={onLogout} />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
+  container: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 12 },
   title: { fontSize: 28, fontWeight: '700' },
+  subtitle: { fontSize: 16, fontWeight: '600', marginTop: 8 },
   info: { fontSize: 16 },
   status: { fontSize: 14, color: '#555' },
   spacer: { height: 24 },
+  vehicleOption: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12 },
+  vehicleOptionSelected: { borderColor: '#1f3a5f', backgroundColor: '#eef1f5' },
+  vehicleLabel: { fontSize: 15 },
 });

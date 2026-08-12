@@ -5,12 +5,16 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Usamos sua localização para registrar as viagens da frota.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "A localização em segundo plano registra o trajeto durante a operação, mesmo com o app minimizado. Você consente nisso no onboarding (spec 03)."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "A localização em segundo plano registra o trajeto durante a operação, mesmo com o app minimizado. Você consente nisso no onboarding (spec 03).",
+        "UIBackgroundModes": ["location"]
       }
     },
     "android": {
@@ -19,6 +23,17 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION"
       ]
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos sua localização para registrar as viagens da frota.",
+          "locationAlwaysAndWhenInUsePermission": "A localização em segundo plano registra o trajeto durante a operação, mesmo com o app minimizado.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ]
+    ]
   }
 }

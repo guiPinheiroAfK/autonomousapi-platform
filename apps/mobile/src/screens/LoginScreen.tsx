@@ -9,10 +9,11 @@ import {
   View,
 } from 'react-native';
 
-import { coreApi } from '../api/client';
+import { coreApi, setAuthToken, type TokenResponse } from '../api/client';
+import { saveTokens } from '../auth/tokenStorage';
 
 interface Props {
-  onLogin: (accessToken: string) => void;
+  onLogin: (tokens: TokenResponse) => void;
 }
 
 export function LoginScreen({ onLogin }: Props) {
@@ -24,7 +25,9 @@ export function LoginScreen({ onLogin }: Props) {
     setLoading(true);
     try {
       const tokens = await coreApi.login(email.trim(), password);
-      onLogin(tokens.accessToken);
+      setAuthToken(tokens.accessToken);
+      await saveTokens(tokens.accessToken, tokens.refreshToken);
+      onLogin(tokens);
     } catch (e) {
       Alert.alert('Falha no login', e instanceof Error ? e.message : 'Erro desconhecido');
     } finally {

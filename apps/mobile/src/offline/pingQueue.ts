@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export interface GpsPing {
-  vehicleId: string;
   recordedAt: string; // ISO-8601
   lat: number;
   lon: number;
@@ -8,29 +9,41 @@ export interface GpsPing {
   accuracy?: number;
 }
 
+const STORAGE_KEY = 'autonomousapi.pingQueue';
+
 /**
- * Fila offline-first de pings de GPS (spec 03: registrar viagem offline, sincronizar
- * ao reconectar). Este é o esqueleto em memória — troque o backing store por
- * AsyncStorage/SQLite para persistir entre reinícios do app. A semântica de reenvio
- * (manter na fila em caso de falha) já está aqui.
+ * Fila offline-first de pings de GPS (spec 03: registrar viagem offline, sincronizar ao
+ * reconectar). Backing store é AsyncStorage — sobrevive a reinício do app, motorista
+ * frequentemente está em área de sinal ruim (spec 03).
  */
-const queue: GpsPing[] = [];
-
-export function enqueue(ping: GpsPing): void {
-  queue.push(ping);
+async function readQueue(): Promise<GpsPing[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  return raw ? (JSON.parse(raw) as GpsPing[]) : [];
 }
 
-export function pendingCount(): number {
-  return queue.length;
+async function writeQueue(queue: GpsPing[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+}
+
+export async function enqueue(ping: GpsPing): Promise<void> {
+  const queue = await readQueue();
+  queue.push(ping);
+  await writeQueue(queue);
+}
+
+export async function pendingCount(): Promise<number> {
+  return (await readQueue()).length;
 }
 
 /**
- * Envia os pings na ordem. Se o envio de um ping falhar, ele permanece na fila
- * (não descarta dado) e o erro é propagado para nova tentativa depois.
+ * Envia os pings na ordem. Se o envio de um ping falhar, ele permanece na fila (não
+ * descarta dado) e o erro é propagado — quem chama decide se tenta de novo depois.
  */
 export async function flush(send: (ping: GpsPing) => Promise<void>): Promise<void> {
+  let queue = await readQueue();
   while (queue.length > 0) {
     await send(queue[0]);
-    queue.shift();
+    queue = queue.slice(1);
+    await writeQueue(queue);
   }
 }
