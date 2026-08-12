@@ -4,6 +4,7 @@ import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
+import com.autonomousapi.core.vehicle.cost.dto.FleetCostEntryResponse;
 import com.autonomousapi.core.vehicle.cost.dto.MonthlyCostResponse;
 import com.autonomousapi.core.vehicle.cost.dto.VehicleCostEntryRequest;
 import com.autonomousapi.core.vehicle.cost.dto.VehicleCostEntryResponse;
@@ -90,6 +91,17 @@ public class VehicleCostService {
             trend.add(new MonthlyCostResponse(month.toString(), totalsByMonth.getOrDefault(month, BigDecimal.ZERO)));
         }
         return trend;
+    }
+
+    /**
+     * Custos da frota inteira, opcionalmente filtrados por categoria, já com os dados do
+     * veículo. Resolve em uma query o que antes eram 1+N requisições vindas do front.
+     */
+    @Transactional(readOnly = true)
+    public List<FleetCostEntryResponse> fleetCosts(JwtPrincipal principal, VehicleCostCategory category) {
+        return category == null
+                ? costs.findFleetCosts(principal.tenantId())
+                : costs.findFleetCostsByCategory(principal.tenantId(), category);
     }
 
     /** Relatório de custos de toda a frota do tenant, desde o início, em CSV (spec 05, Fase 1: web). */

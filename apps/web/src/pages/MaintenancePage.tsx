@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { HandCoins, PackageSearch, Wrench } from 'lucide-react';
-import { coreApi, type VehicleCostEntryResponse, type VehicleResponse } from '../api/client';
+import { coreApi, type VehicleResponse } from '../api/client';
 import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { Select } from '../components/ui/select';
@@ -45,30 +45,25 @@ export function MaintenancePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    coreApi.vehicles.list().then(async (vehicleList) => {
-      setVehicles(vehicleList);
-      const perVehicle = await Promise.all(
-        vehicleList.map((v) => coreApi.vehicleCosts.list(v.id!).then((costs) => ({ v, costs }))),
-      );
-      const built: Row[] = [];
-      for (const { v, costs } of perVehicle) {
-        for (const c of costs.filter((c: VehicleCostEntryResponse) => c.category === 'MANUTENCAO')) {
-          built.push({
+    // Duas requisições fixas, independente do tamanho da frota. Antes era 1 + uma por
+    // veículo: o backend agora devolve os custos já com os dados do veículo embutidos.
+    Promise.all([coreApi.vehicles.list(), coreApi.vehicles.fleetCosts('MANUTENCAO')])
+      .then(([vehicleList, costs]) => {
+        setVehicles(vehicleList);
+        setRows(
+          costs.map((c) => ({
             id: c.id!,
             data: c.occurredAt!,
-            placa: v.plate!,
-            veiculo: `${v.brand} ${v.model}`,
+            placa: c.plate!,
+            veiculo: `${c.brand} ${c.model}`,
             descricao: c.description ?? '',
             pecas: pick(PECAS_POOL, c.id!),
-            oficina: pick(OFICINA_POOL, v.id!),
+            oficina: pick(OFICINA_POOL, c.vehicleId!),
             custo: Number(c.amount),
-          });
-        }
-      }
-      built.sort((a, b) => (a.data < b.data ? 1 : -1));
-      setRows(built);
-      setLoading(false);
-    });
+          })),
+        );
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = useMemo(

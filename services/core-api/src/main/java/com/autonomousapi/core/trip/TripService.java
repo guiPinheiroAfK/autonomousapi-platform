@@ -6,6 +6,7 @@ import com.autonomousapi.core.geo.GeoApiClient;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.trip.dto.StartTripRequest;
+import com.autonomousapi.core.trip.dto.SubmitPingBatchResponse;
 import com.autonomousapi.core.trip.dto.SubmitPingRequest;
 import com.autonomousapi.core.trip.dto.TripResponse;
 import com.autonomousapi.core.vehicle.VehicleRepository;
@@ -65,13 +66,48 @@ public class TripService {
     /** Encaminha o ping pro geo-api. Trip precisa estar em andamento e pertencer ao motorista. */
     @Transactional(readOnly = true)
     public void submitPing(JwtPrincipal principal, UUID tripId, SubmitPingRequest req) {
+        Trip trip = requireOngoingTrip(principal, tripId);
+        geoApiClient.ingestGpsPing(toGeoPing(trip, req));
+    }
+
+    /**
+     * Esvazia um lote da fila offline do app em uma requisição só (antes era uma por ping:
+     * um motorista voltando de área sem sinal disparava centenas de chamadas sequenciais).
+     *
+     * Processa em ordem e para no primeiro erro, devolvendo quantos entraram — o app
+     * descarta esses da fila e tenta o resto depois, sem perder dado nem reenviar o que
+     * já foi aceito. É também o ponto onde entra o produtor Kafka na Fase 2 (ADR 0006):
+     * a assinatura do método não muda, só o destino do ping.
+     */
+    @Transactional(readOnly = true)
+    public SubmitPingBatchResponse submitPings(
+            JwtPrincipal principal, UUID tripId, List<SubmitPingRequest> pings) {
+        Trip trip = requireOngoingTrip(principal, tripId);
+
+        int accepted = 0;
+        for (SubmitPingRequest req : pings) {
+            try {
+                geoApiClient.ingestGpsPing(toGeoPing(trip, req));
+                accepted++;
+            } catch (RuntimeException ex) {
+                break;
+            }
+        }
+        return new SubmitPingBatchResponse(accepted, pings.size());
+    }
+
+    private Trip requireOngoingTrip(JwtPrincipal principal, UUID tripId) {
         Trip trip = findOwned(principal, tripId);
         if (trip.getStatus() != TripStatus.EM_ANDAMENTO) {
             throw new TripStateConflictException("Viagem já finalizada — não é possível registrar novos pings.");
         }
-        geoApiClient.ingestGpsPing(new GpsPingRequest(
+        return trip;
+    }
+
+    private static GpsPingRequest toGeoPing(Trip trip, SubmitPingRequest req) {
+        return new GpsPingRequest(
                 trip.getVehicleId(), req.recordedAt(), req.lat(), req.lon(),
-                req.speed(), req.heading(), req.accuracy()));
+                req.speed(), req.heading(), req.accuracy());
     }
 
     private Trip findOwned(JwtPrincipal principal, UUID tripId) {

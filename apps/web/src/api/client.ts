@@ -21,6 +21,7 @@ export type VehicleCostEntryRequest = Schemas['VehicleCostEntryRequest'];
 export type VehicleCostSummaryResponse = Schemas['VehicleCostSummaryResponse'];
 export type VehicleMaintenanceAlertResponse = Schemas['VehicleMaintenanceAlertResponse'];
 export type MonthlyCostResponse = Schemas['MonthlyCostResponse'];
+export type FleetCostEntryResponse = Schemas['FleetCostEntryResponse'];
 export type SubscriptionResponse = Schemas['SubscriptionResponse'];
 export type CheckoutSessionResponse = Schemas['CheckoutSessionResponse'];
 export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
@@ -103,6 +104,11 @@ export const coreApi = {
     remove: (id: string) => request<void>(`/v1/vehicles/${id}`, { method: 'DELETE' }),
     maintenanceDue: () => request<VehicleMaintenanceAlertResponse[]>('/v1/vehicles/maintenance-due'),
     costTrend: () => request<MonthlyCostResponse[]>('/v1/vehicles/cost-trend'),
+    /** Custos da frota inteira em UMA requisição (evita 1+N por veículo). */
+    fleetCosts: (category?: 'COMBUSTIVEL' | 'MANUTENCAO' | 'OUTRO') =>
+      request<FleetCostEntryResponse[]>(
+        `/v1/vehicles/costs${category ? `?category=${category}` : ''}`,
+      ),
   },
 
   drivers: {
