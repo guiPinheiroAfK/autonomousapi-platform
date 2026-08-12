@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Truck, Users, Wrench } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -25,14 +25,7 @@ import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { StatCard } from '../components/StatCard';
 import { cn } from '../lib/utils';
-
-const MES_ABREVIADO = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-/** "2026-08" -> "Ago/26" — evita new Date() (timezone) para string yyyy-MM. */
-function monthLabel(yyyyMM: string): string {
-  const [year, month] = yyyyMM.split('-');
-  return `${MES_ABREVIADO[Number(month) - 1]}/${year.slice(2)}`;
-}
+import { monthLabel } from '../lib/format';
 
 const VEHICLE_STATUS_COLOR: Record<string, string> = {
   ATIVO: 'var(--color-status-success)',
@@ -92,10 +85,10 @@ export function DashboardPage({ onViewVehicles }: Props) {
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Veículos" value={vehicles.length} hint="Total da frota" />
-        <StatCard label="Em Operação" value={ativos} tone="success" hint="Veículos ativos" />
-        <StatCard label="Em Manutenção" value={manutencao} tone="warning" hint="Fora de operação" />
-        <StatCard label="Motoristas" value={drivers.length} hint="Cadastrados" />
+        <StatCard label="Veículos" value={vehicles.length} hint="Total da frota" icon={Truck} />
+        <StatCard label="Em Operação" value={ativos} tone="success" hint="Veículos ativos" icon={ClipboardList} />
+        <StatCard label="Em Manutenção" value={manutencao} tone="warning" hint="Fora de operação" icon={Wrench} />
+        <StatCard label="Motoristas" value={drivers.length} hint="Cadastrados" icon={Users} />
       </div>
 
       {!loading && (

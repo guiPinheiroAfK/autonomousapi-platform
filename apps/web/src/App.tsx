@@ -7,6 +7,9 @@ import { DashboardPage } from './pages/DashboardPage';
 import { VehiclesPage } from './pages/VehiclesPage';
 import { DriversPage } from './pages/DriversPage';
 import { VehicleCostsPage } from './pages/VehicleCostsPage';
+import { WorkOrdersPage } from './pages/WorkOrdersPage';
+import { MaintenancePage } from './pages/MaintenancePage';
+import { ReportsPage } from './pages/ReportsPage';
 
 export function App() {
   const { user, loading, logout } = useAuth();
@@ -34,6 +37,9 @@ export function App() {
       {view === 'dashboard' && <DashboardPage onViewVehicles={() => setView('vehicles')} />}
       {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} />}
       {view === 'drivers' && <DriversPage />}
+      {view === 'work-orders' && <WorkOrdersPage />}
+      {view === 'maintenance' && <MaintenancePage />}
+      {view === 'reports' && <ReportsPage />}
       {view === 'costs' && costsTarget && (
         <VehicleCostsPage
           vehicleId={costsTarget.vehicleId}
