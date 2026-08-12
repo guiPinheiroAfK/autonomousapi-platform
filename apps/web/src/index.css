@@ -1,0 +1,219 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tokens no padrão shadcn/ui (permite trocar tema sem tocar em componente).
+   Paleta: azul-aço profundo (frota/logística, corporativo e confiável) + âmbar
+   industrial como acento (usado com moderação, para ênfase/alerta). */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f3f4f6;
+  --foreground: #161e2b;
+  --surface: #ffffff;
+  --surface-muted: #f8f9fb;
+
+  --card: #ffffff;
+  --card-foreground: #161e2b;
+  --popover: #ffffff;
+  --popover-foreground: #161e2b;
+
+  --border: #e2e5ea;
+  --input: #d8dce3;
+  --ring: #1f3a5f;
+
+  --muted: #eef0f3;
+  --muted-foreground: #5b6472;
+
+  --primary: #1f3a5f;
+  --primary-foreground: #f7f9fc;
+  --primary-hover: #16314f;
+
+  --secondary: #eef1f5;
+  --secondary-foreground: #1f3a5f;
+
+  --accent: #d97706;
+  --accent-foreground: #2a1602;
+
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+
+  /* Semântica de status compartilhada entre veículo/motorista/custo */
+  --status-info: #1d4ed8;
+  --status-info-bg: #eff6ff;
+  --status-warning: #b45309;
+  --status-warning-bg: #fffbeb;
+  --status-success: #15803d;
+  --status-success-bg: #ecfdf3;
+  --status-danger: #b91c1c;
+  --status-danger-bg: #fef2f2;
+  --status-neutral: #6b7280;
+  --status-neutral-bg: #f3f4f6;
+
+  --sidebar: #16212e;
+  --sidebar-foreground: #cdd5e0;
+  --sidebar-muted: #8693a3;
+  --sidebar-border: #25324296;
+  --sidebar-active: #223349;
+  --sidebar-accent: #f0a23a;
+
+  --radius: 0.5rem;
+  --scrollbar-thumb: #c7ccd4;
+
+  --font-sans: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+  --font-display: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.dark {
+  /* Três camadas de profundidade: sidebar (mais escura) < fundo < card (mais
+     clara) — mantém a hierarquia legível mesmo no escuro. */
+  --background: #121a24;
+  --foreground: #e3e7ed;
+  --surface: #19222e;
+  --surface-muted: #1c2630;
+
+  --card: #1a2330;
+  --card-foreground: #e3e7ed;
+  --popover: #1a2330;
+  --popover-foreground: #e3e7ed;
+
+  --border: #2b3645;
+  --input: #344050;
+  --ring: #5b8ec4;
+
+  --muted: #1f2a36;
+  --muted-foreground: #8d98a6;
+
+  --primary: #4a7fb8;
+  --primary-foreground: #0c1117;
+  --primary-hover: #5c8fc6;
+
+  --secondary: #232e3b;
+  --secondary-foreground: #c7d4e3;
+
+  --accent: #f0a23a;
+  --accent-foreground: #1a1206;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #190606;
+
+  --status-info: #60a5fa;
+  --status-info-bg: #1c2c47;
+  --status-warning: #fbbf24;
+  --status-warning-bg: #382b0e;
+  --status-success: #4ade80;
+  --status-success-bg: #112a1c;
+  --status-danger: #f87171;
+  --status-danger-bg: #391619;
+  --status-neutral: #9aa5b1;
+  --status-neutral-bg: #232b34;
+
+  --sidebar: #0c1218;
+  --sidebar-foreground: #c2cbd6;
+  --sidebar-muted: #74808f;
+  --sidebar-border: #ffffff14;
+  --sidebar-active: #1d2a38;
+  --sidebar-accent: #f0a23a;
+
+  --scrollbar-thumb: #3a4759;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-status-info: var(--status-info);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-success: var(--status-success);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-status-neutral: var(--status-neutral);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-accent: var(--sidebar-accent);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Dado tabular (placas, km, valores) sempre alinhado em grade mono */
+.font-data {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

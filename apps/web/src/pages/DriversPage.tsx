@@ -1,5 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Plus } from 'lucide-react';
 import { coreApi, type DriverRequest, type DriverResponse } from '../api/client';
+import { StatusBadgeMotorista } from '../components/shared/StatusBadge';
+import { Button } from '../components/ui/button';
+import { Card, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Modal } from '../components/ui/modal';
+import { Select } from '../components/ui/select';
 
 const STATUS_OPTIONS = ['ATIVO', 'INATIVO'] as const;
 
@@ -9,6 +17,7 @@ export function DriversPage() {
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [form, setForm] = useState<DriverRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +31,25 @@ export function DriversPage() {
 
   useEffect(refresh, []);
 
+  function openCreate() {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setError('');
+    setModalOpen(true);
+  }
+
+  function openEdit(d: DriverResponse) {
+    setEditingId(d.id!);
+    setForm({
+      name: d.name!,
+      cnh: d.cnh!,
+      phone: d.phone ?? '',
+      status: d.status as DriverRequest['status'],
+    });
+    setError('');
+    setModalOpen(true);
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
@@ -31,22 +59,11 @@ export function DriversPage() {
       } else {
         await coreApi.drivers.create(form);
       }
-      setForm(EMPTY_FORM);
-      setEditingId(null);
+      setModalOpen(false);
       refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar motorista');
     }
-  }
-
-  function startEdit(d: DriverResponse) {
-    setEditingId(d.id!);
-    setForm({
-      name: d.name!,
-      cnh: d.cnh!,
-      phone: d.phone ?? '',
-      status: d.status as DriverRequest['status'],
-    });
   }
 
   async function handleDelete(id: string) {
@@ -60,92 +77,138 @@ export function DriversPage() {
   }
 
   return (
-    <section>
-      <h2>Motoristas</h2>
+    <div className="p-5">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-foreground">Motoristas</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{drivers.length} motoristas cadastrados</p>
+        </div>
+        <Button onClick={openCreate}>
+          <Plus /> Novo Motorista
+        </Button>
+      </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        <input
-          placeholder="Nome"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          required
-        />
-        <input
-          placeholder="CNH (11 dígitos)"
-          value={form.cnh}
-          onChange={(e) => setForm({ ...form, cnh: e.target.value })}
-          pattern="\d{11}"
-          title="11 dígitos numéricos"
-          required
-        />
-        <input
-          placeholder="Telefone"
-          value={form.phone ?? ''}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-        />
-        <select
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value as DriverRequest['status'] })}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button type="submit">{editingId ? 'Salvar' : 'Adicionar'}</button>
-        {editingId && (
-          <button
-            type="button"
-            onClick={() => {
-              setEditingId(null);
-              setForm(EMPTY_FORM);
-            }}
-          >
-            Cancelar
-          </button>
-        )}
-      </form>
-
-      {error && <p style={{ color: '#c00' }}>{error}</p>}
-      {loading ? (
-        <p>Carregando...</p>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>
-              <th>Nome</th>
-              <th>CNH</th>
-              <th>Telefone</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map((d) => (
-              <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td>{d.name}</td>
-                <td>{d.cnh}</td>
-                <td>{d.phone ?? '—'}</td>
-                <td>{d.status}</td>
-                <td style={{ display: 'flex', gap: 6 }}>
-                  <button type="button" onClick={() => startEdit(d)}>
-                    Editar
-                  </button>
-                  <button type="button" onClick={() => handleDelete(d.id!)}>
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {drivers.length === 0 && (
-              <tr>
-                <td colSpan={5}>Nenhum motorista cadastrado ainda.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {error && !modalOpen && (
+        <div className="mb-4 rounded-md border border-status-danger-bg bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
+          {error}
+        </div>
       )}
-    </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Todos os motoristas</CardTitle>
+        </CardHeader>
+        <div className="overflow-x-auto">
+          {loading ? (
+            <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          ) : (
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Nome
+                  </th>
+                  <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    CNH
+                  </th>
+                  <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Telefone
+                  </th>
+                  <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="px-5 py-2.5" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {drivers.map((d) => (
+                  <tr key={d.id} className="hover:bg-muted/50">
+                    <td className="px-5 py-2.5 font-medium text-foreground">{d.name}</td>
+                    <td className="px-5 py-2.5 font-data text-muted-foreground">{d.cnh}</td>
+                    <td className="px-5 py-2.5 font-data text-muted-foreground">{d.phone ?? '—'}</td>
+                    <td className="px-5 py-2.5">
+                      <StatusBadgeMotorista status={d.status} />
+                    </td>
+                    <td className="px-5 py-2.5">
+                      <div className="flex gap-4">
+                        <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(d)}>
+                          Editar
+                        </Button>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-destructive"
+                          onClick={() => handleDelete(d.id!)}
+                        >
+                          Excluir
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {drivers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-xs text-muted-foreground">
+                      Nenhum motorista cadastrado ainda.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Card>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingId ? 'Editar Motorista' : 'Novo Motorista'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Nome</Label>
+            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          </div>
+          <div>
+            <Label htmlFor="cnh">CNH (11 dígitos)</Label>
+            <Input
+              id="cnh"
+              value={form.cnh}
+              onChange={(e) => setForm({ ...form, cnh: e.target.value })}
+              pattern="\d{11}"
+              title="11 dígitos numéricos"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="phone">Telefone</Label>
+            <Input id="phone" value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          </div>
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Select
+              id="status"
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value as DriverRequest['status'] })}
+            >
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {error && <p className="text-xs text-status-danger">{error}</p>}
+
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit">{editingId ? 'Salvar' : 'Adicionar'}</Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 }
