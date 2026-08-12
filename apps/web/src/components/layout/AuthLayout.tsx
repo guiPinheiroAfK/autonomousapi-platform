@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Logo } from '../shared/Logo';
+import { PlacaBR } from '../shared/PlacaBR';
 
 interface Props {
   titulo: string;
@@ -23,9 +24,12 @@ export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
           <Logo tamanho={26} />
         </button>
 
-        <p className="fonte-editorial max-w-md text-[34px] leading-[1.15] text-[var(--tinta)]">
-          {chamada}
-        </p>
+        <div>
+          <p className="fonte-editorial max-w-md text-[34px] leading-[1.15] text-[var(--tinta)]">
+            {chamada}
+          </p>
+          <CartaoVitrine />
+        </div>
 
         <p className="text-[13px] text-[var(--tinta-suave)]">Gestão de frota · Dado viário · Brasil</p>
       </aside>
@@ -49,6 +53,29 @@ export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
   );
 }
 
+/**
+ * Prévia do produto na coluna editorial — o mesmo papel claro do hero da landing,
+ * só que reduzido. É o que dá ao login a sensação de "abrir um produto de verdade"
+ * em vez de uma tela de formulário solta no vazio.
+ */
+function CartaoVitrine() {
+  return (
+    <div className="mt-8 rounded-xl bg-[var(--papel)] p-5 text-[var(--papel-tinta)] shadow-[0_20px_50px_-25px_rgba(0,0,0,0.6)]">
+      <div className="flex items-center gap-2.5">
+        <PlacaBR placa="RTC1D89" />
+        <div className="text-[12px] leading-tight">
+          <p className="font-medium">Renault Kangoo</p>
+          <p className="opacity-60">71.300 km</p>
+        </div>
+      </div>
+      <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-black/10 pt-3 text-[12px]">
+        <span className="opacity-60">Próxima preventiva</span>
+        <span className="font-data text-[#b45309]">em 10 dias</span>
+      </div>
+    </div>
+  );
+}
+
 /** Campo de formulário da superfície pública — sem os tokens do painel. */
 export function CampoPublico({
   id,
@@ -62,7 +89,7 @@ export function CampoPublico({
       </label>
       <input
         id={id}
-        className="w-full rounded-md border border-[var(--linha)] bg-[var(--breu-elevado)] px-3.5 py-2.5 text-[15px] text-[var(--tinta)] outline-none transition-colors placeholder:text-[var(--tinta-suave)]/60 focus:border-[var(--acento)]"
+        className="w-full rounded-xl border border-[var(--linha)] bg-[var(--breu-elevado)] px-4 py-3 text-[15px] text-[var(--tinta)] outline-none transition-colors placeholder:text-[var(--tinta-suave)]/60 focus:border-[var(--acento)]"
         {...props}
       />
     </div>

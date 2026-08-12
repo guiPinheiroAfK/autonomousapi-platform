@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Logo, Marca } from '../components/shared/Logo';
 import { PlacaBR } from '../components/shared/PlacaBR';
 
@@ -41,33 +41,37 @@ export function LandingPage({ onEntrar, onCriarConta }: Props) {
 function Cabecalho({ onEntrar, onCriarConta }: Props) {
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--linha)] bg-[var(--breu)]/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      {/* Grid de 3 colunas (não flex justify-between): a coluna do meio é a única forma de
+          centrar o menu na página de verdade. Com justify-between ele centrava só no espaço
+          sobrando entre logo e botões — como os dois têm larguras diferentes, o menu ficava
+          visualmente puxado para um lado. */}
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-4">
         <Logo tamanho={26} />
 
         <nav className="hidden items-center gap-8 text-[14px] text-[var(--tinta-suave)] md:flex">
-          <a href="#como-operar" className="transition-colors hover:text-[var(--tinta)]">
+          <a href="#como-operar" className="whitespace-nowrap transition-colors hover:text-[var(--tinta)]">
             Como operar
           </a>
-          <a href="#planos" className="transition-colors hover:text-[var(--tinta)]">
+          <a href="#planos" className="whitespace-nowrap transition-colors hover:text-[var(--tinta)]">
             Planos
           </a>
-          <a href="#perguntas" className="transition-colors hover:text-[var(--tinta)]">
+          <a href="#perguntas" className="whitespace-nowrap transition-colors hover:text-[var(--tinta)]">
             Perguntas
           </a>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onEntrar}
-            className="text-[14px] text-[var(--tinta-suave)] transition-colors hover:text-[var(--tinta)]"
+            className="whitespace-nowrap text-[14px] text-[var(--tinta-suave)] transition-colors hover:text-[var(--tinta)]"
           >
             Entrar
           </button>
           <button
             type="button"
             onClick={onCriarConta}
-            className="rounded-full bg-[var(--tinta)] px-4 py-2 text-[14px] font-medium text-[var(--breu)] transition-opacity hover:opacity-90"
+            className="whitespace-nowrap rounded-full bg-[var(--tinta)] px-4 py-2 text-[14px] font-medium text-[var(--breu)] transition-opacity hover:opacity-90"
           >
             Começar
           </button>
@@ -112,28 +116,7 @@ function Hero({ onCriarConta, onEntrar }: Props) {
           </div>
         </div>
 
-        {/* Bloco claro de contraste: cria hierarquia no escuro e é onde o dado do produto aparece. */}
-        <div className="rounded-2xl bg-[var(--papel)] p-8 text-[var(--papel-tinta)]">
-          <div className="flex items-center gap-3">
-            <PlacaBR placa="RTC1D89" />
-            <div className="text-[13px] leading-tight">
-              <p className="font-medium">Renault Kangoo</p>
-              <p className="opacity-60">São Paulo · 71.300 km</p>
-            </div>
-          </div>
-
-          <dl className="mt-7 space-y-3.5 text-[13px]">
-            <LinhaDado rotulo="Custo por km" valor="R$ 0,41" />
-            <LinhaDado rotulo="Próxima preventiva" valor="em 10 dias" alerta />
-            <LinhaDado rotulo="CNH do motorista" valor="válida" />
-            <LinhaDado rotulo="Trajeto registrado" valor="1.284 km no mês" />
-          </dl>
-
-          <p className="mt-7 border-t border-black/10 pt-4 text-[12px] leading-relaxed opacity-55">
-            Exemplo ilustrativo. Cada quilômetro acompanhado vira controle de custo para a
-            frota — e evidência de como aquela via se comporta.
-          </p>
-        </div>
+        <Vitrine />
       </div>
     </section>
   );
@@ -145,6 +128,123 @@ function LinhaDado({ rotulo, valor, alerta }: { rotulo: string; valor: string; a
       <dt className="opacity-60">{rotulo}</dt>
       <dd className={`font-data ${alerta ? 'text-[#b45309]' : ''}`}>{valor}</dd>
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- Vitrine */
+
+/**
+ * O bloco claro do hero não fica preso a um único exemplo. Ele alterna entre uma
+ * ficha de veículo, um extrato de custo e uma lista de frota — os três tipos de
+ * tela que o produto realmente tem — para o visitante sentir o sistema em vez de
+ * ler sobre ele. Troca sozinha a cada 5s e por clique nos indicadores.
+ */
+function Vitrine() {
+  const quadros = [
+    { titulo: 'Ficha do veículo', corpo: <QuadroVeiculo /> },
+    { titulo: 'Extrato de custo', corpo: <QuadroExtrato /> },
+    { titulo: 'Frota', corpo: <QuadroFrota /> },
+  ];
+  const [indice, setIndice] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setIndice((i) => (i + 1) % quadros.length), 5000);
+    return () => clearInterval(id);
+  }, [quadros.length]);
+
+  return (
+    <div className="rounded-2xl bg-[var(--papel)] p-8 text-[var(--papel-tinta)]">
+      <div className="flex items-center justify-between">
+        <p className="font-data text-[11px] uppercase tracking-[0.14em] opacity-50">
+          {quadros[indice].titulo}
+        </p>
+        <div className="flex gap-1.5">
+          {quadros.map((q, i) => (
+            <button
+              key={q.titulo}
+              type="button"
+              onClick={() => setIndice(i)}
+              aria-label={`Ver exemplo: ${q.titulo}`}
+              className={`h-1.5 rounded-full transition-all ${
+                i === indice ? 'w-5 bg-[var(--papel-tinta)]/70' : 'w-1.5 bg-[var(--papel-tinta)]/20'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div key={indice} className="mt-5 min-h-[204px] animate-[surgir_0.35s_ease]">
+        {quadros[indice].corpo}
+      </div>
+
+      <p className="mt-7 border-t border-black/10 pt-4 text-[12px] leading-relaxed opacity-55">
+        Exemplos ilustrativos. Cada tela vem de um dado que já existe na sua operação.
+      </p>
+    </div>
+  );
+}
+
+function QuadroVeiculo() {
+  return (
+    <>
+      <div className="flex items-center gap-3">
+        <PlacaBR placa="RTC1D89" />
+        <div className="text-[13px] leading-tight">
+          <p className="font-medium">Renault Kangoo</p>
+          <p className="opacity-60">São Paulo · 71.300 km</p>
+        </div>
+      </div>
+      <dl className="mt-6 space-y-3.5 text-[13px]">
+        <LinhaDado rotulo="Custo por km" valor="R$ 0,41" />
+        <LinhaDado rotulo="Próxima preventiva" valor="em 10 dias" alerta />
+        <LinhaDado rotulo="CNH do motorista" valor="válida" />
+        <LinhaDado rotulo="Trajeto registrado" valor="1.284 km no mês" />
+      </dl>
+    </>
+  );
+}
+
+function QuadroExtrato() {
+  const linhas = [
+    { item: 'Combustível · 04/08', valor: 'R$ 312,40' },
+    { item: 'Troca de óleo · 07/08', valor: 'R$ 189,00' },
+    { item: 'Pedágio · 09/08', valor: 'R$ 47,60' },
+    { item: 'Pneu dianteiro · 11/08', valor: 'R$ 540,00' },
+  ];
+  return (
+    <>
+      <ul className="space-y-3 text-[13px]">
+        {linhas.map((l) => (
+          <li key={l.item} className="flex items-baseline justify-between gap-4 border-b border-dashed border-black/10 pb-2.5">
+            <span className="opacity-70">{l.item}</span>
+            <span className="font-data">{l.valor}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 flex items-baseline justify-between text-[14px]">
+        <span className="font-medium">Total do mês</span>
+        <span className="font-data font-medium">R$ 1.089,00</span>
+      </div>
+    </>
+  );
+}
+
+function QuadroFrota() {
+  const veiculos = [
+    { placa: 'RTC1D89', status: 'Em rota', cor: 'text-[#15803d]' },
+    { placa: 'QXV4A21', status: 'Preventiva em 3 dias', cor: 'text-[#b45309]' },
+    { placa: 'PLM9K02', status: 'Disponível', cor: 'text-[var(--papel-tinta)]/60' },
+    { placa: 'OTB2E77', status: 'Em manutenção', cor: 'text-[#b91c1c]' },
+  ];
+  return (
+    <ul className="space-y-3.5 text-[13px]">
+      {veiculos.map((v) => (
+        <li key={v.placa} className="flex items-center justify-between gap-4 border-b border-dashed border-black/10 pb-2.5">
+          <span className="font-data">{v.placa}</span>
+          <span className={v.cor}>{v.status}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
