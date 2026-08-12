@@ -1,4 +1,4 @@
-import { BarChart3, Car, ClipboardList, LayoutDashboard, Truck, Users, Wrench } from 'lucide-react';
+import { BarChart3, Car, ClipboardList, CreditCard, LayoutDashboard, Truck, Users, Wrench } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { View } from './AppShell';
 
@@ -12,6 +12,7 @@ const NAV_OPERACAO: { view: View; label: string; icon: typeof Car }[] = [
 const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'maintenance', label: 'Manutenção', icon: Wrench },
   { view: 'reports', label: 'Relatórios', icon: BarChart3 },
+  { view: 'billing', label: 'Assinatura', icon: CreditCard },
 ];
 
 interface SidebarProps {

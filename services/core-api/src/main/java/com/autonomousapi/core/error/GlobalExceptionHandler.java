@@ -45,6 +45,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("not_found", ex.getMessage()));
     }
 
+    @ExceptionHandler(BillingNotConfiguredException.class)
+    public ResponseEntity<ApiError> handleBillingNotConfigured(BillingNotConfiguredException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError("billing_not_configured", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
