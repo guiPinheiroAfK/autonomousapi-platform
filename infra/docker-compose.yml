@@ -25,6 +25,19 @@ services:
       timeout: 5s
       retries: 12
 
+  redis:
+    image: redis:7-alpine
+    # Sem publish no host: só o core-api usa, pela rede do compose. Sem volume também —
+    # o que guardamos aqui (contador de rate limit, cache de agregado) é descartável por
+    # definição; perder no restart apenas significa recontar/recalcular.
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   geo-api:
     build:
       context: ../services/geo-api
@@ -49,6 +62,8 @@ services:
       CORE_JWT_SECRET: ${CORE_JWT_SECRET:-dev-only-secret-change-me-please-0123456789abcdef}
       GEO_API_URL: http://geo-api:8000
       GEO_SERVICE_TOKEN: ${GEO_SERVICE_TOKEN:-dev-service-token-change-me}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
       # Vazio por padrão (sem seed). Rode `CORE_PROFILES=demo docker compose ... up`
       # para popular dado de demonstração (com.autonomousapi.core.demo.DemoDataSeeder).
       SPRING_PROFILES_ACTIVE: ${CORE_PROFILES:-}
@@ -57,6 +72,8 @@ services:
         condition: service_healthy
       geo-api:
         condition: service_started
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
 

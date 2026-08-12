@@ -98,6 +98,16 @@
             <version>${stripe.version}</version>
         </dependency>
 
+        <!--
+          Redis: contador de rate limit do login e cache dos agregados de dashboard.
+          Ambos são estado descartável e compartilhável entre instâncias — é o motivo de
+          existir aqui em vez de memória local (ADR 0007).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

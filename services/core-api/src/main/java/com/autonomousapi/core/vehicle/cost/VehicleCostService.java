@@ -1,5 +1,6 @@
 package com.autonomousapi.core.vehicle.cost;
 
+import com.autonomousapi.core.config.CacheConfig;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +46,8 @@ public class VehicleCostService {
         this.costs = costs;
     }
 
+    /** Invalida o cache do tenant: sem isso o dashboard mostraria o total antigo por até 60s. */
+    @CacheEvict(cacheNames = CacheConfig.CACHE_COST_TREND, key = "#principal.tenantId()")
     @Transactional
     public VehicleCostEntryResponse addEntry(
             JwtPrincipal principal, UUID vehicleId, VehicleCostEntryRequest req) {
@@ -72,7 +77,14 @@ public class VehicleCostService {
         return new VehicleCostSummaryResponse(vehicle.getId(), total, odometerKm, costPerKm);
     }
 
-    /** Soma de custos por mês em toda a frota do tenant, últimos {@value #TREND_MONTHS} meses. */
+    /**
+     * Soma de custos por mês em toda a frota do tenant, últimos {@value #TREND_MONTHS} meses.
+     *
+     * Cacheado por 60s. A chave é o tenantId — nunca o principal inteiro: dois usuários do
+     * mesmo tenant devem compartilhar a entrada, e usuários de tenants diferentes JAMAIS
+     * podem colidir. Trocar isso por uma chave sem tenant vaza dado entre clientes.
+     */
+    @Cacheable(cacheNames = CacheConfig.CACHE_COST_TREND, key = "#principal.tenantId()")
     @Transactional(readOnly = true)
     public List<MonthlyCostResponse> monthlyTrend(JwtPrincipal principal) {
         YearMonth currentMonth = YearMonth.now();
@@ -138,6 +150,7 @@ public class VehicleCostService {
                 : escaped;
     }
 
+    @CacheEvict(cacheNames = CacheConfig.CACHE_COST_TREND, key = "#principal.tenantId()")
     @Transactional
     public void delete(JwtPrincipal principal, UUID vehicleId, UUID costId) {
         Vehicle vehicle = findOwnedVehicle(principal, vehicleId);

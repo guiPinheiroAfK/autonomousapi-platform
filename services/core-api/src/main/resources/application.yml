@@ -22,6 +22,14 @@ spring:
     default-schema: core
     create-schemas: true
     locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # Timeout curto de propósito: o Redis aqui é acessório (rate limit e cache). Se ele
+      # estiver lento ou fora, a requisição segue sem ele em vez de arrastar o usuário.
+      timeout: 300ms
+      connect-timeout: 300ms
 
 # core-api é dono EXCLUSIVO do schema core; NUNCA cria/altera objeto do schema geo (ADR 0004).
 
@@ -42,6 +50,11 @@ app:
     stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
     stripe-price-id: ${STRIPE_PRICE_ID:}
     web-app-url: ${WEB_APP_URL:http://localhost:5180}
+  rate-limit:
+    # Tentativas de login por janela, POR E-MAIL e POR IP (contadas separadamente).
+    # 10/minuto não atrapalha quem errou a senha algumas vezes, mas mata força bruta.
+    login-max-attempts: ${LOGIN_MAX_ATTEMPTS:10}
+    login-window-seconds: ${LOGIN_WINDOW_SECONDS:60}
 
 springdoc:
   api-docs:
