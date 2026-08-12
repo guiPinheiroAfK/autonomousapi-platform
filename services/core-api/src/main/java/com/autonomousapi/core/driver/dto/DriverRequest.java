@@ -5,10 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 
 public record DriverRequest(
         @NotBlank @Size(max = 150) String name,
         @NotBlank @Pattern(regexp = "\\d{11}", message = "CNH deve ter 11 dígitos") String cnh,
         @Size(max = 20) String phone,
-        @NotNull DriverStatus status) {
+        @NotNull DriverStatus status,
+        /** Opcional — sem valor, o motorista não entra no alerta de CNH vencendo. */
+        LocalDate cnhValidade) {
 }

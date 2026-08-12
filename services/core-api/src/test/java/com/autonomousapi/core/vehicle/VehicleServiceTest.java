@@ -12,8 +12,10 @@ import static org.mockito.Mockito.when;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.PlateAlreadyUsedException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleRequest;
 import com.autonomousapi.core.vehicle.dto.VehicleResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +33,7 @@ class VehicleServiceTest {
 
     @Test
     void criaVeiculoNoTenantDoPrincipal() {
-        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO);
+        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO, null, null);
         when(repo.existsByTenantIdAndPlateIgnoreCase(tenantId, "ABC1234")).thenReturn(false);
 
         VehicleResponse resp = service.create(principal, req);
@@ -42,7 +44,7 @@ class VehicleServiceTest {
 
     @Test
     void rejeitaPlacaDuplicadaNoMesmoTenant() {
-        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO);
+        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO, null, null);
         when(repo.existsByTenantIdAndPlateIgnoreCase(tenantId, "ABC1234")).thenReturn(true);
 
         assertThrows(PlateAlreadyUsedException.class, () -> service.create(principal, req));
@@ -79,7 +81,7 @@ class VehicleServiceTest {
         when(repo.existsByTenantIdAndPlateIgnoreCaseAndIdNot(tenantId, "NEW0001", vehicleId))
                 .thenReturn(true);
 
-        VehicleRequest req = new VehicleRequest("NEW0001", "VW", "Gol", 2019, 2500, VehicleStatus.ATIVO);
+        VehicleRequest req = new VehicleRequest("NEW0001", "VW", "Gol", 2019, 2500, VehicleStatus.ATIVO, null, null);
 
         assertThrows(PlateAlreadyUsedException.class, () -> service.update(principal, vehicleId, req));
     }
@@ -93,5 +95,56 @@ class VehicleServiceTest {
         service.delete(principal, vehicleId);
 
         verify(repo).delete(existing);
+    }
+
+    @Test
+    void alertaManutencaoQuandoDataProxima() {
+        Vehicle v = new Vehicle(tenantId, "MNT0001", "Fiat", "Strada", 2022, 1000);
+        v.update("MNT0001", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO,
+                LocalDate.now().plusDays(5), null);
+        when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
+
+        List<VehicleMaintenanceAlertResponse> alerts = service.maintenanceDue(principal);
+
+        assertEquals(1, alerts.size());
+        assertEquals("MNT0001", alerts.get(0).plate());
+        assertEquals(5L, alerts.get(0).diasRestantes());
+    }
+
+    @Test
+    void alertaManutencaoQuandoKmProximo() {
+        Vehicle v = new Vehicle(tenantId, "MNT0002", "Fiat", "Strada", 2022, 9500);
+        v.update("MNT0002", "Fiat", "Strada", 2022, 9500, VehicleStatus.ATIVO, null, 10000);
+        when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
+
+        List<VehicleMaintenanceAlertResponse> alerts = service.maintenanceDue(principal);
+
+        assertEquals(1, alerts.size());
+        assertEquals(500, alerts.get(0).kmRestante());
+    }
+
+    @Test
+    void naoAlertaQuandoManutencaoDistanteNoTempoENoKm() {
+        Vehicle v = new Vehicle(tenantId, "MNT0003", "Fiat", "Strada", 2022, 1000);
+        v.update("MNT0003", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO,
+                LocalDate.now().plusDays(90), 20000);
+        when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
+
+        List<VehicleMaintenanceAlertResponse> alerts = service.maintenanceDue(principal);
+
+        assertEquals(0, alerts.size());
+    }
+
+    @Test
+    void alertaManutencaoIncluiVencidas() {
+        Vehicle v = new Vehicle(tenantId, "MNT0004", "Fiat", "Strada", 2022, 1000);
+        v.update("MNT0004", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO,
+                LocalDate.now().minusDays(3), null);
+        when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
+
+        List<VehicleMaintenanceAlertResponse> alerts = service.maintenanceDue(principal);
+
+        assertEquals(1, alerts.size());
+        assertEquals(-3L, alerts.get(0).diasRestantes());
     }
 }

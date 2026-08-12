@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/vehicles/maintenance-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["maintenanceDue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/health": {
         parameters: {
             query?: never;
@@ -156,6 +172,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/drivers/license-expiring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["licenseExpiring"];
         put?: never;
         post?: never;
         delete?: never;
@@ -210,6 +242,10 @@ export interface components {
             odometerKm: number;
             /** @enum {string} */
             status: "ATIVO" | "MANUTENCAO" | "INATIVO";
+            /** Format: date */
+            proximaManutencaoData?: string;
+            /** Format: int32 */
+            proximaManutencaoKm?: number;
         };
         VehicleResponse: {
             /** Format: uuid */
@@ -222,6 +258,10 @@ export interface components {
             /** Format: int32 */
             odometerKm?: number;
             status?: string;
+            /** Format: date */
+            proximaManutencaoData?: string;
+            /** Format: int32 */
+            proximaManutencaoKm?: number;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -233,6 +273,8 @@ export interface components {
             phone?: string;
             /** @enum {string} */
             status: "ATIVO" | "INATIVO";
+            /** Format: date */
+            cnhValidade?: string;
         };
         DriverResponse: {
             /** Format: uuid */
@@ -241,6 +283,8 @@ export interface components {
             cnh?: string;
             phone?: string;
             status?: string;
+            /** Format: date */
+            cnhValidade?: string;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -291,6 +335,30 @@ export interface components {
             /** Format: int32 */
             odometerKm?: number;
             costPerKm?: number;
+        };
+        VehicleMaintenanceAlertResponse: {
+            /** Format: uuid */
+            vehicleId?: string;
+            plate?: string;
+            brand?: string;
+            model?: string;
+            /** Format: date */
+            proximaManutencaoData?: string;
+            /** Format: int64 */
+            diasRestantes?: number;
+            /** Format: int32 */
+            proximaManutencaoKm?: number;
+            /** Format: int32 */
+            kmRestante?: number;
+        };
+        DriverLicenseAlertResponse: {
+            /** Format: uuid */
+            driverId?: string;
+            name?: string;
+            /** Format: date */
+            cnhValidade?: string;
+            /** Format: int64 */
+            diasRestantes?: number;
         };
         UserResponse: {
             /** Format: uuid */
@@ -675,6 +743,26 @@ export interface operations {
             };
         };
     };
+    maintenanceDue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleMaintenanceAlertResponse"][];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;
@@ -693,6 +781,26 @@ export interface operations {
                     "*/*": {
                         [key: string]: Record<string, never>;
                     };
+                };
+            };
+        };
+    };
+    licenseExpiring: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverLicenseAlertResponse"][];
                 };
             };
         };

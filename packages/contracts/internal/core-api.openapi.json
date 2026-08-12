@@ -491,6 +491,29 @@
                 }
             }
         },
+        "/v1/vehicles/maintenance-due": {
+            "get": {
+                "tags": [
+                    "vehicle-controller"
+                ],
+                "operationId": "maintenanceDue",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/health": {
             "get": {
                 "tags": [
@@ -506,6 +529,29 @@
                                     "type": "object",
                                     "additionalProperties": {
                                         "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/drivers/license-expiring": {
+            "get": {
+                "tags": [
+                    "driver-controller"
+                ],
+                "operationId": "licenseExpiring",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DriverLicenseAlertResponse"
                                     }
                                 }
                             }
@@ -611,6 +657,14 @@
                             "MANUTENCAO",
                             "INATIVO"
                         ]
+                    },
+                    "proximaManutencaoData": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "proximaManutencaoKm": {
+                        "type": "integer",
+                        "format": "int32"
                     }
                 }
             },
@@ -640,6 +694,14 @@
                     },
                     "status": {
                         "type": "string"
+                    },
+                    "proximaManutencaoData": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "proximaManutencaoKm": {
+                        "type": "integer",
+                        "format": "int32"
                     },
                     "createdAt": {
                         "type": "string",
@@ -679,6 +741,10 @@
                             "ATIVO",
                             "INATIVO"
                         ]
+                    },
+                    "cnhValidade": {
+                        "type": "string",
+                        "format": "date"
                     }
                 }
             },
@@ -700,6 +766,10 @@
                     },
                     "status": {
                         "type": "string"
+                    },
+                    "cnhValidade": {
+                        "type": "string",
+                        "format": "date"
                     },
                     "createdAt": {
                         "type": "string",
@@ -852,6 +922,60 @@
                     },
                     "costPerKm": {
                         "type": "number"
+                    }
+                }
+            },
+            "VehicleMaintenanceAlertResponse": {
+                "type": "object",
+                "properties": {
+                    "vehicleId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "plate": {
+                        "type": "string"
+                    },
+                    "brand": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "proximaManutencaoData": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "diasRestantes": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "proximaManutencaoKm": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "kmRestante": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "DriverLicenseAlertResponse": {
+                "type": "object",
+                "properties": {
+                    "driverId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "cnhValidade": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "diasRestantes": {
+                        "type": "integer",
+                        "format": "int64"
                     }
                 }
             },

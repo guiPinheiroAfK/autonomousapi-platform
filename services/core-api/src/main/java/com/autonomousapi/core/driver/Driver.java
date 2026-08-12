@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -38,6 +39,10 @@ public class Driver {
     @Column(name = "status", nullable = false, length = 20)
     private DriverStatus status;
 
+    /** Opcional: sem valor, o motorista não entra no alerta de CNH vencendo. */
+    @Column(name = "cnh_validade")
+    private LocalDate cnhValidade;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -60,11 +65,12 @@ public class Driver {
         this.updatedAt = now;
     }
 
-    public void update(String name, String cnh, String phone, DriverStatus status) {
+    public void update(String name, String cnh, String phone, DriverStatus status, LocalDate cnhValidade) {
         this.name = name;
         this.cnh = cnh;
         this.phone = phone;
         this.status = status;
+        this.cnhValidade = cnhValidade;
         this.updatedAt = Instant.now();
     }
 
@@ -90,6 +96,10 @@ public class Driver {
 
     public DriverStatus getStatus() {
         return status;
+    }
+
+    public LocalDate getCnhValidade() {
+        return cnhValidade;
     }
 
     public Instant getCreatedAt() {

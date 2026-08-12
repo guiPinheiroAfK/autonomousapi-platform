@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /** Veículo da frota de um tenant (spec 05, Fase 1). */
@@ -40,6 +41,13 @@ public class Vehicle {
     @Column(name = "status", nullable = false, length = 20)
     private VehicleStatus status;
 
+    /** Opcionais: sem valor, o veículo não entra em nenhum alerta de manutenção. */
+    @Column(name = "proxima_manutencao_data")
+    private LocalDate proximaManutencaoData;
+
+    @Column(name = "proxima_manutencao_km")
+    private Integer proximaManutencaoKm;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -66,13 +74,16 @@ public class Vehicle {
     }
 
     public void update(String plate, String brand, String model, Integer modelYear,
-            int odometerKm, VehicleStatus status) {
+            int odometerKm, VehicleStatus status, LocalDate proximaManutencaoData,
+            Integer proximaManutencaoKm) {
         this.plate = plate;
         this.brand = brand;
         this.model = model;
         this.modelYear = modelYear;
         this.odometerKm = odometerKm;
         this.status = status;
+        this.proximaManutencaoData = proximaManutencaoData;
+        this.proximaManutencaoKm = proximaManutencaoKm;
         this.updatedAt = Instant.now();
     }
 
@@ -106,6 +117,14 @@ public class Vehicle {
 
     public VehicleStatus getStatus() {
         return status;
+    }
+
+    public LocalDate getProximaManutencaoData() {
+        return proximaManutencaoData;
+    }
+
+    public Integer getProximaManutencaoKm() {
+        return proximaManutencaoKm;
     }
 
     public Instant getCreatedAt() {

@@ -1,5 +1,6 @@
 package com.autonomousapi.core.driver;
 
+import com.autonomousapi.core.driver.dto.DriverLicenseAlertResponse;
 import com.autonomousapi.core.driver.dto.DriverRequest;
 import com.autonomousapi.core.driver.dto.DriverResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
@@ -45,6 +46,12 @@ public class DriverController {
     @GetMapping("/{id}")
     public DriverResponse get(@PathVariable UUID id, Authentication auth) {
         return driverService.get(principal(auth), id);
+    }
+
+    /** Motoristas com CNH vencida ou a vencer (alerta, spec 05 Fase 1). */
+    @GetMapping("/license-expiring")
+    public List<DriverLicenseAlertResponse> licenseExpiring(Authentication auth) {
+        return driverService.licenseExpiring(principal(auth));
     }
 
     @PutMapping("/{id}")

@@ -20,6 +20,8 @@ const EMPTY_FORM: VehicleRequest = {
   modelYear: undefined,
   odometerKm: 0,
   status: 'ATIVO',
+  proximaManutencaoData: undefined,
+  proximaManutencaoKm: undefined,
 };
 
 interface Props {
@@ -60,6 +62,8 @@ export function VehiclesPage({ onViewCosts }: Props) {
       modelYear: v.modelYear,
       odometerKm: v.odometerKm!,
       status: v.status as VehicleRequest['status'],
+      proximaManutencaoData: v.proximaManutencaoData,
+      proximaManutencaoKm: v.proximaManutencaoKm,
     });
     setError('');
     setModalOpen(true);
@@ -248,6 +252,29 @@ export function VehiclesPage({ onViewCosts }: Props) {
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
+            <div>
+              <Label htmlFor="proximaManutencaoData">Próxima manutenção (data)</Label>
+              <Input
+                id="proximaManutencaoData"
+                type="date"
+                value={form.proximaManutencaoData ?? ''}
+                onChange={(e) => setForm({ ...form, proximaManutencaoData: e.target.value || undefined })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="proximaManutencaoKm">Próxima manutenção (km)</Label>
+              <Input
+                id="proximaManutencaoKm"
+                type="number"
+                min={0}
+                value={form.proximaManutencaoKm ?? ''}
+                onChange={(e) =>
+                  setForm({ ...form, proximaManutencaoKm: e.target.value ? Number(e.target.value) : undefined })
+                }
+              />
+            </div>
           </div>
 
           {error && <p className="text-xs text-status-danger">{error}</p>}
