@@ -12,5 +12,13 @@ class Settings(BaseSettings):
     # Token de SERVIÇO (não token de usuário). Só o core-api chama o geo-api (spec 01).
     service_token: str = "dev-service-token-change-me"
 
+    # Retenção de GPS bruto (spec 02 + ADR 0009). 30 dias é ponto de partida documentado
+    # na ADR, não um número regulatório — o agregado anônimo (road_segment_observation)
+    # sobrevive à purga porque não carrega essa referência desde a origem.
+    gps_retention_days: int = 30
+
+    # Intervalo do job de agregação de road_readiness (spec 02: "job periódico").
+    road_readiness_recalc_interval_minutes: int = 5
+
 
 settings = Settings()

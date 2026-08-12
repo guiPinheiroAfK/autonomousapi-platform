@@ -1,13 +1,15 @@
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 from geoalchemy2.elements import WKTElement
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from ..aggregation import recalcular_road_readiness
 from ..db import get_db
-from ..models import VehicleGpsPing
+from ..matching import encontrar_segmento_mais_proximo
+from ..models import RoadSegmentObservation, VehicleGpsPing
 from ..security import require_service_token
 
 # Todas as rotas exigem token de serviço. Prefixo /internal deixa explícito que não é público.
@@ -41,8 +43,11 @@ class GpsPingAccepted(BaseModel):
 @router.post("/gps/pings", status_code=status.HTTP_202_ACCEPTED)
 def ingest_ping(ping: GpsPingIn, db: Session = Depends(get_db)) -> GpsPingAccepted:
     """
-    Ingestão BRUTA de ping de GPS (Fase 1). Sem map matching ainda — isso é Fase 2.
-    Persiste lat/lon e a geometria PostGIS correspondente.
+    Ingestão de ping de GPS + map matching (Fase 2, spec 02). Persiste o ping bruto
+    (expurgado depois pelo job de retenção, ver app/retention.py) e, se cair perto o
+    bastante de um `road_segment` conhecido, gera uma `road_segment_observation` —
+    isso é síncrono e barato (uma consulta indexada), diferente da agregação do score,
+    que o spec proíbe explicitamente de rodar em tempo real (fica para o job periódico).
     """
     row = VehicleGpsPing(
         vehicle_id=ping.vehicle_id,
@@ -55,6 +60,32 @@ def ingest_ping(ping: GpsPingIn, db: Session = Depends(get_db)) -> GpsPingAccept
         geom=WKTElement(f"POINT({ping.lon} {ping.lat})", srid=4326),
     )
     db.add(row)
+
+    segmento_id = encontrar_segmento_mais_proximo(db, ping.lat, ping.lon)
+    if segmento_id is not None:
+        db.add(
+            RoadSegmentObservation(
+                id=uuid4(),
+                road_segment_id=segmento_id,
+                observed_at=ping.recorded_at,
+                avg_speed_kmh=ping.speed,
+            )
+        )
+
     db.commit()
     db.refresh(row)
     return GpsPingAccepted(id=row.id)
+
+
+class RoadReadinessRecalculated(BaseModel):
+    segments_updated: int
+
+
+@router.post("/road-readiness/recalculate")
+def recalculate_road_readiness(db: Session = Depends(get_db)) -> RoadReadinessRecalculated:
+    """
+    Dispara o job de agregação sob demanda (o scheduler já roda isso periodicamente,
+    ver app/scheduler.py) — útil para operação manual e para testes determinísticos,
+    sem depender do timing do agendador em background.
+    """
+    return RoadReadinessRecalculated(segments_updated=recalcular_road_readiness(db))

@@ -64,9 +64,19 @@ Isso é uma extensão da Fase 2 (roteamento básico), não da Fase 1 — depende
 
 ## Definition of Done (dados/mapas, Fase 1-2)
 
-- [ ] Schema `geo` com as entidades acima, migrations versionadas.
-- [ ] Import de um extrato OSM (ex. região do piloto) rodando localmente.
-- [ ] Pipeline de ingestão de GPS → `road_segment_observation` funcionando ponta a ponta com dado de pelo menos 1 veículo real ou simulado.
-- [ ] Job de agregação para `road_readiness_score` rodando (mesmo que score seja simples, ex. contagem de observações).
-- [ ] Política de retenção/anonimização documentada e implementada, não só planejada.
+- [x] Schema `geo` com as entidades acima, migrations versionadas. (`road_segment`,
+      `road_segment_observation`, `road_readiness_score` — migration 0002; `route_plan`/
+      `route_stop` ficam para quando o roteamento multi-parada entrar, ver item abaixo)
+- [x] Import de um extrato OSM (ex. região do piloto) rodando localmente.
+      (`scripts/import_osm_pilot.py`, via Overpass API — bbox de exemplo: Av. Paulista/SP)
+- [x] Pipeline de ingestão de GPS → `road_segment_observation` funcionando ponta a ponta com dado de pelo menos 1 veículo real ou simulado.
+      (verificado com dado real importado — Rua Pamplona/SP)
+- [x] Job de agregação para `road_readiness_score` rodando (mesmo que score seja simples, ex. contagem de observações).
+      (`app/aggregation.py`, v1 = contagem normalizada, agendado via `app/scheduler.py`)
+- [x] Política de retenção/anonimização documentada e implementada, não só planejada.
+      (ADR 0009; `app/retention.py`, roda 1x/dia)
+- [ ] Roteamento básico via OSRM/GraphHopper — **não feito nesta rodada**, deliberadamente:
+      é infraestrutura própria (servidor OSRM + grafo de roteamento processado), separada
+      do que este DoD original já cobria; abrir como item dedicado quando for a vez.
 - [ ] (Extensão Fase 2+) Roteamento multi-coleta/multi-entrega funcionando com solver existente (ex. OR-Tools), retornando sequência otimizada de paradas.
+      (depende do item anterior)
