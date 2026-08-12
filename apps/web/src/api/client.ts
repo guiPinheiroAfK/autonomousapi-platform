@@ -61,6 +61,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+/** Baixa um arquivo autenticado (ex.: CSV de relatório) disparando o download no navegador. */
+async function downloadFile(path: string, filename: string): Promise<void> {
+  const headers: Record<string, string> = {};
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+  const res = await fetch(`${BASE}${path}`, { headers });
+  if (!res.ok) {
+    if (res.status === 401) onUnauthorized?.();
+    throw new Error(`core-api ${res.status} em ${path}`);
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export const coreApi = {
   health: () => request<{ status: string; services?: Record<string, string> }>('/v1/health'),
 
@@ -105,5 +125,9 @@ export const coreApi = {
       request<void>(`/v1/vehicles/${vehicleId}/costs/${costId}`, { method: 'DELETE' }),
     summary: (vehicleId: string) =>
       request<VehicleCostSummaryResponse>(`/v1/vehicles/${vehicleId}/cost-summary`),
+  },
+
+  reports: {
+    exportCostsCsv: () => downloadFile('/v1/reports/costs.csv', 'relatorio-custos.csv'),
   },
 };

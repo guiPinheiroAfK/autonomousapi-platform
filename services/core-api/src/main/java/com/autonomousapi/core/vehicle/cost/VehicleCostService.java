@@ -92,6 +92,40 @@ public class VehicleCostService {
         return trend;
     }
 
+    /** Relatório de custos de toda a frota do tenant, desde o início, em CSV (spec 05, Fase 1: web). */
+    @Transactional(readOnly = true)
+    public String exportCsv(JwtPrincipal principal) {
+        Map<UUID, Vehicle> vehicleById = vehicles.findAllByTenantIdOrderByCreatedAtDesc(principal.tenantId())
+                .stream()
+                .collect(Collectors.toMap(Vehicle::getId, v -> v));
+
+        // LocalDate.MIN estoura o range de "date" do Postgres (4713 BC..5874897 AD) — usa
+        // uma data bem anterior a qualquer lançamento real em vez do mínimo teórico do Java.
+        List<VehicleCostEntry> entries = costs.findAllByTenantIdSince(principal.tenantId(), LocalDate.of(2000, 1, 1));
+
+        StringBuilder csv = new StringBuilder("Placa;Marca;Modelo;Categoria;Descricao;Data;Valor\n");
+        for (VehicleCostEntry e : entries) {
+            Vehicle v = vehicleById.get(e.getVehicleId());
+            csv.append(csvField(v != null ? v.getPlate() : "")).append(';')
+                    .append(csvField(v != null ? v.getBrand() : "")).append(';')
+                    .append(csvField(v != null ? v.getModel() : "")).append(';')
+                    .append(csvField(e.getCategory().name())).append(';')
+                    .append(csvField(e.getDescription())).append(';')
+                    .append(e.getOccurredAt()).append(';')
+                    .append(e.getAmount())
+                    .append('\n');
+        }
+        return csv.toString();
+    }
+
+    private static String csvField(String value) {
+        if (value == null) return "";
+        String escaped = value.replace("\"", "\"\"");
+        return escaped.contains(";") || escaped.contains("\"") || escaped.contains("\n")
+                ? "\"" + escaped + "\""
+                : escaped;
+    }
+
     @Transactional
     public void delete(JwtPrincipal principal, UUID vehicleId, UUID costId) {
         Vehicle vehicle = findOwnedVehicle(principal, vehicleId);

@@ -89,6 +89,21 @@ class VehicleCostServiceTest {
     }
 
     @Test
+    void exportaCsvComCabecalhoEDadosDoVeiculo() {
+        Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "VW", "Saveiro", 2022, 1000);
+        when(vehicleRepo.findAllByTenantIdOrderByCreatedAtDesc(tenantId)).thenReturn(List.of(vehicle));
+        when(costRepo.findAllByTenantIdSince(eq(tenantId), any())).thenReturn(List.of(
+                new VehicleCostEntry(vehicle.getId(), VehicleCostCategory.COMBUSTIVEL,
+                        new BigDecimal("150.50"), "Abastecimento; posto X", LocalDate.of(2026, 1, 10))));
+
+        String csv = service.exportCsv(principal);
+
+        String[] lines = csv.split("\n");
+        assertEquals("Placa;Marca;Modelo;Categoria;Descricao;Data;Valor", lines[0]);
+        assertEquals("ABC1234;VW;Saveiro;COMBUSTIVEL;\"Abastecimento; posto X\";2026-01-10;150.50", lines[1]);
+    }
+
+    @Test
     void naoAdicionaCustoEmVeiculoDeOutroTenant() {
         UUID vehicleId = UUID.randomUUID();
         when(vehicleRepo.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.empty());

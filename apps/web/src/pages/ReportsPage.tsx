@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Download, ClipboardList, TrendingUp, Wallet } from 'lucide-react';
 import {
   Bar,
@@ -12,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { coreApi } from '../api/client';
 import { custoAcumuladoAno, osNoAno, resumoFinanceiroMensal } from '../data/financeiro';
 import { ordensServico, osCustoTotal } from '../data/ordensServico';
 import { PlacaBR } from '../components/shared/PlacaBR';
@@ -30,6 +32,21 @@ const TIPO_COLORS: Record<string, string> = {
 const anoAtual = new Date().getFullYear();
 
 export function ReportsPage() {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  async function handleExport() {
+    setExporting(true);
+    setExportError('');
+    try {
+      await coreApi.reports.exportCostsCsv();
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Falha ao exportar relatório');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const chartData = resumoFinanceiroMensal.map((r) => ({
     label: monthLabel(r.mes),
     Preventiva: r.custoPreventiva,
@@ -75,9 +92,12 @@ export function ReportsPage() {
             Visão consolidada de custos de manutenção · ano de {anoAtual}
           </p>
         </div>
-        <Button variant="outline">
-          <Download /> Exportar relatório
-        </Button>
+        <div className="text-right">
+          <Button variant="outline" onClick={handleExport} disabled={exporting}>
+            <Download /> {exporting ? 'Exportando...' : 'Exportar relatório'}
+          </Button>
+          {exportError && <p className="mt-1 text-xs text-status-danger">{exportError}</p>}
+        </div>
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">

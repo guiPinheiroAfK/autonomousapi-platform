@@ -537,6 +537,27 @@
                 }
             }
         },
+        "/v1/reports/costs.csv": {
+            "get": {
+                "tags": [
+                    "report-controller"
+                ],
+                "operationId": "costsCsv",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "byte"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/health": {
             "get": {
                 "tags": [
