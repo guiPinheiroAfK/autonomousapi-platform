@@ -1,6 +1,7 @@
-# QA Report — sessão autônoma (2026-08-12)
+# QA Report — sessão de 2026-08-12
 
-Registro do que foi feito enquanto você estava fora, para revisão quando voltar. Modelo usado: **Sonnet 5** (nenhuma decisão exigiu subir pra Opus).
+Duas rodadas: a primeira autônoma (features da Fase 1, em Sonnet 5) e a segunda de
+engenharia — auditoria de performance, testes de integração e Redis, em Opus 5.
 
 ## Resumo por PR
 
@@ -11,6 +12,10 @@ Registro do que foi feito enquanto você estava fora, para revisão quando volta
 | [#21](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/21) | Billing web-first via Stripe Checkout | ✅ mesclada em `develop` | `feature/billing-stripe-web-first` |
 | [#22](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/22) | Registro de viagem do motorista: backend | ✅ mesclada em `develop` | `feature/mobile-trip-logging-backend` |
 | [#23](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/23) | Registro de viagem do motorista: mobile | ✅ mesclada em `develop` | `feature/mobile-trip-logging` |
+| [#25](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/25) | Performance: N+1, índices e pings em lote | ✅ mesclada em `develop` | `feature/perf-indices-e-n1` |
+| [#26](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/26) | Testes de integração contra Postgres real | ✅ mesclada em `develop` | `test/integracao-testcontainers` |
+| [#27](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/27) | Redis: rate limit no login e cache | ✅ mesclada em `develop` | `feature/redis-rate-limit-e-cache` |
+| [#28](https://github.com/guiPinheiroAfK/autonomousapi-platform/pull/28) | Code splitting, correção do cache e limpeza | ✅ mesclada em `develop` | `chore/bundle-limpeza` |
 
 ## 1. Clone do FrotaOS (front)
 
@@ -66,6 +71,45 @@ Registro do que foi feito enquanto você estava fora, para revisão quando volta
 - Schema `geo`: pipeline de ingestão de GPS já existe e funciona (endpoint interno confirmado), mas não há agregação/processamento ainda — isso é Fase 2 do spec, não Fase 1
 - Teste ponta-a-ponta do billing com chave real da Stripe (ver seção 3)
 
+## 5. Rodada de engenharia (PRs #25 a #28)
+
+Auditoria do que já existia, sem feature nova.
+
+**Performance (#25).** A tela de Manutenção fazia 1+N requisições HTTP — a lista de veículos
+e depois os custos de cada veículo, 13 chamadas com 12 veículos e crescendo com a frota.
+Novo `GET /v1/vehicles/costs` devolve tudo em uma query; medido no navegador: **13 → 2**
+requisições, mesma tela. Três índices em caminhos que faziam sequential scan, com destaque
+para `subscription.stripe_customer_id`, que o webhook da Stripe consulta a cada evento.
+Envio de ping virou lote (um motorista voltando de uma hora sem sinal disparava ~240
+chamadas sequenciais).
+
+**Testes de integração (#26).** Postgres real na suíte. Foi a mudança de maior valor: teste
+com repositório mockado não executa SQL, e por isso o bug do `LocalDate.MIN` passou por 24
+testes verdes. Validei que o teste de regressão presta reintroduzindo o bug de propósito e
+vendo a suíte ficar vermelha. O CI agora roda contra um Postgres de service container.
+
+**Redis (#27).** O login não tinha limite algum de tentativas — buraco presente, não risco
+futuro. Agora conta por e-mail e por IP. Cache de agregado do dashboard com chave por
+tenant. Kafka ficou documentado no ADR 0006 com o gatilho exato para a Fase 2, em vez de
+entrar sem necessidade.
+
+**Bundle e limpeza (#28).** Bundle inicial de 751 KB → 272 KB: o recharts saiu do carregamento
+inicial (antes até quem só abria a tela de login baixava a biblioteca de gráficos).
+
+### Dois bugs meus que os testes pegaram — e um que quase escapou
+
+1. **`CacheErrorHandler` não estava ligado.** Declarar o `@Bean` não basta: a classe precisa
+   implementar `CachingConfigurer`. Ou seja, minha "degradação graciosa" era decorativa e o
+   Redis fora derrubava o dashboard. O teste de integração (que roda sem Redis) pegou.
+2. **Cache quebrado no HIT.** O valor voltava do Redis como `LinkedHashMap` em vez do DTO,
+   porque nossos DTOs são `record` (classes final) e a tipagem padrão do serializer pula
+   classes final ao gravar o tipo. **O miss funcionava; só o hit quebrava.**
+3. **Como quase escapou:** minha verificação do cache mediu *tempo* (`curl -o /dev/null`) e
+   nunca o *corpo*. O endpoint respondia rápido e errado. Quem pegou foi a verificação no
+   navegador, e agora há teste travando a ida e volta da serialização.
+
+Fica a lição para as próximas: medir latência não é verificar correção.
+
 ## Checklist da Fase 1 (specs/05-roadmap-fases.md) — status ao final desta sessão
 
 | Item | Status |
@@ -85,4 +129,12 @@ Sobra pra fechar a Fase 1 por completo: chave de teste da Stripe (você) e um te
 
 ## Modelo usado
 
-Sonnet 5 do início ao fim desta sessão. Nenhuma decisão arquitetural exigiu subir pra Opus — todo o trabalho foi implementação de features já bem especificadas pelo spec (03 e 05). A única decisão de engenharia não-trivial que tomei sozinho foi a modelagem mínima do billing (sem `subscription_item` por veículo, só a assinatura em si com quantidade calculada no momento do checkout) — decisão de escopo, documentada no PR #21, não arquitetural o suficiente pra justificar subir de modelo.
+**Sonnet 5** nas PRs #19 a #23 (implementação de features já bem especificadas pelo spec).
+A única decisão de escopo não-trivial ali foi a modelagem mínima do billing — sem
+`subscription_item` por veículo, com a quantidade calculada no checkout —, documentada na
+PR #21.
+
+**Opus 5** nas PRs #25 a #28, onde o trabalho era de julgamento e não de execução: decidir
+o que valia corrigir, e principalmente decidir o que **não** fazer. A recomendação de adiar
+Kafka (ADR 0006) e a de usar Redis apenas onde ele se paga (ADR 0007) foram as saídas mais
+importantes dessa rodada — junto com achar dois bugs meus antes que virassem problema seu.
