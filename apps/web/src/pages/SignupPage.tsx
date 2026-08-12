@@ -1,16 +1,18 @@
 import { useState, type FormEvent } from 'react';
-import { Truck } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
+import {
+  AuthLayout,
+  BotaoPublico,
+  CampoPublico,
+  ErroPublico,
+} from '../components/layout/AuthLayout';
 
 interface Props {
   onGoToLogin: () => void;
+  onVoltarParaHome: () => void;
 }
 
-export function SignupPage({ onGoToLogin }: Props) {
+export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
   const { signup } = useAuth();
   const [tenantName, setTenantName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,58 +34,67 @@ export function SignupPage({ onGoToLogin }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sidebar p-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-sidebar-accent text-[#1a1206] shadow-lg">
-            <Truck className="size-6" />
-          </div>
-          <h1 className="font-display text-xl font-bold text-white">AutonomousAPI</h1>
-          <p className="mt-1 text-sm text-sidebar-muted">Gestão de Frota</p>
+    <AuthLayout
+      titulo="Cadastrar minha frota"
+      chamada={
+        <>
+          Comece pelos veículos que <em className="italic">já estão</em> na rua.
+        </>
+      }
+      onVoltar={onVoltarParaHome}
+    >
+      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
+        Sem instalação e sem equipamento novo no carro. Você cadastra a frota e o painel
+        começa a se preencher.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <CampoPublico
+          id="tenantName"
+          rotulo="Nome da frota ou empresa"
+          autoComplete="organization"
+          placeholder="RotaCerta Entregas"
+          value={tenantName}
+          onChange={(e) => setTenantName(e.target.value)}
+          required
+        />
+        <CampoPublico
+          id="email"
+          rotulo="E-mail"
+          type="email"
+          autoComplete="email"
+          placeholder="voce@suafrota.com.br"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <CampoPublico
+          id="password"
+          rotulo="Senha"
+          type="password"
+          autoComplete="new-password"
+          placeholder="mínimo de 8 caracteres"
+          minLength={8}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        {error && <ErroPublico>{error}</ErroPublico>}
+
+        <div className="pt-2">
+          <BotaoPublico type="submit" disabled={submitting}>
+            {submitting ? 'Criando conta...' : 'Criar conta'}
+          </BotaoPublico>
         </div>
+      </form>
 
-        <Card className="p-6">
-          <h2 className="mb-5 font-display text-base font-semibold text-foreground">Cadastrar minha frota</h2>
-
-          {error && (
-            <div className="mb-4 rounded-md border border-status-danger-bg bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="tenantName">Nome da frota/empresa</Label>
-              <Input id="tenantName" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required />
-            </div>
-            <div>
-              <Label htmlFor="email">Seu e-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div>
-              <Label htmlFor="password">Senha (mín. 8 caracteres)</Label>
-              <Input
-                id="password"
-                type="password"
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? 'Criando...' : 'Criar conta'}
-            </Button>
-          </form>
-
-          <p className="mt-5 text-center text-xs text-muted-foreground">
-            Já tem conta?{' '}
-            <Button variant="link" type="button" onClick={onGoToLogin} className="h-auto p-0 text-xs">
-              Entrar
-            </Button>
-          </p>
-        </Card>
-      </div>
-    </div>
+      <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
+        Já tem conta?{' '}
+        <button type="button" onClick={onGoToLogin} className="link-sublinhado text-[var(--tinta)]">
+          Entrar
+        </button>
+      </p>
+    </AuthLayout>
   );
 }

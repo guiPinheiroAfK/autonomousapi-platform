@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -204,6 +204,53 @@ body {
   font-family: var(--font-mono);
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   Superfície pública (landing, login, cadastro).
+   Paleta própria, de papel quente, deliberadamente diferente do painel: quem
+   ainda não é cliente encontra uma página editorial, não um app de gestão. Fica
+   escopada em .superficie-publica para não vazar nos tokens do painel, e é
+   sempre clara — não segue o tema escuro, é uma peça de marca.
+--------------------------------------------------------------------------- */
+.superficie-publica {
+  --papel: #faf8f3;
+  --papel-fundo: #f2eee5;
+  --tinta: #1b2430;
+  --tinta-suave: #5c6472;
+  --linha: #e2dcd0;
+  --acento: #b8541f;
+
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+  font-size: 16px;
+}
+
+/* Serifada só no display. No corpo de texto ela cansa; aqui ela dá o tom
+   editorial que separa a página pública da interface de trabalho. */
+.fonte-editorial {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+/* Sublinhado que nasce do texto ao passar o mouse, em vez de aparecer inteiro. */
+.link-sublinhado {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  transition: background-size 0.25s ease;
+}
+.link-sublinhado:hover {
+  background-size: 100% 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-sublinhado {
+    transition: none;
+  }
 }
 
 ::-webkit-scrollbar {
