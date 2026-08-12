@@ -20,6 +20,7 @@ export type VehicleCostEntryResponse = Schemas['VehicleCostEntryResponse'];
 export type VehicleCostEntryRequest = Schemas['VehicleCostEntryRequest'];
 export type VehicleCostSummaryResponse = Schemas['VehicleCostSummaryResponse'];
 export type VehicleMaintenanceAlertResponse = Schemas['VehicleMaintenanceAlertResponse'];
+export type MonthlyCostResponse = Schemas['MonthlyCostResponse'];
 export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
 export type TokenResponse = Schemas['TokenResponse'];
 export type UserResponse = Schemas['UserResponse'];
@@ -79,6 +80,7 @@ export const coreApi = {
       request<VehicleResponse>(`/v1/vehicles/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id: string) => request<void>(`/v1/vehicles/${id}`, { method: 'DELETE' }),
     maintenanceDue: () => request<VehicleMaintenanceAlertResponse[]>('/v1/vehicles/maintenance-due'),
+    costTrend: () => request<MonthlyCostResponse[]>('/v1/vehicles/cost-trend'),
   },
 
   drivers: {

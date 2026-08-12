@@ -1,9 +1,22 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
   coreApi,
   type DriverLicenseAlertResponse,
   type DriverResponse,
+  type MonthlyCostResponse,
   type VehicleMaintenanceAlertResponse,
   type VehicleResponse,
 } from '../api/client';
@@ -12,6 +25,25 @@ import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { StatCard } from '../components/StatCard';
 import { cn } from '../lib/utils';
+
+const MES_ABREVIADO = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+/** "2026-08" -> "Ago/26" — evita new Date() (timezone) para string yyyy-MM. */
+function monthLabel(yyyyMM: string): string {
+  const [year, month] = yyyyMM.split('-');
+  return `${MES_ABREVIADO[Number(month) - 1]}/${year.slice(2)}`;
+}
+
+const VEHICLE_STATUS_COLOR: Record<string, string> = {
+  ATIVO: 'var(--color-status-success)',
+  MANUTENCAO: 'var(--color-status-warning)',
+  INATIVO: 'var(--color-status-neutral)',
+};
+const VEHICLE_STATUS_LABEL: Record<string, string> = {
+  ATIVO: 'Ativo',
+  MANUTENCAO: 'Em manutenção',
+  INATIVO: 'Inativo',
+};
 
 interface Props {
   onViewVehicles: () => void;
@@ -22,6 +54,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<VehicleMaintenanceAlertResponse[]>([]);
   const [licenseAlerts, setLicenseAlerts] = useState<DriverLicenseAlertResponse[]>([]);
+  const [costTrend, setCostTrend] = useState<MonthlyCostResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,12 +63,14 @@ export function DashboardPage({ onViewVehicles }: Props) {
       coreApi.drivers.list(),
       coreApi.vehicles.maintenanceDue(),
       coreApi.drivers.licenseExpiring(),
+      coreApi.vehicles.costTrend(),
     ])
-      .then(([v, d, m, l]) => {
+      .then(([v, d, m, l, t]) => {
         setVehicles(v);
         setDrivers(d);
         setMaintenanceAlerts(m);
         setLicenseAlerts(l);
+        setCostTrend(t);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -43,6 +78,11 @@ export function DashboardPage({ onViewVehicles }: Props) {
   const ativos = vehicles.filter((v) => v.status === 'ATIVO').length;
   const manutencao = vehicles.filter((v) => v.status === 'MANUTENCAO').length;
   const totalAlertas = maintenanceAlerts.length + licenseAlerts.length;
+
+  const chartData = costTrend.map((m) => ({ label: monthLabel(m.month!), total: m.total ?? 0 }));
+  const statusData = (['ATIVO', 'MANUTENCAO', 'INATIVO'] as const)
+    .map((status) => ({ status, count: vehicles.filter((v) => v.status === status).length }))
+    .filter((d) => d.count > 0);
 
   return (
     <div className="p-5">
@@ -57,6 +97,104 @@ export function DashboardPage({ onViewVehicles }: Props) {
         <StatCard label="Em Manutenção" value={manutencao} tone="warning" hint="Fora de operação" />
         <StatCard label="Motoristas" value={drivers.length} hint="Cadastrados" />
       </div>
+
+      {!loading && (
+        <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
+          <Card>
+            <CardHeader>
+              <CardTitle>Custo de manutenção — últimos 6 meses</CardTitle>
+            </CardHeader>
+            <div className="h-64 px-2 pb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: 'var(--color-muted-foreground)', fontSize: 11 }}
+                    axisLine={{ stroke: 'var(--color-border)' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: 'var(--color-muted-foreground)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={48}
+                    tickFormatter={(v: number) => (v >= 1000 ? `R$${Math.round(v / 1000)}k` : `R$${v}`)}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'var(--color-muted)' }}
+                    contentStyle={{
+                      background: 'var(--color-card)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                    formatter={(v) => [
+                      Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                      'Custo',
+                    ]}
+                  />
+                  <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Veículos por status</CardTitle>
+            </CardHeader>
+            {statusData.length === 0 ? (
+              <p className="p-8 text-center text-xs text-muted-foreground">Sem veículos cadastrados.</p>
+            ) : (
+              <>
+                <div className="h-40 px-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusData}
+                        dataKey="count"
+                        nameKey="status"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={2}
+                        strokeWidth={0}
+                      >
+                        {statusData.map((d) => (
+                          <Cell key={d.status} fill={VEHICLE_STATUS_COLOR[d.status]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          background: 'var(--color-card)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                        formatter={(v, _n, entry) => [
+                          Number(v),
+                          VEHICLE_STATUS_LABEL[(entry.payload as { status: string }).status],
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 px-5 pb-4 text-[11px] text-muted-foreground">
+                  {statusData.map((d) => (
+                    <li key={d.status} className="flex items-center gap-1.5">
+                      <span
+                        className="size-1.5 rounded-full"
+                        style={{ background: VEHICLE_STATUS_COLOR[d.status] }}
+                      />
+                      {VEHICLE_STATUS_LABEL[d.status]} ({d.count})
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </Card>
+        </div>
+      )}
 
       {!loading && totalAlertas > 0 && (
         <Card className="mb-5">
