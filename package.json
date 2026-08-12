@@ -10,6 +10,7 @@
     "packages/contracts"
   ],
   "scripts": {
+    "postinstall": "node scripts/fix-mobile-duplicate-react-native.js",
     "dev:web": "npm run dev --workspace @autonomousapi/web",
     "build:web": "npm run build --workspace @autonomousapi/web",
     "lint": "npm run lint --workspaces --if-present",
@@ -19,6 +20,11 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "react-native": "0.74.5",
+    "@react-native/virtualized-lists": "0.74.87",
+    "@expo/vector-icons": "14.0.4"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
