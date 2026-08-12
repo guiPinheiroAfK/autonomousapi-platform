@@ -28,6 +28,30 @@ JDK 17+ (`JAVA_HOME`).
 ./mvnw clean package
 ```
 
+### Testes de integração (Postgres de verdade)
+
+Os testes que herdam de `IntegrationTestBase` rodam contra um Postgres real, porque teste
+com repositório mockado não executa SQL e por isso não pega migration quebrada, JPQL
+inválido nem tipo que estoura o range da coluna. Duas formas de fornecer o banco:
+
+```bash
+# 1. Apontando para um Postgres existente (é o que o CI faz, via service container).
+#    Use um banco SEPARADO: a suíte limpa tabelas entre os testes.
+docker exec autonomousapi-db-1 psql -U autonomousapi -d postgres -c "create database autonomousapi_test"
+
+CORE_TEST_DB_URL=jdbc:postgresql://localhost:5433/autonomousapi_test \
+CORE_TEST_DB_USER=autonomousapi CORE_TEST_DB_PASSWORD=autonomousapi \
+./mvnw test
+
+# 2. Sem a variável, o Testcontainers sobe um Postgres sozinho (zero config).
+./mvnw test
+```
+
+> **Docker Desktop no Windows:** o Testcontainers pode falhar com "Could not find a valid
+> Docker environment" mesmo com o Docker rodando — o named pipe do Docker Desktop recusa o
+> handshake do cliente Java. Nesse caso use a forma 1, apontando para o Postgres do
+> `infra/docker-compose.yml`. No Linux/CI o modo 2 funciona direto.
+
 ## Endpoints (Fase 1, fundação)
 
 | Método | Rota | Auth | Descrição |
