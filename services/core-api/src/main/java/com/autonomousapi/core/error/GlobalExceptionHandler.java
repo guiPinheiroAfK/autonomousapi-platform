@@ -51,6 +51,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("billing_not_configured", ex.getMessage()));
     }
 
+    @ExceptionHandler(TripStateConflictException.class)
+    public ResponseEntity<ApiError> handleTripInProgress(TripStateConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("trip_already_in_progress", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()

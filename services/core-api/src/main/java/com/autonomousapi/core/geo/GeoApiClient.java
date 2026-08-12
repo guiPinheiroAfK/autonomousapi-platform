@@ -1,5 +1,6 @@
 package com.autonomousapi.core.geo;
 
+import com.autonomousapi.core.geo.dto.GpsPingRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -38,5 +39,19 @@ public class GeoApiClient {
         } catch (Exception ex) {
             return false;
         }
+    }
+
+    /**
+     * Encaminha um ping de GPS bruto do app mobile pro geo-api (spec 01: mobile nunca chama
+     * geo-api direto — core-api é o único orquestrador). Lança em qualquer falha; quem chama
+     * decide se enfileira de novo no mobile (fila offline já trata isso do lado do app).
+     */
+    public void ingestGpsPing(GpsPingRequest ping) {
+        client.post()
+                .uri("/internal/v1/gps/pings")
+                .header("X-Service-Token", serviceToken)
+                .body(ping)
+                .retrieve()
+                .toBodilessEntity();
     }
 }

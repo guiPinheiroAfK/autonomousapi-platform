@@ -319,12 +319,128 @@
                 }
             }
         },
+        "/v1/trips": {
+            "get": {
+                "tags": [
+                    "trip-controller"
+                ],
+                "operationId": "list_2",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TripResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "trip-controller"
+                ],
+                "operationId": "start",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartTripRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/trips/{id}/stop": {
+            "post": {
+                "tags": [
+                    "trip-controller"
+                ],
+                "operationId": "stop",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/trips/{id}/pings": {
+            "post": {
+                "tags": [
+                    "trip-controller"
+                ],
+                "operationId": "submitPing",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitPingRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                }
+            }
+        },
         "/v1/drivers": {
             "get": {
                 "tags": [
                     "driver-controller"
                 ],
-                "operationId": "list_2",
+                "operationId": "list_3",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -953,6 +1069,84 @@
                     "createdAt": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                }
+            },
+            "StartTripRequest": {
+                "required": [
+                    "vehicleId"
+                ],
+                "type": "object",
+                "properties": {
+                    "vehicleId": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "TripResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "vehicleId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "startedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "endedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "SubmitPingRequest": {
+                "required": [
+                    "lat",
+                    "lon",
+                    "recordedAt"
+                ],
+                "type": "object",
+                "properties": {
+                    "recordedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "lat": {
+                        "maximum": 90,
+                        "exclusiveMaximum": false,
+                        "minimum": -90,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lon": {
+                        "maximum": 180,
+                        "exclusiveMaximum": false,
+                        "minimum": -180,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "speed": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "heading": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "accuracy": {
+                        "type": "number",
+                        "format": "double"
                     }
                 }
             },
