@@ -1,16 +1,29 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { AppShell, type View } from './components/layout/AppShell';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { VehiclesPage } from './pages/VehiclesPage';
-import { DriversPage } from './pages/DriversPage';
-import { VehicleCostsPage } from './pages/VehicleCostsPage';
-import { WorkOrdersPage } from './pages/WorkOrdersPage';
-import { MaintenancePage } from './pages/MaintenancePage';
-import { ReportsPage } from './pages/ReportsPage';
-import { BillingPage } from './pages/BillingPage';
+
+/*
+ * Telas autenticadas entram por import dinâmico. O motivo concreto: recharts responde por
+ * boa parte do bundle e só é usado no Dashboard e em Relatórios — sem isso, quem abre a
+ * tela de login baixa a biblioteca inteira de gráficos antes de digitar a senha.
+ *
+ * Login e Signup ficam no bundle inicial de propósito: são a primeira tela renderizada, e
+ * adiar justamente elas trocaria peso por um flash de carregamento na abertura.
+ */
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const VehiclesPage = lazy(() => import('./pages/VehiclesPage').then((m) => ({ default: m.VehiclesPage })));
+const DriversPage = lazy(() => import('./pages/DriversPage').then((m) => ({ default: m.DriversPage })));
+const VehicleCostsPage = lazy(() => import('./pages/VehicleCostsPage').then((m) => ({ default: m.VehicleCostsPage })));
+const WorkOrdersPage = lazy(() => import('./pages/WorkOrdersPage').then((m) => ({ default: m.WorkOrdersPage })));
+const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) => ({ default: m.MaintenancePage })));
+const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
+const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
+
+function CarregandoTela() {
+  return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
+}
 
 export function App() {
   const { user, loading, logout } = useAuth();
@@ -35,20 +48,22 @@ export function App() {
 
   return (
     <AppShell user={user} activeView={view} onNavigate={setView} onLogout={logout}>
-      {view === 'dashboard' && <DashboardPage onViewVehicles={() => setView('vehicles')} />}
-      {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} />}
-      {view === 'drivers' && <DriversPage />}
-      {view === 'work-orders' && <WorkOrdersPage />}
-      {view === 'maintenance' && <MaintenancePage />}
-      {view === 'reports' && <ReportsPage />}
-      {view === 'billing' && <BillingPage />}
-      {view === 'costs' && costsTarget && (
-        <VehicleCostsPage
-          vehicleId={costsTarget.vehicleId}
-          plate={costsTarget.plate}
-          onBack={() => setView('vehicles')}
-        />
-      )}
+      <Suspense fallback={<CarregandoTela />}>
+        {view === 'dashboard' && <DashboardPage onViewVehicles={() => setView('vehicles')} />}
+        {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} />}
+        {view === 'drivers' && <DriversPage />}
+        {view === 'work-orders' && <WorkOrdersPage />}
+        {view === 'maintenance' && <MaintenancePage />}
+        {view === 'reports' && <ReportsPage />}
+        {view === 'billing' && <BillingPage />}
+        {view === 'costs' && costsTarget && (
+          <VehicleCostsPage
+            vehicleId={costsTarget.vehicleId}
+            plate={costsTarget.plate}
+            onBack={() => setView('vehicles')}
+          />
+        )}
+      </Suspense>
     </AppShell>
   );
 }

@@ -1,6 +1,9 @@
 package com.autonomousapi.core.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import org.springframework.cache.annotation.CachingConfigurer;
@@ -42,9 +45,34 @@ public class CacheConfig implements CachingConfigurer {
 
     @Bean
     public RedisCacheConfiguration cacheConfiguration() {
-        ObjectMapper mapper = new ObjectMapper()
-                // Os DTOs carregam LocalDate/Instant; sem este módulo o Jackson quebra.
-                .registerModule(new JavaTimeModule());
+        /*
+         * O JSON gravado PRECISA carregar a informação de tipo. Sem ela o valor volta do
+         * Redis como LinkedHashMap em vez de List<MonthlyCostResponse>, e a resposta estoura
+         * com "Could not write JSON: ClassCastException" — só no cache HIT, nunca no miss.
+         *
+         * DefaultTyping.EVERYTHING, e não o NON_FINAL usado pelo mapper padrão do
+         * GenericJackson2JsonRedisSerializer: nossos DTOs são records, que são classes
+         * FINAL. Com NON_FINAL o Jackson pula justamente eles na hora de escrever o tipo, e
+         * a leitura falha com "expected VALUE_STRING: need ... that contains type id".
+         *
+         * O validador restringe a desserialização polimórfica aos nossos DTOs e a tipos
+         * básicos; liberar Object.class inteiro abriria espaço para gadget chain caso
+         * alguém conseguisse escrever no Redis.
+         */
+        BasicPolymorphicTypeValidator validador = BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType("com.autonomousapi.core.")
+                .allowIfSubType("java.util.")
+                .allowIfSubType("java.time.")
+                .allowIfSubType("java.math.")
+                .allowIfSubType("java.lang.")
+                .build();
+
+        ObjectMapper mapper = JsonMapper.builder()
+                // DTO cacheado hoje só tem String/BigDecimal, mas se um com data entrar no
+                // cache sem este módulo o Jackson quebra — barato deixar registrado.
+                .addModule(new JavaTimeModule())
+                .activateDefaultTyping(validador, ObjectMapper.DefaultTyping.EVERYTHING, JsonTypeInfo.As.PROPERTY)
+                .build();
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(60))

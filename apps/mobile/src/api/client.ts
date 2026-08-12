@@ -84,9 +84,11 @@ export const coreApi = {
       request<TripResponse>('/v1/trips', { method: 'POST', body: JSON.stringify({ vehicleId }) }),
     stop: (tripId: string) => request<TripResponse>(`/v1/trips/${tripId}/stop`, { method: 'POST' }),
     list: () => request<TripResponse[]>('/v1/trips'),
-    submitPing: (tripId: string, ping: SubmitPingRequest) =>
-      request<void>(`/v1/trips/${tripId}/pings`, { method: 'POST', body: JSON.stringify(ping) }),
-    /** Manda a fila inteira em uma requisição; devolve quantos foram aceitos. */
+    /**
+     * Manda um lote da fila em uma requisição; devolve quantos foram aceitos.
+     * O app sempre envia em lote — o endpoint unitário do core-api (POST /pings) segue
+     * existindo para outros consumidores, mas não é usado aqui.
+     */
     submitPingBatch: (tripId: string, pings: SubmitPingRequest[]) =>
       request<SubmitPingBatchResponse>(`/v1/trips/${tripId}/pings/batch`, {
         method: 'POST',
