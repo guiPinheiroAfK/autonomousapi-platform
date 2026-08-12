@@ -6,8 +6,10 @@ import com.autonomousapi.core.auth.dto.SignupRequest;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.auth.dto.UserResponse;
 import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.security.ratelimit.LoginRateLimitGuard;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -25,10 +27,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserRepository users;
+    private final LoginRateLimitGuard loginRateLimit;
 
-    public AuthController(AuthService authService, UserRepository users) {
+    public AuthController(
+            AuthService authService, UserRepository users, LoginRateLimitGuard loginRateLimit) {
         this.authService = authService;
         this.users = users;
+        this.loginRateLimit = loginRateLimit;
     }
 
     @PostMapping("/signup")
@@ -38,7 +43,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public TokenResponse login(@Valid @RequestBody LoginRequest req) {
+    public TokenResponse login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
+        loginRateLimit.verificar(req.email(), http);
         return authService.login(req);
     }
 

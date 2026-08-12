@@ -51,6 +51,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("billing_not_configured", ex.getMessage()));
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ApiError> handleTooManyRequests(TooManyRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ApiError("too_many_requests", ex.getMessage()));
+    }
+
     @ExceptionHandler(TripStateConflictException.class)
     public ResponseEntity<ApiError> handleTripInProgress(TripStateConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
