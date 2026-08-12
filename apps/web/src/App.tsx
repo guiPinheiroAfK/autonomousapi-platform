@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { useAuth } from './auth/AuthContext';
+import { AppShell, type View } from './components/layout/AppShell';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { VehiclesPage } from './pages/VehiclesPage';
 import { DriversPage } from './pages/DriversPage';
 import { VehicleCostsPage } from './pages/VehicleCostsPage';
 
-type View = 'vehicles' | 'drivers' | 'costs';
-
 export function App() {
   const { user, loading, logout } = useAuth();
   const [authScreen, setAuthScreen] = useState<'login' | 'signup'>('login');
-  const [view, setView] = useState<View>('vehicles');
+  const [view, setView] = useState<View>('dashboard');
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
 
   if (loading) return null;
@@ -30,26 +30,8 @@ export function App() {
   }
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 960, margin: '0 auto', padding: '1.5rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0 }}>AutonomousAPI — Painel do Gestor</h1>
-        <div>
-          <span style={{ marginRight: 12, color: '#555' }}>{user.email}</span>
-          <button type="button" onClick={logout}>
-            Sair
-          </button>
-        </div>
-      </header>
-
-      <nav style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        <button type="button" onClick={() => setView('vehicles')} disabled={view === 'vehicles'}>
-          Veículos
-        </button>
-        <button type="button" onClick={() => setView('drivers')} disabled={view === 'drivers'}>
-          Motoristas
-        </button>
-      </nav>
-
+    <AppShell user={user} activeView={view} onNavigate={setView} onLogout={logout}>
+      {view === 'dashboard' && <DashboardPage onViewVehicles={() => setView('vehicles')} />}
       {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} />}
       {view === 'drivers' && <DriversPage />}
       {view === 'costs' && costsTarget && (
@@ -59,6 +41,6 @@ export function App() {
           onBack={() => setView('vehicles')}
         />
       )}
-    </div>
+    </AppShell>
   );
 }
