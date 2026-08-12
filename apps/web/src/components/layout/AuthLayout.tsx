@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Logo } from '../shared/Logo';
 
 interface Props {
   titulo: string;
@@ -17,13 +18,9 @@ interface Props {
 export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
   return (
     <div className="superficie-publica min-h-screen lg:grid lg:grid-cols-2">
-      <aside className="hidden flex-col justify-between border-r border-[var(--linha)] bg-[var(--papel-fundo)] p-12 lg:flex">
-        <button
-          type="button"
-          onClick={onVoltar}
-          className="fonte-editorial self-start text-[22px] leading-none text-[var(--tinta)]"
-        >
-          AutonomousAPI
+      <aside className="hidden flex-col justify-between border-r border-[var(--linha)] bg-[var(--breu-elevado)] p-12 lg:flex">
+        <button type="button" onClick={onVoltar} className="self-start text-[var(--tinta)]">
+          <Logo tamanho={26} />
         </button>
 
         <p className="fonte-editorial max-w-md text-[34px] leading-[1.15] text-[var(--tinta)]">
@@ -65,7 +62,7 @@ export function CampoPublico({
       </label>
       <input
         id={id}
-        className="w-full rounded-md border border-[var(--linha)] bg-[var(--papel)] px-3.5 py-2.5 text-[15px] text-[var(--tinta)] outline-none transition-colors placeholder:text-[var(--tinta-suave)]/60 focus:border-[var(--acento)]"
+        className="w-full rounded-md border border-[var(--linha)] bg-[var(--breu-elevado)] px-3.5 py-2.5 text-[15px] text-[var(--tinta)] outline-none transition-colors placeholder:text-[var(--tinta-suave)]/60 focus:border-[var(--acento)]"
         {...props}
       />
     </div>
@@ -76,7 +73,7 @@ export function CampoPublico({
 export function BotaoPublico({ children, ...props }: React.ComponentProps<'button'>) {
   return (
     <button
-      className="w-full rounded-full bg-[var(--tinta)] px-6 py-3 text-[15px] font-medium text-[var(--papel)] transition-opacity disabled:opacity-55"
+      className="w-full rounded-full bg-[var(--tinta)] px-6 py-3 text-[15px] font-medium text-[var(--breu)] transition-opacity disabled:opacity-55"
       {...props}
     >
       {children}
@@ -87,7 +84,7 @@ export function BotaoPublico({ children, ...props }: React.ComponentProps<'butto
 /** Mensagem de erro no tom da superfície pública (o vermelho do painel destoa aqui). */
 export function ErroPublico({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-md border border-[var(--acento)]/30 bg-[var(--acento)]/8 px-3.5 py-2.5 text-[13px] text-[var(--acento)]">
+    <p className="rounded-md border border-[var(--acento)]/30 bg-[var(--acento)]/12 px-3.5 py-2.5 text-[13px] text-[var(--acento)]">
       {children}
     </p>
   );
