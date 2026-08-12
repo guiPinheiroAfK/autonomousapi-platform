@@ -60,6 +60,9 @@ services:
       CORE_DB_USER: autonomousapi
       CORE_DB_PASSWORD: autonomousapi
       CORE_JWT_SECRET: ${CORE_JWT_SECRET:-dev-only-secret-change-me-please-0123456789abcdef}
+      # A application.yml já lia esta variável; faltava o compose repassá-la. Útil para
+      # sessão longa em demonstração/depuração sem recompilar (o padrão segue 15 min).
+      CORE_JWT_ACCESS_TTL_MIN: ${CORE_JWT_ACCESS_TTL_MIN:-15}
       GEO_API_URL: http://geo-api:8000
       GEO_SERVICE_TOKEN: ${GEO_SERVICE_TOKEN:-dev-service-token-change-me}
       REDIS_HOST: redis
