@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.Map;
 
 public record VehicleRequest(
         @NotBlank @Size(max = 10) String plate,
@@ -16,5 +17,10 @@ public record VehicleRequest(
         @NotNull VehicleStatus status,
         /** Opcional — sem valor, o veículo não entra no alerta de manutenção. */
         LocalDate proximaManutencaoData,
-        Integer proximaManutencaoKm) {
+        Integer proximaManutencaoKm,
+        /**
+         * Atributos que variam por tipo de veículo (ADR 0008): autonomia e conector num
+         * elétrico, cilindrada numa moto, valor FIPE. Nulo é tratado como mapa vazio.
+         */
+        Map<String, Object> atributos) {
 }

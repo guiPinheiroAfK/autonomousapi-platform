@@ -3,6 +3,7 @@ package com.autonomousapi.core.vehicle.dto;
 import com.autonomousapi.core.vehicle.Vehicle;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 public record VehicleResponse(
@@ -15,6 +16,7 @@ public record VehicleResponse(
         String status,
         LocalDate proximaManutencaoData,
         Integer proximaManutencaoKm,
+        Map<String, Object> atributos,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -29,6 +31,7 @@ public record VehicleResponse(
                 v.getStatus().name(),
                 v.getProximaManutencaoData(),
                 v.getProximaManutencaoKm(),
+                v.getAtributos(),
                 v.getCreatedAt(),
                 v.getUpdatedAt());
     }

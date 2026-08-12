@@ -406,6 +406,9 @@ export interface components {
             proximaManutencaoData?: string;
             /** Format: int32 */
             proximaManutencaoKm?: number;
+            atributos?: {
+                [key: string]: Record<string, never>;
+            };
         };
         VehicleResponse: {
             /** Format: uuid */
@@ -422,6 +425,9 @@ export interface components {
             proximaManutencaoData?: string;
             /** Format: int32 */
             proximaManutencaoKm?: number;
+            atributos?: {
+                [key: string]: Record<string, never>;
+            };
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
