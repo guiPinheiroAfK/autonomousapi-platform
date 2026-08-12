@@ -1,6 +1,7 @@
 package com.autonomousapi.core.vehicle;
 
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleRequest;
 import com.autonomousapi.core.vehicle.dto.VehicleResponse;
 import jakarta.validation.Valid;
@@ -45,6 +46,12 @@ public class VehicleController {
     @GetMapping("/{id}")
     public VehicleResponse get(@PathVariable UUID id, Authentication auth) {
         return vehicleService.get(principal(auth), id);
+    }
+
+    /** Veículos com manutenção vencida ou a vencer (alerta, spec 05 Fase 1). */
+    @GetMapping("/maintenance-due")
+    public List<VehicleMaintenanceAlertResponse> maintenanceDue(Authentication auth) {
+        return vehicleService.maintenanceDue(principal(auth));
     }
 
     @PutMapping("/{id}")

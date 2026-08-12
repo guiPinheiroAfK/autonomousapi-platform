@@ -79,28 +79,30 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private void seedVehicles(UUID tenantId) {
-        // plate, brand, model, ano, odômetro, status
-        record V(String plate, String brand, String model, int year, int km, VehicleStatus status) {}
+        // plate, brand, model, ano, odômetro, status, próxima manutenção (data,km)
+        // — data/km nulos = sem manutenção agendada (não entra em nenhum alerta).
+        record V(String plate, String brand, String model, int year, int km, VehicleStatus status,
+                LocalDate proxData, Integer proxKm) {}
 
+        LocalDate today = LocalDate.now();
         List<V> defs = List.of(
-                new V("RTC1A23", "Fiat", "Fiorino", 2022, 32000, VehicleStatus.ATIVO),
-                new V("RTC1B45", "Fiat", "Strada", 2023, 18500, VehicleStatus.ATIVO),
-                new V("RTC1C67", "Volkswagen", "Saveiro", 2021, 54200, VehicleStatus.ATIVO),
-                new V("RTC1D89", "Renault", "Kangoo", 2020, 71300, VehicleStatus.ATIVO),
-                new V("RTC1E12", "Fiat", "Doblo", 2019, 88900, VehicleStatus.MANUTENCAO),
-                new V("RTC1F34", "Hyundai", "HR", 2022, 41200, VehicleStatus.ATIVO),
-                new V("RTC1G56", "Iveco", "Daily", 2021, 62700, VehicleStatus.ATIVO),
-                new V("RTC1H78", "Volkswagen", "Delivery Express", 2023, 15400, VehicleStatus.ATIVO),
-                new V("RTC1I90", "Mercedes-Benz", "Sprinter", 2020, 95600, VehicleStatus.MANUTENCAO),
-                new V("RTC1J12", "Honda", "CG 160", 2023, 8700, VehicleStatus.ATIVO),
-                new V("RTC1K34", "Yamaha", "Factor 125", 2022, 21300, VehicleStatus.ATIVO),
-                new V("RTC1L56", "Fiat", "Fiorino", 2018, 132000, VehicleStatus.INATIVO));
+                new V("RTC1A23", "Fiat", "Fiorino", 2022, 32000, VehicleStatus.ATIVO, null, 40000),
+                new V("RTC1B45", "Fiat", "Strada", 2023, 18500, VehicleStatus.ATIVO, today.plusDays(60), null),
+                new V("RTC1C67", "Volkswagen", "Saveiro", 2021, 54200, VehicleStatus.ATIVO, null, 55000),
+                new V("RTC1D89", "Renault", "Kangoo", 2020, 71300, VehicleStatus.ATIVO, today.plusDays(10), null),
+                new V("RTC1E12", "Fiat", "Doblo", 2019, 88900, VehicleStatus.MANUTENCAO, null, null),
+                new V("RTC1F34", "Hyundai", "HR", 2022, 41200, VehicleStatus.ATIVO, today.minusDays(5), null),
+                new V("RTC1G56", "Iveco", "Daily", 2021, 62700, VehicleStatus.ATIVO, null, null),
+                new V("RTC1H78", "Volkswagen", "Delivery Express", 2023, 15400, VehicleStatus.ATIVO,
+                        today.plusDays(120), null),
+                new V("RTC1I90", "Mercedes-Benz", "Sprinter", 2020, 95600, VehicleStatus.MANUTENCAO, null, null),
+                new V("RTC1J12", "Honda", "CG 160", 2023, 8700, VehicleStatus.ATIVO, null, 9000),
+                new V("RTC1K34", "Yamaha", "Factor 125", 2022, 21300, VehicleStatus.ATIVO, null, null),
+                new V("RTC1L56", "Fiat", "Fiorino", 2018, 132000, VehicleStatus.INATIVO, null, null));
 
         for (V d : defs) {
             Vehicle v = new Vehicle(tenantId, d.plate(), d.brand(), d.model(), d.year(), d.km());
-            if (d.status() != VehicleStatus.ATIVO) {
-                v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status());
-            }
+            v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status(), d.proxData(), d.proxKm());
             vehicles.save(v);
 
             // Histórico de custo só nos veículos operacionais (ATIVO/MANUTENCAO) — reflete
@@ -144,22 +146,22 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private void seedDrivers(UUID tenantId) {
-        record D(String name, String cnh, String phone, DriverStatus status) {}
+        // name, cnh, phone, status, validade da CNH — nula = não entra no alerta de CNH.
+        record D(String name, String cnh, String phone, DriverStatus status, LocalDate cnhValidade) {}
 
+        LocalDate today = LocalDate.now();
         List<D> defs = List.of(
-                new D("Eduardo Ramos", "11223344556", "11987651234", DriverStatus.ATIVO),
-                new D("Juliana Martins", "22334455667", "11987652345", DriverStatus.ATIVO),
-                new D("Anderson Souza", "33445566778", "11987653456", DriverStatus.ATIVO),
-                new D("Patrícia Lima", "44556677889", "11987654567", DriverStatus.ATIVO),
-                new D("Thiago Nogueira", "55667788990", "11987655678", DriverStatus.ATIVO),
-                new D("Camila Duarte", "66778899001", "11987656789", DriverStatus.ATIVO),
-                new D("Roberto Alves", "77889900112", "11987657890", DriverStatus.INATIVO));
+                new D("Eduardo Ramos", "11223344556", "11987651234", DriverStatus.ATIVO, today.plusDays(8)),
+                new D("Juliana Martins", "22334455667", "11987652345", DriverStatus.ATIVO, today.plusDays(200)),
+                new D("Anderson Souza", "33445566778", "11987653456", DriverStatus.ATIVO, today.minusDays(2)),
+                new D("Patrícia Lima", "44556677889", "11987654567", DriverStatus.ATIVO, null),
+                new D("Thiago Nogueira", "55667788990", "11987655678", DriverStatus.ATIVO, today.plusDays(25)),
+                new D("Camila Duarte", "66778899001", "11987656789", DriverStatus.ATIVO, today.plusDays(300)),
+                new D("Roberto Alves", "77889900112", "11987657890", DriverStatus.INATIVO, null));
 
         for (D d : defs) {
             Driver driver = new Driver(tenantId, d.name(), d.cnh(), d.phone());
-            if (d.status() != DriverStatus.ATIVO) {
-                driver.update(d.name(), d.cnh(), d.phone(), d.status());
-            }
+            driver.update(d.name(), d.cnh(), d.phone(), d.status(), d.cnhValidade());
             drivers.save(driver);
         }
     }

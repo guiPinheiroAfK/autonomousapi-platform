@@ -11,7 +11,7 @@ import { Select } from '../components/ui/select';
 
 const STATUS_OPTIONS = ['ATIVO', 'INATIVO'] as const;
 
-const EMPTY_FORM: DriverRequest = { name: '', cnh: '', phone: '', status: 'ATIVO' };
+const EMPTY_FORM: DriverRequest = { name: '', cnh: '', phone: '', status: 'ATIVO', cnhValidade: undefined };
 
 export function DriversPage() {
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
@@ -45,6 +45,7 @@ export function DriversPage() {
       cnh: d.cnh!,
       phone: d.phone ?? '',
       status: d.status as DriverRequest['status'],
+      cnhValidade: d.cnhValidade,
     });
     setError('');
     setModalOpen(true);
@@ -197,6 +198,15 @@ export function DriversPage() {
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="border-t border-border pt-4">
+            <Label htmlFor="cnhValidade">Validade da CNH</Label>
+            <Input
+              id="cnhValidade"
+              type="date"
+              value={form.cnhValidade ?? ''}
+              onChange={(e) => setForm({ ...form, cnhValidade: e.target.value || undefined })}
+            />
           </div>
 
           {error && <p className="text-xs text-status-danger">{error}</p>}

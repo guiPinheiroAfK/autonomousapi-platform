@@ -3,8 +3,12 @@ package com.autonomousapi.core.vehicle;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.PlateAlreadyUsedException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleRequest;
 import com.autonomousapi.core.vehicle.dto.VehicleResponse;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class VehicleService {
+
+    /** Alerta dispara com manutenção a até 15 dias OU 1000km de distância (spec 05, Fase 1). */
+    private static final int MAINTENANCE_DAYS_THRESHOLD = 15;
+    private static final int MAINTENANCE_KM_THRESHOLD = 1000;
 
     private final VehicleRepository vehicles;
 
@@ -33,6 +41,8 @@ public class VehicleService {
         }
         Vehicle vehicle = new Vehicle(
                 tenantId, req.plate(), req.brand(), req.model(), req.modelYear(), req.odometerKm());
+        vehicle.update(req.plate(), req.brand(), req.model(), req.modelYear(), req.odometerKm(),
+                req.status(), req.proximaManutencaoData(), req.proximaManutencaoKm());
         vehicles.save(vehicle);
         return VehicleResponse.from(vehicle);
     }
@@ -56,7 +66,7 @@ public class VehicleService {
             throw new PlateAlreadyUsedException();
         }
         vehicle.update(req.plate(), req.brand(), req.model(), req.modelYear(),
-                req.odometerKm(), req.status());
+                req.odometerKm(), req.status(), req.proximaManutencaoData(), req.proximaManutencaoKm());
         return VehicleResponse.from(vehicle);
     }
 
@@ -64,6 +74,33 @@ public class VehicleService {
     public void delete(JwtPrincipal principal, UUID id) {
         Vehicle vehicle = findOwned(principal, id);
         vehicles.delete(vehicle);
+    }
+
+    /** Veículos com manutenção vencida ou a vencer nos próximos 15 dias / 1000km. */
+    @Transactional(readOnly = true)
+    public List<VehicleMaintenanceAlertResponse> maintenanceDue(JwtPrincipal principal) {
+        LocalDate today = LocalDate.now();
+        return vehicles.findAllByTenantIdWithManutencaoAgendada(principal.tenantId()).stream()
+                .map(v -> toAlert(v, today))
+                .filter(a -> (a.diasRestantes() != null && a.diasRestantes() <= MAINTENANCE_DAYS_THRESHOLD)
+                        || (a.kmRestante() != null && a.kmRestante() <= MAINTENANCE_KM_THRESHOLD))
+                .sorted(Comparator.comparing(
+                        a -> Math.min(
+                                a.diasRestantes() != null ? a.diasRestantes() : Long.MAX_VALUE,
+                                a.kmRestante() != null ? a.kmRestante() : Long.MAX_VALUE)))
+                .toList();
+    }
+
+    private VehicleMaintenanceAlertResponse toAlert(Vehicle v, LocalDate today) {
+        Long diasRestantes = v.getProximaManutencaoData() != null
+                ? ChronoUnit.DAYS.between(today, v.getProximaManutencaoData())
+                : null;
+        Integer kmRestante = v.getProximaManutencaoKm() != null
+                ? v.getProximaManutencaoKm() - v.getOdometerKm()
+                : null;
+        return new VehicleMaintenanceAlertResponse(
+                v.getId(), v.getPlate(), v.getBrand(), v.getModel(),
+                v.getProximaManutencaoData(), diasRestantes, v.getProximaManutencaoKm(), kmRestante);
     }
 
     private Vehicle findOwned(JwtPrincipal principal, UUID id) {

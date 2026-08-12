@@ -2,6 +2,7 @@ package com.autonomousapi.core.driver.dto;
 
 import com.autonomousapi.core.driver.Driver;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record DriverResponse(
@@ -10,12 +11,13 @@ public record DriverResponse(
         String cnh,
         String phone,
         String status,
+        LocalDate cnhValidade,
         Instant createdAt,
         Instant updatedAt) {
 
     public static DriverResponse from(Driver d) {
         return new DriverResponse(
                 d.getId(), d.getName(), d.getCnh(), d.getPhone(),
-                d.getStatus().name(), d.getCreatedAt(), d.getUpdatedAt());
+                d.getStatus().name(), d.getCnhValidade(), d.getCreatedAt(), d.getUpdatedAt());
     }
 }

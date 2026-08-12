@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 
 public record VehicleRequest(
         @NotBlank @Size(max = 10) String plate,
@@ -12,5 +13,8 @@ public record VehicleRequest(
         @NotBlank @Size(max = 80) String model,
         Integer modelYear,
         @NotNull @Min(0) Integer odometerKm,
-        @NotNull VehicleStatus status) {
+        @NotNull VehicleStatus status,
+        /** Opcional — sem valor, o veículo não entra no alerta de manutenção. */
+        LocalDate proximaManutencaoData,
+        Integer proximaManutencaoKm) {
 }

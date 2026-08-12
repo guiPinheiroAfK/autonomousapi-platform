@@ -19,6 +19,8 @@ export type DriverRequest = Schemas['DriverRequest'];
 export type VehicleCostEntryResponse = Schemas['VehicleCostEntryResponse'];
 export type VehicleCostEntryRequest = Schemas['VehicleCostEntryRequest'];
 export type VehicleCostSummaryResponse = Schemas['VehicleCostSummaryResponse'];
+export type VehicleMaintenanceAlertResponse = Schemas['VehicleMaintenanceAlertResponse'];
+export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
 export type TokenResponse = Schemas['TokenResponse'];
 export type UserResponse = Schemas['UserResponse'];
 export type LoginRequest = Schemas['LoginRequest'];
@@ -76,6 +78,7 @@ export const coreApi = {
     update: (id: string, body: VehicleRequest) =>
       request<VehicleResponse>(`/v1/vehicles/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id: string) => request<void>(`/v1/vehicles/${id}`, { method: 'DELETE' }),
+    maintenanceDue: () => request<VehicleMaintenanceAlertResponse[]>('/v1/vehicles/maintenance-due'),
   },
 
   drivers: {
@@ -85,6 +88,7 @@ export const coreApi = {
     update: (id: string, body: DriverRequest) =>
       request<DriverResponse>(`/v1/drivers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id: string) => request<void>(`/v1/drivers/${id}`, { method: 'DELETE' }),
+    licenseExpiring: () => request<DriverLicenseAlertResponse[]>('/v1/drivers/license-expiring'),
   },
 
   vehicleCosts: {

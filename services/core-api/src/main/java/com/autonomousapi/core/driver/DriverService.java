@@ -1,10 +1,14 @@
 package com.autonomousapi.core.driver;
 
+import com.autonomousapi.core.driver.dto.DriverLicenseAlertResponse;
 import com.autonomousapi.core.driver.dto.DriverRequest;
 import com.autonomousapi.core.driver.dto.DriverResponse;
 import com.autonomousapi.core.error.CnhAlreadyUsedException;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -13,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 /** Mesmo padrão de escopo por tenant do VehicleService: 404 (não 403) fora do tenant. */
 @Service
 public class DriverService {
+
+    /** Alerta dispara com CNH vencida ou a vencer nos próximos 30 dias. */
+    private static final int CNH_DAYS_THRESHOLD = 30;
 
     private final DriverRepository drivers;
 
@@ -27,6 +34,7 @@ public class DriverService {
             throw new CnhAlreadyUsedException();
         }
         Driver driver = new Driver(tenantId, req.name(), req.cnh(), req.phone());
+        driver.update(req.name(), req.cnh(), req.phone(), req.status(), req.cnhValidade());
         drivers.save(driver);
         return DriverResponse.from(driver);
     }
@@ -49,13 +57,26 @@ public class DriverService {
         if (drivers.existsByTenantIdAndCnhAndIdNot(principal.tenantId(), req.cnh(), id)) {
             throw new CnhAlreadyUsedException();
         }
-        driver.update(req.name(), req.cnh(), req.phone(), req.status());
+        driver.update(req.name(), req.cnh(), req.phone(), req.status(), req.cnhValidade());
         return DriverResponse.from(driver);
     }
 
     @Transactional
     public void delete(JwtPrincipal principal, UUID id) {
         drivers.delete(findOwned(principal, id));
+    }
+
+    /** Motoristas com CNH vencida ou a vencer nos próximos 30 dias. */
+    @Transactional(readOnly = true)
+    public List<DriverLicenseAlertResponse> licenseExpiring(JwtPrincipal principal) {
+        LocalDate today = LocalDate.now();
+        return drivers.findAllByTenantIdAndCnhValidadeIsNotNull(principal.tenantId()).stream()
+                .map(d -> new DriverLicenseAlertResponse(
+                        d.getId(), d.getName(), d.getCnhValidade(),
+                        ChronoUnit.DAYS.between(today, d.getCnhValidade())))
+                .filter(a -> a.diasRestantes() <= CNH_DAYS_THRESHOLD)
+                .sorted(Comparator.comparingLong(DriverLicenseAlertResponse::diasRestantes))
+                .toList();
     }
 
     private Driver findOwned(JwtPrincipal principal, UUID id) {
