@@ -1,6 +1,8 @@
 package com.autonomousapi.core.vehicle;
 
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.vehicle.cost.VehicleCostService;
+import com.autonomousapi.core.vehicle.cost.dto.MonthlyCostResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleRequest;
 import com.autonomousapi.core.vehicle.dto.VehicleResponse;
@@ -26,9 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class VehicleController {
 
     private final VehicleService vehicleService;
+    private final VehicleCostService costService;
 
-    public VehicleController(VehicleService vehicleService) {
+    public VehicleController(VehicleService vehicleService, VehicleCostService costService) {
         this.vehicleService = vehicleService;
+        this.costService = costService;
     }
 
     @PostMapping
@@ -52,6 +56,12 @@ public class VehicleController {
     @GetMapping("/maintenance-due")
     public List<VehicleMaintenanceAlertResponse> maintenanceDue(Authentication auth) {
         return vehicleService.maintenanceDue(principal(auth));
+    }
+
+    /** Custo somado por mês, últimos 6 meses, em toda a frota (gráfico de tendência do dashboard). */
+    @GetMapping("/cost-trend")
+    public List<MonthlyCostResponse> costTrend(Authentication auth) {
+        return costService.monthlyTrend(principal(auth));
     }
 
     @PutMapping("/{id}")
