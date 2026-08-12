@@ -16,7 +16,9 @@ import com.autonomousapi.core.vehicle.cost.VehicleCostEntry;
 import com.autonomousapi.core.vehicle.cost.VehicleCostEntryRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -102,7 +104,8 @@ public class DemoDataSeeder implements ApplicationRunner {
 
         for (V d : defs) {
             Vehicle v = new Vehicle(tenantId, d.plate(), d.brand(), d.model(), d.year(), d.km());
-            v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status(), d.proxData(), d.proxKm());
+            v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status(), d.proxData(), d.proxKm(),
+                    atributosDe(d.brand(), d.model()));
             vehicles.save(v);
 
             // Histórico de custo só nos veículos operacionais (ATIVO/MANUTENCAO) — reflete
@@ -111,6 +114,28 @@ public class DemoDataSeeder implements ApplicationRunner {
                 seedCostHistory(v.getId(), d.plate(), d.km());
             }
         }
+    }
+
+    /**
+     * Atributos que variam por tipo de veículo (ADR 0008). É exatamente o caso que motivou o
+     * jsonb: moto tem cilindrada, elétrico teria autonomia e conector, utilitário tem
+     * capacidade de carga — nenhum desses faz sentido como coluna preenchida para todo mundo.
+     */
+    private static Map<String, Object> atributosDe(String marca, String modelo) {
+        Map<String, Object> attrs = new LinkedHashMap<>();
+        boolean ehMoto = "Honda".equals(marca) || "Yamaha".equals(marca);
+
+        if (ehMoto) {
+            attrs.put("categoria", "motocicleta");
+            attrs.put("cilindradas", modelo.contains("160") ? 162 : 125);
+            attrs.put("combustivel", "flex");
+        } else {
+            attrs.put("categoria", "utilitario");
+            attrs.put("combustivel", "diesel");
+            attrs.put("capacidadeCargaKg",
+                    modelo.contains("Sprinter") || modelo.contains("Daily") ? 1500 : 650);
+        }
+        return attrs;
     }
 
     /**

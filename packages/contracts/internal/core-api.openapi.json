@@ -977,6 +977,12 @@
                     "proximaManutencaoKm": {
                         "type": "integer",
                         "format": "int32"
+                    },
+                    "atributos": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
                     }
                 }
             },
@@ -1014,6 +1020,12 @@
                     "proximaManutencaoKm": {
                         "type": "integer",
                         "format": "int32"
+                    },
+                    "atributos": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
                     },
                     "createdAt": {
                         "type": "string",
