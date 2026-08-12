@@ -514,6 +514,29 @@
                 }
             }
         },
+        "/v1/vehicles/cost-trend": {
+            "get": {
+                "tags": [
+                    "vehicle-controller"
+                ],
+                "operationId": "costTrend",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MonthlyCostResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/health": {
             "get": {
                 "tags": [
@@ -956,6 +979,17 @@
                     "kmRestante": {
                         "type": "integer",
                         "format": "int32"
+                    }
+                }
+            },
+            "MonthlyCostResponse": {
+                "type": "object",
+                "properties": {
+                    "month": {
+                        "type": "string"
+                    },
+                    "total": {
+                        "type": "number"
                     }
                 }
             },

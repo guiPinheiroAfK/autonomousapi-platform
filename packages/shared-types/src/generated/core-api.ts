@@ -164,6 +164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/vehicles/cost-trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["costTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/health": {
         parameters: {
             query?: never;
@@ -350,6 +366,10 @@ export interface components {
             proximaManutencaoKm?: number;
             /** Format: int32 */
             kmRestante?: number;
+        };
+        MonthlyCostResponse: {
+            month?: string;
+            total?: number;
         };
         DriverLicenseAlertResponse: {
             /** Format: uuid */
@@ -759,6 +779,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleMaintenanceAlertResponse"][];
+                };
+            };
+        };
+    };
+    costTrend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlyCostResponse"][];
                 };
             };
         };

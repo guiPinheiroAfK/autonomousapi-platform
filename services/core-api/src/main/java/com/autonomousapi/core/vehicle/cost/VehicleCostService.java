@@ -4,13 +4,19 @@ import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
+import com.autonomousapi.core.vehicle.cost.dto.MonthlyCostResponse;
 import com.autonomousapi.core.vehicle.cost.dto.VehicleCostEntryRequest;
 import com.autonomousapi.core.vehicle.cost.dto.VehicleCostEntryResponse;
 import com.autonomousapi.core.vehicle.cost.dto.VehicleCostSummaryResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class VehicleCostService {
+
+    /** Gráfico de tendência do dashboard mostra os últimos 6 meses (mês corrente incluso). */
+    private static final int TREND_MONTHS = 6;
 
     private final VehicleRepository vehicles;
     private final VehicleCostEntryRepository costs;
@@ -60,6 +69,27 @@ public class VehicleCostService {
                 ? null
                 : total.divide(BigDecimal.valueOf(odometerKm), 2, RoundingMode.HALF_UP);
         return new VehicleCostSummaryResponse(vehicle.getId(), total, odometerKm, costPerKm);
+    }
+
+    /** Soma de custos por mês em toda a frota do tenant, últimos {@value #TREND_MONTHS} meses. */
+    @Transactional(readOnly = true)
+    public List<MonthlyCostResponse> monthlyTrend(JwtPrincipal principal) {
+        YearMonth currentMonth = YearMonth.now();
+        YearMonth firstMonth = currentMonth.minusMonths(TREND_MONTHS - 1L);
+        LocalDate since = firstMonth.atDay(1);
+
+        Map<YearMonth, BigDecimal> totalsByMonth = costs.findAllByTenantIdSince(principal.tenantId(), since)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        c -> YearMonth.from(c.getOccurredAt()),
+                        Collectors.reducing(BigDecimal.ZERO, VehicleCostEntry::getAmount, BigDecimal::add)));
+
+        List<MonthlyCostResponse> trend = new ArrayList<>();
+        for (int i = 0; i < TREND_MONTHS; i++) {
+            YearMonth month = firstMonth.plusMonths(i);
+            trend.add(new MonthlyCostResponse(month.toString(), totalsByMonth.getOrDefault(month, BigDecimal.ZERO)));
+        }
+        return trend;
     }
 
     @Transactional
