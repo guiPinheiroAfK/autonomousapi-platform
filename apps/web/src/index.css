@@ -292,6 +292,140 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Micro-interações da superfície pública.
+   Nada disso é decorativo por decoração: é o que faz a página "responder" ao
+   mouse em vez de só existir na tela. Tudo respeita prefers-reduced-motion.
+--------------------------------------------------------------------------- */
+
+/* Cartão que "sobe" no hover — cards de modo de operação e de plano. */
+.cartao-pop {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+.cartao-pop:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.55);
+}
+
+/* Botão com resposta tátil: cresce um fiapo no hover, encolhe no clique. */
+.botao-tatil {
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.botao-tatil:hover {
+  transform: translateY(-1px) scale(1.015);
+}
+.botao-tatil:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.05s;
+}
+
+/* Acordeão do FAQ: anima altura via grid-template-rows (0fr → 1fr), técnica que
+   dispensa max-height mágico e funciona com conteúdo de altura variável. */
+.acordeao-corpo {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.acordeao-corpo[data-aberto="true"] {
+  grid-template-rows: 1fr;
+}
+.acordeao-corpo > div {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cartao-pop,
+  .botao-tatil,
+  .acordeao-corpo {
+    transition: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Entrar / Cadastrar.
+   A coluna do formulário "chega" da direita ao montar a tela — dá a sensação
+   de troca de contexto sem ser um redirecionamento de página de verdade. A
+   coluna editorial (esquerda) ganha um brilho âmbar lento e ambiente, preso
+   só nela via overflow:hidden no <aside>, pra não disputar atenção com o
+   formulário do outro lado.
+--------------------------------------------------------------------------- */
+@keyframes chegar-da-direita {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.entra-da-direita {
+  animation: chegar-da-direita 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ambiente-deriva {
+  0%,
+  100% {
+    transform: translate(-8%, -6%) scale(1);
+  }
+  50% {
+    transform: translate(6%, 8%) scale(1.15);
+  }
+}
+.ambiente-publico {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--acento) 16%, transparent), transparent 70%);
+  animation: ambiente-deriva 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entra-da-direita {
+    animation: none;
+  }
+  .ambiente-publico {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Placeholder do mapa/GPS na seção "Tese".
+   Fica no lugar de um vídeo real de rastreamento (a gravar depois, com paleta
+   parecida à de um GPS de mercado). Enquanto isso, uma grade que pulsa e um
+   ponto que percorre uma rota fixa já comunicam "isto é dado de rota
+   acontecendo", sem prometer um vídeo que ainda não existe.
+--------------------------------------------------------------------------- */
+@keyframes mapa-pulsar {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@keyframes mapa-percorrer {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+.mapa-ponto {
+  offset-path: path("M 20 160 C 80 40, 180 220, 260 90 S 380 30, 420 120");
+  animation: mapa-percorrer 7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mapa-ponto {
+    animation: none;
+    offset-distance: 40%;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

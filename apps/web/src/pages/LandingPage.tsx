@@ -27,6 +27,8 @@ export function LandingPage({ onEntrar, onCriarConta }: Props) {
         <Hero onCriarConta={onCriarConta} onEntrar={onEntrar} />
         <Espectro />
         <Tese />
+        <Recursos />
+        <Confianca />
         <Planos onCriarConta={onCriarConta} />
         <Perguntas />
       </main>
@@ -64,14 +66,14 @@ function Cabecalho({ onEntrar, onCriarConta }: Props) {
           <button
             type="button"
             onClick={onEntrar}
-            className="whitespace-nowrap text-[14px] text-[var(--tinta-suave)] transition-colors hover:text-[var(--tinta)]"
+            className="botao-tatil whitespace-nowrap text-[14px] text-[var(--tinta-suave)] transition-colors hover:text-[var(--tinta)]"
           >
             Entrar
           </button>
           <button
             type="button"
             onClick={onCriarConta}
-            className="whitespace-nowrap rounded-full bg-[var(--tinta)] px-4 py-2 text-[14px] font-medium text-[var(--breu)] transition-opacity hover:opacity-90"
+            className="botao-tatil whitespace-nowrap rounded-full bg-[var(--tinta)] px-4 py-2 text-[14px] font-medium text-[var(--breu)] transition-opacity hover:opacity-90"
           >
             Começar
           </button>
@@ -102,14 +104,14 @@ function Hero({ onCriarConta, onEntrar }: Props) {
             <button
               type="button"
               onClick={onCriarConta}
-              className="rounded-full bg-[var(--acento)] px-7 py-3.5 text-[15px] font-medium text-[var(--acento-tinta)] transition-transform hover:-translate-y-0.5"
+              className="botao-tatil rounded-full bg-[var(--acento)] px-7 py-3.5 text-[15px] font-medium text-[var(--acento-tinta)]"
             >
               Cadastrar minha frota
             </button>
             <button
               type="button"
               onClick={onEntrar}
-              className="rounded-full border border-[var(--linha)] px-7 py-3.5 text-[15px] transition-colors hover:border-[var(--tinta-suave)]"
+              className="botao-tatil rounded-full border border-[var(--linha)] px-7 py-3.5 text-[15px] transition-colors hover:border-[var(--tinta-suave)]"
             >
               Já tenho conta
             </button>
@@ -135,15 +137,21 @@ function LinhaDado({ rotulo, valor, alerta }: { rotulo: string; valor: string; a
 
 /**
  * O bloco claro do hero não fica preso a um único exemplo. Ele alterna entre uma
- * ficha de veículo, um extrato de custo e uma lista de frota — os três tipos de
- * tela que o produto realmente tem — para o visitante sentir o sistema em vez de
- * ler sobre ele. Troca sozinha a cada 5s e por clique nos indicadores.
+ * ficha de veículo, um extrato de custo, uma lista de frota e o resumo do painel —
+ * os tipos de tela que o produto realmente tem — para o visitante sentir o sistema
+ * em vez de ler sobre ele. Troca sozinha a cada 5s e por clique nos indicadores.
+ *
+ * Isso é print reconstruído, não captura de tela: os números batem com o que o
+ * painel mostra de verdade (ver DemoDataSeeder), mas é HTML/CSS nítido em qualquer
+ * resolução — uma imagem rasterizada ficaria embaçada nas telas grandes do hero e
+ * precisaria ser refeita a cada mudança de paleta.
  */
 function Vitrine() {
   const quadros = [
     { titulo: 'Ficha do veículo', corpo: <QuadroVeiculo /> },
     { titulo: 'Extrato de custo', corpo: <QuadroExtrato /> },
     { titulo: 'Frota', corpo: <QuadroFrota /> },
+    { titulo: 'Painel', corpo: <QuadroPainel /> },
   ];
   const [indice, setIndice] = useState(0);
 
@@ -248,6 +256,33 @@ function QuadroFrota() {
   );
 }
 
+function QuadroPainel() {
+  const kpis = [
+    { rotulo: 'Veículos', valor: '12' },
+    { rotulo: 'Em operação', valor: '9' },
+    { rotulo: 'Em manutenção', valor: '2' },
+    { rotulo: 'Motoristas', valor: '7' },
+  ];
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {kpis.map((k) => (
+          <div key={k.rotulo} className="rounded-lg border border-black/10 px-3.5 py-2.5">
+            <p className="font-data text-[19px] font-medium leading-none">{k.valor}</p>
+            <p className="mt-1.5 text-[11px] opacity-55">{k.rotulo}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center gap-1.5 overflow-hidden rounded-full border border-black/10">
+        <div className="h-2 bg-[#15803d]" style={{ width: '75%' }} />
+        <div className="h-2 bg-[#b45309]" style={{ width: '17%' }} />
+        <div className="h-2 bg-black/15" style={{ width: '8%' }} />
+      </div>
+      <p className="mt-2 text-[11px] opacity-55">Ativo (9) · Em manutenção (2) · Inativo (1)</p>
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------------- Espectro */
 
 function Espectro() {
@@ -306,7 +341,7 @@ function CartaoModo({
 }) {
   return (
     <div
-      className={`rounded-xl border p-7 ${
+      className={`cartao-pop rounded-xl border p-7 ${
         destaque
           ? 'border-[var(--acento)]/45 bg-[var(--breu-elevado)]'
           : 'border-[var(--linha)] bg-[var(--breu-elevado)]/55'
@@ -328,7 +363,7 @@ function Tese() {
   return (
     <section className="border-t border-[var(--linha)] bg-[var(--breu-elevado)]">
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="grid items-start gap-14 lg:grid-cols-[1.15fr_1fr]">
+        <div className="grid items-start gap-14 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="mb-5 text-[13px] uppercase tracking-[0.2em] text-[var(--tinta-suave)]">
               Por que construímos isso
@@ -337,24 +372,242 @@ function Tese() {
               Nenhum mapa genérico sabe o que é uma moto surgindo entre dois carros parados no
               farol.
             </h2>
+
+            <div className="mt-8 space-y-5 text-[16px] leading-[1.75] text-[var(--tinta-suave)]">
+              <p>
+                As empresas de veículo autônomo que olham para o Brasil não têm dado real do
+                nosso trânsito. Sinalização inconsistente, faixa que some, comportamento que
+                nenhum modelo treinado lá fora previu.
+              </p>
+              <p>
+                Esse dado não se coleta com carro de teste circulando vazio. Ele já está sendo
+                produzido, todo dia, por quem entrega, transporta e aluga — só que ninguém
+                guarda.
+              </p>
+              <p className="text-[var(--tinta)]">
+                A gestão de frota é um produto completo por si só. O mapa do trânsito real é o
+                que ela deixa para trás enquanto funciona.
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-5 text-[16px] leading-[1.75] text-[var(--tinta-suave)] lg:pt-14">
-            <p>
-              As empresas de veículo autônomo que olham para o Brasil não têm dado real do
-              nosso trânsito. Sinalização inconsistente, faixa que some, comportamento que
-              nenhum modelo treinado lá fora previu.
-            </p>
-            <p>
-              Esse dado não se coleta com carro de teste circulando vazio. Ele já está sendo
-              produzido, todo dia, por quem entrega, transporta e aluga — só que ninguém
-              guarda.
-            </p>
-            <p className="text-[var(--tinta)]">
-              A gestão de frota é um produto completo por si só. O mapa do trânsito real é o
-              que ela deixa para trás enquanto funciona.
-            </p>
-          </div>
+          <MapaRota />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Espaço reservado para um vídeo real de rota (gravado com uma paleta de GPS
+ * parecida com a nossa, tipo AutoHub) — por ora um SVG animado no lugar: linha de
+ * rota, ponto percorrendo (via CSS `offset-path`, ver .mapa-ponto no index.css) e
+ * uma grade que pulsa. Quando o vídeo existir, troca-se o conteúdo do <figure> por
+ * um <video loop muted autoPlay>; a moldura e a legenda continuam as mesmas.
+ */
+function MapaRota() {
+  return (
+    <figure className="overflow-hidden rounded-2xl border border-[var(--linha)] bg-[var(--breu)]">
+      <div className="relative aspect-[4/3]">
+        <svg
+          viewBox="0 0 440 240"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden
+        >
+          <defs>
+            <pattern id="grade-mapa" width="22" height="22" patternUnits="userSpaceOnUse">
+              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="var(--linha)" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="440" height="240" fill="url(#grade-mapa)" style={{ animation: 'mapa-pulsar 4s ease-in-out infinite' }} />
+          <path
+            d="M 20 160 C 80 40, 180 220, 260 90 S 380 30, 420 120"
+            fill="none"
+            stroke="var(--acento)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray="1 9"
+          />
+          <circle className="mapa-ponto" r="5" fill="var(--acento)" />
+        </svg>
+      </div>
+      <figcaption className="flex items-center justify-between border-t border-[var(--linha)] px-5 py-3.5 text-[12px] text-[var(--tinta-suave)]">
+        <span>Trajeto registrado pelo app do motorista</span>
+        <span className="font-data text-[var(--acento)]">em breve: vídeo real</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+/* ------------------------------------------------------------------- Recursos */
+
+const ICONE_TRACO = { stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
+
+function IconeCusto() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" {...ICONE_TRACO}>
+      <path d="M12 3v18M17 7.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.6 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3" />
+    </svg>
+  );
+}
+function IconeAlerta() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" {...ICONE_TRACO}>
+      <path d="M12 3 2 20h20L12 3Z" />
+      <path d="M12 10v4M12 17h.01" />
+    </svg>
+  );
+}
+function IconeExport() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" {...ICONE_TRACO}>
+      <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3M7 9l5-5 5 5M12 4v12" />
+    </svg>
+  );
+}
+function IconeFrota() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" {...ICONE_TRACO}>
+      <path d="M3 17V8a1 1 0 0 1 1-1h9l4 4h3a1 1 0 0 1 1 1v5" />
+      <circle cx="7.5" cy="17.5" r="2" />
+      <circle cx="17.5" cy="17.5" r="2" />
+    </svg>
+  );
+}
+function IconeApi() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" {...ICONE_TRACO}>
+      <rect x="3" y="8" width="18" height="8" rx="2" />
+      <path d="M7 12h.01M12 12h.01M17 12h.01" />
+    </svg>
+  );
+}
+function IconeGestor() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" {...ICONE_TRACO}>
+      <circle cx="12" cy="8" r="3.2" />
+      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+    </svg>
+  );
+}
+
+const RECURSOS: { icone: () => ReactNode; titulo: string; texto: string }[] = [
+  {
+    icone: IconeCusto,
+    titulo: 'Custo por km automático',
+    texto: 'Cada lançamento vira uma conta rastreável, sem planilha paralela e sem digitar de novo no fim do mês.',
+  },
+  {
+    icone: IconeAlerta,
+    titulo: 'Alerta de manutenção e CNH',
+    texto: 'O sistema avisa antes do vencimento — de preventiva e de documento — não depois que já venceu.',
+  },
+  {
+    icone: IconeExport,
+    titulo: 'Export sem lock-in',
+    texto: 'Tudo sai em CSV quando você quiser. O dado é seu; a ferramenta é só onde ele mora enquanto está com a gente.',
+  },
+  {
+    icone: IconeFrota,
+    titulo: 'Múltiplas unidades',
+    texto: 'Uma frota em três cidades ou três frotas separadas — o painel consolida sem misturar o que não deve se misturar.',
+  },
+  {
+    icone: IconeApi,
+    titulo: 'Acesso à API',
+    texto: 'Quem já tem um sistema interno integra o que precisar, sem reconstruir o que a AutonomousAPI já resolve.',
+  },
+  {
+    icone: IconeGestor,
+    titulo: 'Gestor sob demanda',
+    texto: 'Comece sozinho e peça ajuda só quando fizer sentido — o plano cresce junto, não trava você numa escolha inicial.',
+  },
+];
+
+function Recursos() {
+  return (
+    <section className="border-t border-[var(--linha)]">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <div className="mb-14 max-w-xl">
+          <p className="mb-4 text-[13px] uppercase tracking-[0.2em] text-[var(--tinta-suave)]">
+            O que o painel já faz
+          </p>
+          <h2 className="fonte-editorial text-[34px] leading-[1.15] sm:text-[44px]">
+            Seis coisas que hoje provavelmente vivem numa planilha.
+          </h2>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {RECURSOS.map(({ icone: Icone, titulo, texto }) => (
+            <div
+              key={titulo}
+              className="cartao-pop rounded-xl border border-[var(--linha)] bg-[var(--breu-elevado)]/55 p-6"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--acento)]/12 text-[var(--acento)]">
+                <Icone />
+              </div>
+              <h3 className="mt-4 text-[16px] font-medium text-[var(--tinta)]">{titulo}</h3>
+              <p className="mt-2 text-[14px] leading-[1.6] text-[var(--tinta-suave)]">{texto}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------- Confiança */
+
+function IconeCadeado() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" {...ICONE_TRACO}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </svg>
+  );
+}
+
+const GARANTIAS: { titulo: string; texto: string }[] = [
+  {
+    titulo: 'Isolamento por conta',
+    texto: 'Cada assinante enxerga só a própria frota. É regra de banco de dados, não convenção de tela — mesmo um erro de interface não vaza dado de outra empresa.',
+  },
+  {
+    titulo: 'Dado de trânsito, nunca de identidade',
+    texto: 'O que vira índice agregado de condição viária é o comportamento da via, não quem passou por ela. Nada identifica motorista, veículo ou cliente final.',
+  },
+  {
+    titulo: 'Você tira seus dados quando quiser',
+    texto: 'Export em CSV a qualquer momento, sem pedir permissão e sem taxa. Cancelar a assinatura não tranca o que é seu.',
+  },
+  {
+    titulo: 'Sem instalação, sem invasão',
+    texto: 'Não há hardware para instalar no veículo. O app do motorista só registra rota com consentimento explícito, dado a cada abertura.',
+  },
+];
+
+function Confianca() {
+  return (
+    <section className="border-t border-[var(--linha)] bg-[var(--breu-elevado)]">
+      <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--acento)]/35 text-[var(--acento)]">
+          <IconeCadeado />
+        </div>
+        <h2 className="fonte-editorial mt-6 text-[34px] leading-tight sm:text-[46px]">
+          Seus dados continuam seus.
+        </h2>
+        <p className="mx-auto mt-4 max-w-lg text-[16px] leading-[1.7] text-[var(--tinta-suave)]">
+          Gestão de frota lida com localização, custo e documento de gente de verdade. Não
+          tratamos isso como detalhe de rodapé.
+        </p>
+
+        <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-[var(--linha)] bg-[var(--linha)] text-left sm:grid-cols-2">
+          {GARANTIAS.map((g) => (
+            <div key={g.titulo} className="bg-[var(--breu-elevado)] p-7">
+              <p className="text-[15px] font-medium text-[var(--tinta)]">{g.titulo}</p>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[var(--tinta-suave)]">{g.texto}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -467,7 +720,7 @@ function Plano({
 }) {
   return (
     <div
-      className={`flex flex-col rounded-xl border p-7 ${
+      className={`cartao-pop flex flex-col rounded-xl border p-7 ${
         destaque ? 'border-[var(--acento)]/50 bg-[var(--breu-elevado)]' : 'border-[var(--linha)]'
       }`}
     >
@@ -481,7 +734,7 @@ function Plano({
       {emailContato ? (
         <a
           href={`mailto:${emailContato}`}
-          className="mt-7 rounded-full border border-[var(--tinta)] py-3 text-center text-[14px] font-medium transition-colors hover:bg-[var(--tinta)] hover:text-[var(--breu)]"
+          className="botao-tatil mt-7 rounded-full border border-[var(--tinta)] py-3 text-center text-[14px] font-medium transition-colors hover:bg-[var(--tinta)] hover:text-[var(--breu)]"
         >
           {acao}
         </a>
@@ -489,7 +742,7 @@ function Plano({
         <button
           type="button"
           onClick={onAcao}
-          className={`mt-7 rounded-full py-3 text-[14px] font-medium transition-opacity hover:opacity-90 ${
+          className={`botao-tatil mt-7 rounded-full py-3 text-[14px] font-medium transition-opacity hover:opacity-90 ${
             destaque
               ? 'bg-[var(--acento)] text-[var(--acento-tinta)]'
               : 'bg-[var(--tinta)] text-[var(--breu)]'
@@ -600,11 +853,13 @@ function Perguntas() {
                     +
                   </span>
                 </button>
-                {estaAberta && (
-                  <p className="pb-7 pr-10 text-[15px] leading-[1.75] text-[var(--tinta-suave)]">
-                    {p.a}
-                  </p>
-                )}
+                <div className="acordeao-corpo" data-aberto={estaAberta}>
+                  <div>
+                    <p className="pb-7 pr-10 text-[15px] leading-[1.75] text-[var(--tinta-suave)]">
+                      {p.a}
+                    </p>
+                  </div>
+                </div>
               </div>
             );
           })}

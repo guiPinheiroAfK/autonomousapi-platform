@@ -19,23 +19,33 @@ interface Props {
 export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
   return (
     <div className="superficie-publica min-h-screen lg:grid lg:grid-cols-2">
-      <aside className="hidden flex-col justify-between border-r border-[var(--linha)] bg-[var(--breu-elevado)] p-12 lg:flex">
-        <button type="button" onClick={onVoltar} className="self-start text-[var(--tinta)]">
+      {/* overflow-hidden prende o brilho ambiente dentro desta metade só — ele não deve
+          vazar pro lado do formulário nem empurrar o layout. */}
+      <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-[var(--linha)] bg-[var(--breu-elevado)] p-12 lg:flex">
+        <div className="ambiente-publico" aria-hidden />
+
+        <button type="button" onClick={onVoltar} className="botao-tatil relative self-start text-[var(--tinta)]">
           <Logo tamanho={26} />
         </button>
 
-        <div>
+        <div className="relative">
           <p className="fonte-editorial max-w-md text-[34px] leading-[1.15] text-[var(--tinta)]">
             {chamada}
           </p>
           <CartaoVitrine />
         </div>
 
-        <p className="text-[13px] text-[var(--tinta-suave)]">Gestão de frota · Dado viário · Brasil</p>
+        <p className="relative text-[13px] text-[var(--tinta-suave)]">
+          Gestão de frota · Dado viário · Brasil
+        </p>
       </aside>
 
+      {/* entra-da-direita: o formulário "chega" ao montar — dá sensação de troca de
+          contexto (como se tivesse vindo da landing) sem ser uma navegação de página
+          de verdade. Cada tela (Entrar/Cadastrar) remonta o componente porque o pai
+          troca de view, então a animação roda de novo a cada troca — de propósito. */}
       <main className="flex min-h-screen flex-col justify-center px-6 py-12 sm:px-12 lg:min-h-0">
-        <div className="mx-auto w-full max-w-sm">
+        <div className="entra-da-direita mx-auto w-full max-w-sm">
           <button
             type="button"
             onClick={onVoltar}
@@ -100,7 +110,7 @@ export function CampoPublico({
 export function BotaoPublico({ children, ...props }: React.ComponentProps<'button'>) {
   return (
     <button
-      className="w-full rounded-full bg-[var(--tinta)] px-6 py-3 text-[15px] font-medium text-[var(--breu)] transition-opacity disabled:opacity-55"
+      className="botao-tatil w-full rounded-full bg-[var(--tinta)] px-6 py-3 text-[15px] font-medium text-[var(--breu)] transition-opacity disabled:opacity-55"
       {...props}
     >
       {children}
