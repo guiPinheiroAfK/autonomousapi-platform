@@ -1,36 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap");
+/* As fontes (IBM Plex Sans/Mono, Inter, Fraunces) são carregadas uma vez só, via <link>
+   em index.html — @import aqui duplicaria a requisição e foi a causa provável do 404 de
+   woff2 visto no console (duas resoluções de hash disputando o mesmo cache). */
 @import "tailwindcss";
 @import "tw-animate-css";
 
 /* Tokens no padrão shadcn/ui (permite trocar tema sem tocar em componente).
-   Paleta: azul-aço profundo (frota/logística, corporativo e confiável) + âmbar
-   industrial como acento (usado com moderação, para ênfase/alerta). */
+   Paleta: cinza neutro (do quase-branco ao quase-preto) + âmbar industrial como
+   ÚNICO acento cromático. O azul-aço saiu: ele competia com as cores de status
+   (info é azul) e dava ao painel cara de dashboard financeiro. Com a base neutra,
+   qualquer cor na tela significa alguma coisa — status, alerta ou ação. */
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f3f4f6;
-  --foreground: #161e2b;
+  --background: #f4f4f5;
+  --foreground: #18181b;
   --surface: #ffffff;
-  --surface-muted: #f8f9fb;
+  --surface-muted: #fafafa;
 
   --card: #ffffff;
-  --card-foreground: #161e2b;
+  --card-foreground: #18181b;
   --popover: #ffffff;
-  --popover-foreground: #161e2b;
+  --popover-foreground: #18181b;
 
-  --border: #e2e5ea;
-  --input: #d8dce3;
-  --ring: #1f3a5f;
+  --border: #e4e4e7;
+  --input: #d4d4d8;
+  --ring: #52525b;
 
-  --muted: #eef0f3;
-  --muted-foreground: #5b6472;
+  --muted: #f1f1f2;
+  --muted-foreground: #64646b;
 
-  --primary: #1f3a5f;
-  --primary-foreground: #f7f9fc;
-  --primary-hover: #16314f;
+  --primary: #26262b;
+  --primary-foreground: #fafafa;
+  --primary-hover: #3a3a41;
 
-  --secondary: #eef1f5;
-  --secondary-foreground: #1f3a5f;
+  --secondary: #efeff1;
+  --secondary-foreground: #26262b;
 
   --accent: #d97706;
   --accent-foreground: #2a1602;
@@ -50,15 +54,15 @@
   --status-neutral: #6b7280;
   --status-neutral-bg: #f3f4f6;
 
-  --sidebar: #16212e;
-  --sidebar-foreground: #cdd5e0;
-  --sidebar-muted: #8693a3;
-  --sidebar-border: #25324296;
-  --sidebar-active: #223349;
+  --sidebar: #1a1a1d;
+  --sidebar-foreground: #d2d2d6;
+  --sidebar-muted: #8d8d95;
+  --sidebar-border: #3a3a4196;
+  --sidebar-active: #2c2c31;
   --sidebar-accent: #f0a23a;
 
   --radius: 0.5rem;
-  --scrollbar-thumb: #c7ccd4;
+  --scrollbar-thumb: #c9c9cd;
 
   --font-sans: "Inter", "IBM Plex Sans", system-ui, sans-serif;
   --font-display: "IBM Plex Sans", system-ui, sans-serif;
@@ -68,29 +72,29 @@
 .dark {
   /* Três camadas de profundidade: sidebar (mais escura) < fundo < card (mais
      clara) — mantém a hierarquia legível mesmo no escuro. */
-  --background: #121a24;
-  --foreground: #e3e7ed;
-  --surface: #19222e;
-  --surface-muted: #1c2630;
+  --background: #131315;
+  --foreground: #e7e7ea;
+  --surface: #1a1a1d;
+  --surface-muted: #1e1e21;
 
-  --card: #1a2330;
-  --card-foreground: #e3e7ed;
-  --popover: #1a2330;
-  --popover-foreground: #e3e7ed;
+  --card: #1c1c1f;
+  --card-foreground: #e7e7ea;
+  --popover: #1c1c1f;
+  --popover-foreground: #e7e7ea;
 
-  --border: #2b3645;
-  --input: #344050;
-  --ring: #5b8ec4;
+  --border: #2e2e33;
+  --input: #3a3a41;
+  --ring: #8a8a93;
 
-  --muted: #1f2a36;
-  --muted-foreground: #8d98a6;
+  --muted: #232327;
+  --muted-foreground: #96969e;
 
-  --primary: #4a7fb8;
-  --primary-foreground: #0c1117;
-  --primary-hover: #5c8fc6;
+  --primary: #e7e7ea;
+  --primary-foreground: #131315;
+  --primary-hover: #c9c9cf;
 
-  --secondary: #232e3b;
-  --secondary-foreground: #c7d4e3;
+  --secondary: #26262b;
+  --secondary-foreground: #d2d2d6;
 
   --accent: #f0a23a;
   --accent-foreground: #1a1206;
@@ -109,14 +113,14 @@
   --status-neutral: #9aa5b1;
   --status-neutral-bg: #232b34;
 
-  --sidebar: #0c1218;
-  --sidebar-foreground: #c2cbd6;
-  --sidebar-muted: #74808f;
+  --sidebar: #0e0e10;
+  --sidebar-foreground: #c6c6cb;
+  --sidebar-muted: #7d7d85;
   --sidebar-border: #ffffff14;
-  --sidebar-active: #1d2a38;
+  --sidebar-active: #242428;
   --sidebar-accent: #f0a23a;
 
-  --scrollbar-thumb: #3a4759;
+  --scrollbar-thumb: #3f3f46;
 }
 
 @theme inline {
@@ -182,9 +186,15 @@
   border-color: var(--color-border);
 }
 
-html,
-body {
+/* Só o elemento raiz pinta o fundo da página. Com html E body pintando, ao alternar
+   o tema o html virava escuro e o body continuava com a cor do tema anterior — a tela
+   ficava metade escura, metade clara. Um dono só para o canvas resolve, e é o
+   comportamento padrão de CSS: o fundo do elemento raiz cobre a viewport inteira. */
+html {
   background: var(--background);
+}
+
+body {
   color: var(--foreground);
 }
 
@@ -196,14 +206,231 @@ body {
   font-family: var(--font-sans);
   font-size: 13.5px;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.15s ease, color 0.15s ease;
 }
+
+/* Sem transition de cor no body de propósito. Quando ela existia, alternar o tema
+   mudava a variável mas a cor computada do body ficava travada no valor anterior —
+   texto escuro sobre fundo escuro. O html, que não tinha transition, sempre alternou
+   certo. Se um dia quisermos o esmaecido na troca de tema, tem que ser numa camada
+   que não seja a que carrega as variáveis. */
 
 /* Dado tabular (placas, km, valores) sempre alinhado em grade mono */
 .font-data {
   font-family: var(--font-mono);
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   Superfície pública (landing, login, cadastro).
+   Paleta própria, deliberadamente diferente do painel: quem ainda não é cliente
+   encontra uma página editorial, não um app de gestão. Escopada em
+   .superficie-publica para não vazar nos tokens do painel, e com tema fixo — é
+   peça de marca, não tela de trabalho, então não acompanha claro/escuro.
+--------------------------------------------------------------------------- */
+.superficie-publica {
+  /* Preto e cinza NEUTROS — saindo do azul-aço do painel, sem puxar para o quente.
+     O que amarra a página ao produto é o âmbar, não o fundo. */
+  --breu: #101113;
+  --breu-elevado: #17191c;
+  --tinta: #eef0f2;
+  --tinta-suave: #949aa2;
+  --linha: #282b30;
+
+  /* Âmbar da marca — o MESMO --sidebar-accent do painel. É o fio que liga a página
+     pública à interface: quem entra depois de assinar reencontra a cor. */
+  --acento: #f0a23a;
+  /* Texto sobre o âmbar — mesmo --accent-foreground do painel. */
+  --acento-tinta: #1a1206;
+
+  /* Bloco claro de contraste, no tom das superfícies claras do painel. */
+  --papel: #f7f8f9;
+  --papel-tinta: #161e2b;
+
+  background: var(--breu);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+  font-size: 16px;
+}
+
+/* Serifada só no display. No corpo de texto ela cansa; aqui ela dá o tom
+   editorial que separa a página pública da interface de trabalho. Fraunces no lugar
+   de uma serifada fina de exibição: peso 600 e o eixo óptico (opsz) puxado para o
+   texto grande deixam a letra mais cheia e as curvas mais macias — "gordinha" no
+   sentido bom, sem virar peso de manchete de jornal. */
+.fonte-editorial {
+  font-family: "Fraunces", Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  /* SOFT arredonda as curvas da letra (0 = desenho padrão, 100 = bem macio) — é o eixo
+     variável que dá o "gordinho e confortável" pedido, sem trocar de peso. WONK em 0
+     mantém as formas alternativas desligadas: aqui é título de produto, não convite de
+     casamento. */
+  font-variation-settings: "SOFT" 40, "WONK" 0;
+}
+
+/* Sublinhado que nasce do texto ao passar o mouse, em vez de aparecer inteiro. */
+.link-sublinhado {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  transition: background-size 0.25s ease;
+}
+.link-sublinhado:hover {
+  background-size: 100% 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-sublinhado {
+    transition: none;
+  }
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Micro-interações da superfície pública.
+   Nada disso é decorativo por decoração: é o que faz a página "responder" ao
+   mouse em vez de só existir na tela. Tudo respeita prefers-reduced-motion.
+--------------------------------------------------------------------------- */
+
+/* Cartão que "sobe" no hover — cards de modo de operação e de plano. */
+.cartao-pop {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+.cartao-pop:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.55);
+}
+
+/* Botão com resposta tátil: cresce um fiapo no hover, encolhe no clique. */
+.botao-tatil {
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.botao-tatil:hover {
+  transform: translateY(-1px) scale(1.015);
+}
+.botao-tatil:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.05s;
+}
+
+/* Acordeão do FAQ: anima altura via grid-template-rows (0fr → 1fr), técnica que
+   dispensa max-height mágico e funciona com conteúdo de altura variável. */
+.acordeao-corpo {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.acordeao-corpo[data-aberto="true"] {
+  grid-template-rows: 1fr;
+}
+.acordeao-corpo > div {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cartao-pop,
+  .botao-tatil,
+  .acordeao-corpo {
+    transition: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Entrar / Cadastrar.
+   A coluna do formulário "chega" da direita ao montar a tela — dá a sensação
+   de troca de contexto sem ser um redirecionamento de página de verdade. A
+   coluna editorial (esquerda) ganha um brilho âmbar lento e ambiente, preso
+   só nela via overflow:hidden no <aside>, pra não disputar atenção com o
+   formulário do outro lado.
+--------------------------------------------------------------------------- */
+@keyframes chegar-da-direita {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.entra-da-direita {
+  animation: chegar-da-direita 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ambiente-deriva {
+  0%,
+  100% {
+    transform: translate(-8%, -6%) scale(1);
+  }
+  50% {
+    transform: translate(6%, 8%) scale(1.15);
+  }
+}
+.ambiente-publico {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--acento) 16%, transparent), transparent 70%);
+  animation: ambiente-deriva 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entra-da-direita {
+    animation: none;
+  }
+  .ambiente-publico {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Placeholder do mapa/GPS na seção "Tese".
+   Fica no lugar de um vídeo real de rastreamento (a gravar depois, com paleta
+   parecida à de um GPS de mercado). Enquanto isso, uma grade que pulsa e um
+   ponto que percorre uma rota fixa já comunicam "isto é dado de rota
+   acontecendo", sem prometer um vídeo que ainda não existe.
+--------------------------------------------------------------------------- */
+@keyframes mapa-pulsar {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@keyframes mapa-percorrer {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+.mapa-ponto {
+  offset-path: path("M 20 160 C 80 40, 180 220, 260 90 S 380 30, 420 120");
+  animation: mapa-percorrer 7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mapa-ponto {
+    animation: none;
+    offset-distance: 40%;
+  }
 }
 
 ::-webkit-scrollbar {

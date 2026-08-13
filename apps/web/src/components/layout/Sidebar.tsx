@@ -1,4 +1,5 @@
-import { BarChart3, Car, ClipboardList, CreditCard, LayoutDashboard, Truck, Users, Wrench } from 'lucide-react';
+import { BarChart3, Car, ClipboardList, CreditCard, LayoutDashboard, Users, Wrench } from 'lucide-react';
+import { Marca } from '../shared/Logo';
 import { cn } from '../../lib/utils';
 import type { View } from './AppShell';
 
@@ -60,8 +61,8 @@ export function Sidebar({ activeView, onNavigate }: SidebarProps) {
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2.5 px-4 py-4">
-        <div className="flex size-8 items-center justify-center rounded-md bg-sidebar-accent text-[#1a1206]">
-          <Truck className="size-[18px]" />
+        <div className="flex size-8 items-center justify-center rounded-md bg-sidebar-accent text-[var(--accent-foreground)]">
+          <Marca tamanho={19} />
         </div>
         <div className="flex flex-col leading-none">
           <span className="font-display text-[14px] font-bold text-white">AutonomousAPI</span>

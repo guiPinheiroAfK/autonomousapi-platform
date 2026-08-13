@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { AppShell, type View } from './components/layout/AppShell';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 
@@ -27,17 +28,36 @@ function CarregandoTela() {
 
 export function App() {
   const { user, loading, logout } = useAuth();
-  const [authScreen, setAuthScreen] = useState<'login' | 'signup'>('login');
+  // Quem não está logado cai na landing, não direto no formulário: a página pública é
+  // a porta de entrada de quem ainda não é cliente.
+  const [authScreen, setAuthScreen] = useState<'landing' | 'login' | 'signup'>('landing');
   const [view, setView] = useState<View>('dashboard');
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
 
   if (loading) return null;
 
   if (!user) {
-    return authScreen === 'login' ? (
-      <LoginPage onGoToSignup={() => setAuthScreen('signup')} />
-    ) : (
-      <SignupPage onGoToLogin={() => setAuthScreen('login')} />
+    if (authScreen === 'login') {
+      return (
+        <LoginPage
+          onGoToSignup={() => setAuthScreen('signup')}
+          onVoltarParaHome={() => setAuthScreen('landing')}
+        />
+      );
+    }
+    if (authScreen === 'signup') {
+      return (
+        <SignupPage
+          onGoToLogin={() => setAuthScreen('login')}
+          onVoltarParaHome={() => setAuthScreen('landing')}
+        />
+      );
+    }
+    return (
+      <LandingPage
+        onEntrar={() => setAuthScreen('login')}
+        onCriarConta={() => setAuthScreen('signup')}
+      />
     );
   }
 
