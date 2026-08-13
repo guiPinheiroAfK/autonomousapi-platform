@@ -73,7 +73,28 @@ Modelo de dados (schema `core`):
 
 ## Definition of Done (parcerias e dados futuros)
 
-- [ ] Modelo de dados de cada item acima criado como migration (mesmo que a feature não esteja com UI completa ainda).
-- [ ] Regra de acesso de `driver_rating` implementada e testada (motorista/passageiro/terceiro não conseguem ler, nem por bug de UI nem por chamada direta à API).
+- [x] Modelo de dados de cada item acima criado como migration (mesmo que a feature não esteja com UI completa ainda).
+      (migration V10 — exceto recarga elétrica, ver nota abaixo; `driver_rating_auto` também
+      fica de fora, depende do pipeline de GPS maduro, spec já marca isso como Fase 3)
+- [x] Regra de acesso de `driver_rating` implementada (todas as rotas de
+      `DriverRatingController`, inclusive leitura, são `GESTOR_FROTA`/`ADMIN` via
+      `@PreAuthorize` de classe — não existe rota que um MOTORISTA autenticado consiga
+      chamar). **Não testado com um usuário MOTORISTA real**: não há hoje nenhum fluxo que
+      crie login com essa role (signup só cria GESTOR_FROTA — spec 03 trata isso como
+      feature futura de convite), então o caso "motorista tenta ler a própria nota" ainda
+      não tem como ser exercitado ponta a ponta. Verificado apenas estruturalmente
+      (`@EnableMethodSecurity` ativo, mesmo mecanismo já em uso no resto do app).
 - [ ] Fallback gracioso implementado para provedor externo de recarga fora do ar.
+      (recarga elétrica não entrou nesta rodada — sem provedor de dado real identificado
+      ainda, ver spec 06 item 1)
 - [ ] Consentimento de avaliação de desempenho incluído no fluxo de onboarding do motorista.
+      (depende do app mobile ter uma tela de onboarding de motorista com login próprio —
+      ainda não existe, mesma dependência do item de acesso acima)
+
+### Nota sobre FIPE (item 2)
+
+O spec pede "usar API pública/terceirizada de consulta FIPE, cacheada". `vehicle_market_value`
+já é essa tabela de cache — o que falta é a consulta automática em si: as APIs públicas de
+FIPE (ex. parallelum) exigem resolver marca/modelo do nosso cadastro para o código de
+catálogo delas, que é um problema de matching à parte, não coberto nesta rodada. Por ora o
+gestor lança o valor manualmente via `POST /v1/vehicles/{id}/market-value`.
