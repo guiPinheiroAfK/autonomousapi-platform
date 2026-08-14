@@ -1,5 +1,9 @@
 package com.autonomousapi.core.demo;
 
+import com.autonomousapi.core.billing.BillingSource;
+import com.autonomousapi.core.billing.Subscription;
+import com.autonomousapi.core.billing.SubscriptionRepository;
+import com.autonomousapi.core.billing.SubscriptionStatus;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.driver.DriverStatus;
@@ -49,6 +53,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final VehicleRepository vehicles;
     private final DriverRepository drivers;
     private final VehicleCostEntryRepository costs;
+    private final SubscriptionRepository subscriptions;
     private final PasswordEncoder passwordEncoder;
 
     public DemoDataSeeder(
@@ -57,12 +62,14 @@ public class DemoDataSeeder implements ApplicationRunner {
             VehicleRepository vehicles,
             DriverRepository drivers,
             VehicleCostEntryRepository costs,
+            SubscriptionRepository subscriptions,
             PasswordEncoder passwordEncoder) {
         this.tenants = tenants;
         this.users = users;
         this.vehicles = vehicles;
         this.drivers = drivers;
         this.costs = costs;
+        this.subscriptions = subscriptions;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -75,6 +82,12 @@ public class DemoDataSeeder implements ApplicationRunner {
         users.save(new User(
                 rotaCerta.getId(), "demo@rotacerta.com.br",
                 passwordEncoder.encode("demo12345"), Role.GESTOR_FROTA));
+
+        // ACTIVE direto, sem passar pelo trial: demo é ambiente permanente de
+        // demonstração, não deve nunca ser bloqueado pelo SubscriptionGate.
+        Subscription demoSub = new Subscription(rotaCerta.getId(), BillingSource.WEB_STRIPE, "demo-customer");
+        demoSub.applyStripeUpdate(null, SubscriptionStatus.ACTIVE, null);
+        subscriptions.save(demoSub);
 
         seedVehicles(rotaCerta.getId());
         seedDrivers(rotaCerta.getId());

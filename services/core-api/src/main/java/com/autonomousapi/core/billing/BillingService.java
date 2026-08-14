@@ -58,7 +58,8 @@ public class BillingService {
     public SubscriptionResponse getSubscription(JwtPrincipal principal) {
         return subscriptions.findByTenantId(principal.tenantId())
                 .map(s -> new SubscriptionResponse(
-                        true, s.getBillingSource().name(), s.getStatus().name(), s.getCurrentPeriodEnd()))
+                        true, s.getBillingSource().name(), s.getStatus().name(),
+                        s.getCurrentPeriodEnd(), s.getTrialEndsAt()))
                 .orElseGet(SubscriptionResponse::none);
     }
 

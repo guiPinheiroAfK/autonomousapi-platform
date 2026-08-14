@@ -3,6 +3,8 @@ package com.autonomousapi.core.auth;
 import com.autonomousapi.core.auth.dto.LoginRequest;
 import com.autonomousapi.core.auth.dto.SignupRequest;
 import com.autonomousapi.core.auth.dto.TokenResponse;
+import com.autonomousapi.core.billing.Subscription;
+import com.autonomousapi.core.billing.SubscriptionRepository;
 import com.autonomousapi.core.error.EmailAlreadyUsedException;
 import com.autonomousapi.core.error.InvalidCredentialsException;
 import com.autonomousapi.core.error.InvalidRefreshTokenException;
@@ -28,9 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
+    /** Spec 03 + ADR 0010: 7 dias de uso livre antes de exigir assinatura. */
+    private static final long TRIAL_DAYS = 7;
+
     private final UserRepository users;
     private final TenantRepository tenants;
     private final RefreshTokenRepository refreshTokens;
+    private final SubscriptionRepository subscriptions;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Duration refreshTtl;
@@ -41,6 +47,7 @@ public class AuthService {
             UserRepository users,
             TenantRepository tenants,
             RefreshTokenRepository refreshTokens,
+            SubscriptionRepository subscriptions,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
@@ -48,13 +55,18 @@ public class AuthService {
         this.users = users;
         this.tenants = tenants;
         this.refreshTokens = refreshTokens;
+        this.subscriptions = subscriptions;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
         this.accessTtlSeconds = Duration.ofMinutes(accessTtlMinutes).toSeconds();
     }
 
-    /** Cria um tenant e o primeiro usuário (gestor de frota) e já devolve tokens. */
+    /**
+     * Cria um tenant, o primeiro usuário (gestor de frota) e o trial de
+     * {@value #TRIAL_DAYS} dias (ver Subscription#trial, SubscriptionGate) — sem isso o
+     * tenant recém-criado ficaria bloqueado na primeira escrita.
+     */
     @Transactional
     public TokenResponse signup(SignupRequest req) {
         if (users.existsByEmail(req.email())) {
@@ -67,6 +79,7 @@ public class AuthService {
                 passwordEncoder.encode(req.password()),
                 Role.GESTOR_FROTA);
         users.save(user);
+        subscriptions.save(Subscription.trial(tenant.getId(), Instant.now().plus(Duration.ofDays(TRIAL_DAYS))));
         return issueTokens(user);
     }
 
