@@ -1,1511 +1,1248 @@
 {
-    "openapi": "3.0.1",
-    "info": {
-        "title": "OpenAPI definition",
-        "version": "v0"
+  "openapi": "3.0.1",
+  "info": { "title": "OpenAPI definition", "version": "v0" },
+  "servers": [{ "url": "http://localhost:8080", "description": "Generated server url" }],
+  "paths": {
+    "/v1/vehicles/{id}": {
+      "get": {
+        "tags": ["vehicle-controller"],
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/VehicleResponse" } } }
+          }
+        }
+      },
+      "put": {
+        "tags": ["vehicle-controller"],
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VehicleRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/VehicleResponse" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["vehicle-controller"],
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
     },
-    "servers": [
-        {
-            "url": "http://localhost:8080",
-            "description": "Generated server url"
+    "/v1/drivers/{id}": {
+      "get": {
+        "tags": ["driver-controller"],
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DriverResponse" } } }
+          }
         }
-    ],
-    "paths": {
-        "/v1/vehicles/{id}": {
-            "get": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "get",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/VehicleResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/VehicleRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/VehicleResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "delete_1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
+      },
+      "put": {
+        "tags": ["driver-controller"],
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/DriverRequest" } }
+          },
+          "required": true
         },
-        "/v1/drivers/{id}": {
-            "get": {
-                "tags": [
-                    "driver-controller"
-                ],
-                "operationId": "get_1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DriverResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "driver-controller"
-                ],
-                "operationId": "update_1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/DriverRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DriverResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "driver-controller"
-                ],
-                "operationId": "delete_2",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/v1/vehicles": {
-            "get": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "list",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/VehicleResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "create",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/VehicleRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/VehicleResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/vehicles/{vehicleId}/costs": {
-            "get": {
-                "tags": [
-                    "vehicle-cost-controller"
-                ],
-                "operationId": "list_1",
-                "parameters": [
-                    {
-                        "name": "vehicleId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/VehicleCostEntryResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "vehicle-cost-controller"
-                ],
-                "operationId": "addEntry",
-                "parameters": [
-                    {
-                        "name": "vehicleId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/VehicleCostEntryRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/VehicleCostEntryResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/trips": {
-            "get": {
-                "tags": [
-                    "trip-controller"
-                ],
-                "operationId": "list_2",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/TripResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "trip-controller"
-                ],
-                "operationId": "start",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/StartTripRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TripResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/trips/{id}/stop": {
-            "post": {
-                "tags": [
-                    "trip-controller"
-                ],
-                "operationId": "stop",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TripResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/trips/{id}/pings": {
-            "post": {
-                "tags": [
-                    "trip-controller"
-                ],
-                "operationId": "submitPing",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SubmitPingRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "202": {
-                        "description": "Accepted"
-                    }
-                }
-            }
-        },
-        "/v1/trips/{id}/pings/batch": {
-            "post": {
-                "tags": [
-                    "trip-controller"
-                ],
-                "operationId": "submitPingBatch",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SubmitPingBatchRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "202": {
-                        "description": "Accepted",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SubmitPingBatchResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/drivers": {
-            "get": {
-                "tags": [
-                    "driver-controller"
-                ],
-                "operationId": "list_3",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/DriverResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "driver-controller"
-                ],
-                "operationId": "create_1",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/DriverRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DriverResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/billing/webhook": {
-            "post": {
-                "tags": [
-                    "billing-controller"
-                ],
-                "operationId": "webhook",
-                "parameters": [
-                    {
-                        "name": "Stripe-Signature",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/v1/billing/checkout": {
-            "post": {
-                "tags": [
-                    "billing-controller"
-                ],
-                "operationId": "checkout",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CheckoutSessionResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/auth/signup": {
-            "post": {
-                "tags": [
-                    "auth-controller"
-                ],
-                "operationId": "signup",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SignupRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TokenResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/auth/refresh": {
-            "post": {
-                "tags": [
-                    "auth-controller"
-                ],
-                "operationId": "refresh",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RefreshRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TokenResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/auth/login": {
-            "post": {
-                "tags": [
-                    "auth-controller"
-                ],
-                "operationId": "login",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/LoginRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TokenResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/vehicles/{vehicleId}/cost-summary": {
-            "get": {
-                "tags": [
-                    "vehicle-cost-controller"
-                ],
-                "operationId": "summary",
-                "parameters": [
-                    {
-                        "name": "vehicleId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/VehicleCostSummaryResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/vehicles/maintenance-due": {
-            "get": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "maintenanceDue",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/vehicles/costs": {
-            "get": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "fleetCosts",
-                "parameters": [
-                    {
-                        "name": "category",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "COMBUSTIVEL",
-                                "MANUTENCAO",
-                                "OUTRO"
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/FleetCostEntryResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/vehicles/cost-trend": {
-            "get": {
-                "tags": [
-                    "vehicle-controller"
-                ],
-                "operationId": "costTrend",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/MonthlyCostResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/reports/costs.csv": {
-            "get": {
-                "tags": [
-                    "report-controller"
-                ],
-                "operationId": "costsCsv",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "text/csv": {
-                                "schema": {
-                                    "type": "string",
-                                    "format": "byte"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/health": {
-            "get": {
-                "tags": [
-                    "health-controller"
-                ],
-                "operationId": "health",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "object",
-                                    "additionalProperties": {
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/drivers/license-expiring": {
-            "get": {
-                "tags": [
-                    "driver-controller"
-                ],
-                "operationId": "licenseExpiring",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/DriverLicenseAlertResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/billing/subscription": {
-            "get": {
-                "tags": [
-                    "billing-controller"
-                ],
-                "operationId": "subscription",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SubscriptionResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/auth/me": {
-            "get": {
-                "tags": [
-                    "auth-controller"
-                ],
-                "operationId": "me",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "*/*": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/vehicles/{vehicleId}/costs/{costId}": {
-            "delete": {
-                "tags": [
-                    "vehicle-cost-controller"
-                ],
-                "operationId": "delete",
-                "parameters": [
-                    {
-                        "name": "vehicleId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "costId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DriverResponse" } } }
+          }
         }
+      },
+      "delete": {
+        "tags": ["driver-controller"],
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
     },
-    "components": {
-        "schemas": {
-            "VehicleRequest": {
-                "required": [
-                    "brand",
-                    "model",
-                    "odometerKm",
-                    "plate",
-                    "status"
-                ],
-                "type": "object",
-                "properties": {
-                    "plate": {
-                        "maxLength": 10,
-                        "minLength": 0,
-                        "type": "string"
-                    },
-                    "brand": {
-                        "maxLength": 80,
-                        "minLength": 0,
-                        "type": "string"
-                    },
-                    "model": {
-                        "maxLength": 80,
-                        "minLength": 0,
-                        "type": "string"
-                    },
-                    "modelYear": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "odometerKm": {
-                        "minimum": 0,
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "ATIVO",
-                            "MANUTENCAO",
-                            "INATIVO"
-                        ]
-                    },
-                    "proximaManutencaoData": {
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "proximaManutencaoKm": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "atributos": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "object"
-                        }
-                    }
+    "/v1/vehicles": {
+      "get": {
+        "tags": ["vehicle-controller"],
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleResponse" }
                 }
-            },
-            "VehicleResponse": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "plate": {
-                        "type": "string"
-                    },
-                    "brand": {
-                        "type": "string"
-                    },
-                    "model": {
-                        "type": "string"
-                    },
-                    "modelYear": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "odometerKm": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "status": {
-                        "type": "string"
-                    },
-                    "proximaManutencaoData": {
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "proximaManutencaoKm": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "atributos": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "object"
-                        }
-                    },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updatedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "DriverRequest": {
-                "required": [
-                    "cnh",
-                    "name",
-                    "status"
-                ],
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "maxLength": 150,
-                        "minLength": 0,
-                        "type": "string"
-                    },
-                    "cnh": {
-                        "pattern": "\\d{11}",
-                        "type": "string"
-                    },
-                    "phone": {
-                        "maxLength": 20,
-                        "minLength": 0,
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "ATIVO",
-                            "INATIVO"
-                        ]
-                    },
-                    "cnhValidade": {
-                        "type": "string",
-                        "format": "date"
-                    }
-                }
-            },
-            "DriverResponse": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "cnh": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string"
-                    },
-                    "cnhValidade": {
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updatedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "VehicleCostEntryRequest": {
-                "required": [
-                    "amount",
-                    "category",
-                    "occurredAt"
-                ],
-                "type": "object",
-                "properties": {
-                    "category": {
-                        "type": "string",
-                        "enum": [
-                            "COMBUSTIVEL",
-                            "MANUTENCAO",
-                            "OUTRO"
-                        ]
-                    },
-                    "amount": {
-                        "minimum": 0.01,
-                        "exclusiveMinimum": false,
-                        "type": "number"
-                    },
-                    "description": {
-                        "maxLength": 255,
-                        "minLength": 0,
-                        "type": "string"
-                    },
-                    "occurredAt": {
-                        "type": "string",
-                        "format": "date"
-                    }
-                }
-            },
-            "VehicleCostEntryResponse": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "amount": {
-                        "type": "number"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "occurredAt": {
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "StartTripRequest": {
-                "required": [
-                    "vehicleId"
-                ],
-                "type": "object",
-                "properties": {
-                    "vehicleId": {
-                        "type": "string",
-                        "format": "uuid"
-                    }
-                }
-            },
-            "TripResponse": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "vehicleId": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "status": {
-                        "type": "string"
-                    },
-                    "startedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "endedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "SubmitPingRequest": {
-                "required": [
-                    "lat",
-                    "lon",
-                    "recordedAt"
-                ],
-                "type": "object",
-                "properties": {
-                    "recordedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "lat": {
-                        "maximum": 90,
-                        "exclusiveMaximum": false,
-                        "minimum": -90,
-                        "exclusiveMinimum": false,
-                        "type": "number",
-                        "format": "double"
-                    },
-                    "lon": {
-                        "maximum": 180,
-                        "exclusiveMaximum": false,
-                        "minimum": -180,
-                        "exclusiveMinimum": false,
-                        "type": "number",
-                        "format": "double"
-                    },
-                    "speed": {
-                        "type": "number",
-                        "format": "double"
-                    },
-                    "heading": {
-                        "type": "number",
-                        "format": "double"
-                    },
-                    "accuracy": {
-                        "type": "number",
-                        "format": "double"
-                    }
-                }
-            },
-            "SubmitPingBatchRequest": {
-                "required": [
-                    "pings"
-                ],
-                "type": "object",
-                "properties": {
-                    "pings": {
-                        "maxItems": 500,
-                        "minItems": 0,
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/SubmitPingRequest"
-                        }
-                    }
-                }
-            },
-            "SubmitPingBatchResponse": {
-                "type": "object",
-                "properties": {
-                    "accepted": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "received": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "CheckoutSessionResponse": {
-                "type": "object",
-                "properties": {
-                    "checkoutUrl": {
-                        "type": "string"
-                    }
-                }
-            },
-            "SignupRequest": {
-                "required": [
-                    "email",
-                    "password",
-                    "tenantName"
-                ],
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string"
-                    },
-                    "password": {
-                        "maxLength": 100,
-                        "minLength": 8,
-                        "type": "string"
-                    },
-                    "tenantName": {
-                        "maxLength": 200,
-                        "minLength": 0,
-                        "type": "string"
-                    }
-                }
-            },
-            "TokenResponse": {
-                "type": "object",
-                "properties": {
-                    "accessToken": {
-                        "type": "string"
-                    },
-                    "refreshToken": {
-                        "type": "string"
-                    },
-                    "tokenType": {
-                        "type": "string"
-                    },
-                    "expiresInSeconds": {
-                        "type": "integer",
-                        "format": "int64"
-                    }
-                }
-            },
-            "RefreshRequest": {
-                "required": [
-                    "refreshToken"
-                ],
-                "type": "object",
-                "properties": {
-                    "refreshToken": {
-                        "type": "string"
-                    }
-                }
-            },
-            "LoginRequest": {
-                "required": [
-                    "email",
-                    "password"
-                ],
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string"
-                    },
-                    "password": {
-                        "type": "string"
-                    }
-                }
-            },
-            "VehicleCostSummaryResponse": {
-                "type": "object",
-                "properties": {
-                    "vehicleId": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "totalCost": {
-                        "type": "number"
-                    },
-                    "odometerKm": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "costPerKm": {
-                        "type": "number"
-                    }
-                }
-            },
-            "VehicleMaintenanceAlertResponse": {
-                "type": "object",
-                "properties": {
-                    "vehicleId": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "plate": {
-                        "type": "string"
-                    },
-                    "brand": {
-                        "type": "string"
-                    },
-                    "model": {
-                        "type": "string"
-                    },
-                    "proximaManutencaoData": {
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "diasRestantes": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "proximaManutencaoKm": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "kmRestante": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "FleetCostEntryResponse": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "vehicleId": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "plate": {
-                        "type": "string"
-                    },
-                    "brand": {
-                        "type": "string"
-                    },
-                    "model": {
-                        "type": "string"
-                    },
-                    "category": {
-                        "type": "string",
-                        "enum": [
-                            "COMBUSTIVEL",
-                            "MANUTENCAO",
-                            "OUTRO"
-                        ]
-                    },
-                    "amount": {
-                        "type": "number"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "occurredAt": {
-                        "type": "string",
-                        "format": "date"
-                    }
-                }
-            },
-            "MonthlyCostResponse": {
-                "type": "object",
-                "properties": {
-                    "month": {
-                        "type": "string"
-                    },
-                    "total": {
-                        "type": "number"
-                    }
-                }
-            },
-            "DriverLicenseAlertResponse": {
-                "type": "object",
-                "properties": {
-                    "driverId": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "cnhValidade": {
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "diasRestantes": {
-                        "type": "integer",
-                        "format": "int64"
-                    }
-                }
-            },
-            "SubscriptionResponse": {
-                "type": "object",
-                "properties": {
-                    "hasSubscription": {
-                        "type": "boolean"
-                    },
-                    "billingSource": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string"
-                    },
-                    "currentPeriodEnd": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "UserResponse": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "format": "uuid"
-                    }
-                }
+              }
             }
+          }
         }
+      },
+      "post": {
+        "tags": ["vehicle-controller"],
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VehicleRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/VehicleResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicleId}/market-value": {
+      "get": {
+        "tags": ["vehicle-market-value-controller"],
+        "operationId": "latest",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleMarketValueResponse" } }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["vehicle-market-value-controller"],
+        "operationId": "record",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleMarketValueRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleMarketValueResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicleId}/incidents": {
+      "get": {
+        "tags": ["vehicle-condition-controller"],
+        "operationId": "listIncidents",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleIncidentResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["vehicle-condition-controller"],
+        "operationId": "registerIncident",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleIncidentRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleIncidentResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicleId}/costs": {
+      "get": {
+        "tags": ["vehicle-cost-controller"],
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleCostEntryResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["vehicle-cost-controller"],
+        "operationId": "addEntry",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleCostEntryRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleCostEntryResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/trips": {
+      "get": {
+        "tags": ["trip-controller"],
+        "operationId": "list_2",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TripResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["trip-controller"],
+        "operationId": "start",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/StartTripRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TripResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/trips/{id}/stop": {
+      "post": {
+        "tags": ["trip-controller"],
+        "operationId": "stop",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TripResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/trips/{id}/pings": {
+      "post": {
+        "tags": ["trip-controller"],
+        "operationId": "submitPing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SubmitPingRequest" } }
+          },
+          "required": true
+        },
+        "responses": { "202": { "description": "Accepted" } }
+      }
+    },
+    "/v1/trips/{id}/pings/batch": {
+      "post": {
+        "tags": ["trip-controller"],
+        "operationId": "submitPingBatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubmitPingBatchRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/SubmitPingBatchResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers": {
+      "get": {
+        "tags": ["driver-controller"],
+        "operationId": "list_3",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DriverResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["driver-controller"],
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/DriverRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DriverResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/drivers/{driverId}/ratings": {
+      "get": {
+        "tags": ["driver-rating-controller"],
+        "operationId": "list_4",
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DriverRatingResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["driver-rating-controller"],
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/DriverRatingRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverRatingResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/webhook": {
+      "post": {
+        "tags": ["billing-controller"],
+        "operationId": "webhook",
+        "parameters": [
+          {
+            "name": "Stripe-Signature",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "string" } } },
+          "required": true
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/v1/billing/checkout": {
+      "post": {
+        "tags": ["billing-controller"],
+        "operationId": "checkout",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/CheckoutSessionResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/verify-email": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VerifyEmailRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/signup": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "signup",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SignupRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/SignupResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/resend-verification": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "resendVerification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResendVerificationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": { "202": { "description": "Accepted" } }
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/affiliates/partners/{partnerId}/click": {
+      "post": {
+        "tags": ["affiliate-controller"],
+        "operationId": "click",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AffiliateClickRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/AffiliateClickResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicleId}/cost-summary": {
+      "get": {
+        "tags": ["vehicle-cost-controller"],
+        "operationId": "summary",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleCostSummaryResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicleId}/condition-score": {
+      "get": {
+        "tags": ["vehicle-condition-controller"],
+        "operationId": "score",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleConditionScoreResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/maintenance-due": {
+      "get": {
+        "tags": ["vehicle-controller"],
+        "operationId": "maintenanceDue",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/costs": {
+      "get": {
+        "tags": ["vehicle-controller"],
+        "operationId": "fleetCosts",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["COMBUSTIVEL", "MANUTENCAO", "OUTRO"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/FleetCostEntryResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/cost-trend": {
+      "get": {
+        "tags": ["vehicle-controller"],
+        "operationId": "costTrend",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/MonthlyCostResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reports/costs.csv": {
+      "get": {
+        "tags": ["report-controller"],
+        "operationId": "costsCsv",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "text/csv": { "schema": { "type": "string", "format": "byte" } } }
+          }
+        }
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "tags": ["health-controller"],
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "type": "object", "additionalProperties": { "type": "object" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers/{driverId}/ratings/summary": {
+      "get": {
+        "tags": ["driver-rating-controller"],
+        "operationId": "summary_1",
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverRatingSummaryResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers/license-expiring": {
+      "get": {
+        "tags": ["driver-controller"],
+        "operationId": "licenseExpiring",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DriverLicenseAlertResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/subscription": {
+      "get": {
+        "tags": ["billing-controller"],
+        "operationId": "subscription",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/SubscriptionResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "tags": ["auth-controller"],
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/UserResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/affiliates/partners": {
+      "get": {
+        "tags": ["affiliate-controller"],
+        "operationId": "listPartners",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AffiliatePartnerResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicleId}/costs/{costId}": {
+      "delete": {
+        "tags": ["vehicle-cost-controller"],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "costId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
     }
+  },
+  "components": {
+    "schemas": {
+      "VehicleRequest": {
+        "required": ["brand", "model", "odometerKm", "plate", "status"],
+        "type": "object",
+        "properties": {
+          "plate": { "maxLength": 10, "minLength": 0, "type": "string" },
+          "brand": { "maxLength": 80, "minLength": 0, "type": "string" },
+          "model": { "maxLength": 80, "minLength": 0, "type": "string" },
+          "modelYear": { "type": "integer", "format": "int32" },
+          "odometerKm": { "minimum": 0, "type": "integer", "format": "int32" },
+          "status": { "type": "string", "enum": ["ATIVO", "MANUTENCAO", "INATIVO"] },
+          "proximaManutencaoData": { "type": "string", "format": "date" },
+          "proximaManutencaoKm": { "type": "integer", "format": "int32" },
+          "atributos": { "type": "object", "additionalProperties": { "type": "object" } }
+        }
+      },
+      "VehicleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "plate": { "type": "string" },
+          "brand": { "type": "string" },
+          "model": { "type": "string" },
+          "modelYear": { "type": "integer", "format": "int32" },
+          "odometerKm": { "type": "integer", "format": "int32" },
+          "status": { "type": "string" },
+          "proximaManutencaoData": { "type": "string", "format": "date" },
+          "proximaManutencaoKm": { "type": "integer", "format": "int32" },
+          "atributos": { "type": "object", "additionalProperties": { "type": "object" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DriverRequest": {
+        "required": ["cnh", "name", "status"],
+        "type": "object",
+        "properties": {
+          "name": { "maxLength": 150, "minLength": 0, "type": "string" },
+          "cnh": { "pattern": "\\d{11}", "type": "string" },
+          "phone": { "maxLength": 20, "minLength": 0, "type": "string" },
+          "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
+          "cnhValidade": { "type": "string", "format": "date" }
+        }
+      },
+      "DriverResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "cnh": { "type": "string" },
+          "phone": { "type": "string" },
+          "status": { "type": "string" },
+          "cnhValidade": { "type": "string", "format": "date" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "VehicleMarketValueRequest": {
+        "required": ["dataReferencia", "valorFipe"],
+        "type": "object",
+        "properties": {
+          "valorFipe": { "minimum": 0.0, "exclusiveMinimum": true, "type": "number" },
+          "dataReferencia": { "type": "string", "format": "date" },
+          "codigoFipe": { "maxLength": 20, "minLength": 0, "type": "string" }
+        }
+      },
+      "VehicleMarketValueResponse": {
+        "type": "object",
+        "properties": {
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "valorFipe": { "type": "number" },
+          "dataReferencia": { "type": "string", "format": "date" },
+          "codigoFipe": { "type": "string" }
+        }
+      },
+      "VehicleIncidentRequest": {
+        "required": ["data", "severidade"],
+        "type": "object",
+        "properties": {
+          "data": { "type": "string", "format": "date" },
+          "severidade": { "type": "string", "enum": ["LEVE", "MODERADA", "GRAVE"] },
+          "descricao": { "maxLength": 500, "minLength": 0, "type": "string" },
+          "custoReparo": { "minimum": 0.0, "exclusiveMinimum": false, "type": "number" }
+        }
+      },
+      "VehicleIncidentResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "data": { "type": "string", "format": "date" },
+          "severidade": { "type": "string", "enum": ["LEVE", "MODERADA", "GRAVE"] },
+          "descricao": { "type": "string" },
+          "custoReparo": { "type": "number" }
+        }
+      },
+      "VehicleCostEntryRequest": {
+        "required": ["amount", "category", "occurredAt"],
+        "type": "object",
+        "properties": {
+          "category": { "type": "string", "enum": ["COMBUSTIVEL", "MANUTENCAO", "OUTRO"] },
+          "amount": { "minimum": 0.01, "exclusiveMinimum": false, "type": "number" },
+          "description": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "occurredAt": { "type": "string", "format": "date" }
+        }
+      },
+      "VehicleCostEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "category": { "type": "string" },
+          "amount": { "type": "number" },
+          "description": { "type": "string" },
+          "occurredAt": { "type": "string", "format": "date" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StartTripRequest": {
+        "required": ["vehicleId"],
+        "type": "object",
+        "properties": { "vehicleId": { "type": "string", "format": "uuid" } }
+      },
+      "TripResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "endedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SubmitPingRequest": {
+        "required": ["lat", "lon", "recordedAt"],
+        "type": "object",
+        "properties": {
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "lat": {
+            "maximum": 90,
+            "exclusiveMaximum": false,
+            "minimum": -90,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "maximum": 180,
+            "exclusiveMaximum": false,
+            "minimum": -180,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "format": "double"
+          },
+          "speed": { "type": "number", "format": "double" },
+          "heading": { "type": "number", "format": "double" },
+          "accuracy": { "type": "number", "format": "double" }
+        }
+      },
+      "SubmitPingBatchRequest": {
+        "required": ["pings"],
+        "type": "object",
+        "properties": {
+          "pings": {
+            "maxItems": 500,
+            "minItems": 0,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SubmitPingRequest" }
+          }
+        }
+      },
+      "SubmitPingBatchResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": { "type": "integer", "format": "int32" },
+          "received": { "type": "integer", "format": "int32" }
+        }
+      },
+      "DriverRatingRequest": {
+        "required": ["nota"],
+        "type": "object",
+        "properties": {
+          "nota": { "maximum": 5, "minimum": 1, "type": "integer", "format": "int32" },
+          "comentario": { "maxLength": 500, "minLength": 0, "type": "string" }
+        }
+      },
+      "DriverRatingResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "gestorUserId": { "type": "string", "format": "uuid" },
+          "nota": { "type": "integer", "format": "int32" },
+          "comentario": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CheckoutSessionResponse": {
+        "type": "object",
+        "properties": { "checkoutUrl": { "type": "string" } }
+      },
+      "VerifyEmailRequest": {
+        "required": ["token"],
+        "type": "object",
+        "properties": { "token": { "type": "string" } }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" },
+          "tokenType": { "type": "string" },
+          "expiresInSeconds": { "type": "integer", "format": "int64" }
+        }
+      },
+      "SignupRequest": {
+        "required": ["email", "password", "tenantName"],
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "password": { "maxLength": 100, "minLength": 8, "type": "string" },
+          "tenantName": { "maxLength": 200, "minLength": 0, "type": "string" }
+        }
+      },
+      "SignupResponse": {
+        "type": "object",
+        "properties": { "email": { "type": "string" }, "message": { "type": "string" } }
+      },
+      "ResendVerificationRequest": {
+        "required": ["email"],
+        "type": "object",
+        "properties": { "email": { "type": "string" } }
+      },
+      "RefreshRequest": {
+        "required": ["refreshToken"],
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string" } }
+      },
+      "LoginRequest": {
+        "required": ["email", "password"],
+        "type": "object",
+        "properties": { "email": { "type": "string" }, "password": { "type": "string" } }
+      },
+      "AffiliateClickRequest": {
+        "type": "object",
+        "properties": { "vehicleId": { "type": "string", "format": "uuid" } }
+      },
+      "AffiliateClickResponse": {
+        "type": "object",
+        "properties": { "redirectUrl": { "type": "string" } }
+      },
+      "VehicleCostSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "totalCost": { "type": "number" },
+          "odometerKm": { "type": "integer", "format": "int32" },
+          "costPerKm": { "type": "number" }
+        }
+      },
+      "VehicleConditionScoreResponse": {
+        "type": "object",
+        "properties": {
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "score": { "type": "number" },
+          "algorithmVersion": { "type": "string" }
+        }
+      },
+      "VehicleMaintenanceAlertResponse": {
+        "type": "object",
+        "properties": {
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "plate": { "type": "string" },
+          "brand": { "type": "string" },
+          "model": { "type": "string" },
+          "proximaManutencaoData": { "type": "string", "format": "date" },
+          "diasRestantes": { "type": "integer", "format": "int64" },
+          "proximaManutencaoKm": { "type": "integer", "format": "int32" },
+          "kmRestante": { "type": "integer", "format": "int32" }
+        }
+      },
+      "FleetCostEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "plate": { "type": "string" },
+          "brand": { "type": "string" },
+          "model": { "type": "string" },
+          "category": { "type": "string", "enum": ["COMBUSTIVEL", "MANUTENCAO", "OUTRO"] },
+          "amount": { "type": "number" },
+          "description": { "type": "string" },
+          "occurredAt": { "type": "string", "format": "date" }
+        }
+      },
+      "MonthlyCostResponse": {
+        "type": "object",
+        "properties": { "month": { "type": "string" }, "total": { "type": "number" } }
+      },
+      "DriverRatingSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "driverId": { "type": "string", "format": "uuid" },
+          "notaMedia": { "type": "number" },
+          "totalAvaliacoes": { "type": "integer", "format": "int32" }
+        }
+      },
+      "DriverLicenseAlertResponse": {
+        "type": "object",
+        "properties": {
+          "driverId": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "cnhValidade": { "type": "string", "format": "date" },
+          "diasRestantes": { "type": "integer", "format": "int64" }
+        }
+      },
+      "SubscriptionResponse": {
+        "type": "object",
+        "properties": {
+          "hasSubscription": { "type": "boolean" },
+          "billingSource": { "type": "string" },
+          "status": { "type": "string" },
+          "currentPeriodEnd": { "type": "string", "format": "date-time" },
+          "trialEndsAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string" },
+          "role": { "type": "string" },
+          "tenantId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "AffiliatePartnerResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "category": { "type": "string" }
+        }
+      }
+    }
+  }
 }

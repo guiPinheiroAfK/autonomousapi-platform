@@ -70,6 +70,15 @@ services:
       # Vazio por padrão (sem seed). Rode `CORE_PROFILES=demo docker compose ... up`
       # para popular dado de demonstração (com.autonomousapi.core.demo.DemoDataSeeder).
       SPRING_PROFILES_ACTIVE: ${CORE_PROFILES:-}
+      # Confirmação de e-mail (ADR 0011). Vazio por padrão: o link de verificação só
+      # aparece no log do container (`docker compose logs core-api`), sem enviar de
+      # verdade — nenhuma credencial de provedor SMTP é necessária para testar o fluxo.
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-587}
+      MAIL_SMTP_USER: ${MAIL_SMTP_USER:-}
+      MAIL_SMTP_PASSWORD: ${MAIL_SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@autonomousapi.com.br}
+      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:5180}
     depends_on:
       db:
         condition: service_healthy

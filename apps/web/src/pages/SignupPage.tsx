@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { coreApi } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import {
   AuthLayout,
@@ -19,18 +20,31 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // ADR 0011: signup não loga mais — só troca a tela pra "confirme seu e-mail".
+  const [emailPendente, setEmailPendente] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      await signup({ email, password, tenantName });
+      const resp = await signup({ email, password, tenantName });
+      setEmailPendente(resp.email ?? email);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha no cadastro');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (emailPendente) {
+    return (
+      <ConfirmeSeuEmail
+        email={emailPendente}
+        onVoltarParaHome={onVoltarParaHome}
+        onGoToLogin={onGoToLogin}
+      />
+    );
   }
 
   return (
@@ -91,6 +105,59 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
 
       <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
         Já tem conta?{' '}
+        <button type="button" onClick={onGoToLogin} className="link-sublinhado text-[var(--tinta)]">
+          Entrar
+        </button>
+      </p>
+    </AuthLayout>
+  );
+}
+
+function ConfirmeSeuEmail({
+  email,
+  onVoltarParaHome,
+  onGoToLogin,
+}: {
+  email: string;
+  onVoltarParaHome: () => void;
+  onGoToLogin: () => void;
+}) {
+  const [reenviando, setReenviando] = useState(false);
+  const [reenviado, setReenviado] = useState(false);
+
+  async function reenviar() {
+    setReenviando(true);
+    try {
+      await coreApi.auth.resendVerification({ email });
+      setReenviado(true);
+    } finally {
+      setReenviando(false);
+    }
+  }
+
+  return (
+    <AuthLayout
+      titulo="Confirme seu e-mail"
+      chamada={
+        <>
+          Falta <em className="italic">um clique</em> para começar.
+        </>
+      }
+      onVoltar={onVoltarParaHome}
+    >
+      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
+        Mandamos um link de confirmação para <span className="text-[var(--tinta)]">{email}</span>.
+        Abra o e-mail e clique no link — sua conta só fica ativa depois disso.
+      </p>
+
+      <div className="mt-8 space-y-3">
+        <BotaoPublico type="button" onClick={reenviar} disabled={reenviando || reenviado}>
+          {reenviado ? 'Link reenviado' : reenviando ? 'Reenviando...' : 'Reenviar e-mail'}
+        </BotaoPublico>
+      </div>
+
+      <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
+        Já confirmou?{' '}
         <button type="button" onClick={onGoToLogin} className="link-sublinhado text-[var(--tinta)]">
           Entrar
         </button>

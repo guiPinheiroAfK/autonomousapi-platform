@@ -52,6 +52,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/vehicles/{vehicleId}/market-value": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["latest"];
+        put?: never;
+        post: operations["record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/vehicles/{vehicleId}/incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listIncidents"];
+        put?: never;
+        post: operations["registerIncident"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/vehicles/{vehicleId}/costs": {
         parameters: {
             query?: never;
@@ -148,6 +180,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/drivers/{driverId}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/billing/webhook": {
         parameters: {
             query?: never;
@@ -180,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/signup": {
         parameters: {
             query?: never;
@@ -190,6 +254,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["signup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resendVerification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -228,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/affiliates/partners/{partnerId}/click": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["click"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/vehicles/{vehicleId}/cost-summary": {
         parameters: {
             query?: never;
@@ -236,6 +332,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/vehicles/{vehicleId}/condition-score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["score"];
         put?: never;
         post?: never;
         delete?: never;
@@ -324,6 +436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/drivers/{driverId}/ratings/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/drivers/license-expiring": {
         parameters: {
             query?: never;
@@ -364,6 +492,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/affiliates/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPartners"];
         put?: never;
         post?: never;
         delete?: never;
@@ -456,6 +600,40 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
         };
+        VehicleMarketValueRequest: {
+            valorFipe: number;
+            /** Format: date */
+            dataReferencia: string;
+            codigoFipe?: string;
+        };
+        VehicleMarketValueResponse: {
+            /** Format: uuid */
+            vehicleId?: string;
+            valorFipe?: number;
+            /** Format: date */
+            dataReferencia?: string;
+            codigoFipe?: string;
+        };
+        VehicleIncidentRequest: {
+            /** Format: date */
+            data: string;
+            /** @enum {string} */
+            severidade: "LEVE" | "MODERADA" | "GRAVE";
+            descricao?: string;
+            custoReparo?: number;
+        };
+        VehicleIncidentResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            /** Format: date */
+            data?: string;
+            /** @enum {string} */
+            severidade?: "LEVE" | "MODERADA" | "GRAVE";
+            descricao?: string;
+            custoReparo?: number;
+        };
         VehicleCostEntryRequest: {
             /** @enum {string} */
             category: "COMBUSTIVEL" | "MANUTENCAO" | "OUTRO";
@@ -513,13 +691,29 @@ export interface components {
             /** Format: int32 */
             received?: number;
         };
+        DriverRatingRequest: {
+            /** Format: int32 */
+            nota: number;
+            comentario?: string;
+        };
+        DriverRatingResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            driverId?: string;
+            /** Format: uuid */
+            gestorUserId?: string;
+            /** Format: int32 */
+            nota?: number;
+            comentario?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         CheckoutSessionResponse: {
             checkoutUrl?: string;
         };
-        SignupRequest: {
-            email: string;
-            password: string;
-            tenantName: string;
+        VerifyEmailRequest: {
+            token: string;
         };
         TokenResponse: {
             accessToken?: string;
@@ -528,12 +722,31 @@ export interface components {
             /** Format: int64 */
             expiresInSeconds?: number;
         };
+        SignupRequest: {
+            email: string;
+            password: string;
+            tenantName: string;
+        };
+        SignupResponse: {
+            email?: string;
+            message?: string;
+        };
+        ResendVerificationRequest: {
+            email: string;
+        };
         RefreshRequest: {
             refreshToken: string;
         };
         LoginRequest: {
             email: string;
             password: string;
+        };
+        AffiliateClickRequest: {
+            /** Format: uuid */
+            vehicleId?: string;
+        };
+        AffiliateClickResponse: {
+            redirectUrl?: string;
         };
         VehicleCostSummaryResponse: {
             /** Format: uuid */
@@ -542,6 +755,12 @@ export interface components {
             /** Format: int32 */
             odometerKm?: number;
             costPerKm?: number;
+        };
+        VehicleConditionScoreResponse: {
+            /** Format: uuid */
+            vehicleId?: string;
+            score?: number;
+            algorithmVersion?: string;
         };
         VehicleMaintenanceAlertResponse: {
             /** Format: uuid */
@@ -577,6 +796,13 @@ export interface components {
             month?: string;
             total?: number;
         };
+        DriverRatingSummaryResponse: {
+            /** Format: uuid */
+            driverId?: string;
+            notaMedia?: number;
+            /** Format: int32 */
+            totalAvaliacoes?: number;
+        };
         DriverLicenseAlertResponse: {
             /** Format: uuid */
             driverId?: string;
@@ -592,6 +818,8 @@ export interface components {
             status?: string;
             /** Format: date-time */
             currentPeriodEnd?: string;
+            /** Format: date-time */
+            trialEndsAt?: string;
         };
         UserResponse: {
             /** Format: uuid */
@@ -600,6 +828,12 @@ export interface components {
             role?: string;
             /** Format: uuid */
             tenantId?: string;
+        };
+        AffiliatePartnerResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            category?: string;
         };
     };
     responses: never;
@@ -786,6 +1020,102 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleResponse"];
+                };
+            };
+        };
+    };
+    latest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleMarketValueResponse"];
+                };
+            };
+        };
+    };
+    record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleMarketValueRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleMarketValueResponse"];
+                };
+            };
+        };
+    };
+    listIncidents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleIncidentResponse"][];
+                };
+            };
+        };
+    };
+    registerIncident: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleIncidentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleIncidentResponse"];
                 };
             };
         };
@@ -998,6 +1328,54 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                driverId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverRatingResponse"][];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                driverId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DriverRatingRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverRatingResponse"];
+                };
+            };
+        };
+    };
     webhook: {
         parameters: {
             query?: never;
@@ -1042,6 +1420,30 @@ export interface operations {
             };
         };
     };
+    verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenResponse"];
+                };
+            };
+        };
+    };
     signup: {
         parameters: {
             query?: never;
@@ -1061,8 +1463,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["TokenResponse"];
+                    "*/*": components["schemas"]["SignupResponse"];
                 };
+            };
+        };
+    };
+    resendVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1114,6 +1538,32 @@ export interface operations {
             };
         };
     };
+    click: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AffiliateClickRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AffiliateClickResponse"];
+                };
+            };
+        };
+    };
     summary: {
         parameters: {
             query?: never;
@@ -1132,6 +1582,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleCostSummaryResponse"];
+                };
+            };
+        };
+    };
+    score: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleConditionScoreResponse"];
                 };
             };
         };
@@ -1240,6 +1712,28 @@ export interface operations {
             };
         };
     };
+    summary_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                driverId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverRatingSummaryResponse"];
+                };
+            };
+        };
+    };
     licenseExpiring: {
         parameters: {
             query?: never;
@@ -1296,6 +1790,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    listPartners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AffiliatePartnerResponse"][];
                 };
             };
         };

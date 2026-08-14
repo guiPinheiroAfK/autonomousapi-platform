@@ -29,6 +29,9 @@ export type TokenResponse = Schemas['TokenResponse'];
 export type UserResponse = Schemas['UserResponse'];
 export type LoginRequest = Schemas['LoginRequest'];
 export type SignupRequest = Schemas['SignupRequest'];
+export type SignupResponse = Schemas['SignupResponse'];
+export type VerifyEmailRequest = Schemas['VerifyEmailRequest'];
+export type ResendVerificationRequest = Schemas['ResendVerificationRequest'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -90,8 +93,13 @@ export const coreApi = {
   auth: {
     login: (body: LoginRequest) =>
       request<TokenResponse>('/v1/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+    // Não devolve tokens (ADR 0011): a conta nasce desabilitada até confirmar o e-mail.
     signup: (body: SignupRequest) =>
-      request<TokenResponse>('/v1/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
+      request<SignupResponse>('/v1/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
+    verifyEmail: (body: VerifyEmailRequest) =>
+      request<TokenResponse>('/v1/auth/verify-email', { method: 'POST', body: JSON.stringify(body) }),
+    resendVerification: (body: ResendVerificationRequest) =>
+      request<void>('/v1/auth/resend-verification', { method: 'POST', body: JSON.stringify(body) }),
     me: () => request<UserResponse>('/v1/auth/me'),
   },
 

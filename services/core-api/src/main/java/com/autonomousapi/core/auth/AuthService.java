@@ -2,12 +2,15 @@ package com.autonomousapi.core.auth;
 
 import com.autonomousapi.core.auth.dto.LoginRequest;
 import com.autonomousapi.core.auth.dto.SignupRequest;
+import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.billing.Subscription;
 import com.autonomousapi.core.billing.SubscriptionRepository;
+import com.autonomousapi.core.email.EmailSender;
 import com.autonomousapi.core.error.EmailAlreadyUsedException;
 import com.autonomousapi.core.error.InvalidCredentialsException;
 import com.autonomousapi.core.error.InvalidRefreshTokenException;
+import com.autonomousapi.core.error.InvalidVerificationTokenException;
 import com.autonomousapi.core.security.jwt.JwtService;
 import com.autonomousapi.core.tenant.Tenant;
 import com.autonomousapi.core.tenant.TenantRepository;
@@ -36,39 +39,55 @@ public class AuthService {
     private final UserRepository users;
     private final TenantRepository tenants;
     private final RefreshTokenRepository refreshTokens;
+    private final EmailVerificationTokenRepository verificationTokens;
     private final SubscriptionRepository subscriptions;
+    private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Duration refreshTtl;
     private final long accessTtlSeconds;
+    private final Duration emailVerificationTtl;
+    private final String webAppUrl;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(
             UserRepository users,
             TenantRepository tenants,
             RefreshTokenRepository refreshTokens,
+            EmailVerificationTokenRepository verificationTokens,
             SubscriptionRepository subscriptions,
+            EmailSender emailSender,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
-            @Value("${app.jwt.access-ttl-minutes}") long accessTtlMinutes) {
+            @Value("${app.jwt.access-ttl-minutes}") long accessTtlMinutes,
+            @Value("${app.auth.email-verification-ttl-hours}") long emailVerificationTtlHours,
+            @Value("${app.auth.web-app-url}") String webAppUrl) {
         this.users = users;
         this.tenants = tenants;
         this.refreshTokens = refreshTokens;
+        this.verificationTokens = verificationTokens;
         this.subscriptions = subscriptions;
+        this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
         this.accessTtlSeconds = Duration.ofMinutes(accessTtlMinutes).toSeconds();
+        this.emailVerificationTtl = Duration.ofHours(emailVerificationTtlHours);
+        this.webAppUrl = webAppUrl;
     }
 
     /**
-     * Cria um tenant, o primeiro usuário (gestor de frota) e o trial de
-     * {@value #TRIAL_DAYS} dias (ver Subscription#trial, SubscriptionGate) — sem isso o
-     * tenant recém-criado ficaria bloqueado na primeira escrita.
+     * Cria um tenant, o primeiro usuário (gestor de frota, DESABILITADO — ADR 0011) e o
+     * trial de {@value #TRIAL_DAYS} dias (ver Subscription#trial, SubscriptionGate).
+     *
+     * O usuário nasce desabilitado e signup NÃO devolve tokens: sem isso, qualquer
+     * e-mail (nem precisa ser real) já teria acesso de escrita completo, o que é
+     * exatamente o abuso que a confirmação de e-mail existe para impedir. Só o clique no
+     * link enviado habilita a conta e emite os tokens de verdade (ver verifyEmail).
      */
     @Transactional
-    public TokenResponse signup(SignupRequest req) {
+    public SignupResponse signup(SignupRequest req) {
         if (users.existsByEmail(req.email())) {
             throw new EmailAlreadyUsedException();
         }
@@ -78,9 +97,58 @@ public class AuthService {
                 req.email(),
                 passwordEncoder.encode(req.password()),
                 Role.GESTOR_FROTA);
+        user.setEnabled(false);
         users.save(user);
         subscriptions.save(Subscription.trial(tenant.getId(), Instant.now().plus(Duration.ofDays(TRIAL_DAYS))));
+        sendVerificationEmail(user);
+        return SignupResponse.pendingVerification(user.getEmail());
+    }
+
+    /**
+     * Habilita a conta e já emite tokens (evita o usuário ter que logar de novo depois
+     * de confirmar — o clique no e-mail já é a prova de posse da conta).
+     */
+    @Transactional
+    public TokenResponse verifyEmail(String rawToken) {
+        String hash = sha256Hex(rawToken);
+        EmailVerificationToken token = verificationTokens.findByTokenHash(hash)
+                .orElseThrow(InvalidVerificationTokenException::new);
+        if (!token.isUsable()) {
+            throw new InvalidVerificationTokenException();
+        }
+        User user = users.findById(token.getUserId())
+                .orElseThrow(InvalidVerificationTokenException::new);
+
+        token.markUsed();
+        verificationTokens.save(token);
+        user.setEnabled(true);
+        users.save(user);
+
         return issueTokens(user);
+    }
+
+    /**
+     * Silencioso de propósito quanto ao motivo de não reenviar (e-mail não existe, ou já
+     * está confirmado): responder diferente nos dois casos permitiria descobrir se um
+     * e-mail está cadastrado no sistema só tentando reenviar confirmação pra ele.
+     */
+    @Transactional
+    public void resendVerification(String email) {
+        users.findByEmail(email)
+                .filter(user -> !user.isEnabled())
+                .ifPresent(this::sendVerificationEmail);
+    }
+
+    private void sendVerificationEmail(User user) {
+        verificationTokens.findAllByUserIdAndUsedAtIsNull(user.getId())
+                .forEach(EmailVerificationToken::markUsed);
+
+        String rawToken = generateRawToken();
+        verificationTokens.save(new EmailVerificationToken(
+                user.getId(), sha256Hex(rawToken), Instant.now().plus(emailVerificationTtl)));
+
+        String link = webAppUrl + "/verificar-email?token=" + rawToken;
+        emailSender.sendVerificationEmail(user.getEmail(), link);
     }
 
     @Transactional

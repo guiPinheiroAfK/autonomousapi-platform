@@ -5,6 +5,7 @@ import {
   setUnauthorizedHandler,
   type LoginRequest,
   type SignupRequest,
+  type SignupResponse,
   type UserResponse,
 } from '../api/client';
 
@@ -14,7 +15,10 @@ interface AuthState {
   user: UserResponse | null;
   loading: boolean;
   login: (body: LoginRequest) => Promise<void>;
-  signup: (body: SignupRequest) => Promise<void>;
+  /** Não loga automaticamente (ADR 0011) — devolve a mensagem de "confirme seu e-mail". */
+  signup: (body: SignupRequest) => Promise<SignupResponse>;
+  /** Habilita a conta e já loga — o clique no link é a prova de posse do e-mail. */
+  verifyEmail: (token: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -65,7 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signup(body: SignupRequest) {
-    const tokens = await coreApi.auth.signup(body);
+    return coreApi.auth.signup(body);
+  }
+
+  async function verifyEmail(token: string) {
+    const tokens = await coreApi.auth.verifyEmail({ token });
     await afterAuth(tokens.accessToken!);
   }
 
@@ -76,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, verifyEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

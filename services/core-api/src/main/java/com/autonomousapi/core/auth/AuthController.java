@@ -2,9 +2,12 @@ package com.autonomousapi.core.auth;
 
 import com.autonomousapi.core.auth.dto.LoginRequest;
 import com.autonomousapi.core.auth.dto.RefreshRequest;
+import com.autonomousapi.core.auth.dto.ResendVerificationRequest;
 import com.autonomousapi.core.auth.dto.SignupRequest;
+import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.auth.dto.UserResponse;
+import com.autonomousapi.core.auth.dto.VerifyEmailRequest;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.ratelimit.LoginRateLimitGuard;
 import com.autonomousapi.core.user.User;
@@ -38,8 +41,20 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public TokenResponse signup(@Valid @RequestBody SignupRequest req) {
+    public SignupResponse signup(@Valid @RequestBody SignupRequest req) {
         return authService.signup(req);
+    }
+
+    @PostMapping("/verify-email")
+    public TokenResponse verifyEmail(@Valid @RequestBody VerifyEmailRequest req) {
+        return authService.verifyEmail(req.token());
+    }
+
+    /** Sempre 202, tenha o e-mail conta ou não — evita descobrir e-mail cadastrado por tentativa. */
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void resendVerification(@Valid @RequestBody ResendVerificationRequest req) {
+        authService.resendVerification(req.email());
     }
 
     @PostMapping("/login")

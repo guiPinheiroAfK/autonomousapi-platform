@@ -4,6 +4,7 @@ import { AppShell, type View } from './components/layout/AppShell';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 
 /*
  * Telas autenticadas entram por import dinâmico. O motivo concreto: recharts responde por
@@ -26,17 +27,36 @@ function CarregandoTela() {
   return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
 }
 
+/** Lido uma única vez: link do e-mail de confirmação (ADR 0011) chega em /verificar-email?token=... */
+function tokenDeVerificacaoNaUrl(): string | null {
+  if (window.location.pathname !== '/verificar-email') return null;
+  return new URLSearchParams(window.location.search).get('token');
+}
+
 export function App() {
   const { user, loading, logout } = useAuth();
+  const tokenVerificacao = useState(tokenDeVerificacaoNaUrl)[0];
   // Quem não está logado cai na landing, não direto no formulário: a página pública é
-  // a porta de entrada de quem ainda não é cliente.
-  const [authScreen, setAuthScreen] = useState<'landing' | 'login' | 'signup'>('landing');
+  // a porta de entrada de quem ainda não é cliente. Chega direto em 'verify-email' se
+  // a URL trouxer o token do e-mail de confirmação.
+  const [authScreen, setAuthScreen] = useState<'landing' | 'login' | 'signup' | 'verify-email'>(
+    tokenVerificacao ? 'verify-email' : 'landing',
+  );
   const [view, setView] = useState<View>('dashboard');
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
 
   if (loading) return null;
 
   if (!user) {
+    if (authScreen === 'verify-email' && tokenVerificacao) {
+      return (
+        <VerifyEmailPage
+          token={tokenVerificacao}
+          onVoltarParaHome={() => setAuthScreen('landing')}
+          onGoToSignup={() => setAuthScreen('signup')}
+        />
+      );
+    }
     if (authScreen === 'login') {
       return (
         <LoginPage
