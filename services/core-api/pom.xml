@@ -98,6 +98,13 @@
             <version>${stripe.version}</version>
         </dependency>
 
+        <!-- Confirmação de e-mail no cadastro (ADR 0011): SMTP genérico, funciona com
+             qualquer provedor (Resend, SES, Gmail com senha de app, etc.) via config. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!--
           Redis: contador de rate limit do login e cache dos agregados de dashboard.
           Ambos são estado descartável e compartilhável entre instâncias — é o motivo de

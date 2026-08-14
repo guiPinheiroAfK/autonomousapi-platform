@@ -57,6 +57,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("subscription_required", ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidVerificationTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidVerificationToken(InvalidVerificationTokenException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("invalid_verification_token", ex.getMessage()));
+    }
+
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<ApiError> handleTooManyRequests(TooManyRequestsException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
