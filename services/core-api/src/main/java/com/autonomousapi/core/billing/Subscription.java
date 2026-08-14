@@ -38,6 +38,10 @@ public class Subscription {
     @Column(name = "current_period_end")
     private Instant currentPeriodEnd;
 
+    /** Só controlado pelo core-api, nunca pela Stripe — relógio do trial (ver SubscriptionGate). */
+    @Column(name = "trial_ends_at")
+    private Instant trialEndsAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -59,12 +63,32 @@ public class Subscription {
         this.updatedAt = now;
     }
 
+    /**
+     * Assinatura "técnica" criada no signup (spec 03 + ADR 0010): TRIALING por
+     * {@code trialEndsAt}, sem nenhum contato com a Stripe ainda — só existe pra dar um
+     * relógio ao SubscriptionGate antes do primeiro checkout de verdade.
+     */
+    public static Subscription trial(UUID tenantId, Instant trialEndsAt) {
+        Subscription sub = new Subscription(tenantId, BillingSource.WEB_STRIPE, null);
+        sub.status = SubscriptionStatus.TRIALING;
+        sub.trialEndsAt = trialEndsAt;
+        return sub;
+    }
+
     public void applyStripeUpdate(
             String stripeSubscriptionId, SubscriptionStatus status, Instant currentPeriodEnd) {
         this.stripeSubscriptionId = stripeSubscriptionId;
         this.status = status;
         this.currentPeriodEnd = currentPeriodEnd;
         this.updatedAt = Instant.now();
+    }
+
+    /** Pode escrever no sistema: pagando de verdade, ou ainda dentro do trial. */
+    public boolean permiteEscrita() {
+        if (status == SubscriptionStatus.ACTIVE) return true;
+        return status == SubscriptionStatus.TRIALING
+                && trialEndsAt != null
+                && Instant.now().isBefore(trialEndsAt);
     }
 
     public UUID getId() {
@@ -93,5 +117,9 @@ public class Subscription {
 
     public Instant getCurrentPeriodEnd() {
         return currentPeriodEnd;
+    }
+
+    public Instant getTrialEndsAt() {
+        return trialEndsAt;
     }
 }

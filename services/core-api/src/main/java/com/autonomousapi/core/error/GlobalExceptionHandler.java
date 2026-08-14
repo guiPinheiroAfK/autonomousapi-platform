@@ -51,6 +51,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("billing_not_configured", ex.getMessage()));
     }
 
+    @ExceptionHandler(SubscriptionRequiredException.class)
+    public ResponseEntity<ApiError> handleSubscriptionRequired(SubscriptionRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+                .body(new ApiError("subscription_required", ex.getMessage()));
+    }
+
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<ApiError> handleTooManyRequests(TooManyRequestsException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
