@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, ClipboardList, TrendingUp, Wallet } from 'lucide-react';
 import {
   Bar,
@@ -13,9 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { coreApi } from '../api/client';
-import { custoAcumuladoAno, osNoAno, resumoFinanceiroMensal } from '../data/financeiro';
-import { ordensServico, osCustoTotal } from '../data/ordensServico';
+import { coreApi, type WorkOrderReportResponse } from '../api/client';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
@@ -34,6 +32,15 @@ const anoAtual = new Date().getFullYear();
 export function ReportsPage() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  const [report, setReport] = useState<WorkOrderReportResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    coreApi.reports
+      .maintenanceSummary()
+      .then(setReport)
+      .finally(() => setLoading(false));
+  }, []);
 
   async function handleExport() {
     setExporting(true);
@@ -47,15 +54,23 @@ export function ReportsPage() {
     }
   }
 
-  const chartData = resumoFinanceiroMensal.map((r) => ({
-    label: monthLabel(r.mes),
-    Preventiva: r.custoPreventiva,
-    Corretiva: r.custoCorretiva,
-    Revisão: r.custoRevisao,
-    Sinistro: r.custoSinistro,
+  const monthly = report?.monthly ?? [];
+  const ranking = (report?.vehicleRanking ?? []).map((r) => ({
+    placa: r.plate ?? '',
+    veiculo: r.vehicleName ?? '',
+    total: Number(r.total ?? 0),
   }));
 
-  const doAno = resumoFinanceiroMensal.filter((r) => r.mes.startsWith(String(anoAtual)));
+  const chartData = monthly.map((r) => ({
+    label: monthLabel(r.mes ?? ''),
+    Preventiva: Number(r.custoPreventiva ?? 0),
+    Corretiva: Number(r.custoCorretiva ?? 0),
+    Revisão: Number(r.custoRevisao ?? 0),
+    Sinistro: Number(r.custoSinistro ?? 0),
+  }));
+
+  // "No ano" = meses do array que caem no ano corrente (monthly já são os últimos 12 meses fechados).
+  const doAno = monthly.filter((r) => (r.mes ?? '').startsWith(String(anoAtual)));
   const distribuicao = (['Preventiva', 'Corretiva', 'Revisão', 'Sinistro'] as const).map((tipo) => {
     const key =
       tipo === 'Preventiva'
@@ -65,23 +80,17 @@ export function ReportsPage() {
           : tipo === 'Revisão'
             ? 'custoRevisao'
             : 'custoSinistro';
-    return { tipo, total: doAno.reduce((sum, r) => sum + r[key], 0) };
+    return { tipo, total: doAno.reduce((sum, r) => sum + Number(r[key] ?? 0), 0) };
   }).filter((d) => d.total > 0);
 
-  const custoMedioOS = osNoAno === 0 ? 0 : custoAcumuladoAno / osNoAno;
-
-  const custoPorVeiculo = new Map<string, { placa: string; veiculo: string; total: number }>();
-  for (const os of ordensServico) {
-    const atual = custoPorVeiculo.get(os.placa);
-    const custo = osCustoTotal(os);
-    if (atual) {
-      atual.total += custo;
-    } else {
-      custoPorVeiculo.set(os.placa, { placa: os.placa, veiculo: os.veiculo, total: custo });
-    }
-  }
-  const ranking = [...custoPorVeiculo.values()].sort((a, b) => b.total - a.total).slice(0, 6);
+  const custoAcumulado = distribuicao.reduce((sum, d) => sum + d.total, 0);
+  const osNoAno = doAno.reduce((sum, r) => sum + Number(r.qtdOS ?? 0), 0);
+  const custoMedioOS = osNoAno === 0 ? 0 : custoAcumulado / osNoAno;
   const maxRanking = ranking[0]?.total ?? 1;
+
+  if (loading) {
+    return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
+  }
 
   return (
     <div className="p-5">
@@ -101,7 +110,7 @@ export function ReportsPage() {
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label={`Custo acumulado ${anoAtual}`} value={formatBRL(custoAcumuladoAno)} icon={Wallet} />
+        <StatCard label={`Custo acumulado ${anoAtual}`} value={formatBRL(custoAcumulado)} icon={Wallet} />
         <StatCard label="Custo médio por OS" value={formatBRL(custoMedioOS)} tone="warning" icon={TrendingUp} />
         <StatCard label="OSs no ano" value={osNoAno} tone="success" icon={ClipboardList} />
       </div>

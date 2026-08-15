@@ -3,6 +3,45 @@
   "info": { "title": "OpenAPI definition", "version": "v0" },
   "servers": [{ "url": "http://localhost:8080", "description": "Generated server url" }],
   "paths": {
+    "/v1/work-orders/{id}": {
+      "put": {
+        "tags": ["work-order-controller"],
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/WorkOrderRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/WorkOrderResponse" } } }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["work-order-controller"],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
     "/v1/vehicles/{id}": {
       "get": {
         "tags": ["vehicle-controller"],
@@ -24,7 +63,7 @@
       },
       "put": {
         "tags": ["vehicle-controller"],
-        "operationId": "update",
+        "operationId": "update_1",
         "parameters": [
           {
             "name": "id",
@@ -48,7 +87,7 @@
       },
       "delete": {
         "tags": ["vehicle-controller"],
-        "operationId": "delete_1",
+        "operationId": "delete_2",
         "parameters": [
           {
             "name": "id",
@@ -81,7 +120,7 @@
       },
       "put": {
         "tags": ["driver-controller"],
-        "operationId": "update_1",
+        "operationId": "update_2",
         "parameters": [
           {
             "name": "id",
@@ -105,7 +144,7 @@
       },
       "delete": {
         "tags": ["driver-controller"],
-        "operationId": "delete_2",
+        "operationId": "delete_3",
         "parameters": [
           {
             "name": "id",
@@ -117,10 +156,53 @@
         "responses": { "204": { "description": "No Content" } }
       }
     },
+    "/v1/work-orders": {
+      "get": {
+        "tags": ["work-order-controller"],
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WorkOrderResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["work-order-controller"],
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/WorkOrderRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/WorkOrderResponse" } } }
+          }
+        }
+      }
+    },
     "/v1/vehicles": {
       "get": {
         "tags": ["vehicle-controller"],
-        "operationId": "list",
+        "operationId": "list_1",
         "responses": {
           "200": {
             "description": "OK",
@@ -137,7 +219,7 @@
       },
       "post": {
         "tags": ["vehicle-controller"],
-        "operationId": "create",
+        "operationId": "create_1",
         "requestBody": {
           "content": {
             "application/json": { "schema": { "$ref": "#/components/schemas/VehicleRequest" } }
@@ -260,7 +342,7 @@
     "/v1/vehicles/{vehicleId}/costs": {
       "get": {
         "tags": ["vehicle-cost-controller"],
-        "operationId": "list_1",
+        "operationId": "list_2",
         "parameters": [
           {
             "name": "vehicleId",
@@ -315,7 +397,7 @@
     "/v1/trips": {
       "get": {
         "tags": ["trip-controller"],
-        "operationId": "list_2",
+        "operationId": "list_3",
         "responses": {
           "200": {
             "description": "OK",
@@ -421,7 +503,7 @@
     "/v1/drivers": {
       "get": {
         "tags": ["driver-controller"],
-        "operationId": "list_3",
+        "operationId": "list_4",
         "responses": {
           "200": {
             "description": "OK",
@@ -438,7 +520,7 @@
       },
       "post": {
         "tags": ["driver-controller"],
-        "operationId": "create_1",
+        "operationId": "create_2",
         "requestBody": {
           "content": {
             "application/json": { "schema": { "$ref": "#/components/schemas/DriverRequest" } }
@@ -456,7 +538,7 @@
     "/v1/drivers/{driverId}/ratings": {
       "get": {
         "tags": ["driver-rating-controller"],
-        "operationId": "list_4",
+        "operationId": "list_5",
         "parameters": [
           {
             "name": "driverId",
@@ -481,7 +563,7 @@
       },
       "post": {
         "tags": ["driver-rating-controller"],
-        "operationId": "create_2",
+        "operationId": "create_3",
         "parameters": [
           {
             "name": "driverId",
@@ -575,6 +657,21 @@
         }
       }
     },
+    "/v1/auth/reset-password": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
     "/v1/auth/resend-verification": {
       "post": {
         "tags": ["auth-controller"],
@@ -624,6 +721,21 @@
             "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
           }
         }
+      }
+    },
+    "/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ForgotPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": { "202": { "description": "Accepted" } }
       }
     },
     "/v1/affiliates/partners/{partnerId}/click": {
@@ -764,6 +876,20 @@
         }
       }
     },
+    "/v1/reports/maintenance-summary": {
+      "get": {
+        "tags": ["report-controller"],
+        "operationId": "maintenanceSummary",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/WorkOrderReportResponse" } }
+            }
+          }
+        }
+      }
+    },
     "/v1/reports/costs.csv": {
       "get": {
         "tags": ["report-controller"],
@@ -881,7 +1007,7 @@
     "/v1/vehicles/{vehicleId}/costs/{costId}": {
       "delete": {
         "tags": ["vehicle-cost-controller"],
-        "operationId": "delete",
+        "operationId": "delete_1",
         "parameters": [
           {
             "name": "vehicleId",
@@ -902,6 +1028,88 @@
   },
   "components": {
     "schemas": {
+      "WorkOrderItemRequest": {
+        "required": ["descricao", "quantidade", "valorUnitario"],
+        "type": "object",
+        "properties": {
+          "descricao": { "maxLength": 200, "minLength": 0, "type": "string" },
+          "quantidade": { "minimum": 1, "type": "integer", "format": "int32" },
+          "valorUnitario": { "minimum": 0.0, "exclusiveMinimum": true, "type": "number" }
+        }
+      },
+      "WorkOrderRequest": {
+        "required": [
+          "dataAbertura",
+          "descricaoProblema",
+          "itens",
+          "kmAbertura",
+          "previsaoConclusao",
+          "prioridade",
+          "responsavelOficina",
+          "status",
+          "tipo",
+          "vehicleId"
+        ],
+        "type": "object",
+        "properties": {
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "tipo": { "type": "string", "enum": ["PREVENTIVA", "CORRETIVA", "REVISAO", "SINISTRO"] },
+          "status": {
+            "type": "string",
+            "enum": ["ABERTA", "EM_ANDAMENTO", "CONCLUIDA", "ATRASADA", "CANCELADA"]
+          },
+          "prioridade": { "type": "string", "enum": ["BAIXA", "MEDIA", "ALTA"] },
+          "descricaoProblema": { "maxLength": 1000, "minLength": 0, "type": "string" },
+          "observacoes": { "maxLength": 1000, "minLength": 0, "type": "string" },
+          "responsavelOficina": { "maxLength": 150, "minLength": 0, "type": "string" },
+          "dataAbertura": { "type": "string", "format": "date" },
+          "previsaoConclusao": { "type": "string", "format": "date" },
+          "kmAbertura": { "minimum": 0, "type": "integer", "format": "int32" },
+          "itens": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkOrderItemRequest" }
+          }
+        }
+      },
+      "WorkOrderItemResponse": {
+        "type": "object",
+        "properties": {
+          "descricao": { "type": "string" },
+          "quantidade": { "type": "integer", "format": "int32" },
+          "valorUnitario": { "type": "number" },
+          "subtotal": { "type": "number" }
+        }
+      },
+      "WorkOrderResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "numero": { "type": "string" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "vehiclePlate": { "type": "string" },
+          "vehicleName": { "type": "string" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "driverName": { "type": "string" },
+          "tipo": { "type": "string", "enum": ["PREVENTIVA", "CORRETIVA", "REVISAO", "SINISTRO"] },
+          "status": {
+            "type": "string",
+            "enum": ["ABERTA", "EM_ANDAMENTO", "CONCLUIDA", "ATRASADA", "CANCELADA"]
+          },
+          "prioridade": { "type": "string", "enum": ["BAIXA", "MEDIA", "ALTA"] },
+          "descricaoProblema": { "type": "string" },
+          "observacoes": { "type": "string" },
+          "responsavelOficina": { "type": "string" },
+          "dataAbertura": { "type": "string", "format": "date" },
+          "previsaoConclusao": { "type": "string", "format": "date" },
+          "kmAbertura": { "type": "integer", "format": "int32" },
+          "itens": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkOrderItemResponse" }
+          },
+          "custoTotal": { "type": "number" }
+        }
+      },
       "VehicleRequest": {
         "required": ["brand", "model", "odometerKm", "plate", "status"],
         "type": "object",
@@ -1128,6 +1336,14 @@
         "type": "object",
         "properties": { "email": { "type": "string" }, "message": { "type": "string" } }
       },
+      "ResetPasswordRequest": {
+        "required": ["newPassword", "token"],
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "newPassword": { "maxLength": 100, "minLength": 8, "type": "string" }
+        }
+      },
       "ResendVerificationRequest": {
         "required": ["email"],
         "type": "object",
@@ -1142,6 +1358,11 @@
         "required": ["email", "password"],
         "type": "object",
         "properties": { "email": { "type": "string" }, "password": { "type": "string" } }
+      },
+      "ForgotPasswordRequest": {
+        "required": ["email"],
+        "type": "object",
+        "properties": { "email": { "type": "string" } }
       },
       "AffiliateClickRequest": {
         "type": "object",
@@ -1198,6 +1419,39 @@
       "MonthlyCostResponse": {
         "type": "object",
         "properties": { "month": { "type": "string" }, "total": { "type": "number" } }
+      },
+      "MonthlyMaintenanceCostResponse": {
+        "type": "object",
+        "properties": {
+          "mes": { "type": "string" },
+          "custoPreventiva": { "type": "number" },
+          "custoCorretiva": { "type": "number" },
+          "custoRevisao": { "type": "number" },
+          "custoSinistro": { "type": "number" },
+          "qtdOS": { "type": "integer", "format": "int64" }
+        }
+      },
+      "VehicleMaintenanceCostResponse": {
+        "type": "object",
+        "properties": {
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "plate": { "type": "string" },
+          "vehicleName": { "type": "string" },
+          "total": { "type": "number" }
+        }
+      },
+      "WorkOrderReportResponse": {
+        "type": "object",
+        "properties": {
+          "monthly": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MonthlyMaintenanceCostResponse" }
+          },
+          "vehicleRanking": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/VehicleMaintenanceCostResponse" }
+          }
+        }
       },
       "DriverRatingSummaryResponse": {
         "type": "object",

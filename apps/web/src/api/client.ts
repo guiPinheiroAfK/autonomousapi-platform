@@ -32,6 +32,12 @@ export type SignupRequest = Schemas['SignupRequest'];
 export type SignupResponse = Schemas['SignupResponse'];
 export type VerifyEmailRequest = Schemas['VerifyEmailRequest'];
 export type ResendVerificationRequest = Schemas['ResendVerificationRequest'];
+export type ForgotPasswordRequest = Schemas['ForgotPasswordRequest'];
+export type ResetPasswordRequest = Schemas['ResetPasswordRequest'];
+export type WorkOrderRequest = Schemas['WorkOrderRequest'];
+export type WorkOrderResponse = Schemas['WorkOrderResponse'];
+export type WorkOrderItemRequest = Schemas['WorkOrderItemRequest'];
+export type WorkOrderReportResponse = Schemas['WorkOrderReportResponse'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -100,6 +106,10 @@ export const coreApi = {
       request<TokenResponse>('/v1/auth/verify-email', { method: 'POST', body: JSON.stringify(body) }),
     resendVerification: (body: ResendVerificationRequest) =>
       request<void>('/v1/auth/resend-verification', { method: 'POST', body: JSON.stringify(body) }),
+    forgotPassword: (body: ForgotPasswordRequest) =>
+      request<void>('/v1/auth/forgot-password', { method: 'POST', body: JSON.stringify(body) }),
+    resetPassword: (body: ResetPasswordRequest) =>
+      request<void>('/v1/auth/reset-password', { method: 'POST', body: JSON.stringify(body) }),
     me: () => request<UserResponse>('/v1/auth/me'),
   },
 
@@ -143,8 +153,19 @@ export const coreApi = {
       request<VehicleCostSummaryResponse>(`/v1/vehicles/${vehicleId}/cost-summary`),
   },
 
+  workOrders: {
+    list: (vehicleId?: string) =>
+      request<WorkOrderResponse[]>(`/v1/work-orders${vehicleId ? `?vehicleId=${vehicleId}` : ''}`),
+    create: (body: WorkOrderRequest) =>
+      request<WorkOrderResponse>('/v1/work-orders', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: string, body: WorkOrderRequest) =>
+      request<WorkOrderResponse>(`/v1/work-orders/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    remove: (id: string) => request<void>(`/v1/work-orders/${id}`, { method: 'DELETE' }),
+  },
+
   reports: {
     exportCostsCsv: () => downloadFile('/v1/reports/costs.csv', 'relatorio-custos.csv'),
+    maintenanceSummary: () => request<WorkOrderReportResponse>('/v1/reports/maintenance-summary'),
   },
 
   billing: {

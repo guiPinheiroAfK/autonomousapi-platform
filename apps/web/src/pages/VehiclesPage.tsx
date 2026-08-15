@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
-import { coreApi, type VehicleCostEntryResponse, type VehicleRequest, type VehicleResponse } from '../api/client';
-import { osPorPlaca, TIPO_OS_LABEL } from '../data/ordensServico';
+import {
+  coreApi,
+  type VehicleCostEntryResponse,
+  type VehicleRequest,
+  type VehicleResponse,
+  type WorkOrderResponse,
+} from '../api/client';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
@@ -14,6 +19,7 @@ import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { StatCard } from '../components/shared/StatCard';
 import { formatBRL, formatDateBR } from '../lib/format';
+import { TIPO_OS_LABEL } from '../lib/workOrderLabels';
 
 const STATUS_OPTIONS = ['ATIVO', 'MANUTENCAO', 'INATIVO'] as const;
 
@@ -44,6 +50,7 @@ export function VehiclesPage({ onViewCosts }: Props) {
   const [statusFiltro, setStatusFiltro] = useState<(typeof STATUS_OPTIONS)[number] | 'todos'>('todos');
   const [detail, setDetail] = useState<VehicleResponse | null>(null);
   const [detailCosts, setDetailCosts] = useState<VehicleCostEntryResponse[]>([]);
+  const [detailOS, setDetailOS] = useState<WorkOrderResponse[]>([]);
 
   function refresh() {
     coreApi.vehicles
@@ -81,7 +88,9 @@ export function VehiclesPage({ onViewCosts }: Props) {
   function openDetail(v: VehicleResponse) {
     setDetail(v);
     setDetailCosts([]);
+    setDetailOS([]);
     coreApi.vehicleCosts.list(v.id!).then(setDetailCosts);
+    coreApi.workOrders.list(v.id!).then(setDetailOS);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -128,7 +137,6 @@ export function VehiclesPage({ onViewCosts }: Props) {
   }, [vehicles, search, statusFiltro]);
 
   const detailManutencao = detailCosts.filter((c) => c.category === 'MANUTENCAO');
-  const detailOS = detail ? osPorPlaca(detail.plate!) : [];
 
   return (
     <div className="p-5">
@@ -425,8 +433,10 @@ export function VehiclesPage({ onViewCosts }: Props) {
                         {detailOS.map((os) => (
                           <tr key={os.id}>
                             <td className="py-1.5 font-data text-foreground">{os.numero}</td>
-                            <td className="py-1.5 text-muted-foreground">{TIPO_OS_LABEL[os.tipo]}</td>
-                            <td className="py-1.5 font-data text-muted-foreground">{formatDateBR(os.dataAbertura)}</td>
+                            <td className="py-1.5 text-muted-foreground">{TIPO_OS_LABEL[os.tipo ?? ''] ?? os.tipo}</td>
+                            <td className="py-1.5 font-data text-muted-foreground">
+                              {os.dataAbertura ? formatDateBR(os.dataAbertura) : '—'}
+                            </td>
                             <td className="py-1.5">
                               <StatusBadgeOS status={os.status} />
                             </td>
