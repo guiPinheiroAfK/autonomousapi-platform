@@ -500,6 +500,28 @@
         }
       }
     },
+    "/v1/me/incidents": {
+      "post": {
+        "tags": ["me-controller"],
+        "operationId": "reportIncident",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleIncidentRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleIncidentResponse" } }
+            }
+          }
+        }
+      }
+    },
     "/v1/drivers": {
       "get": {
         "tags": ["driver-controller"],
@@ -998,6 +1020,72 @@
           "200": {
             "description": "OK",
             "content": { "text/csv": { "schema": { "type": "string", "format": "byte" } } }
+          }
+        }
+      }
+    },
+    "/v1/me/vehicle": {
+      "get": {
+        "tags": ["me-controller"],
+        "operationId": "vehicle",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverAssignmentResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/vehicle/work-orders": {
+      "get": {
+        "tags": ["me-controller"],
+        "operationId": "vehicleWorkOrders",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WorkOrderResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/trips": {
+      "get": {
+        "tags": ["me-controller"],
+        "operationId": "trips",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TripResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/profile": {
+      "get": {
+        "tags": ["me-controller"],
+        "operationId": "profile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverProfileResponse" } }
+            }
           }
         }
       }
@@ -1587,6 +1675,16 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/VehicleMaintenanceCostResponse" }
           }
+        }
+      },
+      "DriverProfileResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "cnh": { "type": "string" },
+          "cnhValidade": { "type": "string", "format": "date" },
+          "phone": { "type": "string" }
         }
       },
       "DriverRatingSummaryResponse": {
