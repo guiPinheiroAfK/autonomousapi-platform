@@ -80,18 +80,18 @@ export function StatusBadgeCusto({ categoria, className }: { categoria?: string;
 }
 
 const OS_TONE: Record<string, Tone> = {
-  aberta: 'info',
-  em_andamento: 'warning',
-  concluida: 'success',
-  atrasada: 'danger',
-  cancelada: 'neutral',
+  ABERTA: 'info',
+  EM_ANDAMENTO: 'warning',
+  CONCLUIDA: 'success',
+  ATRASADA: 'danger',
+  CANCELADA: 'neutral',
 };
 const OS_LABEL: Record<string, string> = {
-  aberta: 'Aberta',
-  em_andamento: 'Em andamento',
-  concluida: 'Concluída',
-  atrasada: 'Atrasada',
-  cancelada: 'Cancelada',
+  ABERTA: 'Aberta',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDA: 'Concluída',
+  ATRASADA: 'Atrasada',
+  CANCELADA: 'Cancelada',
 };
 
 export function StatusBadgeOS({ status, className }: { status?: string; className?: string }) {
@@ -100,14 +100,14 @@ export function StatusBadgeOS({ status, className }: { status?: string; classNam
 }
 
 const PRIORIDADE_TONE: Record<string, Tone> = {
-  baixa: 'neutral',
-  media: 'warning',
-  alta: 'danger',
+  BAIXA: 'neutral',
+  MEDIA: 'warning',
+  ALTA: 'danger',
 };
 const PRIORIDADE_LABEL: Record<string, string> = {
-  baixa: 'Baixa',
-  media: 'Média',
-  alta: 'Alta',
+  BAIXA: 'Baixa',
+  MEDIA: 'Média',
+  ALTA: 'Alta',
 };
 
 export function StatusBadgePrioridade({ prioridade, className }: { prioridade?: string; className?: string }) {

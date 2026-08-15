@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/v1/work-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update"];
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/vehicles/{id}": {
         parameters: {
             query?: never;
@@ -12,9 +28,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get"];
-        put: operations["update"];
+        put: operations["update_1"];
         post?: never;
-        delete: operations["delete_1"];
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -28,9 +44,25 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_1"];
-        put: operations["update_1"];
+        put: operations["update_2"];
         post?: never;
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -43,9 +75,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
-        post: operations["create"];
+        post: operations["create_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -91,7 +123,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post: operations["addEntry"];
         delete?: never;
@@ -107,7 +139,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post: operations["start"];
         delete?: never;
@@ -171,9 +203,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -187,9 +219,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -260,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/resend-verification": {
         parameters: {
             query?: never;
@@ -302,6 +350,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["forgotPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -396,6 +460,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["costTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/maintenance-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["maintenanceSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -526,7 +606,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -536,6 +616,70 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WorkOrderItemRequest: {
+            descricao: string;
+            /** Format: int32 */
+            quantidade: number;
+            valorUnitario: number;
+        };
+        WorkOrderRequest: {
+            /** Format: uuid */
+            vehicleId: string;
+            /** Format: uuid */
+            driverId?: string;
+            /** @enum {string} */
+            tipo: "PREVENTIVA" | "CORRETIVA" | "REVISAO" | "SINISTRO";
+            /** @enum {string} */
+            status: "ABERTA" | "EM_ANDAMENTO" | "CONCLUIDA" | "ATRASADA" | "CANCELADA";
+            /** @enum {string} */
+            prioridade: "BAIXA" | "MEDIA" | "ALTA";
+            descricaoProblema: string;
+            observacoes?: string;
+            responsavelOficina: string;
+            /** Format: date */
+            dataAbertura: string;
+            /** Format: date */
+            previsaoConclusao: string;
+            /** Format: int32 */
+            kmAbertura: number;
+            itens: components["schemas"]["WorkOrderItemRequest"][];
+        };
+        WorkOrderItemResponse: {
+            descricao?: string;
+            /** Format: int32 */
+            quantidade?: number;
+            valorUnitario?: number;
+            subtotal?: number;
+        };
+        WorkOrderResponse: {
+            /** Format: uuid */
+            id?: string;
+            numero?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            vehiclePlate?: string;
+            vehicleName?: string;
+            /** Format: uuid */
+            driverId?: string;
+            driverName?: string;
+            /** @enum {string} */
+            tipo?: "PREVENTIVA" | "CORRETIVA" | "REVISAO" | "SINISTRO";
+            /** @enum {string} */
+            status?: "ABERTA" | "EM_ANDAMENTO" | "CONCLUIDA" | "ATRASADA" | "CANCELADA";
+            /** @enum {string} */
+            prioridade?: "BAIXA" | "MEDIA" | "ALTA";
+            descricaoProblema?: string;
+            observacoes?: string;
+            responsavelOficina?: string;
+            /** Format: date */
+            dataAbertura?: string;
+            /** Format: date */
+            previsaoConclusao?: string;
+            /** Format: int32 */
+            kmAbertura?: number;
+            itens?: components["schemas"]["WorkOrderItemResponse"][];
+            custoTotal?: number;
+        };
         VehicleRequest: {
             plate: string;
             brand: string;
@@ -731,6 +875,10 @@ export interface components {
             email?: string;
             message?: string;
         };
+        ResetPasswordRequest: {
+            token: string;
+            newPassword: string;
+        };
         ResendVerificationRequest: {
             email: string;
         };
@@ -740,6 +888,9 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        ForgotPasswordRequest: {
+            email: string;
         };
         AffiliateClickRequest: {
             /** Format: uuid */
@@ -796,6 +947,26 @@ export interface components {
             month?: string;
             total?: number;
         };
+        MonthlyMaintenanceCostResponse: {
+            mes?: string;
+            custoPreventiva?: number;
+            custoCorretiva?: number;
+            custoRevisao?: number;
+            custoSinistro?: number;
+            /** Format: int64 */
+            qtdOS?: number;
+        };
+        VehicleMaintenanceCostResponse: {
+            /** Format: uuid */
+            vehicleId?: string;
+            plate?: string;
+            vehicleName?: string;
+            total?: number;
+        };
+        WorkOrderReportResponse: {
+            monthly?: components["schemas"]["MonthlyMaintenanceCostResponse"][];
+            vehicleRanking?: components["schemas"]["VehicleMaintenanceCostResponse"][];
+        };
         DriverRatingSummaryResponse: {
             /** Format: uuid */
             driverId?: string;
@@ -844,6 +1015,52 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkOrderResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get: {
         parameters: {
             query?: never;
@@ -866,7 +1083,7 @@ export interface operations {
             };
         };
     };
-    update: {
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -892,7 +1109,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -934,7 +1151,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -960,7 +1177,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -982,6 +1199,52 @@ export interface operations {
     };
     list: {
         parameters: {
+            query?: {
+                vehicleId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkOrderResponse"][];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkOrderResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
             query?: never;
             header?: never;
             path?: never;
@@ -1000,7 +1263,7 @@ export interface operations {
             };
         };
     };
-    create: {
+    create_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1120,7 +1383,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1168,7 +1431,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1284,7 +1547,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -1304,7 +1567,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1328,7 +1591,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -1350,7 +1613,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1468,6 +1731,28 @@ export interface operations {
             };
         };
     };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     resendVerification: {
         parameters: {
             query?: never;
@@ -1535,6 +1820,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["TokenResponse"];
                 };
+            };
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1666,6 +1973,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MonthlyCostResponse"][];
+                };
+            };
+        };
+    };
+    maintenanceSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkOrderReportResponse"];
                 };
             };
         };
@@ -1814,7 +2141,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
