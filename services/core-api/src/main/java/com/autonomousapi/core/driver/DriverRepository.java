@@ -16,4 +16,7 @@ public interface DriverRepository extends JpaRepository<Driver, UUID> {
     boolean existsByTenantIdAndCnhAndIdNot(UUID tenantId, String cnh, UUID id);
 
     List<Driver> findAllByTenantIdAndCnhValidadeIsNotNull(UUID tenantId);
+
+    /** Resolve o driver a partir do login vinculado (ADR 0013) — base do CurrentDriverResolver. */
+    Optional<Driver> findByAppUserId(UUID appUserId);
 }
