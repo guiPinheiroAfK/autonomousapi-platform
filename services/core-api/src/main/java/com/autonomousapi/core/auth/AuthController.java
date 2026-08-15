@@ -1,8 +1,10 @@
 package com.autonomousapi.core.auth;
 
+import com.autonomousapi.core.auth.dto.ForgotPasswordRequest;
 import com.autonomousapi.core.auth.dto.LoginRequest;
 import com.autonomousapi.core.auth.dto.RefreshRequest;
 import com.autonomousapi.core.auth.dto.ResendVerificationRequest;
+import com.autonomousapi.core.auth.dto.ResetPasswordRequest;
 import com.autonomousapi.core.auth.dto.SignupRequest;
 import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
@@ -61,6 +63,19 @@ public class AuthController {
     public TokenResponse login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
         loginRateLimit.verificar(req.email(), http);
         return authService.login(req);
+    }
+
+    /** Sempre 202, e-mail cadastrado ou não — mesmo raciocínio do resend-verification. */
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        authService.forgotPassword(req.email());
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req.token(), req.newPassword());
     }
 
     @PostMapping("/refresh")

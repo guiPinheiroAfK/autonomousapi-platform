@@ -13,6 +13,13 @@ export function formatDateBR(isoDate: string): string {
   return `${d}/${m}/${y}`;
 }
 
+/** Formata um instante ISO completo ("2026-09-14T12:00:00Z", ex.: Subscription.currentPeriodEnd)
+ *  como "DD/MM/YYYY". Diferente de formatDateBR: aqui passar por Date() é correto — é um
+ *  instante de verdade, não um LocalDate "puro" que o parsing por Date deslocaria de fuso. */
+export function formatDateTimeBR(isoInstant: string): string {
+  return new Date(isoInstant).toLocaleDateString('pt-BR');
+}
+
 /** Dias entre hoje e uma data "YYYY-MM-DD" (negativo = já vencida). */
 export function diasAteVencer(isoDate: string): number {
   const [y, m, d] = isoDate.split('-').map(Number);

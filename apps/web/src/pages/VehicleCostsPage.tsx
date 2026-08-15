@@ -13,7 +13,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../components/shared/StatCard';
 
 const CATEGORY_OPTIONS = ['COMBUSTIVEL', 'MANUTENCAO', 'OUTRO'] as const;
 

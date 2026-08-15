@@ -12,7 +12,7 @@ import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../components/shared/StatCard';
 import { formatBRL, formatDateBR } from '../lib/format';
 
 const STATUS_OPTIONS = ['ATIVO', 'MANUTENCAO', 'INATIVO'] as const;

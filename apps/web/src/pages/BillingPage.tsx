@@ -3,6 +3,7 @@ import { CheckCircle2, CreditCard } from 'lucide-react';
 import { coreApi, type SubscriptionResponse } from '../api/client';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
+import { formatDateTimeBR } from '../lib/format';
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Ativa',
@@ -76,16 +77,33 @@ export function BillingPage() {
                 {subscription.currentPeriodEnd && (
                   <div>
                     <p className="text-muted-foreground">Renova em</p>
-                    <p className="font-medium text-foreground">
-                      {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
-                    </p>
+                    <p className="font-medium text-foreground">{formatDateTimeBR(subscription.currentPeriodEnd)}</p>
+                  </div>
+                )}
+                {subscription.status === 'TRIALING' && subscription.trialEndsAt && (
+                  <div>
+                    <p className="text-muted-foreground">Trial até</p>
+                    <p className="font-medium text-foreground">{formatDateTimeBR(subscription.trialEndsAt)}</p>
                   </div>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Gerenciamento de forma de pagamento e cancelamento fica no portal da Stripe (em breve, link direto
-                aqui).
-              </p>
+              {subscription.status === 'TRIALING' ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    Depois do trial, cadastrar veículo/motorista novo exige assinatura ativa — o que já está
+                    cadastrado continua acessível.
+                  </p>
+                  <Button size="sm" onClick={handleCheckout} disabled={checkingOut}>
+                    {checkingOut ? 'Abrindo checkout...' : 'Assinar agora'}
+                  </Button>
+                  {error && <p className="text-xs text-status-danger">{error}</p>}
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Gerenciamento de forma de pagamento e cancelamento fica no portal da Stripe (em breve, link direto
+                  aqui).
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-3">

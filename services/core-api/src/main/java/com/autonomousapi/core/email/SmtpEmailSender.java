@@ -28,22 +28,35 @@ public class SmtpEmailSender implements EmailSender {
 
     @Override
     public void sendVerificationEmail(String to, String verificationUrl) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(to);
-        message.setSubject("Confirme sua conta — AutonomousAPI");
-        message.setText(
+        send(to, "Confirme sua conta — AutonomousAPI",
                 "Falta um passo para começar a usar a AutonomousAPI.\n\n"
                         + "Confirme seu e-mail clicando no link abaixo (válido por 24 horas):\n"
                         + verificationUrl + "\n\n"
                         + "Se você não criou essa conta, pode ignorar este e-mail.");
+    }
+
+    @Override
+    public void sendPasswordResetEmail(String to, String resetUrl) {
+        send(to, "Redefinir senha — AutonomousAPI",
+                "Pediram uma redefinição de senha para esta conta.\n\n"
+                        + "Clique no link abaixo para escolher uma nova senha (válido por 1 hora):\n"
+                        + resetUrl + "\n\n"
+                        + "Se não foi você, pode ignorar este e-mail — sua senha continua a mesma.");
+    }
+
+    private void send(String to, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
         try {
             mailSender.send(message);
         } catch (Exception ex) {
-            // Falha de envio não pode derrubar o signup em si — o usuário já foi criado
-            // (desabilitado) e pode pedir reenvio depois. Log alto porque é sinal de
-            // provedor mal configurado, não de erro do usuário.
-            log.error("Falha ao enviar e-mail de verificação para {}", to, ex);
+            // Falha de envio não pode derrubar a operação que disparou o e-mail — o
+            // usuário pode pedir reenvio depois. Log alto porque é sinal de provedor
+            // mal configurado, não de erro do usuário.
+            log.error("Falha ao enviar e-mail para {}", to, ex);
         }
     }
 }
