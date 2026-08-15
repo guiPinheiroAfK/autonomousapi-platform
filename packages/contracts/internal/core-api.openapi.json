@@ -535,6 +535,93 @@
         }
       }
     },
+    "/v1/drivers/{id}/invite": {
+      "post": {
+        "tags": ["driver-controller"],
+        "operationId": "invite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverInviteResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers/{id}/assignment": {
+      "get": {
+        "tags": ["driver-controller"],
+        "operationId": "activeAssignment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverAssignmentResponse" } }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["driver-controller"],
+        "operationId": "assign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AssignVehicleRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriverAssignmentResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers/{id}/assignment/end": {
+      "post": {
+        "tags": ["driver-controller"],
+        "operationId": "endAssignment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
     "/v1/drivers/{driverId}/ratings": {
       "get": {
         "tags": ["driver-rating-controller"],
@@ -736,6 +823,19 @@
           "required": true
         },
         "responses": { "202": { "description": "Accepted" } }
+      }
+    },
+    "/v1/auth/accept-invite": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "acceptInvite",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/AcceptInviteRequest" } }
+          },
+          "required": true
+        },
+        "responses": { "204": { "description": "No Content" } }
       }
     },
     "/v1/affiliates/partners/{partnerId}/click": {
@@ -1150,7 +1250,8 @@
           "cnh": { "pattern": "\\d{11}", "type": "string" },
           "phone": { "maxLength": 20, "minLength": 0, "type": "string" },
           "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-          "cnhValidade": { "type": "string", "format": "date" }
+          "cnhValidade": { "type": "string", "format": "date" },
+          "email": { "maxLength": 255, "minLength": 0, "type": "string" }
         }
       },
       "DriverResponse": {
@@ -1162,6 +1263,8 @@
           "phone": { "type": "string" },
           "status": { "type": "string" },
           "cnhValidade": { "type": "string", "format": "date" },
+          "email": { "type": "string" },
+          "hasLogin": { "type": "boolean" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }
@@ -1286,6 +1389,31 @@
           "received": { "type": "integer", "format": "int32" }
         }
       },
+      "DriverInviteResponse": {
+        "type": "object",
+        "properties": {
+          "driverId": { "type": "string", "format": "uuid" },
+          "email": { "type": "string" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AssignVehicleRequest": {
+        "required": ["vehicleId"],
+        "type": "object",
+        "properties": { "vehicleId": { "type": "string", "format": "uuid" } }
+      },
+      "DriverAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "plate": { "type": "string" },
+          "brand": { "type": "string" },
+          "model": { "type": "string" },
+          "startedAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "DriverRatingRequest": {
         "required": ["nota"],
         "type": "object",
@@ -1363,6 +1491,14 @@
         "required": ["email"],
         "type": "object",
         "properties": { "email": { "type": "string" } }
+      },
+      "AcceptInviteRequest": {
+        "required": ["password", "token"],
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "password": { "maxLength": 100, "minLength": 8, "type": "string" }
+        }
       },
       "AffiliateClickRequest": {
         "type": "object",

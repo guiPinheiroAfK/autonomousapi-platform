@@ -1,6 +1,7 @@
 package com.autonomousapi.core.driver.dto;
 
 import com.autonomousapi.core.driver.DriverStatus;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,5 +14,7 @@ public record DriverRequest(
         @Size(max = 20) String phone,
         @NotNull DriverStatus status,
         /** Opcional — sem valor, o motorista não entra no alerta de CNH vencendo. */
-        LocalDate cnhValidade) {
+        LocalDate cnhValidade,
+        /** Opcional — destino do convite de acesso ao app (ADR 0013). */
+        @Email @Size(max = 255) String email) {
 }

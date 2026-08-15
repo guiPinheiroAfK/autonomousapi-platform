@@ -10,4 +10,7 @@ public interface EmailSender {
     void sendVerificationEmail(String to, String verificationUrl);
 
     void sendPasswordResetEmail(String to, String resetUrl);
+
+    /** Convite de acesso do motorista ao app (ADR 0013). */
+    void sendDriverInviteEmail(String to, String inviteUrl);
 }

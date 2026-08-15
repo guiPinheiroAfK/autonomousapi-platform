@@ -44,6 +44,15 @@ public class SmtpEmailSender implements EmailSender {
                         + "Se não foi você, pode ignorar este e-mail — sua senha continua a mesma.");
     }
 
+    @Override
+    public void sendDriverInviteEmail(String to, String inviteUrl) {
+        send(to, "Você foi convidado para a AutonomousAPI",
+                "O gestor da sua frota criou um acesso para você no app da AutonomousAPI.\n\n"
+                        + "Defina sua senha clicando no link abaixo (válido por 3 dias):\n"
+                        + inviteUrl + "\n\n"
+                        + "Depois de definir a senha, é só entrar no app com seu e-mail.");
+    }
+
     private void send(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromAddress);

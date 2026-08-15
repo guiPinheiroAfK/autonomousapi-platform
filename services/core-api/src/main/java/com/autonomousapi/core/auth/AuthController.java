@@ -1,5 +1,6 @@
 package com.autonomousapi.core.auth;
 
+import com.autonomousapi.core.auth.dto.AcceptInviteRequest;
 import com.autonomousapi.core.auth.dto.ForgotPasswordRequest;
 import com.autonomousapi.core.auth.dto.LoginRequest;
 import com.autonomousapi.core.auth.dto.RefreshRequest;
@@ -10,6 +11,7 @@ import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.auth.dto.UserResponse;
 import com.autonomousapi.core.auth.dto.VerifyEmailRequest;
+import com.autonomousapi.core.driver.DriverInviteService;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.ratelimit.LoginRateLimitGuard;
 import com.autonomousapi.core.user.User;
@@ -33,12 +35,17 @@ public class AuthController {
     private final AuthService authService;
     private final UserRepository users;
     private final LoginRateLimitGuard loginRateLimit;
+    private final DriverInviteService driverInviteService;
 
     public AuthController(
-            AuthService authService, UserRepository users, LoginRateLimitGuard loginRateLimit) {
+            AuthService authService,
+            UserRepository users,
+            LoginRateLimitGuard loginRateLimit,
+            DriverInviteService driverInviteService) {
         this.authService = authService;
         this.users = users;
         this.loginRateLimit = loginRateLimit;
+        this.driverInviteService = driverInviteService;
     }
 
     @PostMapping("/signup")
@@ -76,6 +83,16 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
         authService.resetPassword(req.token(), req.newPassword());
+    }
+
+    /**
+     * Aceite do convite de motorista (ADR 0013): cria o login MOTORISTA e define a senha.
+     * Público — o token do e-mail é a prova de posse. Depois é só entrar pelo app.
+     */
+    @PostMapping("/accept-invite")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void acceptInvite(@Valid @RequestBody AcceptInviteRequest req) {
+        driverInviteService.accept(req.token(), req.password());
     }
 
     @PostMapping("/refresh")

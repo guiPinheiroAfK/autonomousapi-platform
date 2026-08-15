@@ -27,6 +27,24 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("cnh_already_used", ex.getMessage()));
     }
 
+    @ExceptionHandler(VehicleAlreadyAssignedException.class)
+    public ResponseEntity<ApiError> handleVehicleAssigned(VehicleAlreadyAssignedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("vehicle_already_assigned", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DriverEmailRequiredException.class)
+    public ResponseEntity<ApiError> handleDriverEmailRequired(DriverEmailRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("driver_email_required", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidDriverInviteTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidDriverInvite(InvalidDriverInviteTokenException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("invalid_driver_invite_token", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

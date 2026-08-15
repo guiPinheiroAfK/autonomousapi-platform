@@ -34,7 +34,7 @@ public class DriverService {
             throw new CnhAlreadyUsedException();
         }
         Driver driver = new Driver(tenantId, req.name(), req.cnh(), req.phone());
-        driver.update(req.name(), req.cnh(), req.phone(), req.status(), req.cnhValidade());
+        driver.update(req.name(), req.cnh(), req.phone(), req.status(), req.cnhValidade(), req.email());
         drivers.save(driver);
         return DriverResponse.from(driver);
     }
@@ -57,7 +57,7 @@ public class DriverService {
         if (drivers.existsByTenantIdAndCnhAndIdNot(principal.tenantId(), req.cnh(), id)) {
             throw new CnhAlreadyUsedException();
         }
-        driver.update(req.name(), req.cnh(), req.phone(), req.status(), req.cnhValidade());
+        driver.update(req.name(), req.cnh(), req.phone(), req.status(), req.cnhValidade(), req.email());
         return DriverResponse.from(driver);
     }
 

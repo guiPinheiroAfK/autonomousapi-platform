@@ -212,6 +212,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/drivers/{id}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/drivers/{id}/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["activeAssignment"];
+        put?: never;
+        post: operations["assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/drivers/{id}/assignment/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["endAssignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/drivers/{driverId}/ratings": {
         parameters: {
             query?: never;
@@ -366,6 +414,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/accept-invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acceptInvite"];
         delete?: never;
         options?: never;
         head?: never;
@@ -729,6 +793,7 @@ export interface components {
             status: "ATIVO" | "INATIVO";
             /** Format: date */
             cnhValidade?: string;
+            email?: string;
         };
         DriverResponse: {
             /** Format: uuid */
@@ -739,6 +804,8 @@ export interface components {
             status?: string;
             /** Format: date */
             cnhValidade?: string;
+            email?: string;
+            hasLogin?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -835,6 +902,30 @@ export interface components {
             /** Format: int32 */
             received?: number;
         };
+        DriverInviteResponse: {
+            /** Format: uuid */
+            driverId?: string;
+            email?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        AssignVehicleRequest: {
+            /** Format: uuid */
+            vehicleId: string;
+        };
+        DriverAssignmentResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            driverId?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            plate?: string;
+            brand?: string;
+            model?: string;
+            /** Format: date-time */
+            startedAt?: string;
+        };
         DriverRatingRequest: {
             /** Format: int32 */
             nota: number;
@@ -891,6 +982,10 @@ export interface components {
         };
         ForgotPasswordRequest: {
             email: string;
+        };
+        AcceptInviteRequest: {
+            token: string;
+            password: string;
         };
         AffiliateClickRequest: {
             /** Format: uuid */
@@ -1591,6 +1686,96 @@ export interface operations {
             };
         };
     };
+    invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverInviteResponse"];
+                };
+            };
+        };
+    };
+    activeAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverAssignmentResponse"];
+                };
+            };
+        };
+    };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignVehicleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DriverAssignmentResponse"];
+                };
+            };
+        };
+    };
+    endAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_5: {
         parameters: {
             query?: never;
@@ -1838,6 +2023,28 @@ export interface operations {
         responses: {
             /** @description Accepted */
             202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    acceptInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInviteRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
