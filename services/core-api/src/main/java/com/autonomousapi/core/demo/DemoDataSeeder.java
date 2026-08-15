@@ -199,7 +199,7 @@ public class DemoDataSeeder implements ApplicationRunner {
 
         for (D d : defs) {
             Driver driver = new Driver(tenantId, d.name(), d.cnh(), d.phone());
-            driver.update(d.name(), d.cnh(), d.phone(), d.status(), d.cnhValidade());
+            driver.update(d.name(), d.cnh(), d.phone(), d.status(), d.cnhValidade(), null);
             drivers.save(driver);
         }
     }

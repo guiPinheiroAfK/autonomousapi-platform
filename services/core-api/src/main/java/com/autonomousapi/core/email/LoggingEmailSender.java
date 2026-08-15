@@ -23,4 +23,9 @@ public class LoggingEmailSender implements EmailSender {
     public void sendPasswordResetEmail(String to, String resetUrl) {
         log.info("[email de redefinição de senha — sem SMTP configurado] destinatário={} link={}", to, resetUrl);
     }
+
+    @Override
+    public void sendDriverInviteEmail(String to, String inviteUrl) {
+        log.info("[email de convite de motorista — sem SMTP configurado] destinatário={} link={}", to, inviteUrl);
+    }
 }

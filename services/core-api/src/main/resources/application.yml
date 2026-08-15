@@ -80,6 +80,9 @@ app:
     # Bem mais curto que o de verificação de e-mail: um link de redefinição de senha
     # interceptado vale mais a um atacante do que um link de confirmação de cadastro.
     password-reset-ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:60}
+    # Convite de motorista dura mais que a confirmação de cadastro: o motorista pode
+    # levar dias para abrir o e-mail e instalar o app (ADR 0013).
+    driver-invite-ttl-hours: ${DRIVER_INVITE_TTL_HOURS:72}
 
 springdoc:
   api-docs:

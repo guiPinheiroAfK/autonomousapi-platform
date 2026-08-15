@@ -31,7 +31,7 @@ class DriverServiceTest {
 
     @Test
     void criaMotoristaNoTenantDoPrincipal() {
-        DriverRequest req = new DriverRequest("João Silva", "12345678901", "11999990000", DriverStatus.ATIVO, null);
+        DriverRequest req = new DriverRequest("João Silva", "12345678901", "11999990000", DriverStatus.ATIVO, null, null);
         when(repo.existsByTenantIdAndCnh(tenantId, "12345678901")).thenReturn(false);
 
         DriverResponse resp = service.create(principal, req);
@@ -42,7 +42,7 @@ class DriverServiceTest {
 
     @Test
     void rejeitaCnhDuplicadaNoMesmoTenant() {
-        DriverRequest req = new DriverRequest("João Silva", "12345678901", null, DriverStatus.ATIVO, null);
+        DriverRequest req = new DriverRequest("João Silva", "12345678901", null, DriverStatus.ATIVO, null, null);
         when(repo.existsByTenantIdAndCnh(tenantId, "12345678901")).thenReturn(true);
 
         assertThrows(CnhAlreadyUsedException.class, () -> service.create(principal, req));
@@ -71,7 +71,7 @@ class DriverServiceTest {
     @Test
     void alertaCnhQuandoVencendoEmBreve() {
         Driver d = new Driver(tenantId, "Carlos Rocha", "11122233344", null);
-        d.update("Carlos Rocha", "11122233344", null, DriverStatus.ATIVO, LocalDate.now().plusDays(10));
+        d.update("Carlos Rocha", "11122233344", null, DriverStatus.ATIVO, LocalDate.now().plusDays(10), null);
         when(repo.findAllByTenantIdAndCnhValidadeIsNotNull(tenantId)).thenReturn(List.of(d));
 
         List<DriverLicenseAlertResponse> alerts = service.licenseExpiring(principal);
@@ -83,7 +83,7 @@ class DriverServiceTest {
     @Test
     void naoAlertaCnhQuandoValidadeDistante() {
         Driver d = new Driver(tenantId, "Carlos Rocha", "11122233344", null);
-        d.update("Carlos Rocha", "11122233344", null, DriverStatus.ATIVO, LocalDate.now().plusDays(180));
+        d.update("Carlos Rocha", "11122233344", null, DriverStatus.ATIVO, LocalDate.now().plusDays(180), null);
         when(repo.findAllByTenantIdAndCnhValidadeIsNotNull(tenantId)).thenReturn(List.of(d));
 
         List<DriverLicenseAlertResponse> alerts = service.licenseExpiring(principal);

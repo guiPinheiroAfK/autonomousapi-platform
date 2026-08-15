@@ -12,12 +12,16 @@ public record DriverResponse(
         String phone,
         String status,
         LocalDate cnhValidade,
+        String email,
+        /** True quando o motorista já aceitou o convite e tem login (ADR 0013). */
+        boolean hasLogin,
         Instant createdAt,
         Instant updatedAt) {
 
     public static DriverResponse from(Driver d) {
         return new DriverResponse(
                 d.getId(), d.getName(), d.getCnh(), d.getPhone(),
-                d.getStatus().name(), d.getCnhValidade(), d.getCreatedAt(), d.getUpdatedAt());
+                d.getStatus().name(), d.getCnhValidade(), d.getEmail(), d.hasLogin(),
+                d.getCreatedAt(), d.getUpdatedAt());
     }
 }

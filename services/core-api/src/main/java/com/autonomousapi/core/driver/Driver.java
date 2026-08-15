@@ -35,6 +35,17 @@ public class Driver {
     @Column(name = "phone", length = 20)
     private String phone;
 
+    /** Para onde vai o convite de acesso (ADR 0013). Opcional — sem e-mail, não há convite. */
+    @Column(name = "email", length = 255)
+    private String email;
+
+    /**
+     * Vínculo com a conta de login (app_user, role MOTORISTA). Null enquanto o motorista
+     * não tem acesso ao app — o registro operacional existe de forma independente (ADR 0013).
+     */
+    @Column(name = "app_user_id")
+    private UUID appUserId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private DriverStatus status;
@@ -65,12 +76,20 @@ public class Driver {
         this.updatedAt = now;
     }
 
-    public void update(String name, String cnh, String phone, DriverStatus status, LocalDate cnhValidade) {
+    public void update(
+            String name, String cnh, String phone, DriverStatus status, LocalDate cnhValidade, String email) {
         this.name = name;
         this.cnh = cnh;
         this.phone = phone;
         this.status = status;
         this.cnhValidade = cnhValidade;
+        this.email = email;
+        this.updatedAt = Instant.now();
+    }
+
+    /** Liga o registro operacional à conta de login criada no aceite do convite (ADR 0013). */
+    public void linkAppUser(UUID appUserId) {
+        this.appUserId = appUserId;
         this.updatedAt = Instant.now();
     }
 
@@ -100,6 +119,19 @@ public class Driver {
 
     public LocalDate getCnhValidade() {
         return cnhValidade;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public UUID getAppUserId() {
+        return appUserId;
+    }
+
+    /** True quando o motorista já aceitou o convite e tem login vinculado. */
+    public boolean hasLogin() {
+        return appUserId != null;
     }
 
     public Instant getCreatedAt() {
