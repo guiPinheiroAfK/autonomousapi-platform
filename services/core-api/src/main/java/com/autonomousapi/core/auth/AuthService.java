@@ -9,6 +9,7 @@ import com.autonomousapi.core.billing.SubscriptionRepository;
 import com.autonomousapi.core.email.EmailSender;
 import com.autonomousapi.core.error.EmailAlreadyUsedException;
 import com.autonomousapi.core.error.InvalidCredentialsException;
+import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
 import com.autonomousapi.core.error.InvalidRefreshTokenException;
 import com.autonomousapi.core.error.InvalidVerificationTokenException;
 import com.autonomousapi.core.security.jwt.JwtService;
@@ -40,6 +41,7 @@ public class AuthService {
     private final TenantRepository tenants;
     private final RefreshTokenRepository refreshTokens;
     private final EmailVerificationTokenRepository verificationTokens;
+    private final PasswordResetTokenRepository passwordResetTokens;
     private final SubscriptionRepository subscriptions;
     private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
@@ -47,6 +49,7 @@ public class AuthService {
     private final Duration refreshTtl;
     private final long accessTtlSeconds;
     private final Duration emailVerificationTtl;
+    private final Duration passwordResetTtl;
     private final String webAppUrl;
     private final SecureRandom random = new SecureRandom();
 
@@ -55,6 +58,7 @@ public class AuthService {
             TenantRepository tenants,
             RefreshTokenRepository refreshTokens,
             EmailVerificationTokenRepository verificationTokens,
+            PasswordResetTokenRepository passwordResetTokens,
             SubscriptionRepository subscriptions,
             EmailSender emailSender,
             PasswordEncoder passwordEncoder,
@@ -62,11 +66,13 @@ public class AuthService {
             @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
             @Value("${app.jwt.access-ttl-minutes}") long accessTtlMinutes,
             @Value("${app.auth.email-verification-ttl-hours}") long emailVerificationTtlHours,
+            @Value("${app.auth.password-reset-ttl-minutes}") long passwordResetTtlMinutes,
             @Value("${app.auth.web-app-url}") String webAppUrl) {
         this.users = users;
         this.tenants = tenants;
         this.refreshTokens = refreshTokens;
         this.verificationTokens = verificationTokens;
+        this.passwordResetTokens = passwordResetTokens;
         this.subscriptions = subscriptions;
         this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
@@ -74,6 +80,7 @@ public class AuthService {
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
         this.accessTtlSeconds = Duration.ofMinutes(accessTtlMinutes).toSeconds();
         this.emailVerificationTtl = Duration.ofHours(emailVerificationTtlHours);
+        this.passwordResetTtl = Duration.ofMinutes(passwordResetTtlMinutes);
         this.webAppUrl = webAppUrl;
     }
 
@@ -149,6 +156,49 @@ public class AuthService {
 
         String link = webAppUrl + "/verificar-email?token=" + rawToken;
         emailSender.sendVerificationEmail(user.getEmail(), link);
+    }
+
+    /**
+     * Silencioso quanto a e-mail não existir, mesmo raciocínio do resendVerification —
+     * responder diferente vazaria quais e-mails estão cadastrados.
+     */
+    @Transactional
+    public void forgotPassword(String email) {
+        users.findByEmail(email).ifPresent(user -> {
+            passwordResetTokens.findAllByUserIdAndUsedAtIsNull(user.getId())
+                    .forEach(PasswordResetToken::markUsed);
+
+            String rawToken = generateRawToken();
+            passwordResetTokens.save(new PasswordResetToken(
+                    user.getId(), sha256Hex(rawToken), Instant.now().plus(passwordResetTtl)));
+
+            String link = webAppUrl + "/redefinir-senha?token=" + rawToken;
+            emailSender.sendPasswordResetEmail(user.getEmail(), link);
+        });
+    }
+
+    /**
+     * Troca a senha e revoga TODOS os refresh tokens do usuário — se um token tivesse
+     * vazado, trocar a senha precisa derrubar quem estava usando ele, não só bloquear
+     * login novo. Não devolve tokens novos: login de novo com a senha nova é a
+     * confirmação de que a pessoa realmente sabe/lembra a senha que acabou de escolher.
+     */
+    @Transactional
+    public void resetPassword(String rawToken, String newPassword) {
+        String hash = sha256Hex(rawToken);
+        PasswordResetToken token = passwordResetTokens.findByTokenHash(hash)
+                .orElseThrow(InvalidPasswordResetTokenException::new);
+        if (!token.isUsable()) {
+            throw new InvalidPasswordResetTokenException();
+        }
+        User user = users.findById(token.getUserId())
+                .orElseThrow(InvalidPasswordResetTokenException::new);
+
+        token.markUsed();
+        passwordResetTokens.save(token);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        users.save(user);
+        refreshTokens.revokeAllForUser(user.getId());
     }
 
     @Transactional

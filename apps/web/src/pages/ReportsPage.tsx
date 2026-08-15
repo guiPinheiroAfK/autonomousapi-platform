@@ -19,7 +19,7 @@ import { ordensServico, osCustoTotal } from '../data/ordensServico';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../components/shared/StatCard';
 import { formatBRL, monthLabel } from '../lib/format';
 
 const TIPO_COLORS: Record<string, string> = {

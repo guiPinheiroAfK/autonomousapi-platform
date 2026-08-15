@@ -23,7 +23,7 @@ import {
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../components/shared/StatCard';
 import { cn } from '../lib/utils';
 import { monthLabel } from '../lib/format';
 

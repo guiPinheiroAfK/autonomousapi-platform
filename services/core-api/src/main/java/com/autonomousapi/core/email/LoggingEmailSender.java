@@ -18,4 +18,9 @@ public class LoggingEmailSender implements EmailSender {
     public void sendVerificationEmail(String to, String verificationUrl) {
         log.info("[email de verificação — sem SMTP configurado] destinatário={} link={}", to, verificationUrl);
     }
+
+    @Override
+    public void sendPasswordResetEmail(String to, String resetUrl) {
+        log.info("[email de redefinição de senha — sem SMTP configurado] destinatário={} link={}", to, resetUrl);
+    }
 }

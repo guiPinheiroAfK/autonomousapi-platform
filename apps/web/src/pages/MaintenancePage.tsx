@@ -4,7 +4,7 @@ import { coreApi, type VehicleResponse } from '../api/client';
 import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { Select } from '../components/ui/select';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../components/shared/StatCard';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { formatBRL, formatDateBR } from '../lib/format';
 

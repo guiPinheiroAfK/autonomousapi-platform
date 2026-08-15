@@ -16,6 +16,7 @@ import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.billing.SubscriptionRepository;
 import com.autonomousapi.core.email.EmailSender;
+import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
 import com.autonomousapi.core.error.InvalidVerificationTokenException;
 import com.autonomousapi.core.security.jwt.JwtService;
 import com.autonomousapi.core.tenant.Tenant;
@@ -35,6 +36,7 @@ class AuthServiceTest {
     private final TenantRepository tenants = mock(TenantRepository.class);
     private final RefreshTokenRepository refreshTokens = mock(RefreshTokenRepository.class);
     private final EmailVerificationTokenRepository verificationTokens = mock(EmailVerificationTokenRepository.class);
+    private final PasswordResetTokenRepository passwordResetTokens = mock(PasswordResetTokenRepository.class);
     private final SubscriptionRepository subscriptions = mock(SubscriptionRepository.class);
     private final EmailSender emailSender = mock(EmailSender.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
@@ -42,8 +44,8 @@ class AuthServiceTest {
 
     private AuthService service() {
         return new AuthService(
-                users, tenants, refreshTokens, verificationTokens, subscriptions, emailSender,
-                passwordEncoder, jwtService, 30, 15, 24, "http://localhost:5180");
+                users, tenants, refreshTokens, verificationTokens, passwordResetTokens, subscriptions, emailSender,
+                passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180");
     }
 
     @Test
@@ -114,6 +116,53 @@ class AuthServiceTest {
         service().resendVerification("pendente@frota.com");
 
         verify(emailSender).sendVerificationEmail(org.mockito.ArgumentMatchers.eq("pendente@frota.com"), anyString());
+    }
+
+    @Test
+    void forgotPasswordNaoFazNadaSeEmailNaoExiste() {
+        when(users.findByEmail("inexistente@frota.com")).thenReturn(Optional.empty());
+
+        service().forgotPassword("inexistente@frota.com");
+
+        verify(emailSender, never()).sendPasswordResetEmail(anyString(), anyString());
+    }
+
+    @Test
+    void forgotPasswordEnviaLinkSeEmailExiste() {
+        User user = new User(UUID.randomUUID(), "existe@frota.com", "hash", Role.GESTOR_FROTA);
+        when(users.findByEmail("existe@frota.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokens.findAllByUserIdAndUsedAtIsNull(any())).thenReturn(java.util.List.of());
+
+        service().forgotPassword("existe@frota.com");
+
+        verify(emailSender).sendPasswordResetEmail(org.mockito.ArgumentMatchers.eq("existe@frota.com"), anyString());
+    }
+
+    @Test
+    void resetPasswordComTokenInvalidoLancaErro() {
+        when(passwordResetTokens.findByTokenHash(anyString())).thenReturn(Optional.empty());
+
+        assertThrows(InvalidPasswordResetTokenException.class,
+                () -> service().resetPassword("qualquer-coisa", "novaSenha123"));
+    }
+
+    @Test
+    void resetPasswordTrocaSenhaERevogaRefreshTokens() {
+        // User gera o próprio id no construtor — usar user.getId(), não uma UUID solta,
+        // pra não descolar do id que o service realmente usa em revokeAllForUser.
+        User user = new User(UUID.randomUUID(), "reset@frota.com", "hash-antigo", Role.GESTOR_FROTA);
+        String rawToken = "token-de-reset";
+        PasswordResetToken storedToken = new PasswordResetToken(
+                user.getId(), sha256Hex(rawToken), java.time.Instant.now().plusSeconds(3600));
+
+        when(passwordResetTokens.findByTokenHash(sha256Hex(rawToken))).thenReturn(Optional.of(storedToken));
+        when(users.findById(user.getId())).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("novaSenha123")).thenReturn("hash-novo");
+
+        service().resetPassword(rawToken, "novaSenha123");
+
+        assertEquals("hash-novo", user.getPasswordHash());
+        verify(refreshTokens).revokeAllForUser(user.getId());
     }
 
     private static String sha256Hex(String value) {
