@@ -10,9 +10,10 @@ import {
 interface Props {
   onGoToSignup: () => void;
   onVoltarParaHome: () => void;
+  onGoToForgotPassword: () => void;
 }
 
-export function LoginPage({ onGoToSignup, onVoltarParaHome }: Props) {
+export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword }: Props) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,6 +73,12 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome }: Props) {
           </BotaoPublico>
         </div>
       </form>
+
+      <p className="mt-4 text-[13px] text-[var(--tinta-suave)]">
+        <button type="button" onClick={onGoToForgotPassword} className="link-sublinhado text-[var(--tinta)]">
+          Esqueceu a senha?
+        </button>
+      </p>
 
       <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
         Ainda não tem conta?{' '}

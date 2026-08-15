@@ -38,6 +38,16 @@ export type WorkOrderRequest = Schemas['WorkOrderRequest'];
 export type WorkOrderResponse = Schemas['WorkOrderResponse'];
 export type WorkOrderItemRequest = Schemas['WorkOrderItemRequest'];
 export type WorkOrderReportResponse = Schemas['WorkOrderReportResponse'];
+export type DriverRatingRequest = Schemas['DriverRatingRequest'];
+export type DriverRatingResponse = Schemas['DriverRatingResponse'];
+export type DriverRatingSummaryResponse = Schemas['DriverRatingSummaryResponse'];
+export type VehicleMarketValueRequest = Schemas['VehicleMarketValueRequest'];
+export type VehicleMarketValueResponse = Schemas['VehicleMarketValueResponse'];
+export type VehicleIncidentRequest = Schemas['VehicleIncidentRequest'];
+export type VehicleIncidentResponse = Schemas['VehicleIncidentResponse'];
+export type VehicleConditionScoreResponse = Schemas['VehicleConditionScoreResponse'];
+export type AffiliatePartnerResponse = Schemas['AffiliatePartnerResponse'];
+export type AffiliateClickResponse = Schemas['AffiliateClickResponse'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -137,6 +147,53 @@ export const coreApi = {
       request<DriverResponse>(`/v1/drivers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id: string) => request<void>(`/v1/drivers/${id}`, { method: 'DELETE' }),
     licenseExpiring: () => request<DriverLicenseAlertResponse[]>('/v1/drivers/license-expiring'),
+  },
+
+  /** Avaliação manual de motorista (spec 06) — todo endpoint é GESTOR_FROTA/ADMIN no core-api. */
+  driverRatings: {
+    list: (driverId: string) => request<DriverRatingResponse[]>(`/v1/drivers/${driverId}/ratings`),
+    summary: (driverId: string) =>
+      request<DriverRatingSummaryResponse>(`/v1/drivers/${driverId}/ratings/summary`),
+    create: (driverId: string, body: DriverRatingRequest) =>
+      request<DriverRatingResponse>(`/v1/drivers/${driverId}/ratings`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  },
+
+  /** Valor de mercado/FIPE (spec 06) — lançamento manual, ver ADR do backend. */
+  vehicleMarketValue: {
+    /** null quando o veículo ainda não tem nenhum valor lançado (204 sem corpo). */
+    latest: (vehicleId: string) =>
+      request<VehicleMarketValueResponse | null>(`/v1/vehicles/${vehicleId}/market-value`),
+    record: (vehicleId: string, body: VehicleMarketValueRequest) =>
+      request<VehicleMarketValueResponse>(`/v1/vehicles/${vehicleId}/market-value`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  },
+
+  /** Sinistro e condição do veículo (spec 06). */
+  vehicleCondition: {
+    score: (vehicleId: string) =>
+      request<VehicleConditionScoreResponse>(`/v1/vehicles/${vehicleId}/condition-score`),
+    incidents: (vehicleId: string) =>
+      request<VehicleIncidentResponse[]>(`/v1/vehicles/${vehicleId}/incidents`),
+    registerIncident: (vehicleId: string, body: VehicleIncidentRequest) =>
+      request<VehicleIncidentResponse>(`/v1/vehicles/${vehicleId}/incidents`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  },
+
+  /** Afiliados (spec 06) — catálogo é global, gerido pela AutonomousAPI, não por tenant. */
+  affiliates: {
+    listPartners: () => request<AffiliatePartnerResponse[]>('/v1/affiliates/partners'),
+    click: (partnerId: string, vehicleId?: string) =>
+      request<AffiliateClickResponse>(`/v1/affiliates/partners/${partnerId}/click`, {
+        method: 'POST',
+        body: JSON.stringify({ vehicleId }),
+      }),
   },
 
   vehicleCosts: {
