@@ -1,8 +1,10 @@
 import { lazy, Suspense, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { AppShell, type View } from './components/layout/AppShell';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignupPage } from './pages/SignupPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 
@@ -22,26 +24,28 @@ const WorkOrdersPage = lazy(() => import('./pages/WorkOrdersPage').then((m) => (
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) => ({ default: m.MaintenancePage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
+const AffiliatesPage = lazy(() => import('./pages/AffiliatesPage').then((m) => ({ default: m.AffiliatesPage })));
 
 function CarregandoTela() {
   return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
 }
 
-/** Lido uma única vez: link do e-mail de confirmação (ADR 0011) chega em /verificar-email?token=... */
-function tokenDeVerificacaoNaUrl(): string | null {
-  if (window.location.pathname !== '/verificar-email') return null;
+/** Lido uma única vez: token de um link de e-mail (ADR 0011/0012) chega em ?token=... */
+function tokenNaUrl(pathname: string): string | null {
+  if (window.location.pathname !== pathname) return null;
   return new URLSearchParams(window.location.search).get('token');
 }
 
 export function App() {
   const { user, loading, logout } = useAuth();
-  const tokenVerificacao = useState(tokenDeVerificacaoNaUrl)[0];
+  const tokenVerificacao = useState(() => tokenNaUrl('/verificar-email'))[0];
+  const tokenReset = useState(() => tokenNaUrl('/redefinir-senha'))[0];
   // Quem não está logado cai na landing, não direto no formulário: a página pública é
-  // a porta de entrada de quem ainda não é cliente. Chega direto em 'verify-email' se
-  // a URL trouxer o token do e-mail de confirmação.
-  const [authScreen, setAuthScreen] = useState<'landing' | 'login' | 'signup' | 'verify-email'>(
-    tokenVerificacao ? 'verify-email' : 'landing',
-  );
+  // a porta de entrada de quem ainda não é cliente. Chega direto em 'verify-email' ou
+  // 'reset-password' se a URL trouxer o token de um link de e-mail.
+  const [authScreen, setAuthScreen] = useState<
+    'landing' | 'login' | 'signup' | 'verify-email' | 'forgot-password' | 'reset-password'
+  >(tokenVerificacao ? 'verify-email' : tokenReset ? 'reset-password' : 'landing');
   const [view, setView] = useState<View>('dashboard');
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
 
@@ -57,11 +61,29 @@ export function App() {
         />
       );
     }
+    if (authScreen === 'reset-password' && tokenReset) {
+      return (
+        <ResetPasswordPage
+          token={tokenReset}
+          onGoToLogin={() => setAuthScreen('login')}
+          onVoltarParaHome={() => setAuthScreen('landing')}
+        />
+      );
+    }
+    if (authScreen === 'forgot-password') {
+      return (
+        <ForgotPasswordPage
+          onVoltarParaLogin={() => setAuthScreen('login')}
+          onVoltarParaHome={() => setAuthScreen('landing')}
+        />
+      );
+    }
     if (authScreen === 'login') {
       return (
         <LoginPage
           onGoToSignup={() => setAuthScreen('signup')}
           onVoltarParaHome={() => setAuthScreen('landing')}
+          onGoToForgotPassword={() => setAuthScreen('forgot-password')}
         />
       );
     }
@@ -96,6 +118,7 @@ export function App() {
         {view === 'maintenance' && <MaintenancePage />}
         {view === 'reports' && <ReportsPage />}
         {view === 'billing' && <BillingPage />}
+        {view === 'affiliates' && <AffiliatesPage />}
         {view === 'costs' && costsTarget && (
           <VehicleCostsPage
             vehicleId={costsTarget.vehicleId}

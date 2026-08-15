@@ -114,3 +114,19 @@ export function StatusBadgePrioridade({ prioridade, className }: { prioridade?: 
   const p = prioridade ?? '';
   return <Base tone={PRIORIDADE_TONE[p] ?? 'neutral'} label={PRIORIDADE_LABEL[p] ?? p} className={className} />;
 }
+
+const SEVERIDADE_TONE: Record<string, Tone> = {
+  LEVE: 'neutral',
+  MODERADA: 'warning',
+  GRAVE: 'danger',
+};
+const SEVERIDADE_LABEL: Record<string, string> = {
+  LEVE: 'Leve',
+  MODERADA: 'Moderada',
+  GRAVE: 'Grave',
+};
+
+export function StatusBadgeSeveridade({ severidade, className }: { severidade?: string; className?: string }) {
+  const s = severidade ?? '';
+  return <Base tone={SEVERIDADE_TONE[s] ?? 'neutral'} label={SEVERIDADE_LABEL[s] ?? s} className={className} />;
+}
