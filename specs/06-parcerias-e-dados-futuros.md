@@ -60,6 +60,8 @@ Modelo de dados (schema `core`):
 
 **Fase recomendada:** baixa prioridade de engenharia, pode entrar a qualquer momento a partir da Fase 1 (é essencialmente um link rastreado + uma tela), mas só vale priorizar depois que a base de gestores ativos justificar o esforço de negociar parcerias.
 
+**Status atual (registrado):** a estrutura já está pronta para múltiplos parceiros, mas hoje só existe 1 parceiro de exemplo cadastrado (rastreador, não dashcam ainda). Não existe UI de admin para cadastro de parceiro — é feito direto no banco, decisão consciente porque a negociação comercial de cada parceria é externa e manual, e não compensa construir uma UI antes de ter volume de parceiros. Ampliar o catálogo é inserção de linha nova, sem mudança de código (ver `08-decisoes-tecnicas-pendentes.md`, item 3).
+
 ## Resumo de priorização sugerida
 
 | Item | Complexidade técnica | Dependência | Prioridade sugerida |
