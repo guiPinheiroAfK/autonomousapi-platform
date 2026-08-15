@@ -16,6 +16,15 @@ Escopo:
 
 **Saída da fase:** um gestor de frota real consegue cadastrar veículos, receber alerta de manutenção, ver custo por km, e pagar assinatura — sem precisar do time para operar manualmente nada disso.
 
+## Próximo pacote de trabalho (priorizado, em cima da Fase 1)
+
+Dois itens identificados depois do MVP inicial, priorizados para entrar juntos no próximo ciclo, antes de avançar para o restante da Fase 2:
+
+- **App do motorista completo**, incluindo o mini-chat gestor↔motorista (spec `07-app-motorista.md`) — hoje o app do motorista só tem login, consentimento e tela de viagem, o que empurra toda comunicação prática pro WhatsApp.
+- **Tela de veículo migrando de dialog para rota própria** `/frota/:id` (spec `08-decisoes-tecnicas-pendentes.md`, item 1).
+
+Justificativa de priorizar isso antes de seguir a Fase 2 "pura": ambos fecham gaps de uso diário do produto já em operação, enquanto a Fase 2 (prontidão viária) é sobre construir a próxima camada de dado — vale fechar a experiência de quem já usa o produto todo dia antes de empilhar mais escopo novo.
+
 ## Fase 2 — Dados de prontidão viária (score por trecho)
 
 **Objetivo:** o subproduto de dado começa a existir de verdade.
