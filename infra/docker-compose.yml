@@ -38,12 +38,33 @@ services:
       timeout: 3s
       retries: 10
 
+  # Motor de roteamento (spec 02). Fica atrás do profile `routing` de propósito: o
+  # osrm-routed morre em loop se o grafo não existir, e preparar o grafo é um passo
+  # manual (~30s, precisa de rede) que não faz sentido impor a quem só quer subir o
+  # painel:
+  #
+  #   cd services/geo-api && python scripts/prepare_osrm_graph.py
+  #   docker compose -f infra/docker-compose.yml --profile routing up -d osrm
+  #
+  # Sem ele no ar, o geo-api responde "roteamento indisponível" — degradação explícita,
+  # não erro (mesmo padrão do provedor de recarga, do SMTP e da Stripe).
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    profiles: ["routing"]
+    command: osrm-routed --algorithm mld /data/pilot
+    volumes:
+      - ./osrm/data:/data:ro
+    # Interno como o geo-api: só o geo-api fala com o OSRM, pela rede do compose.
+    expose:
+      - "5000"
+
   geo-api:
     build:
       context: ../services/geo-api
     environment:
       GEO_DB_URL: postgresql+psycopg://autonomousapi:autonomousapi@db:5432/autonomousapi
       GEO_SERVICE_TOKEN: ${GEO_SERVICE_TOKEN:-dev-service-token-change-me}
+      GEO_OSRM_URL: ${GEO_OSRM_URL:-http://osrm:5000}
     depends_on:
       db:
         condition: service_healthy

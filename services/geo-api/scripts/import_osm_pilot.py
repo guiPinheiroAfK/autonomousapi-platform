@@ -3,9 +3,8 @@ Import de extrato OSM da região do piloto (spec 02, DoD Fase 1-2).
 
 Deliberadamente NÃO baixa um .osm.pbf do Brasil inteiro (gigabytes, e o spec pede
 "extrato da região do piloto", não o país). Usa a Overpass API para pegar só as vias
-(`highway=*`) dentro de uma bounding box pequena — hoje, a região da Av. Paulista em
-São Paulo, como um piloto plausível; troque PILOTO_BBOX quando a área real do piloto
-for definida.
+(`highway=*`) dentro da bbox do piloto — ver `app/pilot_area.py`, que é a fonte única
+compartilhada com o preparo do grafo de roteamento (`scripts/prepare_osrm_graph.py`).
 
 Idempotente: roda de novo e faz upsert por `osm_way_id`, então reimportar (ou trocar a
 bbox por uma maior depois) não duplica segmento.
@@ -25,17 +24,18 @@ from geoalchemy2.elements import WKTElement
 
 from app.db import SessionLocal
 from app.models import RoadSegment
+from app.pilot_area import HIGHWAY_TYPES_VEICULARES, PILOTO_BBOX, bbox_overpass
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-# min_lat, min_lon, max_lat, max_lon — Av. Paulista e arredores, São Paulo.
-PILOTO_BBOX = (-23.5665, -46.6558, -23.5595, -46.6478)
 
-
-def buscar_vias_overpass(bbox: tuple[float, float, float, float]) -> list[dict]:
+def buscar_vias_overpass() -> list[dict]:
+    # Mesma lista de tipos de via do grafo de roteamento (app/pilot_area.py): filtrar
+    # por inclusão, e não por exclusão, evita que uma tag nova do OSM entre por engano
+    # num pipeline e não no outro.
     query = f"""
-    [out:json][timeout:30];
-    way["highway"]["highway"!~"footway|path|steps|cycleway|pedestrian|track"]{bbox};
+    [out:json][timeout:60];
+    way["highway"~"^({HIGHWAY_TYPES_VEICULARES})$"]{bbox_overpass()};
     out geom;
     """
     # POST (não GET) e User-Agent identificável: a Overpass API pública devolve 406
@@ -44,14 +44,15 @@ def buscar_vias_overpass(bbox: tuple[float, float, float, float]) -> list[dict]:
         OVERPASS_URL,
         data={"data": query},
         headers={"User-Agent": "autonomousapi-geo-api/0.1 (import-osm-pilot script)"},
-        timeout=40,
+        timeout=90,
     )
     resp.raise_for_status()
     return resp.json()["elements"]
 
 
 def importar() -> None:
-    vias = buscar_vias_overpass(PILOTO_BBOX)
+    print(f"Área do piloto (min_lat, min_lon, max_lat, max_lon): {PILOTO_BBOX}")
+    vias = buscar_vias_overpass()
     print(f"Overpass retornou {len(vias)} via(s) na bbox do piloto.")
 
     db = SessionLocal()

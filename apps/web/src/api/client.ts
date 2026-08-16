@@ -54,6 +54,9 @@ export type AssignVehicleRequest = Schemas['AssignVehicleRequest'];
 export type NotifyDriverRequest = Schemas['NotifyDriverRequest'];
 export type ChargingStationItem = Schemas['ChargingStationItem'];
 export type ChargingStationsResponse = Schemas['ChargingStationsResponse'];
+export type RouteResponse = Schemas['RouteResponse'];
+export type RouteStep = Schemas['RouteStep'];
+export type PlaceResponse = Schemas['PlaceResponse'];
 export type ChatConversationResponse = Schemas['ChatConversationResponse'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
@@ -226,6 +229,18 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify({ vehicleId }),
       }),
+  },
+
+  /** Roteamento ponto-a-ponto e busca de endereço (spec 02) — ver geo-api/OSRM. */
+  routes: {
+    preview: (fromLat: number, fromLon: number, toLat: number, toLon: number) =>
+      request<RouteResponse>(
+        `/v1/routes/preview?fromLat=${fromLat}&fromLon=${fromLon}&toLat=${toLat}&toLon=${toLon}`,
+      ),
+  },
+
+  places: {
+    search: (q: string) => request<PlaceResponse[]>(`/v1/places/search?q=${encodeURIComponent(q)}`),
   },
 
   /** Recarga elétrica (spec 06, item 1) — agregado de provedor externo, ver geo-api. */
