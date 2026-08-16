@@ -1,5 +1,7 @@
 package com.autonomousapi.core.geo;
 
+import com.autonomousapi.core.geo.dto.ChargingStationsResponse;
+import com.autonomousapi.core.geo.dto.GeoChargingStationsResponse;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -53,5 +55,31 @@ public class GeoApiClient {
                 .body(ping)
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    /**
+     * Estações de recarga elétrica (spec 06, item 1). RNF011 aplicado aqui também: falha de
+     * rede/timeout/geo-api fora do ar vira resposta "indisponível" (lista vazia,
+     * providerAvailable=false), nunca propaga exceção pro controller — a tela do usuário não
+     * pode quebrar por causa de um provedor terceiro instável.
+     */
+    public ChargingStationsResponse chargingStations(Double lat, Double lon, Double radiusKm) {
+        try {
+            GeoChargingStationsResponse response = client
+                    .get()
+                    .uri(builder -> {
+                        builder.path("/internal/v1/charging-stations");
+                        if (lat != null) builder.queryParam("lat", lat);
+                        if (lon != null) builder.queryParam("lon", lon);
+                        if (radiusKm != null) builder.queryParam("radius_km", radiusKm);
+                        return builder.build();
+                    })
+                    .header("X-Service-Token", serviceToken)
+                    .retrieve()
+                    .body(GeoChargingStationsResponse.class);
+            return response != null ? response.toPublic() : ChargingStationsResponse.indisponivel();
+        } catch (Exception ex) {
+            return ChargingStationsResponse.indisponivel();
+        }
     }
 }

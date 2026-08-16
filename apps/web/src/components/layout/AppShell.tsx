@@ -14,7 +14,8 @@ export type View =
   | 'reports'
   | 'billing'
   | 'affiliates'
-  | 'chat';
+  | 'chat'
+  | 'charging-stations';
 
 const TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -28,6 +29,7 @@ const TITLES: Record<View, string> = {
   billing: 'Assinatura',
   affiliates: 'Parceiros',
   chat: 'Mensagens',
+  'charging-stations': 'Pontos de Recarga',
 };
 
 interface AppShellProps {

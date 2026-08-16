@@ -772,6 +772,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/charging-stations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/billing/subscription": {
         parameters: {
             query?: never;
@@ -1294,6 +1310,24 @@ export interface components {
             cnhValidade?: string;
             /** Format: int64 */
             diasRestantes?: number;
+        };
+        ChargingStationItem: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            address?: string;
+            connectorType?: string;
+            /** Format: double */
+            powerKw?: number;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lon?: number;
+            status?: string;
+        };
+        ChargingStationsResponse: {
+            providerAvailable?: boolean;
+            stations?: components["schemas"]["ChargingStationItem"][];
         };
         SubscriptionResponse: {
             hasSubscription?: boolean;
@@ -2765,6 +2799,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DriverLicenseAlertResponse"][];
+                };
+            };
+        };
+    };
+    list_6: {
+        parameters: {
+            query?: {
+                lat?: number;
+                lon?: number;
+                radiusKm?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChargingStationsResponse"];
                 };
             };
         };

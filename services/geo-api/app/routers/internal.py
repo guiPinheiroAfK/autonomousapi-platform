@@ -1,15 +1,18 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
+from geoalchemy2 import Geography
 from geoalchemy2.elements import WKTElement
 from pydantic import BaseModel, Field
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..aggregation import recalcular_road_readiness
+from ..config import settings
 from ..db import get_db
 from ..matching import encontrar_segmento_mais_proximo
-from ..models import RoadSegmentObservation, VehicleGpsPing
+from ..models import ChargingStation, ChargingStationStatus, RoadSegmentObservation, VehicleGpsPing
 from ..security import require_service_token
 
 # Todas as rotas exigem token de serviço. Prefixo /internal deixa explícito que não é público.
@@ -89,3 +92,70 @@ def recalculate_road_readiness(db: Session = Depends(get_db)) -> RoadReadinessRe
     sem depender do timing do agendador em background.
     """
     return RoadReadinessRecalculated(segments_updated=recalcular_road_readiness(db))
+
+
+class ChargingStationItem(BaseModel):
+    id: UUID
+    name: str | None
+    address: str | None
+    connector_type: str | None
+    power_kw: float | None
+    lat: float
+    lon: float
+    status: str
+
+
+class ChargingStationsResponse(BaseModel):
+    provider_available: bool
+    stations: list[ChargingStationItem]
+
+
+@router.get("/charging-stations")
+def listar_estacoes_recarga(
+    lat: float | None = Query(default=None, ge=-90, le=90),
+    lon: float | None = Query(default=None, ge=-180, le=180),
+    radius_km: float = Query(default=20.0, gt=0),
+    db: Session = Depends(get_db),
+) -> ChargingStationsResponse:
+    """
+    Lista estações com o status mais recente de cada uma (spec 06, item 1). RNF011: uma
+    estação sem status observado recentemente (provedor nunca sincronizou, ou está fora
+    do ar há tempo) aparece com status "DESCONHECIDO" em vez de ser omitida ou quebrar a
+    resposta — a tela do usuário nunca vê erro por causa disso.
+    """
+    query = select(ChargingStation)
+    if lat is not None and lon is not None:
+        ponto = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+        query = query.where(
+            func.ST_DWithin(
+                func.cast(ChargingStation.geom, Geography),
+                func.cast(ponto, Geography),
+                radius_km * 1000,
+            )
+        )
+    estacoes = db.execute(query).scalars().all()
+
+    itens: list[ChargingStationItem] = []
+    for estacao in estacoes:
+        ultimo_status = db.execute(
+            select(ChargingStationStatus)
+            .where(ChargingStationStatus.station_id == estacao.id)
+            .order_by(ChargingStationStatus.observed_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+        itens.append(
+            ChargingStationItem(
+                id=estacao.id,
+                name=estacao.name,
+                address=estacao.address,
+                connector_type=estacao.connector_type,
+                power_kw=estacao.power_kw,
+                lat=estacao.lat,
+                lon=estacao.lon,
+                status=ultimo_status.status if ultimo_status else "DESCONHECIDO",
+            )
+        )
+
+    return ChargingStationsResponse(
+        provider_available=bool(settings.open_charge_map_api_key), stations=itens
+    )

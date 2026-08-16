@@ -1288,6 +1288,40 @@
         }
       }
     },
+    "/v1/charging-stations": {
+      "get": {
+        "tags": ["charging-station-controller"],
+        "operationId": "list_6",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "number", "format": "double" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ChargingStationsResponse" } }
+            }
+          }
+        }
+      }
+    },
     "/v1/billing/subscription": {
       "get": {
         "tags": ["billing-controller"],
@@ -1903,6 +1937,29 @@
           "name": { "type": "string" },
           "cnhValidade": { "type": "string", "format": "date" },
           "diasRestantes": { "type": "integer", "format": "int64" }
+        }
+      },
+      "ChargingStationItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "address": { "type": "string" },
+          "connectorType": { "type": "string" },
+          "powerKw": { "type": "number", "format": "double" },
+          "lat": { "type": "number", "format": "double" },
+          "lon": { "type": "number", "format": "double" },
+          "status": { "type": "string" }
+        }
+      },
+      "ChargingStationsResponse": {
+        "type": "object",
+        "properties": {
+          "providerAvailable": { "type": "boolean" },
+          "stations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ChargingStationItem" }
+          }
         }
       },
       "SubscriptionResponse": {

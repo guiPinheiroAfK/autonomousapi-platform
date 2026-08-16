@@ -111,6 +111,22 @@ export interface ChatMessageResponse {
   sentAt: string;
 }
 
+export interface ChargingStationItem {
+  id: string;
+  name: string | null;
+  address: string | null;
+  connectorType: string | null;
+  powerKw: number | null;
+  lat: number;
+  lon: number;
+  status: 'DISPONIVEL' | 'OCUPADO' | 'FORA_DE_SERVICO' | 'DESCONHECIDO';
+}
+
+export interface ChargingStationsResponse {
+  providerAvailable: boolean;
+  stations: ChargingStationItem[];
+}
+
 let authToken: string | null = null;
 
 /** Chamado pelo App ao logar/restaurar sessão/deslogar — client sem depender de estado React. */
@@ -192,5 +208,9 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify({ pings }),
       }),
+  },
+
+  chargingStations: {
+    list: () => request<ChargingStationsResponse>('/v1/charging-stations'),
   },
 };
