@@ -26,5 +26,16 @@ class Settings(BaseSettings):
     open_charge_map_api_key: str = ""
     charging_sync_country_code: str = "BR"
 
+    # Motor de roteamento (spec 02). Vazio = roteamento desligado, respondendo
+    # "indisponível" com motivo legível em vez de erro. O grafo é preparado por
+    # scripts/prepare_osrm_graph.py e servido pelo profile `routing` do compose.
+    osrm_url: str = ""
+
+    # Geocodificação (endereço -> coordenada) para o roteamento ser usável por gente.
+    # Instância pública do Nominatim por padrão: sem chave, mas com política de uso
+    # (volume baixo, UA identificável — ver app/geocoding.py). Trocar por instância
+    # própria quando o volume justificar.
+    nominatim_url: str = "https://nominatim.openstreetmap.org"
+
 
 settings = Settings()

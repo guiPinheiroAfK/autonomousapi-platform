@@ -3,10 +3,16 @@ package com.autonomousapi.core.geo;
 import com.autonomousapi.core.geo.dto.ChargingStationsResponse;
 import com.autonomousapi.core.geo.dto.DrivingEventsResponse;
 import com.autonomousapi.core.geo.dto.GeoChargingStationsResponse;
+import com.autonomousapi.core.geo.dto.GeoPlace;
+import com.autonomousapi.core.geo.dto.GeoRouteResponse;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
+import com.autonomousapi.core.geo.dto.PlaceResponse;
+import com.autonomousapi.core.geo.dto.RouteResponse;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -108,6 +114,53 @@ public class GeoApiClient {
             return response != null ? response : DrivingEventsResponse.vazio();
         } catch (Exception ex) {
             return DrivingEventsResponse.vazio();
+        }
+    }
+
+    /**
+     * Rota ponto-a-ponto (spec 02). O geo-api já responde 200 com {@code available=false}
+     * quando o motor está fora do ar; o try/catch aqui cobre a camada de baixo (o próprio
+     * geo-api inacessível), para a tela receber sempre a mesma forma de resposta em vez de
+     * um 500 vazado.
+     */
+    public RouteResponse route(double fromLat, double fromLon, double toLat, double toLon) {
+        try {
+            GeoRouteResponse response = client
+                    .get()
+                    .uri(builder -> builder
+                            .path("/internal/v1/route")
+                            .queryParam("from_lat", fromLat)
+                            .queryParam("from_lon", fromLon)
+                            .queryParam("to_lat", toLat)
+                            .queryParam("to_lon", toLon)
+                            .build())
+                    .header("X-Service-Token", serviceToken)
+                    .retrieve()
+                    .body(GeoRouteResponse.class);
+            return response != null
+                    ? response.toPublic()
+                    : RouteResponse.indisponivel("Serviço de roteamento não respondeu.");
+        } catch (Exception ex) {
+            return RouteResponse.indisponivel("Serviço de roteamento indisponível no momento.");
+        }
+    }
+
+    /**
+     * Endereço -> coordenada, restrito à área do piloto. Falha vira lista vazia: para quem
+     * digita no campo de busca, "não achei" e "o geocoder caiu" levam à mesma ação prática
+     * (tentar outro termo), e um erro na tela só atrapalharia.
+     */
+    public List<PlaceResponse> geocode(String query) {
+        try {
+            List<GeoPlace> lugares = client
+                    .get()
+                    .uri(builder -> builder.path("/internal/v1/geocode").queryParam("q", query).build())
+                    .header("X-Service-Token", serviceToken)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {});
+            return lugares != null ? lugares.stream().map(GeoPlace::toPublic).toList() : List.of();
+        } catch (Exception ex) {
+            return List.of();
         }
     }
 }

@@ -628,6 +628,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/routes/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/reports/maintenance-summary": {
         parameters: {
             query?: never;
@@ -652,6 +668,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["costsCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/places/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1266,6 +1298,25 @@ export interface components {
             month?: string;
             total?: number;
         };
+        RouteResponse: {
+            available?: boolean;
+            /** Format: double */
+            distanceM?: number;
+            /** Format: double */
+            durationS?: number;
+            geometry?: number[][];
+            steps?: components["schemas"]["RouteStep"][];
+            unavailableReason?: string;
+        };
+        RouteStep: {
+            instructionType?: string;
+            modifier?: string;
+            name?: string;
+            /** Format: double */
+            distanceM?: number;
+            /** Format: double */
+            durationS?: number;
+        };
         MonthlyMaintenanceCostResponse: {
             mes?: string;
             custoPreventiva?: number;
@@ -1285,6 +1336,13 @@ export interface components {
         WorkOrderReportResponse: {
             monthly?: components["schemas"]["MonthlyMaintenanceCostResponse"][];
             vehicleRanking?: components["schemas"]["VehicleMaintenanceCostResponse"][];
+        };
+        PlaceResponse: {
+            displayName?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lon?: number;
         };
         DriverProfileResponse: {
             /** Format: uuid */
@@ -2619,6 +2677,31 @@ export interface operations {
             };
         };
     };
+    preview: {
+        parameters: {
+            query: {
+                fromLat: number;
+                fromLon: number;
+                toLat: number;
+                toLon: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RouteResponse"];
+                };
+            };
+        };
+    };
     maintenanceSummary: {
         parameters: {
             query?: never;
@@ -2655,6 +2738,28 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PlaceResponse"][];
                 };
             };
         };

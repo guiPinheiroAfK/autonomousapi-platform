@@ -75,8 +75,10 @@ Isso é uma extensão da Fase 2 (roteamento básico), não da Fase 1 — depende
       (`app/aggregation.py`, v1 = contagem normalizada, agendado via `app/scheduler.py`)
 - [x] Política de retenção/anonimização documentada e implementada, não só planejada.
       (ADR 0009; `app/retention.py`, roda 1x/dia)
-- [ ] Roteamento básico via OSRM/GraphHopper — **não feito nesta rodada**, deliberadamente:
-      é infraestrutura própria (servidor OSRM + grafo de roteamento processado), separada
-      do que este DoD original já cobria; abrir como item dedicado quando for a vez.
+- [x] Roteamento básico via OSRM/GraphHopper. (OSRM em modo MLD sobre extrato da área do
+      piloto — ADR 0018. Grafo preparado por `scripts/prepare_osrm_graph.py`, servido pelo
+      profile `routing` do compose; `GET /v1/routes/preview` no core-api e tela "Rotas" no
+      web, com busca de endereço via Nominatim.)
 - [ ] (Extensão Fase 2+) Roteamento multi-coleta/multi-entrega funcionando com solver existente (ex. OR-Tools), retornando sequência otimizada de paradas.
-      (depende do item anterior)
+      (destravado agora que o motor ponto-a-ponto existe — o solver roda sobre a matriz de
+      distância que o OSRM passa a fornecer. Falta modelar `route_plan`/`route_stop`.)

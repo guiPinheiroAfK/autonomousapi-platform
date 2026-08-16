@@ -41,6 +41,10 @@ venv/
 pgdata/
 osm-data/
 
+# Grafo de roteamento do OSRM: gerado por scripts/prepare_osrm_graph.py (dezenas de MB,
+# binário, derivado do OSM). Reproduzível a qualquer momento — não versionar.
+infra/osrm/data/
+
 # === IDEs (JetBrains) ===
 .idea/
 *.iml

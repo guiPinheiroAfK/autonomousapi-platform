@@ -12,8 +12,10 @@ from ..aggregation import recalcular_road_readiness
 from ..config import settings
 from ..db import get_db
 from ..driving_events import calcular_driving_events
+from ..geocoding import NominatimGeocoder
 from ..matching import encontrar_segmento_mais_proximo
 from ..models import ChargingStation, ChargingStationStatus, RoadSegmentObservation, VehicleGpsPing
+from ..routing import OsrmRoutingClient
 from ..security import require_service_token
 
 # Todas as rotas exigem token de serviço. Prefixo /internal deixa explícito que não é público.
@@ -186,3 +188,74 @@ def driving_events(
         hard_braking_count=eventos.hard_braking_count,
         overspeed_count=eventos.overspeed_count,
     )
+
+
+class RouteStepOut(BaseModel):
+    instruction_type: str
+    modifier: str | None
+    name: str | None
+    distance_m: float
+    duration_s: float
+
+
+class RouteResponse(BaseModel):
+    available: bool
+    distance_m: float | None = None
+    duration_s: float | None = None
+    geometry: list[list[float]] = []
+    steps: list[RouteStepOut] = []
+    unavailable_reason: str | None = None
+
+
+@router.get("/route")
+def rota(
+    from_lat: float = Query(ge=-90, le=90),
+    from_lon: float = Query(ge=-180, le=180),
+    to_lat: float = Query(ge=-90, le=90),
+    to_lon: float = Query(ge=-180, le=180),
+) -> RouteResponse:
+    """
+    Rota ponto-a-ponto (spec 02, Fase 1-2 do roteamento). Sempre 200: motor fora do ar ou
+    par de pontos sem rota devolvem `available=false` com motivo legível, em vez de 5xx —
+    a diferença entre "não configurado", "caiu" e "não existe rota aqui" importa pra quem
+    lê a tela, e um 503 genérico apaga essa diferença.
+    """
+    cliente = OsrmRoutingClient(settings.osrm_url)
+    resultado = cliente.rota(from_lat, from_lon, to_lat, to_lon)
+    return RouteResponse(
+        available=resultado.available,
+        distance_m=resultado.distance_m,
+        duration_s=resultado.duration_s,
+        geometry=resultado.geometry,
+        steps=[
+            RouteStepOut(
+                instruction_type=p.instruction_type,
+                modifier=p.modifier,
+                name=p.name,
+                distance_m=p.distance_m,
+                duration_s=p.duration_s,
+            )
+            for p in resultado.steps
+        ],
+        unavailable_reason=resultado.unavailable_reason,
+    )
+
+
+class PlaceOut(BaseModel):
+    display_name: str
+    lat: float
+    lon: float
+
+
+@router.get("/geocode")
+def geocode(q: str = Query(min_length=3)) -> list[PlaceOut]:
+    """
+    Endereço -> coordenada, restrito à área do piloto (spec 02). Lista vazia é resposta
+    válida ("não achei aqui"), não erro — o front distingue isso de falha por já ter
+    recebido 200.
+    """
+    geocoder = NominatimGeocoder(settings.nominatim_url)
+    return [
+        PlaceOut(display_name=lugar.display_name, lat=lugar.lat, lon=lugar.lon)
+        for lugar in geocoder.buscar(q)
+    ]

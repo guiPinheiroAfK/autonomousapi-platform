@@ -127,6 +127,29 @@ export interface ChargingStationsResponse {
   stations: ChargingStationItem[];
 }
 
+export interface PlaceResponse {
+  displayName: string;
+  lat: number;
+  lon: number;
+}
+
+export interface RouteStep {
+  instructionType: string;
+  modifier: string | null;
+  name: string | null;
+  distanceM: number;
+  durationS: number;
+}
+
+export interface RouteResponse {
+  available: boolean;
+  distanceM: number | null;
+  durationS: number | null;
+  geometry: number[][];
+  steps: RouteStep[];
+  unavailableReason: string | null;
+}
+
 let authToken: string | null = null;
 
 /** Chamado pelo App ao logar/restaurar sessão/deslogar — client sem depender de estado React. */
@@ -212,5 +235,16 @@ export const coreApi = {
 
   chargingStations: {
     list: () => request<ChargingStationsResponse>('/v1/charging-stations'),
+  },
+
+  routes: {
+    preview: (fromLat: number, fromLon: number, toLat: number, toLon: number) =>
+      request<RouteResponse>(
+        `/v1/routes/preview?fromLat=${fromLat}&fromLon=${fromLon}&toLat=${toLat}&toLon=${toLon}`,
+      ),
+  },
+
+  places: {
+    search: (q: string) => request<PlaceResponse[]>(`/v1/places/search?q=${encodeURIComponent(q)}`),
   },
 };
