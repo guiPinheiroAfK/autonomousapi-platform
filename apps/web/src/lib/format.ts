@@ -20,6 +20,11 @@ export function formatDateTimeBR(isoInstant: string): string {
   return new Date(isoInstant).toLocaleDateString('pt-BR');
 }
 
+/** Só a hora de um instante ISO ("2026-08-16T14:05:00Z" -> "14:05"), pro chat. */
+export function formatTimeBR(isoInstant: string): string {
+  return new Date(isoInstant).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 /** Dias entre hoje e uma data "YYYY-MM-DD" (negativo = já vencida). */
 export function diasAteVencer(isoDate: string): number {
   const [y, m, d] = isoDate.split('-').map(Number);

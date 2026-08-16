@@ -28,6 +28,7 @@ const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) =>
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
 const AffiliatesPage = lazy(() => import('./pages/AffiliatesPage').then((m) => ({ default: m.AffiliatesPage })));
+const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })));
 
 function CarregandoTela() {
   return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
@@ -172,6 +173,7 @@ export function App() {
         {view === 'reports' && <ReportsPage />}
         {view === 'billing' && <BillingPage />}
         {view === 'affiliates' && <AffiliatesPage />}
+        {view === 'chat' && <ChatPage />}
         {view === 'costs' && costsTarget && (
           <VehicleCostsPage
             vehicleId={costsTarget.vehicleId}

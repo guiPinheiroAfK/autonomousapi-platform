@@ -52,6 +52,11 @@ export type DriverInviteResponse = Schemas['DriverInviteResponse'];
 export type DriverAssignmentResponse = Schemas['DriverAssignmentResponse'];
 export type AssignVehicleRequest = Schemas['AssignVehicleRequest'];
 export type NotifyDriverRequest = Schemas['NotifyDriverRequest'];
+export type ChatConversationResponse = Schemas['ChatConversationResponse'];
+export type ChatMessageResponse = Schemas['ChatMessageResponse'];
+export type CreateConversationRequest = Schemas['CreateConversationRequest'];
+export type SendMessageRequest = Schemas['SendMessageRequest'];
+export type SyncCursorRequest = Schemas['SyncCursorRequest'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -246,5 +251,25 @@ export const coreApi = {
   billing: {
     subscription: () => request<SubscriptionResponse>('/v1/billing/subscription'),
     checkout: () => request<CheckoutSessionResponse>('/v1/billing/checkout', { method: 'POST' }),
+  },
+
+  /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */
+  chat: {
+    listConversations: () => request<ChatConversationResponse[]>('/v1/chat/conversations'),
+    createConversation: (body: CreateConversationRequest) =>
+      request<ChatConversationResponse>('/v1/chat/conversations', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    listMessages: (conversationId: string) =>
+      request<ChatMessageResponse[]>(`/v1/chat/conversations/${conversationId}/messages`),
+    sendMessage: (conversationId: string, body: SendMessageRequest) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    /** Gestor-only: confirma que o device já persistiu localmente até syncedAt (habilita a limpeza no servidor). */
+    syncCursor: (body: SyncCursorRequest) =>
+      request<void>('/v1/chat/sync-cursor', { method: 'POST', body: JSON.stringify(body) }),
   },
 };
