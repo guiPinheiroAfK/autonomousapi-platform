@@ -914,6 +914,8 @@ export interface components {
             odometerKm: number;
             /** @enum {string} */
             status: "ATIVO" | "MANUTENCAO" | "INATIVO";
+            /** @enum {string} */
+            tipo?: "CARRO" | "MOTO" | "VAN" | "CAMINHAO" | "ONIBUS";
             /** Format: date */
             proximaManutencaoData?: string;
             /** Format: int32 */
@@ -933,6 +935,7 @@ export interface components {
             /** Format: int32 */
             odometerKm?: number;
             status?: string;
+            tipo?: string;
             /** Format: date */
             proximaManutencaoData?: string;
             /** Format: int32 */

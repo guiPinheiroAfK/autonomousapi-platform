@@ -3,6 +3,7 @@ import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
 import { coreApi, type VehicleRequest, type VehicleResponse } from '../api/client';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
+import { VEHICLE_TYPE_LABEL, VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -12,6 +13,7 @@ import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
 
 const STATUS_OPTIONS = ['ATIVO', 'MANUTENCAO', 'INATIVO'] as const;
+const TIPO_OPTIONS = ['CARRO', 'MOTO', 'VAN', 'CAMINHAO', 'ONIBUS'] as const;
 
 const EMPTY_FORM: VehicleRequest = {
   plate: '',
@@ -20,6 +22,7 @@ const EMPTY_FORM: VehicleRequest = {
   modelYear: undefined,
   odometerKm: 0,
   status: 'ATIVO',
+  tipo: undefined,
   proximaManutencaoData: undefined,
   proximaManutencaoKm: undefined,
 };
@@ -66,6 +69,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
       modelYear: v.modelYear,
       odometerKm: v.odometerKm!,
       status: v.status as VehicleRequest['status'],
+      tipo: v.tipo as VehicleRequest['tipo'],
       proximaManutencaoData: v.proximaManutencaoData,
       proximaManutencaoKm: v.proximaManutencaoKm,
     });
@@ -177,6 +181,9 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Tipo
+                  </th>
+                  <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Placa
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -197,6 +204,11 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
               <tbody className="divide-y divide-border">
                 {filtered.map((v) => (
                   <tr key={v.id} className="hover:bg-muted/50">
+                    <td className="px-5 py-2.5">
+                      <div title={VEHICLE_TYPE_LABEL[v.tipo ?? ''] ?? 'Tipo não informado'}>
+                        <VehicleTypeIcon tipo={v.tipo} />
+                      </div>
+                    </td>
                     <td className="px-5 py-2.5">
                       <PlacaBR placa={v.plate!} size="sm" />
                     </td>
@@ -237,7 +249,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-xs text-muted-foreground">
+                    <td colSpan={7} className="px-5 py-8 text-center text-xs text-muted-foreground">
                       Nenhum veículo encontrado.
                     </td>
                   </tr>
@@ -286,19 +298,38 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
               />
             </div>
           </div>
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select
-              id="status"
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as VehicleRequest['status'] })}
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select
+                id="status"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as VehicleRequest['status'] })}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="tipo">Tipo</Label>
+              <Select
+                id="tipo"
+                value={form.tipo ?? ''}
+                onChange={(e) =>
+                  setForm({ ...form, tipo: (e.target.value || undefined) as VehicleRequest['tipo'] })
+                }
+              >
+                <option value="">Não informado</option>
+                {TIPO_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {VEHICLE_TYPE_LABEL[t]}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
             <div>

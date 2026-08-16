@@ -45,6 +45,11 @@ public class Vehicle {
     @Column(name = "status", nullable = false, length = 20)
     private VehicleStatus status;
 
+    /** Opcional (spec 08 item 4) — sem valor, a listagem usa o ícone genérico. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", length = 20)
+    private VehicleType tipo;
+
     /** Opcionais: sem valor, o veículo não entra em nenhum alerta de manutenção. */
     @Column(name = "proxima_manutencao_data")
     private LocalDate proximaManutencaoData;
@@ -90,7 +95,7 @@ public class Vehicle {
     }
 
     public void update(String plate, String brand, String model, Integer modelYear,
-            int odometerKm, VehicleStatus status, LocalDate proximaManutencaoData,
+            int odometerKm, VehicleStatus status, VehicleType tipo, LocalDate proximaManutencaoData,
             Integer proximaManutencaoKm, Map<String, Object> atributos) {
         this.plate = plate;
         this.brand = brand;
@@ -98,6 +103,7 @@ public class Vehicle {
         this.modelYear = modelYear;
         this.odometerKm = odometerKm;
         this.status = status;
+        this.tipo = tipo;
         this.proximaManutencaoData = proximaManutencaoData;
         this.proximaManutencaoKm = proximaManutencaoKm;
         // Cópia defensiva: sem isso o mapa do request continuaria ligado à entidade e uma
@@ -136,6 +142,10 @@ public class Vehicle {
 
     public VehicleStatus getStatus() {
         return status;
+    }
+
+    public VehicleType getTipo() {
+        return tipo;
     }
 
     public LocalDate getProximaManutencaoData() {

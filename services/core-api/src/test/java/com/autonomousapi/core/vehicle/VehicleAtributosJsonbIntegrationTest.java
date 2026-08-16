@@ -45,7 +45,7 @@ class VehicleAtributosJsonbIntegrationTest extends IntegrationTestBase {
 
     private Vehicle salvar(String placa, Map<String, Object> atributos) {
         Vehicle v = new Vehicle(tenantId, placa, "Fiat", "Fiorino", 2022, 1000);
-        v.update(placa, "Fiat", "Fiorino", 2022, 1000, VehicleStatus.ATIVO, null, null, atributos);
+        v.update(placa, "Fiat", "Fiorino", 2022, 1000, VehicleStatus.ATIVO, null, null, null, atributos);
         return vehicles.save(v);
     }
 
@@ -87,7 +87,7 @@ class VehicleAtributosJsonbIntegrationTest extends IntegrationTestBase {
 
         UUID outroTenant = tenants.save(new Tenant("Concorrente " + UUID.randomUUID())).getId();
         Vehicle alheio = new Vehicle(outroTenant, "XXX9Z99", "Ford", "Transit", 2021, 10);
-        alheio.update("XXX9Z99", "Ford", "Transit", 2021, 10, VehicleStatus.ATIVO, null, null,
+        alheio.update("XXX9Z99", "Ford", "Transit", 2021, 10, VehicleStatus.ATIVO, null, null, null,
                 Map.of("categoria", "eletrico"));
         vehicles.save(alheio);
         em.flush();
