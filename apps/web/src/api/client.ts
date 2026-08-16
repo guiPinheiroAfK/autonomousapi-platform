@@ -89,8 +89,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = (await res.json().catch(() => null)) as ApiError | null;
     throw new Error(body?.message ?? `core-api ${res.status} em ${path}`);
   }
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  // Corpo vazio não é só 204: um controller que devolve null (ex. GET .../assignment
+  // "sem designação ativa") também sai como 200 com Content-Length 0 — res.json()
+  // quebraria nesse caso. Ler como texto primeiro cobre os dois de uma vez.
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 /** Baixa um arquivo autenticado (ex.: CSV de relatório) disparando o download no navegador. */
