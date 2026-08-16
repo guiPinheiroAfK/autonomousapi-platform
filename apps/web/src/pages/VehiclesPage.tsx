@@ -1,30 +1,15 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { CircleOff, Eye, Gauge, Plus, ShieldAlert, Truck, Wrench } from 'lucide-react';
-import {
-  coreApi,
-  type VehicleConditionScoreResponse,
-  type VehicleCostEntryResponse,
-  type VehicleIncidentRequest,
-  type VehicleIncidentResponse,
-  type VehicleMarketValueRequest,
-  type VehicleMarketValueResponse,
-  type VehicleRequest,
-  type VehicleResponse,
-  type WorkOrderResponse,
-} from '../api/client';
+import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
+import { coreApi, type VehicleRequest, type VehicleResponse } from '../api/client';
 import { PlacaBR } from '../components/shared/PlacaBR';
-import { StatusBadgeOS, StatusBadgeSeveridade, StatusBadgeVeiculo } from '../components/shared/StatusBadge';
+import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { StatCard } from '../components/shared/StatCard';
-import { formatBRL, formatDateBR } from '../lib/format';
-import { TIPO_OS_LABEL } from '../lib/workOrderLabels';
 
 const STATUS_OPTIONS = ['ATIVO', 'MANUTENCAO', 'INATIVO'] as const;
 
@@ -41,9 +26,10 @@ const EMPTY_FORM: VehicleRequest = {
 
 interface Props {
   onViewCosts: (vehicleId: string, plate: string) => void;
+  onViewDetail: (vehicleId: string) => void;
 }
 
-export function VehiclesPage({ onViewCosts }: Props) {
+export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [form, setForm] = useState<VehicleRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,22 +39,6 @@ export function VehiclesPage({ onViewCosts }: Props) {
 
   const [search, setSearch] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<(typeof STATUS_OPTIONS)[number] | 'todos'>('todos');
-  const [detail, setDetail] = useState<VehicleResponse | null>(null);
-  const [detailCosts, setDetailCosts] = useState<VehicleCostEntryResponse[]>([]);
-  const [detailOS, setDetailOS] = useState<WorkOrderResponse[]>([]);
-  const [detailFipe, setDetailFipe] = useState<VehicleMarketValueResponse | null>(null);
-  const [detailScore, setDetailScore] = useState<VehicleConditionScoreResponse | null>(null);
-  const [detailIncidents, setDetailIncidents] = useState<VehicleIncidentResponse[]>([]);
-
-  const [fipeForm, setFipeForm] = useState({ valorFipe: '', dataReferencia: '', codigoFipe: '' });
-  const [fipeSaving, setFipeSaving] = useState(false);
-  const [incidentForm, setIncidentForm] = useState<VehicleIncidentRequest>({
-    data: '',
-    severidade: 'LEVE',
-    descricao: '',
-    custoReparo: undefined,
-  });
-  const [incidentSaving, setIncidentSaving] = useState(false);
 
   function refresh() {
     coreApi.vehicles
@@ -101,61 +71,6 @@ export function VehiclesPage({ onViewCosts }: Props) {
     });
     setError('');
     setModalOpen(true);
-  }
-
-  function openDetail(v: VehicleResponse) {
-    setDetail(v);
-    setDetailCosts([]);
-    setDetailOS([]);
-    setDetailFipe(null);
-    setDetailScore(null);
-    setDetailIncidents([]);
-    setFipeForm({ valorFipe: '', dataReferencia: new Date().toISOString().slice(0, 10), codigoFipe: '' });
-    setIncidentForm({ data: new Date().toISOString().slice(0, 10), severidade: 'LEVE', descricao: '', custoReparo: undefined });
-
-    coreApi.vehicleCosts.list(v.id!).then(setDetailCosts);
-    coreApi.workOrders.list(v.id!).then(setDetailOS);
-    coreApi.vehicleMarketValue.latest(v.id!).then(setDetailFipe);
-    refreshCondition(v.id!);
-  }
-
-  function refreshCondition(vehicleId: string) {
-    coreApi.vehicleCondition.score(vehicleId).then(setDetailScore);
-    coreApi.vehicleCondition.incidents(vehicleId).then(setDetailIncidents);
-  }
-
-  async function handleAddFipe(e: FormEvent) {
-    e.preventDefault();
-    if (!detail) return;
-    setFipeSaving(true);
-    try {
-      const body: VehicleMarketValueRequest = {
-        valorFipe: Number(fipeForm.valorFipe),
-        dataReferencia: fipeForm.dataReferencia,
-        codigoFipe: fipeForm.codigoFipe || undefined,
-      };
-      const saved = await coreApi.vehicleMarketValue.record(detail.id!, body);
-      setDetailFipe(saved);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao lançar valor FIPE');
-    } finally {
-      setFipeSaving(false);
-    }
-  }
-
-  async function handleAddIncident(e: FormEvent) {
-    e.preventDefault();
-    if (!detail) return;
-    setIncidentSaving(true);
-    try {
-      await coreApi.vehicleCondition.registerIncident(detail.id!, incidentForm);
-      setIncidentForm({ data: new Date().toISOString().slice(0, 10), severidade: 'LEVE', descricao: '', custoReparo: undefined });
-      refreshCondition(detail.id!);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao registrar sinistro');
-    } finally {
-      setIncidentSaving(false);
-    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -200,8 +115,6 @@ export function VehiclesPage({ onViewCosts }: Props) {
       return true;
     });
   }, [vehicles, search, statusFiltro]);
-
-  const detailManutencao = detailCosts.filter((c) => c.category === 'MANUTENCAO');
 
   return (
     <div className="p-5">
@@ -299,7 +212,7 @@ export function VehiclesPage({ onViewCosts }: Props) {
                       <div className="flex items-center gap-4">
                         <button
                           type="button"
-                          onClick={() => openDetail(v)}
+                          onClick={() => onViewDetail(v.id!)}
                           className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
                         >
                           <Eye className="size-4" />
@@ -422,244 +335,7 @@ export function VehiclesPage({ onViewCosts }: Props) {
         </form>
       </Modal>
 
-      <Dialog open={detail != null} onOpenChange={(open) => !open && setDetail(null)}>
-        {detail && (
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <PlacaBR placa={detail.plate!} />
-                  <div>
-                    <DialogTitle>{detail.model}</DialogTitle>
-                    <DialogDescription>
-                      {detail.brand} · {detail.modelYear ?? '—'}
-                    </DialogDescription>
-                  </div>
-                </div>
-                <StatusBadgeVeiculo status={detail.status} />
-              </div>
-            </DialogHeader>
-
-            <div className="p-5">
-              <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <InfoStat label="KM atual" value={`${detail.odometerKm?.toLocaleString('pt-BR')} km`} />
-                <InfoStat
-                  label="Próx. preventiva"
-                  value={detail.proximaManutencaoData ? formatDateBR(detail.proximaManutencaoData) : '—'}
-                />
-                <InfoStat
-                  label="Preventiva por km"
-                  value={detail.proximaManutencaoKm ? `${detail.proximaManutencaoKm.toLocaleString('pt-BR')} km` : '—'}
-                />
-                <InfoStat
-                  label="Gasto histórico"
-                  value={formatBRL(detailCosts.reduce((sum, c) => sum + Number(c.amount ?? 0), 0))}
-                />
-              </div>
-
-              <Tabs defaultValue="manutencao">
-                <TabsList>
-                  <TabsTrigger value="manutencao">Manutenção</TabsTrigger>
-                  <TabsTrigger value="os">Ordens de Serviço</TabsTrigger>
-                  <TabsTrigger value="fipe">FIPE</TabsTrigger>
-                  <TabsTrigger value="sinistros">Sinistros</TabsTrigger>
-                </TabsList>
-                <TabsContent value="manutencao">
-                  {detailManutencao.length === 0 ? (
-                    <p className="py-6 text-center text-xs text-muted-foreground">Nenhum lançamento de manutenção.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {detailManutencao.map((c) => (
-                        <li key={c.id} className="rounded-md border border-border p-3 text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-foreground">{c.description}</span>
-                            <span className="font-data font-semibold text-foreground">
-                              {formatBRL(Number(c.amount))}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-muted-foreground">{formatDateBR(c.occurredAt!)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </TabsContent>
-                <TabsContent value="os">
-                  {detailOS.length === 0 ? (
-                    <p className="py-6 text-center text-xs text-muted-foreground">Nenhuma OS registrada ainda.</p>
-                  ) : (
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-border text-muted-foreground">
-                          <th className="py-1.5 text-left font-medium">OS</th>
-                          <th className="py-1.5 text-left font-medium">Tipo</th>
-                          <th className="py-1.5 text-left font-medium">Abertura</th>
-                          <th className="py-1.5 text-left font-medium">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {detailOS.map((os) => (
-                          <tr key={os.id}>
-                            <td className="py-1.5 font-data text-foreground">{os.numero}</td>
-                            <td className="py-1.5 text-muted-foreground">{TIPO_OS_LABEL[os.tipo ?? ''] ?? os.tipo}</td>
-                            <td className="py-1.5 font-data text-muted-foreground">
-                              {os.dataAbertura ? formatDateBR(os.dataAbertura) : '—'}
-                            </td>
-                            <td className="py-1.5">
-                              <StatusBadgeOS status={os.status} />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="fipe">
-                  <div className="space-y-4">
-                    {detailFipe ? (
-                      <div className="flex items-center justify-between rounded-md border border-border p-3">
-                        <div className="flex items-center gap-2.5">
-                          <Gauge className="size-4 text-primary" />
-                          <div>
-                            <p className="font-data text-sm font-semibold text-foreground">
-                              {formatBRL(Number(detailFipe.valorFipe ?? 0))}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Referência {detailFipe.dataReferencia ? formatDateBR(detailFipe.dataReferencia) : '—'}
-                              {detailFipe.codigoFipe ? ` · cód. ${detailFipe.codigoFipe}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Nenhum valor FIPE lançado ainda.</p>
-                    )}
-
-                    <form onSubmit={handleAddFipe} className="grid grid-cols-3 gap-2 border-t border-border pt-4">
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        placeholder="Valor (R$)"
-                        value={fipeForm.valorFipe}
-                        onChange={(e) => setFipeForm({ ...fipeForm, valorFipe: e.target.value })}
-                        required
-                      />
-                      <Input
-                        type="date"
-                        value={fipeForm.dataReferencia}
-                        onChange={(e) => setFipeForm({ ...fipeForm, dataReferencia: e.target.value })}
-                        required
-                      />
-                      <Input
-                        placeholder="Código FIPE (opcional)"
-                        value={fipeForm.codigoFipe}
-                        onChange={(e) => setFipeForm({ ...fipeForm, codigoFipe: e.target.value })}
-                      />
-                      <Button type="submit" size="sm" className="col-span-3" disabled={fipeSaving}>
-                        {fipeSaving ? 'Salvando...' : 'Lançar valor'}
-                      </Button>
-                    </form>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="sinistros">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 rounded-md border border-border p-3">
-                      <ShieldAlert className="size-4 text-primary" />
-                      <div>
-                        <p className="font-data text-sm font-semibold text-foreground">
-                          Condição: {detailScore ? Number(detailScore.score ?? 0).toFixed(0) : '100'}/100
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {detailScore?.algorithmVersion ?? 'sem sinistro registrado'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {detailIncidents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nenhum sinistro registrado.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {detailIncidents.map((i) => (
-                          <li key={i.id} className="rounded-md border border-border p-3 text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="font-data text-muted-foreground">
-                                {i.data ? formatDateBR(i.data) : '—'}
-                              </span>
-                              <StatusBadgeSeveridade severidade={i.severidade} />
-                            </div>
-                            {i.descricao && <p className="mt-1 text-foreground">{i.descricao}</p>}
-                            {i.custoReparo != null && (
-                              <p className="mt-1 font-data text-muted-foreground">
-                                Reparo: {formatBRL(Number(i.custoReparo))}
-                              </p>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <form onSubmit={handleAddIncident} className="space-y-2 border-t border-border pt-4">
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          type="date"
-                          value={incidentForm.data}
-                          onChange={(e) => setIncidentForm({ ...incidentForm, data: e.target.value })}
-                          required
-                        />
-                        <Select
-                          value={incidentForm.severidade}
-                          onChange={(e) =>
-                            setIncidentForm({
-                              ...incidentForm,
-                              severidade: e.target.value as VehicleIncidentRequest['severidade'],
-                            })
-                          }
-                        >
-                          <option value="LEVE">Leve</option>
-                          <option value="MODERADA">Moderada</option>
-                          <option value="GRAVE">Grave</option>
-                        </Select>
-                      </div>
-                      <Input
-                        placeholder="Descrição (opcional)"
-                        value={incidentForm.descricao ?? ''}
-                        onChange={(e) => setIncidentForm({ ...incidentForm, descricao: e.target.value || undefined })}
-                      />
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        placeholder="Custo de reparo (opcional)"
-                        value={incidentForm.custoReparo ?? ''}
-                        onChange={(e) =>
-                          setIncidentForm({
-                            ...incidentForm,
-                            custoReparo: e.target.value ? Number(e.target.value) : undefined,
-                          })
-                        }
-                      />
-                      <Button type="submit" size="sm" className="w-full" disabled={incidentSaving}>
-                        {incidentSaving ? 'Registrando...' : 'Registrar sinistro'}
-                      </Button>
-                    </form>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
     </div>
   );
 }
 
-function InfoStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-border p-2.5">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-data text-sm font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}

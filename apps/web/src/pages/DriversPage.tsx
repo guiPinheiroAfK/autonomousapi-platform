@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Eye, Plus, Star } from 'lucide-react';
+import { Car, Eye, Mail, Plus, Star } from 'lucide-react';
 import {
   coreApi,
+  type DriverAssignmentResponse,
   type DriverRatingResponse,
   type DriverRatingSummaryResponse,
   type DriverRequest,
   type DriverResponse,
+  type VehicleResponse,
 } from '../api/client';
 import { StatusBadgeMotorista } from '../components/shared/StatusBadge';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
@@ -22,7 +24,14 @@ import { diasAteVencer, formatDateBR, iniciais } from '../lib/format';
 
 const STATUS_OPTIONS = ['ATIVO', 'INATIVO'] as const;
 
-const EMPTY_FORM: DriverRequest = { name: '', cnh: '', phone: '', status: 'ATIVO', cnhValidade: undefined };
+const EMPTY_FORM: DriverRequest = {
+  name: '',
+  cnh: '',
+  phone: '',
+  status: 'ATIVO',
+  cnhValidade: undefined,
+  email: undefined,
+};
 
 /** Categoria da CNH é campo só-visual (não existe no backend ainda) — atribuída
  *  deterministicamente a partir do próprio número da CNH. */
@@ -52,6 +61,19 @@ export function DriversPage() {
   const [ratingSaving, setRatingSaving] = useState(false);
   const [ratingError, setRatingError] = useState('');
 
+  const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
+  const [detailAssignment, setDetailAssignment] = useState<DriverAssignmentResponse | null>(null);
+  const [assignVehicleId, setAssignVehicleId] = useState('');
+  const [assignSaving, setAssignSaving] = useState(false);
+  const [assignError, setAssignError] = useState('');
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteSent, setInviteSent] = useState('');
+  const [inviteError, setInviteError] = useState('');
+  const [notifyBody, setNotifyBody] = useState('');
+  const [notifySending, setNotifySending] = useState(false);
+  const [notifySent, setNotifySent] = useState(false);
+  const [notifyError, setNotifyError] = useState('');
+
   function refresh() {
     coreApi.drivers
       .list()
@@ -61,6 +83,9 @@ export function DriversPage() {
   }
 
   useEffect(refresh, []);
+  useEffect(() => {
+    coreApi.vehicles.list().then(setVehicles);
+  }, []);
 
   function openCreate() {
     setEditingId(null);
@@ -77,6 +102,7 @@ export function DriversPage() {
       phone: d.phone ?? '',
       status: d.status as DriverRequest['status'],
       cnhValidade: d.cnhValidade,
+      email: d.email ?? undefined,
     });
     setError('');
     setModalOpen(true);
@@ -115,12 +141,25 @@ export function DriversPage() {
     setNovaNota(5);
     setNovoComentario('');
     setRatingError('');
+    setDetailAssignment(null);
+    setAssignVehicleId('');
+    setAssignError('');
+    setInviteSent('');
+    setInviteError('');
+    setNotifyBody('');
+    setNotifySent(false);
+    setNotifyError('');
     refreshRatings(d.id!);
+    refreshAssignment(d.id!);
   }
 
   function refreshRatings(driverId: string) {
     coreApi.driverRatings.list(driverId).then(setDetailRatings);
     coreApi.driverRatings.summary(driverId).then(setDetailSummary);
+  }
+
+  function refreshAssignment(driverId: string) {
+    coreApi.drivers.activeAssignment(driverId).then(setDetailAssignment);
   }
 
   async function handleAddRating(e: FormEvent) {
@@ -136,6 +175,65 @@ export function DriversPage() {
       setRatingError(err instanceof Error ? err.message : 'Falha ao registrar avaliação');
     } finally {
       setRatingSaving(false);
+    }
+  }
+
+  async function handleInvite() {
+    if (!detail) return;
+    setInviteSending(true);
+    setInviteError('');
+    setInviteSent('');
+    try {
+      const resp = await coreApi.drivers.invite(detail.id!);
+      setInviteSent(`Convite enviado para ${resp.email}.`);
+      refresh();
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Falha ao enviar convite');
+    } finally {
+      setInviteSending(false);
+    }
+  }
+
+  async function handleAssign(e: FormEvent) {
+    e.preventDefault();
+    if (!detail || !assignVehicleId) return;
+    setAssignSaving(true);
+    setAssignError('');
+    try {
+      const assignment = await coreApi.drivers.assign(detail.id!, { vehicleId: assignVehicleId });
+      setDetailAssignment(assignment);
+      setAssignVehicleId('');
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : 'Falha ao designar veículo');
+    } finally {
+      setAssignSaving(false);
+    }
+  }
+
+  async function handleEndAssignment() {
+    if (!detail) return;
+    try {
+      await coreApi.drivers.endAssignment(detail.id!);
+      setDetailAssignment(null);
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : 'Falha ao encerrar designação');
+    }
+  }
+
+  async function handleNotify(e: FormEvent) {
+    e.preventDefault();
+    if (!detail || !notifyBody.trim()) return;
+    setNotifySending(true);
+    setNotifyError('');
+    setNotifySent(false);
+    try {
+      await coreApi.drivers.notify(detail.id!, { title: 'Aviso do gestor', body: notifyBody });
+      setNotifyBody('');
+      setNotifySent(true);
+    } catch (err) {
+      setNotifyError(err instanceof Error ? err.message : 'Falha ao enviar aviso');
+    } finally {
+      setNotifySending(false);
     }
   }
 
@@ -324,6 +422,15 @@ export function DriversPage() {
             <Input id="phone" value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div>
+            <Label htmlFor="email">E-mail (para acesso ao app)</Label>
+            <Input
+              id="email"
+              type="email"
+              value={form.email ?? ''}
+              onChange={(e) => setForm({ ...form, email: e.target.value || undefined })}
+            />
+          </div>
+          <div>
             <Label htmlFor="status">Status</Label>
             <Select
               id="status"
@@ -374,6 +481,79 @@ export function DriversPage() {
             </DialogHeader>
 
             <div className="space-y-4 p-5">
+              <div className="rounded-md border border-border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Mail className="size-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">
+                        {detail.hasLogin ? 'Acesso ao app ativo' : detail.email ? 'Convite pendente' : 'Sem e-mail cadastrado'}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{detail.email ?? 'Cadastre um e-mail para convidar'}</p>
+                    </div>
+                  </div>
+                  {!detail.hasLogin && detail.email && (
+                    <Button type="button" size="sm" variant="outline" onClick={handleInvite} disabled={inviteSending}>
+                      {inviteSending ? 'Enviando...' : 'Convidar'}
+                    </Button>
+                  )}
+                </div>
+                {inviteSent && <p className="mt-2 text-[11px] text-status-success">{inviteSent}</p>}
+                {inviteError && <p className="mt-2 text-[11px] text-status-danger">{inviteError}</p>}
+
+                {detail.hasLogin && (
+                  <form onSubmit={handleNotify} className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+                    <Input
+                      placeholder="Mandar um aviso rápido pelo app..."
+                      value={notifyBody}
+                      onChange={(e) => setNotifyBody(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button type="submit" size="sm" variant="outline" disabled={!notifyBody.trim() || notifySending}>
+                      {notifySending ? 'Enviando...' : 'Enviar'}
+                    </Button>
+                  </form>
+                )}
+                {notifySent && <p className="mt-2 text-[11px] text-status-success">Aviso enviado.</p>}
+                {notifyError && <p className="mt-2 text-[11px] text-status-danger">{notifyError}</p>}
+              </div>
+
+              <div className="rounded-md border border-border p-3">
+                <div className="mb-2 flex items-center gap-2.5">
+                  <Car className="size-4 text-muted-foreground" />
+                  <p className="text-xs font-medium text-foreground">Veículo designado</p>
+                </div>
+                {detailAssignment ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-data text-xs text-foreground">
+                      {detailAssignment.plate} — {detailAssignment.brand} {detailAssignment.model}
+                    </span>
+                    <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={handleEndAssignment}>
+                      Encerrar
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAssign} className="flex items-center gap-2">
+                    <Select
+                      value={assignVehicleId}
+                      onChange={(e) => setAssignVehicleId(e.target.value)}
+                      className="flex-1"
+                    >
+                      <option value="">Selecione um veículo...</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.plate} — {v.brand} {v.model}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button type="submit" size="sm" disabled={!assignVehicleId || assignSaving}>
+                      {assignSaving ? 'Designando...' : 'Designar'}
+                    </Button>
+                  </form>
+                )}
+                {assignError && <p className="mt-2 text-[11px] text-status-danger">{assignError}</p>}
+              </div>
+
               <div className="flex items-center gap-3 rounded-md border border-border p-3">
                 <Star className="size-4 fill-status-warning text-status-warning" />
                 <div>
