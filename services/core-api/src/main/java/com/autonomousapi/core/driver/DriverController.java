@@ -6,6 +6,7 @@ import com.autonomousapi.core.driver.dto.DriverInviteResponse;
 import com.autonomousapi.core.driver.dto.DriverLicenseAlertResponse;
 import com.autonomousapi.core.driver.dto.DriverRequest;
 import com.autonomousapi.core.driver.dto.DriverResponse;
+import com.autonomousapi.core.driver.dto.NotifyDriverRequest;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -31,14 +32,17 @@ public class DriverController {
     private final DriverService driverService;
     private final DriverInviteService inviteService;
     private final DriverAssignmentService assignmentService;
+    private final DriverNotificationService notificationService;
 
     public DriverController(
             DriverService driverService,
             DriverInviteService inviteService,
-            DriverAssignmentService assignmentService) {
+            DriverAssignmentService assignmentService,
+            DriverNotificationService notificationService) {
         this.driverService = driverService;
         this.inviteService = inviteService;
         this.assignmentService = assignmentService;
+        this.notificationService = notificationService;
     }
 
     @PostMapping
@@ -105,6 +109,15 @@ public class DriverController {
     @GetMapping("/{id}/assignment")
     public DriverAssignmentResponse activeAssignment(@PathVariable UUID id, Authentication auth) {
         return assignmentService.activeForDriver(principal(auth), id);
+    }
+
+    /** Aviso do gestor pro motorista, via push (spec 07 item 5, ADR 0016). */
+    @PostMapping("/{id}/notify")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    public void notify(
+            @PathVariable UUID id, @Valid @RequestBody NotifyDriverRequest req, Authentication auth) {
+        notificationService.notify(principal(auth), id, req.title(), req.body());
     }
 
     private JwtPrincipal principal(Authentication auth) {

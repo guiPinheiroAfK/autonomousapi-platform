@@ -19,4 +19,10 @@ public interface DriverRepository extends JpaRepository<Driver, UUID> {
 
     /** Resolve o driver a partir do login vinculado (ADR 0013) — base do CurrentDriverResolver. */
     Optional<Driver> findByAppUserId(UUID appUserId);
+
+    /**
+     * Cross-tenant de propósito: usado só pelo job diário de push (ADR 0016), que roda uma
+     * vez para toda a base — só motoristas com login (sem login não tem pra onde mandar push).
+     */
+    List<Driver> findAllByCnhValidadeIsNotNullAndAppUserIdIsNotNull();
 }

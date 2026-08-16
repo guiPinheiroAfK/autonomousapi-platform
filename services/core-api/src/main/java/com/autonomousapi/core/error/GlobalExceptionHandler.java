@@ -45,6 +45,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("invalid_driver_invite_token", ex.getMessage()));
     }
 
+    @ExceptionHandler(DriverWithoutLoginException.class)
+    public ResponseEntity<ApiError> handleDriverWithoutLogin(DriverWithoutLoginException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("driver_without_login", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

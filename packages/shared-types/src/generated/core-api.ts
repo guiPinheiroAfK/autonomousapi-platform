@@ -196,6 +196,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/push/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me/incidents": {
         parameters: {
             query?: never;
@@ -222,6 +238,22 @@ export interface paths {
         get: operations["list_4"];
         put?: never;
         post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/drivers/{id}/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["notify"];
         delete?: never;
         options?: never;
         head?: never;
@@ -982,6 +1014,14 @@ export interface components {
             /** Format: int32 */
             received?: number;
         };
+        RegisterDeviceRequest: {
+            token: string;
+            plataforma?: string;
+        };
+        NotifyDriverRequest: {
+            title: string;
+            body: string;
+        };
         DriverInviteResponse: {
             /** Format: uuid */
             driverId?: string;
@@ -1731,6 +1771,28 @@ export interface operations {
             };
         };
     };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     reportIncident: {
         parameters: {
             query?: never;
@@ -1796,6 +1858,30 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["DriverResponse"];
                 };
+            };
+        };
+    };
+    notify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotifyDriverRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
