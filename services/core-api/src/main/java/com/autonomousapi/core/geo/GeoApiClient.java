@@ -1,8 +1,11 @@
 package com.autonomousapi.core.geo;
 
 import com.autonomousapi.core.geo.dto.ChargingStationsResponse;
+import com.autonomousapi.core.geo.dto.DrivingEventsResponse;
 import com.autonomousapi.core.geo.dto.GeoChargingStationsResponse;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
+import java.time.Instant;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -80,6 +83,31 @@ public class GeoApiClient {
             return response != null ? response.toPublic() : ChargingStationsResponse.indisponivel();
         } catch (Exception ex) {
             return ChargingStationsResponse.indisponivel();
+        }
+    }
+
+    /**
+     * Componentes de avaliação automática de motorista (spec 06, item 3). Chamado só pelo
+     * job diário {@code DriverAutoRatingJob} — falha vira "sem dado" (pingCount=0), o job
+     * trata isso como amostra insuficiente e não lança rating pra aquela viagem, em vez de
+     * propagar exceção e derrubar o processamento das outras viagens do lote.
+     */
+    public DrivingEventsResponse drivingEvents(UUID vehicleId, Instant from, Instant to) {
+        try {
+            DrivingEventsResponse response = client
+                    .get()
+                    .uri(builder -> builder
+                            .path("/internal/v1/driving-events")
+                            .queryParam("vehicle_id", vehicleId)
+                            .queryParam("from", from)
+                            .queryParam("to", to)
+                            .build())
+                    .header("X-Service-Token", serviceToken)
+                    .retrieve()
+                    .body(DrivingEventsResponse.class);
+            return response != null ? response : DrivingEventsResponse.vazio();
+        } catch (Exception ex) {
+            return DrivingEventsResponse.vazio();
         }
     }
 }

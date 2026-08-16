@@ -40,6 +40,14 @@ public class Trip {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /**
+     * Marca que {@link com.autonomousapi.core.driver.rating.DriverAutoRatingJob} já
+     * processou esta viagem (spec 06, item 3) — evita reprocessar e duplicar
+     * lançamento em {@code driver_rating_auto} a cada rodada do job.
+     */
+    @Column(name = "rating_processed_at")
+    private Instant ratingProcessedAt;
+
     protected Trip() {
         // JPA
     }
@@ -57,6 +65,10 @@ public class Trip {
     public void finish() {
         this.status = TripStatus.FINALIZADA;
         this.endedAt = Instant.now();
+    }
+
+    public void markRatingProcessed() {
+        this.ratingProcessedAt = Instant.now();
     }
 
     public UUID getId() {
@@ -85,5 +97,9 @@ public class Trip {
 
     public Instant getEndedAt() {
         return endedAt;
+    }
+
+    public Instant getRatingProcessedAt() {
+        return ratingProcessedAt;
     }
 }
