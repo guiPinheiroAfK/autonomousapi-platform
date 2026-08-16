@@ -5,10 +5,11 @@ import { ActivityIndicator, View } from 'react-native';
 import { coreApi, setAuthToken, type UserResponse } from './src/api/client';
 import { clearTokens, loadAccessToken } from './src/auth/tokenStorage';
 import { acceptLocationConsent, hasAcceptedLocationConsent } from './src/onboarding/consent';
+import { registerPushToken } from './src/push/registerPush';
+import { HomeTabs } from './src/screens/HomeTabs';
 import { LocationConsentScreen } from './src/screens/LocationConsentScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { NotDriverScreen } from './src/screens/NotDriverScreen';
-import { TripScreen } from './src/screens/TripScreen';
 
 export default function App() {
   const [bootstrapping, setBootstrapping] = useState(true);
@@ -33,6 +34,13 @@ export default function App() {
       setBootstrapping(false);
     })();
   }, []);
+
+  // Cobre tanto login novo quanto sessão restaurada no boot — os dois passam por setUser.
+  useEffect(() => {
+    if (user?.role === 'MOTORISTA') {
+      registerPushToken();
+    }
+  }, [user]);
 
   async function handleLogout() {
     setAuthToken(null);
@@ -72,7 +80,7 @@ export default function App() {
     <>
       <StatusBar style="auto" />
       {user.role === 'MOTORISTA' ? (
-        <TripScreen onLogout={handleLogout} />
+        <HomeTabs userId={user.id} onLogout={handleLogout} />
       ) : (
         <NotDriverScreen onLogout={handleLogout} />
       )}
