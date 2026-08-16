@@ -733,6 +733,111 @@
         }
       }
     },
+    "/v1/chat/sync-cursor": {
+      "post": {
+        "tags": ["chat-controller"],
+        "operationId": "syncCursor",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SyncCursorRequest" } }
+          },
+          "required": true
+        },
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/v1/chat/conversations": {
+      "get": {
+        "tags": ["chat-controller"],
+        "operationId": "listConversations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ChatConversationResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["chat-controller"],
+        "operationId": "createConversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateConversationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ChatConversationResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/conversations/{id}/messages": {
+      "get": {
+        "tags": ["chat-controller"],
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ChatMessageResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["chat-controller"],
+        "operationId": "sendMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ChatMessageResponse" } }
+            }
+          }
+        }
+      }
+    },
     "/v1/billing/webhook": {
       "post": {
         "tags": ["billing-controller"],
@@ -1571,6 +1676,48 @@
           "nota": { "type": "integer", "format": "int32" },
           "comentario": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SyncCursorRequest": {
+        "required": ["deviceId", "syncedAt"],
+        "type": "object",
+        "properties": {
+          "deviceId": { "type": "string" },
+          "syncedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateConversationRequest": {
+        "required": ["driverId"],
+        "type": "object",
+        "properties": {
+          "driverId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ChatConversationResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "driverName": { "type": "string" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "vehiclePlate": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SendMessageRequest": {
+        "required": ["body"],
+        "type": "object",
+        "properties": { "body": { "maxLength": 2000, "minLength": 0, "type": "string" } }
+      },
+      "ChatMessageResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "conversationId": { "type": "string", "format": "uuid" },
+          "senderUserId": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "sentAt": { "type": "string", "format": "date-time" }
         }
       },
       "CheckoutSessionResponse": {

@@ -1,0 +1,92 @@
+package com.autonomousapi.core.chat;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import java.util.UUID;
+
+/**
+ * Mensagem de uma {@link ChatConversation} (ADR 0015). {@code aindaNoServidor} controla o
+ * que já foi removido pelo job de limpeza — soft delete, a linha continua existindo.
+ */
+@Entity
+@Table(name = "chat_message")
+public class ChatMessage {
+
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
+
+    @Column(name = "conversation_id", nullable = false, updatable = false)
+    private UUID conversationId;
+
+    @Column(name = "sender_user_id", nullable = false, updatable = false)
+    private UUID senderUserId;
+
+    @Column(name = "body", nullable = false, length = 2000)
+    private String body;
+
+    @Column(name = "sent_at", nullable = false, updatable = false)
+    private Instant sentAt;
+
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
+
+    @Column(name = "lido_em")
+    private Instant lidoEm;
+
+    @Column(name = "ainda_no_servidor", nullable = false)
+    private boolean aindaNoServidor;
+
+    protected ChatMessage() {
+        // JPA
+    }
+
+    public ChatMessage(UUID conversationId, UUID senderUserId, String body) {
+        this.id = UUID.randomUUID();
+        this.conversationId = conversationId;
+        this.senderUserId = senderUserId;
+        this.body = body;
+        this.sentAt = Instant.now();
+        this.aindaNoServidor = true;
+    }
+
+    /** Removida do servidor pelo job de limpeza — o dispositivo do gestor já sincronizou. */
+    public void removerDoServidor() {
+        this.aindaNoServidor = false;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getConversationId() {
+        return conversationId;
+    }
+
+    public UUID getSenderUserId() {
+        return senderUserId;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public Instant getSentAt() {
+        return sentAt;
+    }
+
+    public Instant getDeliveredAt() {
+        return deliveredAt;
+    }
+
+    public Instant getLidoEm() {
+        return lidoEm;
+    }
+
+    public boolean isAindaNoServidor() {
+        return aindaNoServidor;
+    }
+}
