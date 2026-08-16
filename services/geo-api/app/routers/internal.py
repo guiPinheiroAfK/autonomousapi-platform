@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ..aggregation import recalcular_road_readiness
 from ..config import settings
 from ..db import get_db
+from ..driving_events import calcular_driving_events
 from ..matching import encontrar_segmento_mais_proximo
 from ..models import ChargingStation, ChargingStationStatus, RoadSegmentObservation, VehicleGpsPing
 from ..security import require_service_token
@@ -158,4 +159,30 @@ def listar_estacoes_recarga(
 
     return ChargingStationsResponse(
         provider_available=bool(settings.open_charge_map_api_key), stations=itens
+    )
+
+
+class DrivingEventsResponse(BaseModel):
+    ping_count: int
+    hard_braking_count: int
+    overspeed_count: int
+
+
+@router.get("/driving-events")
+def driving_events(
+    vehicle_id: UUID,
+    de: datetime = Query(alias="from"),
+    ate: datetime = Query(alias="to"),
+    db: Session = Depends(get_db),
+) -> DrivingEventsResponse:
+    """
+    Componentes de avaliação automática de motorista (spec 06, item 3): frenagem brusca
+    e excesso de velocidade calculados a partir do ping de GPS da viagem. Chamado só
+    pelo job diário do core-api (DriverAutoRatingJob) — nunca em tempo real na tela.
+    """
+    eventos = calcular_driving_events(db, vehicle_id, de, ate)
+    return DrivingEventsResponse(
+        ping_count=eventos.ping_count,
+        hard_braking_count=eventos.hard_braking_count,
+        overspeed_count=eventos.overspeed_count,
     )
