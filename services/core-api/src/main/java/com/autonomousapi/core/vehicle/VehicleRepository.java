@@ -33,4 +33,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
      */
     @Query("select v from Vehicle v where v.proximaManutencaoData is not null or v.proximaManutencaoKm is not null")
     List<Vehicle> findAllWithManutencaoAgendada();
+
+    /** Cross-tenant de propósito: usado só pelo job semanal de sincronização FIPE. */
+    List<Vehicle> findAllByTipoIn(List<VehicleType> tipos);
 }
