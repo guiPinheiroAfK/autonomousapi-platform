@@ -105,6 +105,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("trip_already_in_progress", ex.getMessage()));
     }
 
+    @ExceptionHandler(RoutePlanAlreadyAssignedException.class)
+    public ResponseEntity<ApiError> handleRoutePlanAssigned(RoutePlanAlreadyAssignedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("route_plan_already_assigned", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
