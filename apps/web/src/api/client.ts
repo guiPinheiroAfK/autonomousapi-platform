@@ -57,6 +57,7 @@ export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
 export type SendMessageRequest = Schemas['SendMessageRequest'];
 export type SyncCursorRequest = Schemas['SyncCursorRequest'];
+export type AcceptInviteRequest = Schemas['AcceptInviteRequest'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -129,6 +130,9 @@ export const coreApi = {
       request<void>('/v1/auth/forgot-password', { method: 'POST', body: JSON.stringify(body) }),
     resetPassword: (body: ResetPasswordRequest) =>
       request<void>('/v1/auth/reset-password', { method: 'POST', body: JSON.stringify(body) }),
+    /** Aceite do convite de motorista (ADR 0013) — cria o login MOTORISTA e define a senha. */
+    acceptInvite: (body: AcceptInviteRequest) =>
+      request<void>('/v1/auth/accept-invite', { method: 'POST', body: JSON.stringify(body) }),
     me: () => request<UserResponse>('/v1/auth/me'),
   },
 
