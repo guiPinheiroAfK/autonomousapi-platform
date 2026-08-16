@@ -1,4 +1,4 @@
-import { BarChart3, Car, ClipboardList, CreditCard, Handshake, LayoutDashboard, MessageCircle, Users, Wrench } from 'lucide-react';
+import { BarChart3, Car, ClipboardList, CreditCard, Handshake, LayoutDashboard, MessageCircle, Plug, Users, Wrench } from 'lucide-react';
 import { Marca } from '../shared/Logo';
 import { cn } from '../../lib/utils';
 import type { View } from './AppShell';
@@ -15,6 +15,7 @@ const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'maintenance', label: 'Manutenção', icon: Wrench },
   { view: 'reports', label: 'Relatórios', icon: BarChart3 },
   { view: 'affiliates', label: 'Parceiros', icon: Handshake },
+  { view: 'charging-stations', label: 'Pontos de Recarga', icon: Plug },
   { view: 'billing', label: 'Assinatura', icon: CreditCard },
 ];
 

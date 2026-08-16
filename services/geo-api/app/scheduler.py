@@ -13,6 +13,8 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from .aggregation import recalcular_road_readiness
+from .charging import obter_provider
+from .charging_sync import sincronizar_estacoes
 from .config import settings
 from .db import SessionLocal
 from .retention import purgar_pings_antigos
@@ -42,6 +44,17 @@ def _job_purgar_pings_antigos() -> None:
         db.close()
 
 
+def _job_sincronizar_estacoes_recarga() -> None:
+    db = SessionLocal()
+    try:
+        provider = obter_provider(settings.open_charge_map_api_key)
+        sincronizar_estacoes(db, provider, settings.charging_sync_country_code)
+    except Exception:
+        logger.exception("falha ao sincronizar estações de recarga")
+    finally:
+        db.close()
+
+
 def iniciar_scheduler() -> None:
     scheduler.add_job(
         _job_recalcular_road_readiness,
@@ -55,6 +68,13 @@ def iniciar_scheduler() -> None:
         "interval",
         hours=24,
         id="purgar_pings_antigos",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _job_sincronizar_estacoes_recarga,
+        "interval",
+        hours=24,
+        id="sincronizar_estacoes_recarga",
         replace_existing=True,
     )
     scheduler.start()

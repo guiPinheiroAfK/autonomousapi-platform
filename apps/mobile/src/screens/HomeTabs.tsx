@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { ChargingStationsScreen } from './ChargingStationsScreen';
 import { ChatScreen } from './ChatScreen';
 import { HomeScreen } from './HomeScreen';
 import { TripScreen } from './TripScreen';
@@ -10,12 +11,13 @@ interface Props {
   onLogout: () => void;
 }
 
-type Tab = 'inicio' | 'viagem' | 'chat';
+type Tab = 'inicio' | 'viagem' | 'chat' | 'recarga';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'inicio', label: 'Início' },
   { key: 'viagem', label: 'Viagem' },
   { key: 'chat', label: 'Mensagens' },
+  { key: 'recarga', label: 'Recarga' },
 ];
 
 /**
@@ -31,6 +33,7 @@ export function HomeTabs({ userId, onLogout }: Props) {
         {tab === 'inicio' && <HomeScreen onLogout={onLogout} />}
         {tab === 'viagem' && <TripScreen onLogout={onLogout} />}
         {tab === 'chat' && <ChatScreen userId={userId} />}
+        {tab === 'recarga' && <ChargingStationsScreen />}
       </View>
       <View style={styles.tabBar}>
         {TABS.map((t) => (

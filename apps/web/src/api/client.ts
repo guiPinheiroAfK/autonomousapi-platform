@@ -52,6 +52,8 @@ export type DriverInviteResponse = Schemas['DriverInviteResponse'];
 export type DriverAssignmentResponse = Schemas['DriverAssignmentResponse'];
 export type AssignVehicleRequest = Schemas['AssignVehicleRequest'];
 export type NotifyDriverRequest = Schemas['NotifyDriverRequest'];
+export type ChargingStationItem = Schemas['ChargingStationItem'];
+export type ChargingStationsResponse = Schemas['ChargingStationsResponse'];
 export type ChatConversationResponse = Schemas['ChatConversationResponse'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
@@ -224,6 +226,18 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify({ vehicleId }),
       }),
+  },
+
+  /** Recarga elétrica (spec 06, item 1) — agregado de provedor externo, ver geo-api. */
+  chargingStations: {
+    list: (params?: { lat?: number; lon?: number; radiusKm?: number }) => {
+      const query = new URLSearchParams();
+      if (params?.lat != null) query.set('lat', String(params.lat));
+      if (params?.lon != null) query.set('lon', String(params.lon));
+      if (params?.radiusKm != null) query.set('radiusKm', String(params.radiusKm));
+      const qs = query.toString();
+      return request<ChargingStationsResponse>(`/v1/charging-stations${qs ? `?${qs}` : ''}`);
+    },
   },
 
   vehicleCosts: {

@@ -100,3 +100,56 @@ class RoadReadinessScore(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
+
+
+class ChargingStation(Base):
+    """
+    Ponto de recarga elétrica agregado de provedor externo (spec 06, item 1). Não
+    construímos rede própria de sensores — normalizamos dado de terceiro (Open Charge
+    Map hoje). `provider` + `external_id` é a chave de idempotência do sync.
+    """
+
+    __tablename__ = "charging_station"
+    __table_args__ = {"schema": "geo"}
+
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
+    provider: Mapped[str] = mapped_column(String(40), nullable=False)
+    external_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    address: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    connector_type: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    power_kw: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lat: Mapped[float] = mapped_column(Float, nullable=False)
+    lon: Mapped[float] = mapped_column(Float, nullable=False)
+    geom: Mapped[object] = mapped_column(
+        Geometry(geometry_type="POINT", srid=4326), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class ChargingStationStatus(Base):
+    """
+    Status observado de uma estação (spec 06, item 1). Fonte pode ser o provedor externo
+    ou "reportado pelo motorista" (fallback quando o provedor não tem tempo real) — o
+    campo `source` distingue as duas. Sem status recente = RNF011 (leitura devolve
+    "DESCONHECIDO", ver routers/internal.py), não é campo obrigatório na leitura.
+    """
+
+    __tablename__ = "charging_station_status"
+    __table_args__ = {"schema": "geo"}
+
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
+    station_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("geo.charging_station.id"), nullable=False, index=True
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    source: Mapped[str] = mapped_column(String(30), nullable=False)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

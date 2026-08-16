@@ -20,5 +20,11 @@ class Settings(BaseSettings):
     # Intervalo do job de agregação de road_readiness (spec 02: "job periódico").
     road_readiness_recalc_interval_minutes: int = 5
 
+    # Recarga elétrica (spec 06, item 1). Sem chave (padrão dev/demo) = provider
+    # desabilitado, mecanismo pronto e testável sem credencial — mesmo padrão do
+    # EmailSender/PushSender/Stripe no core-api (ver app/charging.py).
+    open_charge_map_api_key: str = ""
+    charging_sync_country_code: str = "BR"
+
 
 settings = Settings()
