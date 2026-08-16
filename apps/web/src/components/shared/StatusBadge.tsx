@@ -130,3 +130,19 @@ export function StatusBadgeSeveridade({ severidade, className }: { severidade?: 
   const s = severidade ?? '';
   return <Base tone={SEVERIDADE_TONE[s] ?? 'neutral'} label={SEVERIDADE_LABEL[s] ?? s} className={className} />;
 }
+
+const ROUTE_PLAN_TONE: Record<string, Tone> = {
+  PLANEJADA: 'info',
+  EM_ANDAMENTO: 'warning',
+  CONCLUIDA: 'success',
+};
+const ROUTE_PLAN_LABEL: Record<string, string> = {
+  PLANEJADA: 'Planejada',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDA: 'Concluída',
+};
+
+export function StatusBadgeRotaPlan({ status, className }: { status?: string; className?: string }) {
+  const s = status ?? '';
+  return <Base tone={ROUTE_PLAN_TONE[s] ?? 'neutral'} label={ROUTE_PLAN_LABEL[s] ?? s} className={className} />;
+}

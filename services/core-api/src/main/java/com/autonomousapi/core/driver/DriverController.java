@@ -52,7 +52,15 @@ public class DriverController {
         return driverService.create(principal(auth), req);
     }
 
+    /**
+     * Gestor-only. Achado da revisão do plano de rota multi-parada: até então este endpoint
+     * não tinha nenhum {@code @PreAuthorize} (nem comentário justificando, ao contrário do
+     * {@code VehicleController}) — um token MOTORISTA conseguia listar nome e CNH de todos os
+     * motoristas do tenant, o que contraria o spec 07 ("dados de outros motoristas... fora de
+     * escopo"). Fechado junto por já estarmos revisando o shell por papel.
+     */
     @GetMapping
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public List<DriverResponse> list(Authentication auth) {
         return driverService.list(principal(auth));
     }
@@ -62,8 +70,10 @@ public class DriverController {
         return driverService.get(principal(auth), id);
     }
 
-    /** Motoristas com CNH vencida ou a vencer (alerta, spec 05 Fase 1). */
+    /** Motoristas com CNH vencida ou a vencer (alerta, spec 05 Fase 1). Gestor-only — mesmo
+     *  motivo do {@link #list}: CNH de outros motoristas não é dado do motorista logado. */
     @GetMapping("/license-expiring")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public List<DriverLicenseAlertResponse> licenseExpiring(Authentication auth) {
         return driverService.licenseExpiring(principal(auth));
     }

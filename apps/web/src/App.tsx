@@ -31,9 +31,12 @@ const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ defa
 const AffiliatesPage = lazy(() => import('./pages/AffiliatesPage').then((m) => ({ default: m.AffiliatesPage })));
 const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })));
 const RoutesPage = lazy(() => import('./pages/RoutesPage').then((m) => ({ default: m.RoutesPage })));
+const RoutePlansPage = lazy(() => import('./pages/RoutePlansPage').then((m) => ({ default: m.RoutePlansPage })));
 const ChargingStationsPage = lazy(() =>
   import('./pages/ChargingStationsPage').then((m) => ({ default: m.ChargingStationsPage })),
 );
+const DriverHomePage = lazy(() => import('./pages/DriverHomePage').then((m) => ({ default: m.DriverHomePage })));
+const DriverRoutePage = lazy(() => import('./pages/DriverRoutePage').then((m) => ({ default: m.DriverRoutePage })));
 
 function CarregandoTela() {
   return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
@@ -77,6 +80,17 @@ export function App() {
   const [vehicleDetailId, setVehicleDetailId] = useState<string | null>(() => vehicleIdNaUrl());
   const [view, setView] = useState<View>(() => (vehicleIdNaUrl() ? 'vehicle-detail' : 'dashboard'));
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
+
+  // `user` só chega depois do fetch de /v1/auth/me (loading), então o useState acima não
+  // sabe ainda o papel na primeira renderização — este efeito corrige pro motorista assim
+  // que o papel é conhecido. Também serve de defesa em profundidade (spec 07): a view
+  // 'dashboard' (analítico de frota) nunca deve ficar de pé pra um token MOTORISTA, mesmo
+  // que o nav já esconda a opção — ver também o guard no render mais abaixo.
+  useEffect(() => {
+    if (user?.role === 'MOTORISTA' && view === 'dashboard') {
+      setView('driver-home');
+    }
+  }, [user, view]);
 
   // Botão voltar/avançar do navegador: sincroniza view/vehicleDetailId com a URL atual.
   useEffect(() => {
@@ -185,7 +199,14 @@ export function App() {
   return (
     <AppShell user={user} activeView={view} onNavigate={navigate} onLogout={logout}>
       <Suspense fallback={<CarregandoTela />}>
-        {view === 'dashboard' && <DashboardPage onViewVehicles={() => setView('vehicles')} />}
+        {view === 'dashboard' &&
+          (user.role === 'MOTORISTA' ? (
+            <DriverHomePage onViewRoute={() => setView('driver-route')} />
+          ) : (
+            <DashboardPage onViewVehicles={() => setView('vehicles')} />
+          ))}
+        {view === 'driver-home' && <DriverHomePage onViewRoute={() => setView('driver-route')} />}
+        {view === 'driver-route' && <DriverRoutePage />}
         {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} onViewDetail={goToVehicleDetail} />}
         {view === 'vehicle-detail' && vehicleDetailId && (
           <VehicleDetailPage vehicleId={vehicleDetailId} onBack={backFromVehicleDetail} />
@@ -196,9 +217,12 @@ export function App() {
         {view === 'reports' && <ReportsPage />}
         {view === 'billing' && <BillingPage />}
         {view === 'affiliates' && <AffiliatesPage />}
-        {view === 'chat' && <ChatPage />}
+        {view === 'chat' && (
+          <ChatPage onOpenActiveRoute={user.role === 'MOTORISTA' ? () => setView('driver-route') : undefined} />
+        )}
         {view === 'charging-stations' && <ChargingStationsPage />}
         {view === 'routes' && <RoutesPage />}
+        {view === 'route-plans' && <RoutePlansPage />}
         {view === 'costs' && costsTarget && (
           <VehicleCostsPage
             vehicleId={costsTarget.vehicleId}

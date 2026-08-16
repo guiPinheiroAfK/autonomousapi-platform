@@ -16,8 +16,14 @@ import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.error.DriverWithoutLoginException;
 import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
 import com.autonomousapi.core.push.PushNotificationService;
+import com.autonomousapi.core.routeplan.RoutePlanService;
+import com.autonomousapi.core.routeplan.RoutePlanStatus;
+import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.tenant.Tenant;
+import com.autonomousapi.core.tenant.TenantRepository;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.util.List;
 import java.util.Optional;
@@ -31,11 +37,14 @@ class ChatServiceTest {
     private final ChatSyncCursorRepository syncCursors = mock(ChatSyncCursorRepository.class);
     private final DriverRepository drivers = mock(DriverRepository.class);
     private final VehicleRepository vehicles = mock(VehicleRepository.class);
+    private final TenantRepository tenants = mock(TenantRepository.class);
     private final CurrentDriverResolver driverResolver = mock(CurrentDriverResolver.class);
     private final PushNotificationService pushNotificationService = mock(PushNotificationService.class);
+    private final RoutePlanService routePlanService = mock(RoutePlanService.class);
 
     private final ChatService service = new ChatService(
-            conversations, messages, syncCursors, drivers, vehicles, driverResolver, pushNotificationService);
+            conversations, messages, syncCursors, drivers, vehicles, tenants, driverResolver,
+            pushNotificationService, routePlanService);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -158,5 +167,59 @@ class ChatServiceTest {
         service.registerSyncCursor(gestorPrincipal, "device-1", now);
 
         verify(syncCursors).save(any(ChatSyncCursor.class));
+    }
+
+    @Test
+    void listConversationsResolveTenantNamePraOMotoristaVer() {
+        UUID driverId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, driverId, null);
+        Driver d = driverComLogin();
+        Tenant tenant = new Tenant("Frota Rota Certa");
+        JwtPrincipal motoristaPrincipal = new JwtPrincipal(UUID.randomUUID(), tenantId, "MOTORISTA");
+        when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
+        when(conversations.findAllByDriverIdOrderByCreatedAtDesc(d.getId())).thenReturn(List.of(conv));
+        when(drivers.findById(driverId)).thenReturn(Optional.of(d));
+        when(tenants.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(messages.findFirstByConversationIdAndAindaNoServidorTrueOrderBySentAtDesc(conv.getId()))
+                .thenReturn(Optional.empty());
+
+        List<ChatConversationResponse> result = service.listConversations(motoristaPrincipal);
+
+        assertEquals("Frota Rota Certa", result.get(0).tenantName());
+    }
+
+    @Test
+    void sendRoutePlanMessageDelegaDesignacaoENotificaOMotorista() {
+        UUID conversationId = UUID.randomUUID();
+        UUID routePlanId = UUID.randomUUID();
+        Driver d = driverComLogin();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId()))
+                .thenReturn(new RoutePlanResponse(routePlanId, d.getId(), d.getName(), null, null,
+                        RoutePlanStatus.PLANEJADA, java.time.Instant.now(), List.of()));
+        when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
+
+        ChatMessageResponse resp = service.sendRoutePlanMessage(gestorPrincipal, conversationId, routePlanId);
+
+        assertEquals(ChatMessageType.ROUTE_ASSIGNMENT, resp.messageType());
+        assertEquals(routePlanId, resp.routePlanId());
+        verify(pushNotificationService).notifyUser(eq(d.getAppUserId()), eq("Nova rota atribuída"), any());
+    }
+
+    @Test
+    void sendRoutePlanMessagePropagaConflitoSemGravarMensagem() {
+        UUID conversationId = UUID.randomUUID();
+        UUID routePlanId = UUID.randomUUID();
+        Driver d = driverComLogin();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId()))
+                .thenThrow(new RoutePlanAlreadyAssignedException());
+
+        assertThrows(RoutePlanAlreadyAssignedException.class,
+                () -> service.sendRoutePlanMessage(gestorPrincipal, conversationId, routePlanId));
+        verify(messages, never()).save(any());
     }
 }

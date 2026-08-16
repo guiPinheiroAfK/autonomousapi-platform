@@ -25,6 +25,20 @@ export function formatTimeBR(isoInstant: string): string {
   return new Date(isoInstant).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+/** Horário relativo curto pra prévia da lista de conversas: hora se foi hoje, "DD/MM" se
+ *  foi antes — evita "14/08/2026" comprido numa linha que já é apertada. */
+export function formatRelativeShortBR(isoInstant: string): string {
+  const data = new Date(isoInstant);
+  const hoje = new Date();
+  const mesmoDia =
+    data.getFullYear() === hoje.getFullYear() &&
+    data.getMonth() === hoje.getMonth() &&
+    data.getDate() === hoje.getDate();
+  return mesmoDia
+    ? data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
 /** Dias entre hoje e uma data "YYYY-MM-DD" (negativo = já vencida). */
 export function diasAteVencer(isoDate: string): number {
   const [y, m, d] = isoDate.split('-').map(Number);
