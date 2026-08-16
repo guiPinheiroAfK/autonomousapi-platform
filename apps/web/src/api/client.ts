@@ -61,8 +61,15 @@ export type ChatConversationResponse = Schemas['ChatConversationResponse'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
 export type SendMessageRequest = Schemas['SendMessageRequest'];
+export type SendRoutePlanRequest = Schemas['SendRoutePlanRequest'];
 export type SyncCursorRequest = Schemas['SyncCursorRequest'];
 export type AcceptInviteRequest = Schemas['AcceptInviteRequest'];
+export type StopInput = Schemas['StopInput'];
+export type RoutePlanResponse = Schemas['RoutePlanResponse'];
+export type RouteStopResponse = Schemas['RouteStopResponse'];
+export type SuggestOrderRequest = Schemas['SuggestOrderRequest'];
+export type CreateRoutePlanRequest = Schemas['CreateRoutePlanRequest'];
+export type AssignDriverRequest = Schemas['AssignDriverRequest'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -289,6 +296,12 @@ export const coreApi = {
     checkout: () => request<CheckoutSessionResponse>('/v1/billing/checkout', { method: 'POST' }),
   },
 
+  /** Superfície do app do motorista (spec 07) — escopado ao token, motorista-only no backend. */
+  me: {
+    /** Designação ativa (null se não houver veículo designado no momento). */
+    vehicle: () => request<DriverAssignmentResponse | null>('/v1/me/vehicle'),
+  },
+
   /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */
   chat: {
     listConversations: () => request<ChatConversationResponse[]>('/v1/chat/conversations'),
@@ -307,5 +320,28 @@ export const coreApi = {
     /** Gestor-only: confirma que o device já persistiu localmente até syncedAt (habilita a limpeza no servidor). */
     syncCursor: (body: SyncCursorRequest) =>
       request<void>('/v1/chat/sync-cursor', { method: 'POST', body: JSON.stringify(body) }),
+    /** Gestor-only: anexa uma rota já cadastrada à conversa (spec 07 item 8). */
+    sendRoutePlan: (conversationId: string, body: SendRoutePlanRequest) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/route-plan`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  },
+
+  /** Rota multi-parada (spec 02, spec 07 item 8). suggestOrder é stateless — a ordem
+   *  sugerida é sempre revisada pelo gestor antes de create persistir. */
+  routePlans: {
+    suggestOrder: (body: SuggestOrderRequest) =>
+      request<StopInput[]>('/v1/routes/plans/suggest-order', { method: 'POST', body: JSON.stringify(body) }),
+    create: (body: CreateRoutePlanRequest) =>
+      request<RoutePlanResponse>('/v1/routes/plans', { method: 'POST', body: JSON.stringify(body) }),
+    list: () => request<RoutePlanResponse[]>('/v1/routes/plans'),
+    assign: (id: string, body: AssignDriverRequest) =>
+      request<RoutePlanResponse>(`/v1/routes/plans/${id}/assign`, { method: 'POST', body: JSON.stringify(body) }),
+    /** Motorista-only: rota ativa do próprio token (null se não houver). */
+    active: () => request<RoutePlanResponse | null>('/v1/routes/plans/active'),
+    /** Motorista-only: marca uma parada da própria rota ativa como concluída. */
+    completeStop: (stopId: string) =>
+      request<RouteStopResponse>(`/v1/routes/plans/stops/${stopId}/complete`, { method: 'POST' }),
   },
 };
