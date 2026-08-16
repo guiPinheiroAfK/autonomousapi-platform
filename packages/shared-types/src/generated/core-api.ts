@@ -196,6 +196,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/routes/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/routes/plans/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/routes/plans/suggest-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["suggestOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/routes/plans/stops/{stopId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["completeStop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/push/devices": {
         parameters: {
             query?: never;
@@ -235,9 +299,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -285,7 +349,7 @@ export interface paths {
         };
         get: operations["activeAssignment"];
         put?: never;
-        post: operations["assign"];
+        post: operations["assign_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -315,9 +379,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -350,6 +414,22 @@ export interface paths {
         get: operations["listConversations"];
         put?: never;
         post: operations["createConversation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/route-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sendRoutePlan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -644,6 +724,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/routes/plans/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["active"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/reports/maintenance-summary": {
         parameters: {
             query?: never;
@@ -811,7 +907,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1113,6 +1209,75 @@ export interface components {
             /** Format: int32 */
             received?: number;
         };
+        CreateRoutePlanRequest: {
+            /** Format: uuid */
+            driverId?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            stops: components["schemas"]["StopInput"][];
+        };
+        LocalTime: {
+            /** Format: int32 */
+            hour?: number;
+            /** Format: int32 */
+            minute?: number;
+            /** Format: int32 */
+            second?: number;
+            /** Format: int32 */
+            nano?: number;
+        };
+        StopInput: {
+            /** @enum {string} */
+            tipo: "COLETA" | "ENTREGA";
+            label: string;
+            /** Format: double */
+            lat: number;
+            /** Format: double */
+            lon: number;
+            janelaInicio?: components["schemas"]["LocalTime"];
+            janelaFim?: components["schemas"]["LocalTime"];
+        };
+        RoutePlanResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            driverId?: string;
+            driverName?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            vehiclePlate?: string;
+            /** @enum {string} */
+            status?: "PLANEJADA" | "EM_ANDAMENTO" | "CONCLUIDA";
+            /** Format: date-time */
+            createdAt?: string;
+            stops?: components["schemas"]["RouteStopResponse"][];
+        };
+        RouteStopResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            tipo?: "COLETA" | "ENTREGA";
+            label?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lon?: number;
+            janelaInicio?: components["schemas"]["LocalTime"];
+            janelaFim?: components["schemas"]["LocalTime"];
+            /** Format: int32 */
+            ordemSugerida?: number;
+            /** Format: int32 */
+            ordemRealExecutada?: number;
+            /** Format: date-time */
+            concluidaEm?: string;
+        };
+        AssignDriverRequest: {
+            /** Format: uuid */
+            driverId: string;
+        };
+        SuggestOrderRequest: {
+            stops: components["schemas"]["StopInput"][];
+        };
         RegisterDeviceRequest: {
             token: string;
             plataforma?: string;
@@ -1180,14 +1345,19 @@ export interface components {
             /** Format: uuid */
             driverId?: string;
             driverName?: string;
+            tenantName?: string;
             /** Format: uuid */
             vehicleId?: string;
             vehiclePlate?: string;
             /** Format: date-time */
             createdAt?: string;
+            lastMessageBody?: string;
+            /** Format: date-time */
+            lastMessageAt?: string;
         };
-        SendMessageRequest: {
-            body: string;
+        SendRoutePlanRequest: {
+            /** Format: uuid */
+            routePlanId: string;
         };
         ChatMessageResponse: {
             /** Format: uuid */
@@ -1199,6 +1369,13 @@ export interface components {
             body?: string;
             /** Format: date-time */
             sentAt?: string;
+            /** @enum {string} */
+            messageType?: "TEXT" | "ROUTE_ASSIGNMENT";
+            /** Format: uuid */
+            routePlanId?: string;
+        };
+        SendMessageRequest: {
+            body: string;
         };
         CheckoutSessionResponse: {
             checkoutUrl?: string;
@@ -1951,6 +2128,122 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"][];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoutePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"];
+                };
+            };
+        };
+    };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignDriverRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"];
+                };
+            };
+        };
+    };
+    suggestOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StopInput"][];
+                };
+            };
+        };
+    };
+    completeStop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                stopId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RouteStopResponse"];
+                };
+            };
+        };
+    };
     register: {
         parameters: {
             query?: never;
@@ -1997,7 +2290,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2017,7 +2310,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2109,7 +2402,7 @@ export interface operations {
             };
         };
     };
-    assign: {
+    assign_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2155,7 +2448,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2177,7 +2470,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2265,6 +2558,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ChatConversationResponse"];
+                };
+            };
+        };
+    };
+    sendRoutePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendRoutePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
                 };
             };
         };
@@ -2702,6 +3021,26 @@ export interface operations {
             };
         };
     };
+    active: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"];
+                };
+            };
+        };
+    };
     maintenanceSummary: {
         parameters: {
             query?: never;
@@ -2908,7 +3247,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 lat?: number;

@@ -1,171 +1,278 @@
 {
   "openapi": "3.0.1",
-  "info": { "title": "OpenAPI definition", "version": "v0" },
-  "servers": [{ "url": "http://localhost:8080", "description": "Generated server url" }],
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
   "paths": {
     "/v1/work-orders/{id}": {
       "put": {
-        "tags": ["work-order-controller"],
+        "tags": [
+          "work-order-controller"
+        ],
         "operationId": "update",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/WorkOrderRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkOrderRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/WorkOrderResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderResponse"
+                }
+              }
+            }
           }
         }
       },
       "delete": {
-        "tags": ["work-order-controller"],
+        "tags": [
+          "work-order-controller"
+        ],
         "operationId": "delete",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/vehicles/{id}": {
       "get": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "get",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/VehicleResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponse"
+                }
+              }
+            }
           }
         }
       },
       "put": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "update_1",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/VehicleRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/VehicleResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponse"
+                }
+              }
+            }
           }
         }
       },
       "delete": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "delete_2",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/drivers/{id}": {
       "get": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "driver-controller"
+        ],
         "operationId": "get_1",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DriverResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverResponse"
+                }
+              }
+            }
           }
         }
       },
       "put": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "driver-controller"
+        ],
         "operationId": "update_2",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/DriverRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DriverResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverResponse"
+                }
+              }
+            }
           }
         }
       },
       "delete": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "driver-controller"
+        ],
         "operationId": "delete_3",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/work-orders": {
       "get": {
-        "tags": ["work-order-controller"],
+        "tags": [
+          "work-order-controller"
+        ],
         "operationId": "list",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -175,7 +282,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/WorkOrderResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/WorkOrderResponse"
+                  }
                 }
               }
             }
@@ -183,25 +292,39 @@
         }
       },
       "post": {
-        "tags": ["work-order-controller"],
+        "tags": [
+          "work-order-controller"
+        ],
         "operationId": "create",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/WorkOrderRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkOrderRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "201": {
             "description": "Created",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/WorkOrderResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/vehicles": {
       "get": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "list_1",
         "responses": {
           "200": {
@@ -210,7 +333,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/VehicleResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleResponse"
+                  }
                 }
               }
             }
@@ -218,58 +343,86 @@
         }
       },
       "post": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "create_1",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/VehicleRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "201": {
             "description": "Created",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/VehicleResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/vehicles/{vehicleId}/market-value": {
       "get": {
-        "tags": ["vehicle-market-value-controller"],
+        "tags": [
+          "vehicle-market-value-controller"
+        ],
         "operationId": "latest",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleMarketValueResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleMarketValueResponse"
+                }
+              }
             }
           }
         }
       },
       "post": {
-        "tags": ["vehicle-market-value-controller"],
+        "tags": [
+          "vehicle-market-value-controller"
+        ],
         "operationId": "record",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/VehicleMarketValueRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/VehicleMarketValueRequest"
+              }
             }
           },
           "required": true
@@ -278,7 +431,11 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleMarketValueResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleMarketValueResponse"
+                }
+              }
             }
           }
         }
@@ -286,14 +443,19 @@
     },
     "/v1/vehicles/{vehicleId}/incidents": {
       "get": {
-        "tags": ["vehicle-condition-controller"],
+        "tags": [
+          "vehicle-condition-controller"
+        ],
         "operationId": "listIncidents",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -303,7 +465,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/VehicleIncidentResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleIncidentResponse"
+                  }
                 }
               }
             }
@@ -311,20 +475,27 @@
         }
       },
       "post": {
-        "tags": ["vehicle-condition-controller"],
+        "tags": [
+          "vehicle-condition-controller"
+        ],
         "operationId": "registerIncident",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/VehicleIncidentRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/VehicleIncidentRequest"
+              }
             }
           },
           "required": true
@@ -333,7 +504,11 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleIncidentResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleIncidentResponse"
+                }
+              }
             }
           }
         }
@@ -341,14 +516,19 @@
     },
     "/v1/vehicles/{vehicleId}/costs": {
       "get": {
-        "tags": ["vehicle-cost-controller"],
+        "tags": [
+          "vehicle-cost-controller"
+        ],
         "operationId": "list_2",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -358,7 +538,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/VehicleCostEntryResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleCostEntryResponse"
+                  }
                 }
               }
             }
@@ -366,20 +548,27 @@
         }
       },
       "post": {
-        "tags": ["vehicle-cost-controller"],
+        "tags": [
+          "vehicle-cost-controller"
+        ],
         "operationId": "addEntry",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/VehicleCostEntryRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/VehicleCostEntryRequest"
+              }
             }
           },
           "required": true
@@ -388,7 +577,11 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleCostEntryResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleCostEntryResponse"
+                }
+              }
             }
           }
         }
@@ -396,7 +589,9 @@
     },
     "/v1/trips": {
       "get": {
-        "tags": ["trip-controller"],
+        "tags": [
+          "trip-controller"
+        ],
         "operationId": "list_3",
         "responses": {
           "200": {
@@ -405,7 +600,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/TripResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/TripResponse"
+                  }
                 }
               }
             }
@@ -413,79 +610,122 @@
         }
       },
       "post": {
-        "tags": ["trip-controller"],
+        "tags": [
+          "trip-controller"
+        ],
         "operationId": "start",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/StartTripRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTripRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "201": {
             "description": "Created",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TripResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/trips/{id}/stop": {
       "post": {
-        "tags": ["trip-controller"],
+        "tags": [
+          "trip-controller"
+        ],
         "operationId": "stop",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TripResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/trips/{id}/pings": {
       "post": {
-        "tags": ["trip-controller"],
+        "tags": [
+          "trip-controller"
+        ],
         "operationId": "submitPing",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/SubmitPingRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPingRequest"
+              }
+            }
           },
           "required": true
         },
-        "responses": { "202": { "description": "Accepted" } }
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
       }
     },
     "/v1/trips/{id}/pings/batch": {
       "post": {
-        "tags": ["trip-controller"],
+        "tags": [
+          "trip-controller"
+        ],
         "operationId": "submitPingBatch",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/SubmitPingBatchRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPingBatchRequest"
+              }
             }
           },
           "required": true
@@ -494,52 +734,21 @@
           "202": {
             "description": "Accepted",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/SubmitPingBatchResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitPingBatchResponse"
+                }
+              }
             }
           }
         }
       }
     },
-    "/v1/push/devices": {
-      "post": {
-        "tags": ["push-device-controller"],
-        "operationId": "register",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/RegisterDeviceRequest" }
-            }
-          },
-          "required": true
-        },
-        "responses": { "204": { "description": "No Content" } }
-      }
-    },
-    "/v1/me/incidents": {
-      "post": {
-        "tags": ["me-controller"],
-        "operationId": "reportIncident",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/VehicleIncidentRequest" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleIncidentResponse" } }
-            }
-          }
-        }
-      }
-    },
-    "/v1/drivers": {
+    "/v1/routes/plans": {
       "get": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "route-plan-controller"
+        ],
         "operationId": "list_4",
         "responses": {
           "200": {
@@ -548,7 +757,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/DriverResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/RoutePlanResponse"
+                  }
                 }
               }
             }
@@ -556,60 +767,303 @@
         }
       },
       "post": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "route-plan-controller"
+        ],
         "operationId": "create_2",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/DriverRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoutePlanRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "201": {
             "description": "Created",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DriverResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlanResponse"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/v1/drivers/{id}/notify": {
+    "/v1/routes/plans/{id}/assign": {
       "post": {
-        "tags": ["driver-controller"],
-        "operationId": "notify",
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "assign",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/NotifyDriverRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignDriverRequest"
+              }
+            }
           },
           "required": true
         },
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlanResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "/v1/drivers/{id}/invite": {
+    "/v1/routes/plans/suggest-order": {
       "post": {
-        "tags": ["driver-controller"],
-        "operationId": "invite",
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "suggestOrder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StopInput"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/routes/plans/stops/{stopId}/complete": {
+      "post": {
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "completeStop",
         "parameters": [
           {
-            "name": "id",
+            "name": "stopId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverInviteResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteStopResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/push/devices": {
+      "post": {
+        "tags": [
+          "push-device-controller"
+        ],
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/v1/me/incidents": {
+      "post": {
+        "tags": [
+          "me-controller"
+        ],
+        "operationId": "reportIncident",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleIncidentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleIncidentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers": {
+      "get": {
+        "tags": [
+          "driver-controller"
+        ],
+        "operationId": "list_5",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DriverResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "driver-controller"
+        ],
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/drivers/{id}/notify": {
+      "post": {
+        "tags": [
+          "driver-controller"
+        ],
+        "operationId": "notify",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifyDriverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/v1/drivers/{id}/invite": {
+      "post": {
+        "tags": [
+          "driver-controller"
+        ],
+        "operationId": "invite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverInviteResponse"
+                }
+              }
             }
           }
         }
@@ -617,40 +1071,56 @@
     },
     "/v1/drivers/{id}/assignment": {
       "get": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "driver-controller"
+        ],
         "operationId": "activeAssignment",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverAssignmentResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAssignmentResponse"
+                }
+              }
             }
           }
         }
       },
       "post": {
-        "tags": ["driver-controller"],
-        "operationId": "assign",
+        "tags": [
+          "driver-controller"
+        ],
+        "operationId": "assign_1",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AssignVehicleRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AssignVehicleRequest"
+              }
             }
           },
           "required": true
@@ -659,7 +1129,11 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverAssignmentResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAssignmentResponse"
+                }
+              }
             }
           }
         }
@@ -667,29 +1141,43 @@
     },
     "/v1/drivers/{id}/assignment/end": {
       "post": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "driver-controller"
+        ],
         "operationId": "endAssignment",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/drivers/{driverId}/ratings": {
       "get": {
-        "tags": ["driver-rating-controller"],
-        "operationId": "list_5",
+        "tags": [
+          "driver-rating-controller"
+        ],
+        "operationId": "list_6",
         "parameters": [
           {
             "name": "driverId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -699,7 +1187,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/DriverRatingResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/DriverRatingResponse"
+                  }
                 }
               }
             }
@@ -707,19 +1197,28 @@
         }
       },
       "post": {
-        "tags": ["driver-rating-controller"],
-        "operationId": "create_3",
+        "tags": [
+          "driver-rating-controller"
+        ],
+        "operationId": "create_4",
         "parameters": [
           {
             "name": "driverId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/DriverRatingRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverRatingRequest"
+              }
+            }
           },
           "required": true
         },
@@ -727,7 +1226,11 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverRatingResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverRatingResponse"
+                }
+              }
             }
           }
         }
@@ -735,20 +1238,32 @@
     },
     "/v1/chat/sync-cursor": {
       "post": {
-        "tags": ["chat-controller"],
+        "tags": [
+          "chat-controller"
+        ],
         "operationId": "syncCursor",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/SyncCursorRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncCursorRequest"
+              }
+            }
           },
           "required": true
         },
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/chat/conversations": {
       "get": {
-        "tags": ["chat-controller"],
+        "tags": [
+          "chat-controller"
+        ],
         "operationId": "listConversations",
         "responses": {
           "200": {
@@ -757,7 +1272,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/ChatConversationResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/ChatConversationResponse"
+                  }
                 }
               }
             }
@@ -765,12 +1282,16 @@
         }
       },
       "post": {
-        "tags": ["chat-controller"],
+        "tags": [
+          "chat-controller"
+        ],
         "operationId": "createConversation",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateConversationRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationRequest"
+              }
             }
           },
           "required": true
@@ -779,7 +1300,52 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/ChatConversationResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/conversations/{id}/route-plan": {
+      "post": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "sendRoutePlan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendRoutePlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
             }
           }
         }
@@ -787,14 +1353,19 @@
     },
     "/v1/chat/conversations/{id}/messages": {
       "get": {
-        "tags": ["chat-controller"],
+        "tags": [
+          "chat-controller"
+        ],
         "operationId": "listMessages",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -804,7 +1375,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/ChatMessageResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessageResponse"
+                  }
                 }
               }
             }
@@ -812,19 +1385,28 @@
         }
       },
       "post": {
-        "tags": ["chat-controller"],
+        "tags": [
+          "chat-controller"
+        ],
         "operationId": "sendMessage",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
           },
           "required": true
         },
@@ -832,7 +1414,11 @@
           "201": {
             "description": "Created",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/ChatMessageResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
             }
           }
         }
@@ -840,32 +1426,52 @@
     },
     "/v1/billing/webhook": {
       "post": {
-        "tags": ["billing-controller"],
+        "tags": [
+          "billing-controller"
+        ],
         "operationId": "webhook",
         "parameters": [
           {
             "name": "Stripe-Signature",
             "in": "header",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
-          "content": { "application/json": { "schema": { "type": "string" } } },
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
           "required": true
         },
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/v1/billing/checkout": {
       "post": {
-        "tags": ["billing-controller"],
+        "tags": [
+          "billing-controller"
+        ],
         "operationId": "checkout",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/CheckoutSessionResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                }
+              }
             }
           }
         }
@@ -873,150 +1479,239 @@
     },
     "/v1/auth/verify-email": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "verifyEmail",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/VerifyEmailRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/auth/signup": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "signup",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/SignupRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "201": {
             "description": "Created",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/SignupResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/auth/reset-password": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "resetPassword",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
             }
           },
           "required": true
         },
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/auth/resend-verification": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "resendVerification",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ResendVerificationRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
             }
           },
           "required": true
         },
-        "responses": { "202": { "description": "Accepted" } }
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
       }
     },
     "/v1/auth/refresh": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "refresh",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/auth/login": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "login",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/auth/forgot-password": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "forgotPassword",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ForgotPasswordRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
             }
           },
           "required": true
         },
-        "responses": { "202": { "description": "Accepted" } }
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
       }
     },
     "/v1/auth/accept-invite": {
       "post": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "acceptInvite",
         "requestBody": {
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/AcceptInviteRequest" } }
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            }
           },
           "required": true
         },
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/v1/affiliates/partners/{partnerId}/click": {
       "post": {
-        "tags": ["affiliate-controller"],
+        "tags": [
+          "affiliate-controller"
+        ],
         "operationId": "click",
         "parameters": [
           {
             "name": "partnerId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AffiliateClickRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AffiliateClickRequest"
+              }
             }
           }
         },
@@ -1024,7 +1719,11 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/AffiliateClickResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateClickResponse"
+                }
+              }
             }
           }
         }
@@ -1032,21 +1731,30 @@
     },
     "/v1/vehicles/{vehicleId}/cost-summary": {
       "get": {
-        "tags": ["vehicle-cost-controller"],
+        "tags": [
+          "vehicle-cost-controller"
+        ],
         "operationId": "summary",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleCostSummaryResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleCostSummaryResponse"
+                }
+              }
             }
           }
         }
@@ -1054,21 +1762,30 @@
     },
     "/v1/vehicles/{vehicleId}/condition-score": {
       "get": {
-        "tags": ["vehicle-condition-controller"],
+        "tags": [
+          "vehicle-condition-controller"
+        ],
         "operationId": "score",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/VehicleConditionScoreResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleConditionScoreResponse"
+                }
+              }
             }
           }
         }
@@ -1076,7 +1793,9 @@
     },
     "/v1/vehicles/maintenance-due": {
       "get": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "maintenanceDue",
         "responses": {
           "200": {
@@ -1085,7 +1804,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse"
+                  }
                 }
               }
             }
@@ -1095,14 +1816,23 @@
     },
     "/v1/vehicles/costs": {
       "get": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "fleetCosts",
         "parameters": [
           {
             "name": "category",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "enum": ["COMBUSTIVEL", "MANUTENCAO", "OUTRO"] }
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COMBUSTIVEL",
+                "MANUTENCAO",
+                "OUTRO"
+              ]
+            }
           }
         ],
         "responses": {
@@ -1112,7 +1842,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/FleetCostEntryResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/FleetCostEntryResponse"
+                  }
                 }
               }
             }
@@ -1122,7 +1854,9 @@
     },
     "/v1/vehicles/cost-trend": {
       "get": {
-        "tags": ["vehicle-controller"],
+        "tags": [
+          "vehicle-controller"
+        ],
         "operationId": "costTrend",
         "responses": {
           "200": {
@@ -1131,7 +1865,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/MonthlyCostResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/MonthlyCostResponse"
+                  }
                 }
               }
             }
@@ -1141,51 +1877,97 @@
     },
     "/v1/routes/preview": {
       "get": {
-        "tags": ["route-controller"],
+        "tags": [
+          "route-controller"
+        ],
         "operationId": "preview",
         "parameters": [
           {
             "name": "fromLat",
             "in": "query",
             "required": true,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           },
           {
             "name": "fromLon",
             "in": "query",
             "required": true,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           },
           {
             "name": "toLat",
             "in": "query",
             "required": true,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           },
           {
             "name": "toLon",
             "in": "query",
             "required": true,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/RouteResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/routes/plans/active": {
+      "get": {
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "active",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlanResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/reports/maintenance-summary": {
       "get": {
-        "tags": ["report-controller"],
+        "tags": [
+          "report-controller"
+        ],
         "operationId": "maintenanceSummary",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/WorkOrderReportResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderReportResponse"
+                }
+              }
             }
           }
         }
@@ -1193,22 +1975,40 @@
     },
     "/v1/reports/costs.csv": {
       "get": {
-        "tags": ["report-controller"],
+        "tags": [
+          "report-controller"
+        ],
         "operationId": "costsCsv",
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "text/csv": { "schema": { "type": "string", "format": "byte" } } }
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/places/search": {
       "get": {
-        "tags": ["place-controller"],
+        "tags": [
+          "place-controller"
+        ],
         "operationId": "search",
         "parameters": [
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1217,7 +2017,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/PlaceResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceResponse"
+                  }
                 }
               }
             }
@@ -1227,13 +2029,19 @@
     },
     "/v1/me/vehicle": {
       "get": {
-        "tags": ["me-controller"],
+        "tags": [
+          "me-controller"
+        ],
         "operationId": "vehicle",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverAssignmentResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverAssignmentResponse"
+                }
+              }
             }
           }
         }
@@ -1241,7 +2049,9 @@
     },
     "/v1/me/vehicle/work-orders": {
       "get": {
-        "tags": ["me-controller"],
+        "tags": [
+          "me-controller"
+        ],
         "operationId": "vehicleWorkOrders",
         "responses": {
           "200": {
@@ -1250,7 +2060,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/WorkOrderResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/WorkOrderResponse"
+                  }
                 }
               }
             }
@@ -1260,7 +2072,9 @@
     },
     "/v1/me/trips": {
       "get": {
-        "tags": ["me-controller"],
+        "tags": [
+          "me-controller"
+        ],
         "operationId": "trips",
         "responses": {
           "200": {
@@ -1269,7 +2083,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/TripResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/TripResponse"
+                  }
                 }
               }
             }
@@ -1279,13 +2095,19 @@
     },
     "/v1/me/profile": {
       "get": {
-        "tags": ["me-controller"],
+        "tags": [
+          "me-controller"
+        ],
         "operationId": "profile",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverProfileResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverProfileResponse"
+                }
+              }
             }
           }
         }
@@ -1293,14 +2115,21 @@
     },
     "/v1/health": {
       "get": {
-        "tags": ["health-controller"],
+        "tags": [
+          "health-controller"
+        ],
         "operationId": "health",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
-                "schema": { "type": "object", "additionalProperties": { "type": "object" } }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
               }
             }
           }
@@ -1309,21 +2138,30 @@
     },
     "/v1/drivers/{driverId}/ratings/summary": {
       "get": {
-        "tags": ["driver-rating-controller"],
+        "tags": [
+          "driver-rating-controller"
+        ],
         "operationId": "summary_1",
         "parameters": [
           {
             "name": "driverId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/DriverRatingSummaryResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverRatingSummaryResponse"
+                }
+              }
             }
           }
         }
@@ -1331,7 +2169,9 @@
     },
     "/v1/drivers/license-expiring": {
       "get": {
-        "tags": ["driver-controller"],
+        "tags": [
+          "driver-controller"
+        ],
         "operationId": "licenseExpiring",
         "responses": {
           "200": {
@@ -1340,7 +2180,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/DriverLicenseAlertResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/DriverLicenseAlertResponse"
+                  }
                 }
               }
             }
@@ -1350,33 +2192,48 @@
     },
     "/v1/charging-stations": {
       "get": {
-        "tags": ["charging-station-controller"],
-        "operationId": "list_6",
+        "tags": [
+          "charging-station-controller"
+        ],
+        "operationId": "list_7",
         "parameters": [
           {
             "name": "lat",
             "in": "query",
             "required": false,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           },
           {
             "name": "lon",
             "in": "query",
             "required": false,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           },
           {
             "name": "radiusKm",
             "in": "query",
             "required": false,
-            "schema": { "type": "number", "format": "double" }
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/ChargingStationsResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargingStationsResponse"
+                }
+              }
             }
           }
         }
@@ -1384,13 +2241,19 @@
     },
     "/v1/billing/subscription": {
       "get": {
-        "tags": ["billing-controller"],
+        "tags": [
+          "billing-controller"
+        ],
         "operationId": "subscription",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/SubscriptionResponse" } }
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
             }
           }
         }
@@ -1398,19 +2261,29 @@
     },
     "/v1/auth/me": {
       "get": {
-        "tags": ["auth-controller"],
+        "tags": [
+          "auth-controller"
+        ],
         "operationId": "me",
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/UserResponse" } } }
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/v1/affiliates/partners": {
       "get": {
-        "tags": ["affiliate-controller"],
+        "tags": [
+          "affiliate-controller"
+        ],
         "operationId": "listPartners",
         "responses": {
           "200": {
@@ -1419,7 +2292,9 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/AffiliatePartnerResponse" }
+                  "items": {
+                    "$ref": "#/components/schemas/AffiliatePartnerResponse"
+                  }
                 }
               }
             }
@@ -1429,35 +2304,63 @@
     },
     "/v1/vehicles/{vehicleId}/costs/{costId}": {
       "delete": {
-        "tags": ["vehicle-cost-controller"],
+        "tags": [
+          "vehicle-cost-controller"
+        ],
         "operationId": "delete_1",
         "parameters": [
           {
             "name": "vehicleId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           {
             "name": "costId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
-        "responses": { "204": { "description": "No Content" } }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     }
   },
   "components": {
     "schemas": {
       "WorkOrderItemRequest": {
-        "required": ["descricao", "quantidade", "valorUnitario"],
+        "required": [
+          "descricao",
+          "quantidade",
+          "valorUnitario"
+        ],
         "type": "object",
         "properties": {
-          "descricao": { "maxLength": 200, "minLength": 0, "type": "string" },
-          "quantidade": { "minimum": 1, "type": "integer", "format": "int32" },
-          "valorUnitario": { "minimum": 0.0, "exclusiveMinimum": true, "type": "number" }
+          "descricao": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "quantidade": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "valorUnitario": {
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "type": "number"
+          }
         }
       },
       "WorkOrderRequest": {
@@ -1475,205 +2378,592 @@
         ],
         "type": "object",
         "properties": {
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "driverId": { "type": "string", "format": "uuid" },
-          "tipo": { "type": "string", "enum": ["PREVENTIVA", "CORRETIVA", "REVISAO", "SINISTRO"] },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "PREVENTIVA",
+              "CORRETIVA",
+              "REVISAO",
+              "SINISTRO"
+            ]
+          },
           "status": {
             "type": "string",
-            "enum": ["ABERTA", "EM_ANDAMENTO", "CONCLUIDA", "ATRASADA", "CANCELADA"]
+            "enum": [
+              "ABERTA",
+              "EM_ANDAMENTO",
+              "CONCLUIDA",
+              "ATRASADA",
+              "CANCELADA"
+            ]
           },
-          "prioridade": { "type": "string", "enum": ["BAIXA", "MEDIA", "ALTA"] },
-          "descricaoProblema": { "maxLength": 1000, "minLength": 0, "type": "string" },
-          "observacoes": { "maxLength": 1000, "minLength": 0, "type": "string" },
-          "responsavelOficina": { "maxLength": 150, "minLength": 0, "type": "string" },
-          "dataAbertura": { "type": "string", "format": "date" },
-          "previsaoConclusao": { "type": "string", "format": "date" },
-          "kmAbertura": { "minimum": 0, "type": "integer", "format": "int32" },
+          "prioridade": {
+            "type": "string",
+            "enum": [
+              "BAIXA",
+              "MEDIA",
+              "ALTA"
+            ]
+          },
+          "descricaoProblema": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "observacoes": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "responsavelOficina": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string"
+          },
+          "dataAbertura": {
+            "type": "string",
+            "format": "date"
+          },
+          "previsaoConclusao": {
+            "type": "string",
+            "format": "date"
+          },
+          "kmAbertura": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
           "itens": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/WorkOrderItemRequest" }
+            "items": {
+              "$ref": "#/components/schemas/WorkOrderItemRequest"
+            }
           }
         }
       },
       "WorkOrderItemResponse": {
         "type": "object",
         "properties": {
-          "descricao": { "type": "string" },
-          "quantidade": { "type": "integer", "format": "int32" },
-          "valorUnitario": { "type": "number" },
-          "subtotal": { "type": "number" }
+          "descricao": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valorUnitario": {
+            "type": "number"
+          },
+          "subtotal": {
+            "type": "number"
+          }
         }
       },
       "WorkOrderResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "numero": { "type": "string" },
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "vehiclePlate": { "type": "string" },
-          "vehicleName": { "type": "string" },
-          "driverId": { "type": "string", "format": "uuid" },
-          "driverName": { "type": "string" },
-          "tipo": { "type": "string", "enum": ["PREVENTIVA", "CORRETIVA", "REVISAO", "SINISTRO"] },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "vehicleName": {
+            "type": "string"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "PREVENTIVA",
+              "CORRETIVA",
+              "REVISAO",
+              "SINISTRO"
+            ]
+          },
           "status": {
             "type": "string",
-            "enum": ["ABERTA", "EM_ANDAMENTO", "CONCLUIDA", "ATRASADA", "CANCELADA"]
+            "enum": [
+              "ABERTA",
+              "EM_ANDAMENTO",
+              "CONCLUIDA",
+              "ATRASADA",
+              "CANCELADA"
+            ]
           },
-          "prioridade": { "type": "string", "enum": ["BAIXA", "MEDIA", "ALTA"] },
-          "descricaoProblema": { "type": "string" },
-          "observacoes": { "type": "string" },
-          "responsavelOficina": { "type": "string" },
-          "dataAbertura": { "type": "string", "format": "date" },
-          "previsaoConclusao": { "type": "string", "format": "date" },
-          "kmAbertura": { "type": "integer", "format": "int32" },
+          "prioridade": {
+            "type": "string",
+            "enum": [
+              "BAIXA",
+              "MEDIA",
+              "ALTA"
+            ]
+          },
+          "descricaoProblema": {
+            "type": "string"
+          },
+          "observacoes": {
+            "type": "string"
+          },
+          "responsavelOficina": {
+            "type": "string"
+          },
+          "dataAbertura": {
+            "type": "string",
+            "format": "date"
+          },
+          "previsaoConclusao": {
+            "type": "string",
+            "format": "date"
+          },
+          "kmAbertura": {
+            "type": "integer",
+            "format": "int32"
+          },
           "itens": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/WorkOrderItemResponse" }
+            "items": {
+              "$ref": "#/components/schemas/WorkOrderItemResponse"
+            }
           },
-          "custoTotal": { "type": "number" }
+          "custoTotal": {
+            "type": "number"
+          }
         }
       },
       "VehicleRequest": {
-        "required": ["brand", "model", "odometerKm", "plate", "status"],
+        "required": [
+          "brand",
+          "model",
+          "odometerKm",
+          "plate",
+          "status"
+        ],
         "type": "object",
         "properties": {
-          "plate": { "maxLength": 10, "minLength": 0, "type": "string" },
-          "brand": { "maxLength": 80, "minLength": 0, "type": "string" },
-          "model": { "maxLength": 80, "minLength": 0, "type": "string" },
-          "modelYear": { "type": "integer", "format": "int32" },
-          "odometerKm": { "minimum": 0, "type": "integer", "format": "int32" },
-          "status": { "type": "string", "enum": ["ATIVO", "MANUTENCAO", "INATIVO"] },
-          "tipo": { "type": "string", "enum": ["CARRO", "MOTO", "VAN", "CAMINHAO", "ONIBUS"] },
-          "proximaManutencaoData": { "type": "string", "format": "date" },
-          "proximaManutencaoKm": { "type": "integer", "format": "int32" },
-          "atributos": { "type": "object", "additionalProperties": { "type": "object" } }
+          "plate": {
+            "maxLength": 10,
+            "minLength": 0,
+            "type": "string"
+          },
+          "brand": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          },
+          "modelYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "odometerKm": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ATIVO",
+              "MANUTENCAO",
+              "INATIVO"
+            ]
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "CARRO",
+              "MOTO",
+              "VAN",
+              "CAMINHAO",
+              "ONIBUS"
+            ]
+          },
+          "proximaManutencaoData": {
+            "type": "string",
+            "format": "date"
+          },
+          "proximaManutencaoKm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atributos": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          }
         }
       },
       "VehicleResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "plate": { "type": "string" },
-          "brand": { "type": "string" },
-          "model": { "type": "string" },
-          "modelYear": { "type": "integer", "format": "int32" },
-          "odometerKm": { "type": "integer", "format": "int32" },
-          "status": { "type": "string" },
-          "tipo": { "type": "string" },
-          "proximaManutencaoData": { "type": "string", "format": "date" },
-          "proximaManutencaoKm": { "type": "integer", "format": "int32" },
-          "atributos": { "type": "object", "additionalProperties": { "type": "object" } },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "modelYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "odometerKm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "proximaManutencaoData": {
+            "type": "string",
+            "format": "date"
+          },
+          "proximaManutencaoKm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atributos": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "DriverRequest": {
-        "required": ["cnh", "name", "status"],
+        "required": [
+          "cnh",
+          "name",
+          "status"
+        ],
         "type": "object",
         "properties": {
-          "name": { "maxLength": 150, "minLength": 0, "type": "string" },
-          "cnh": { "pattern": "\\d{11}", "type": "string" },
-          "phone": { "maxLength": 20, "minLength": 0, "type": "string" },
-          "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-          "cnhValidade": { "type": "string", "format": "date" },
-          "email": { "maxLength": 255, "minLength": 0, "type": "string" }
+          "name": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cnh": {
+            "pattern": "\\d{11}",
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ATIVO",
+              "INATIVO"
+            ]
+          },
+          "cnhValidade": {
+            "type": "string",
+            "format": "date"
+          },
+          "email": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          }
         }
       },
       "DriverResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "name": { "type": "string" },
-          "cnh": { "type": "string" },
-          "phone": { "type": "string" },
-          "status": { "type": "string" },
-          "cnhValidade": { "type": "string", "format": "date" },
-          "email": { "type": "string" },
-          "hasLogin": { "type": "boolean" },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cnh": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "cnhValidade": {
+            "type": "string",
+            "format": "date"
+          },
+          "email": {
+            "type": "string"
+          },
+          "hasLogin": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "VehicleMarketValueRequest": {
-        "required": ["dataReferencia", "valorFipe"],
+        "required": [
+          "dataReferencia",
+          "valorFipe"
+        ],
         "type": "object",
         "properties": {
-          "valorFipe": { "minimum": 0.0, "exclusiveMinimum": true, "type": "number" },
-          "dataReferencia": { "type": "string", "format": "date" },
-          "codigoFipe": { "maxLength": 20, "minLength": 0, "type": "string" }
+          "valorFipe": {
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "type": "number"
+          },
+          "dataReferencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "codigoFipe": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
         }
       },
       "VehicleMarketValueResponse": {
         "type": "object",
         "properties": {
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "valorFipe": { "type": "number" },
-          "dataReferencia": { "type": "string", "format": "date" },
-          "codigoFipe": { "type": "string" }
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "valorFipe": {
+            "type": "number"
+          },
+          "dataReferencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "codigoFipe": {
+            "type": "string"
+          }
         }
       },
       "VehicleIncidentRequest": {
-        "required": ["data", "severidade"],
+        "required": [
+          "data",
+          "severidade"
+        ],
         "type": "object",
         "properties": {
-          "data": { "type": "string", "format": "date" },
-          "severidade": { "type": "string", "enum": ["LEVE", "MODERADA", "GRAVE"] },
-          "descricao": { "maxLength": 500, "minLength": 0, "type": "string" },
-          "custoReparo": { "minimum": 0.0, "exclusiveMinimum": false, "type": "number" }
+          "data": {
+            "type": "string",
+            "format": "date"
+          },
+          "severidade": {
+            "type": "string",
+            "enum": [
+              "LEVE",
+              "MODERADA",
+              "GRAVE"
+            ]
+          },
+          "descricao": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "custoReparo": {
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "type": "number"
+          }
         }
       },
       "VehicleIncidentResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "data": { "type": "string", "format": "date" },
-          "severidade": { "type": "string", "enum": ["LEVE", "MODERADA", "GRAVE"] },
-          "descricao": { "type": "string" },
-          "custoReparo": { "type": "number" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "data": {
+            "type": "string",
+            "format": "date"
+          },
+          "severidade": {
+            "type": "string",
+            "enum": [
+              "LEVE",
+              "MODERADA",
+              "GRAVE"
+            ]
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "custoReparo": {
+            "type": "number"
+          }
         }
       },
       "VehicleCostEntryRequest": {
-        "required": ["amount", "category", "occurredAt"],
+        "required": [
+          "amount",
+          "category",
+          "occurredAt"
+        ],
         "type": "object",
         "properties": {
-          "category": { "type": "string", "enum": ["COMBUSTIVEL", "MANUTENCAO", "OUTRO"] },
-          "amount": { "minimum": 0.01, "exclusiveMinimum": false, "type": "number" },
-          "description": { "maxLength": 255, "minLength": 0, "type": "string" },
-          "occurredAt": { "type": "string", "format": "date" }
+          "category": {
+            "type": "string",
+            "enum": [
+              "COMBUSTIVEL",
+              "MANUTENCAO",
+              "OUTRO"
+            ]
+          },
+          "amount": {
+            "minimum": 0.01,
+            "exclusiveMinimum": false,
+            "type": "number"
+          },
+          "description": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "VehicleCostEntryResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "category": { "type": "string" },
-          "amount": { "type": "number" },
-          "description": { "type": "string" },
-          "occurredAt": { "type": "string", "format": "date" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "StartTripRequest": {
-        "required": ["vehicleId"],
+        "required": [
+          "vehicleId"
+        ],
         "type": "object",
-        "properties": { "vehicleId": { "type": "string", "format": "uuid" } }
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
       },
       "TripResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "status": { "type": "string" },
-          "startedAt": { "type": "string", "format": "date-time" },
-          "endedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "SubmitPingRequest": {
-        "required": ["lat", "lon", "recordedAt"],
+        "required": [
+          "lat",
+          "lon",
+          "recordedAt"
+        ],
         "type": "object",
         "properties": {
-          "recordedAt": { "type": "string", "format": "date-time" },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "lat": {
             "maximum": 90,
             "exclusiveMaximum": false,
@@ -1690,297 +2980,893 @@
             "type": "number",
             "format": "double"
           },
-          "speed": { "type": "number", "format": "double" },
-          "heading": { "type": "number", "format": "double" },
-          "accuracy": { "type": "number", "format": "double" }
+          "speed": {
+            "type": "number",
+            "format": "double"
+          },
+          "heading": {
+            "type": "number",
+            "format": "double"
+          },
+          "accuracy": {
+            "type": "number",
+            "format": "double"
+          }
         }
       },
       "SubmitPingBatchRequest": {
-        "required": ["pings"],
+        "required": [
+          "pings"
+        ],
         "type": "object",
         "properties": {
           "pings": {
             "maxItems": 500,
             "minItems": 0,
             "type": "array",
-            "items": { "$ref": "#/components/schemas/SubmitPingRequest" }
+            "items": {
+              "$ref": "#/components/schemas/SubmitPingRequest"
+            }
           }
         }
       },
       "SubmitPingBatchResponse": {
         "type": "object",
         "properties": {
-          "accepted": { "type": "integer", "format": "int32" },
-          "received": { "type": "integer", "format": "int32" }
+          "accepted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "received": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateRoutePlanRequest": {
+        "required": [
+          "stops"
+        ],
+        "type": "object",
+        "properties": {
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopInput"
+            }
+          }
+        }
+      },
+      "LocalTime": {
+        "type": "object",
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minute": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "second": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nano": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StopInput": {
+        "required": [
+          "label",
+          "lat",
+          "lon",
+          "tipo"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "COLETA",
+              "ENTREGA"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "janelaInicio": {
+            "$ref": "#/components/schemas/LocalTime"
+          },
+          "janelaFim": {
+            "$ref": "#/components/schemas/LocalTime"
+          }
+        }
+      },
+      "RoutePlanResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANEJADA",
+              "EM_ANDAMENTO",
+              "CONCLUIDA"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteStopResponse"
+            }
+          }
+        }
+      },
+      "RouteStopResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "COLETA",
+              "ENTREGA"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "janelaInicio": {
+            "$ref": "#/components/schemas/LocalTime"
+          },
+          "janelaFim": {
+            "$ref": "#/components/schemas/LocalTime"
+          },
+          "ordemSugerida": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ordemRealExecutada": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concluidaEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssignDriverRequest": {
+        "required": [
+          "driverId"
+        ],
+        "type": "object",
+        "properties": {
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SuggestOrderRequest": {
+        "required": [
+          "stops"
+        ],
+        "type": "object",
+        "properties": {
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopInput"
+            }
+          }
         }
       },
       "RegisterDeviceRequest": {
-        "required": ["token"],
+        "required": [
+          "token"
+        ],
         "type": "object",
         "properties": {
-          "token": { "type": "string" },
-          "plataforma": { "pattern": "ANDROID|IOS|WEB", "type": "string" }
+          "token": {
+            "type": "string"
+          },
+          "plataforma": {
+            "pattern": "ANDROID|IOS|WEB",
+            "type": "string"
+          }
         }
       },
       "NotifyDriverRequest": {
-        "required": ["body", "title"],
+        "required": [
+          "body",
+          "title"
+        ],
         "type": "object",
         "properties": {
-          "title": { "maxLength": 100, "minLength": 0, "type": "string" },
-          "body": { "maxLength": 500, "minLength": 0, "type": "string" }
+          "title": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "body": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
         }
       },
       "DriverInviteResponse": {
         "type": "object",
         "properties": {
-          "driverId": { "type": "string", "format": "uuid" },
-          "email": { "type": "string" },
-          "expiresAt": { "type": "string", "format": "date-time" }
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "AssignVehicleRequest": {
-        "required": ["vehicleId"],
+        "required": [
+          "vehicleId"
+        ],
         "type": "object",
-        "properties": { "vehicleId": { "type": "string", "format": "uuid" } }
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
       },
       "DriverAssignmentResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "driverId": { "type": "string", "format": "uuid" },
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "plate": { "type": "string" },
-          "brand": { "type": "string" },
-          "model": { "type": "string" },
-          "startedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "DriverRatingRequest": {
-        "required": ["nota"],
+        "required": [
+          "nota"
+        ],
         "type": "object",
         "properties": {
-          "nota": { "maximum": 5, "minimum": 1, "type": "integer", "format": "int32" },
-          "comentario": { "maxLength": 500, "minLength": 0, "type": "string" }
+          "nota": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "comentario": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
         }
       },
       "DriverRatingResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "driverId": { "type": "string", "format": "uuid" },
-          "gestorUserId": { "type": "string", "format": "uuid" },
-          "nota": { "type": "integer", "format": "int32" },
-          "comentario": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gestorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nota": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comentario": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "SyncCursorRequest": {
-        "required": ["deviceId", "syncedAt"],
+        "required": [
+          "deviceId",
+          "syncedAt"
+        ],
         "type": "object",
         "properties": {
-          "deviceId": { "type": "string" },
-          "syncedAt": { "type": "string", "format": "date-time" }
+          "deviceId": {
+            "type": "string"
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CreateConversationRequest": {
-        "required": ["driverId"],
+        "required": [
+          "driverId"
+        ],
         "type": "object",
         "properties": {
-          "driverId": { "type": "string", "format": "uuid" },
-          "vehicleId": { "type": "string", "format": "uuid" }
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          }
         }
       },
       "ChatConversationResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "driverId": { "type": "string", "format": "uuid" },
-          "driverName": { "type": "string" },
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "vehiclePlate": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastMessageBody": {
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
-      "SendMessageRequest": {
-        "required": ["body"],
+      "SendRoutePlanRequest": {
+        "required": [
+          "routePlanId"
+        ],
         "type": "object",
-        "properties": { "body": { "maxLength": 2000, "minLength": 0, "type": "string" } }
+        "properties": {
+          "routePlanId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
       },
       "ChatMessageResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "conversationId": { "type": "string", "format": "uuid" },
-          "senderUserId": { "type": "string", "format": "uuid" },
-          "body": { "type": "string" },
-          "sentAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "messageType": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "ROUTE_ASSIGNMENT"
+            ]
+          },
+          "routePlanId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SendMessageRequest": {
+        "required": [
+          "body"
+        ],
+        "type": "object",
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          }
         }
       },
       "CheckoutSessionResponse": {
         "type": "object",
-        "properties": { "checkoutUrl": { "type": "string" } }
+        "properties": {
+          "checkoutUrl": {
+            "type": "string"
+          }
+        }
       },
       "VerifyEmailRequest": {
-        "required": ["token"],
+        "required": [
+          "token"
+        ],
         "type": "object",
-        "properties": { "token": { "type": "string" } }
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
       },
       "TokenResponse": {
         "type": "object",
         "properties": {
-          "accessToken": { "type": "string" },
-          "refreshToken": { "type": "string" },
-          "tokenType": { "type": "string" },
-          "expiresInSeconds": { "type": "integer", "format": "int64" }
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       },
       "SignupRequest": {
-        "required": ["email", "password", "tenantName"],
+        "required": [
+          "email",
+          "password",
+          "tenantName"
+        ],
         "type": "object",
         "properties": {
-          "email": { "type": "string" },
-          "password": { "maxLength": 100, "minLength": 8, "type": "string" },
-          "tenantName": { "maxLength": 200, "minLength": 0, "type": "string" }
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 100,
+            "minLength": 8,
+            "type": "string"
+          },
+          "tenantName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          }
         }
       },
       "SignupResponse": {
         "type": "object",
-        "properties": { "email": { "type": "string" }, "message": { "type": "string" } }
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
       },
       "ResetPasswordRequest": {
-        "required": ["newPassword", "token"],
+        "required": [
+          "newPassword",
+          "token"
+        ],
         "type": "object",
         "properties": {
-          "token": { "type": "string" },
-          "newPassword": { "maxLength": 100, "minLength": 8, "type": "string" }
+          "token": {
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 100,
+            "minLength": 8,
+            "type": "string"
+          }
         }
       },
       "ResendVerificationRequest": {
-        "required": ["email"],
-        "type": "object",
-        "properties": { "email": { "type": "string" } }
-      },
-      "RefreshRequest": {
-        "required": ["refreshToken"],
-        "type": "object",
-        "properties": { "refreshToken": { "type": "string" } }
-      },
-      "LoginRequest": {
-        "required": ["email", "password"],
-        "type": "object",
-        "properties": { "email": { "type": "string" }, "password": { "type": "string" } }
-      },
-      "ForgotPasswordRequest": {
-        "required": ["email"],
-        "type": "object",
-        "properties": { "email": { "type": "string" } }
-      },
-      "AcceptInviteRequest": {
-        "required": ["password", "token"],
+        "required": [
+          "email"
+        ],
         "type": "object",
         "properties": {
-          "token": { "type": "string" },
-          "password": { "maxLength": 100, "minLength": 8, "type": "string" }
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "required": [
+          "refreshToken"
+        ],
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "AcceptInviteRequest": {
+        "required": [
+          "password",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 100,
+            "minLength": 8,
+            "type": "string"
+          }
         }
       },
       "AffiliateClickRequest": {
         "type": "object",
-        "properties": { "vehicleId": { "type": "string", "format": "uuid" } }
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
       },
       "AffiliateClickResponse": {
         "type": "object",
-        "properties": { "redirectUrl": { "type": "string" } }
+        "properties": {
+          "redirectUrl": {
+            "type": "string"
+          }
+        }
       },
       "VehicleCostSummaryResponse": {
         "type": "object",
         "properties": {
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "totalCost": { "type": "number" },
-          "odometerKm": { "type": "integer", "format": "int32" },
-          "costPerKm": { "type": "number" }
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "totalCost": {
+            "type": "number"
+          },
+          "odometerKm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "costPerKm": {
+            "type": "number"
+          }
         }
       },
       "VehicleConditionScoreResponse": {
         "type": "object",
         "properties": {
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "score": { "type": "number" },
-          "algorithmVersion": { "type": "string" }
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "type": "number"
+          },
+          "algorithmVersion": {
+            "type": "string"
+          }
         }
       },
       "VehicleMaintenanceAlertResponse": {
         "type": "object",
         "properties": {
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "plate": { "type": "string" },
-          "brand": { "type": "string" },
-          "model": { "type": "string" },
-          "proximaManutencaoData": { "type": "string", "format": "date" },
-          "diasRestantes": { "type": "integer", "format": "int64" },
-          "proximaManutencaoKm": { "type": "integer", "format": "int32" },
-          "kmRestante": { "type": "integer", "format": "int32" }
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "proximaManutencaoData": {
+            "type": "string",
+            "format": "date"
+          },
+          "diasRestantes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "proximaManutencaoKm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kmRestante": {
+            "type": "integer",
+            "format": "int32"
+          }
         }
       },
       "FleetCostEntryResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "plate": { "type": "string" },
-          "brand": { "type": "string" },
-          "model": { "type": "string" },
-          "category": { "type": "string", "enum": ["COMBUSTIVEL", "MANUTENCAO", "OUTRO"] },
-          "amount": { "type": "number" },
-          "description": { "type": "string" },
-          "occurredAt": { "type": "string", "format": "date" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "COMBUSTIVEL",
+              "MANUTENCAO",
+              "OUTRO"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "MonthlyCostResponse": {
         "type": "object",
-        "properties": { "month": { "type": "string" }, "total": { "type": "number" } }
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
       },
       "RouteResponse": {
         "type": "object",
         "properties": {
-          "available": { "type": "boolean" },
-          "distanceM": { "type": "number", "format": "double" },
-          "durationS": { "type": "number", "format": "double" },
+          "available": {
+            "type": "boolean"
+          },
+          "distanceM": {
+            "type": "number",
+            "format": "double"
+          },
+          "durationS": {
+            "type": "number",
+            "format": "double"
+          },
           "geometry": {
             "type": "array",
-            "items": { "type": "array", "items": { "type": "number", "format": "double" } }
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
           },
-          "steps": { "type": "array", "items": { "$ref": "#/components/schemas/RouteStep" } },
-          "unavailableReason": { "type": "string" }
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteStep"
+            }
+          },
+          "unavailableReason": {
+            "type": "string"
+          }
         }
       },
       "RouteStep": {
         "type": "object",
         "properties": {
-          "instructionType": { "type": "string" },
-          "modifier": { "type": "string" },
-          "name": { "type": "string" },
-          "distanceM": { "type": "number", "format": "double" },
-          "durationS": { "type": "number", "format": "double" }
+          "instructionType": {
+            "type": "string"
+          },
+          "modifier": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "distanceM": {
+            "type": "number",
+            "format": "double"
+          },
+          "durationS": {
+            "type": "number",
+            "format": "double"
+          }
         }
       },
       "MonthlyMaintenanceCostResponse": {
         "type": "object",
         "properties": {
-          "mes": { "type": "string" },
-          "custoPreventiva": { "type": "number" },
-          "custoCorretiva": { "type": "number" },
-          "custoRevisao": { "type": "number" },
-          "custoSinistro": { "type": "number" },
-          "qtdOS": { "type": "integer", "format": "int64" }
+          "mes": {
+            "type": "string"
+          },
+          "custoPreventiva": {
+            "type": "number"
+          },
+          "custoCorretiva": {
+            "type": "number"
+          },
+          "custoRevisao": {
+            "type": "number"
+          },
+          "custoSinistro": {
+            "type": "number"
+          },
+          "qtdOS": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       },
       "VehicleMaintenanceCostResponse": {
         "type": "object",
         "properties": {
-          "vehicleId": { "type": "string", "format": "uuid" },
-          "plate": { "type": "string" },
-          "vehicleName": { "type": "string" },
-          "total": { "type": "number" }
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "vehicleName": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          }
         }
       },
       "WorkOrderReportResponse": {
@@ -1988,97 +3874,193 @@
         "properties": {
           "monthly": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/MonthlyMaintenanceCostResponse" }
+            "items": {
+              "$ref": "#/components/schemas/MonthlyMaintenanceCostResponse"
+            }
           },
           "vehicleRanking": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/VehicleMaintenanceCostResponse" }
+            "items": {
+              "$ref": "#/components/schemas/VehicleMaintenanceCostResponse"
+            }
           }
         }
       },
       "PlaceResponse": {
         "type": "object",
         "properties": {
-          "displayName": { "type": "string" },
-          "lat": { "type": "number", "format": "double" },
-          "lon": { "type": "number", "format": "double" }
+          "displayName": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          }
         }
       },
       "DriverProfileResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "name": { "type": "string" },
-          "cnh": { "type": "string" },
-          "cnhValidade": { "type": "string", "format": "date" },
-          "phone": { "type": "string" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cnh": {
+            "type": "string"
+          },
+          "cnhValidade": {
+            "type": "string",
+            "format": "date"
+          },
+          "phone": {
+            "type": "string"
+          }
         }
       },
       "DriverRatingSummaryResponse": {
         "type": "object",
         "properties": {
-          "driverId": { "type": "string", "format": "uuid" },
-          "notaMedia": { "type": "number" },
-          "totalAvaliacoes": { "type": "integer", "format": "int32" }
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notaMedia": {
+            "type": "number"
+          },
+          "totalAvaliacoes": {
+            "type": "integer",
+            "format": "int32"
+          }
         }
       },
       "DriverLicenseAlertResponse": {
         "type": "object",
         "properties": {
-          "driverId": { "type": "string", "format": "uuid" },
-          "name": { "type": "string" },
-          "cnhValidade": { "type": "string", "format": "date" },
-          "diasRestantes": { "type": "integer", "format": "int64" }
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cnhValidade": {
+            "type": "string",
+            "format": "date"
+          },
+          "diasRestantes": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       },
       "ChargingStationItem": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "name": { "type": "string" },
-          "address": { "type": "string" },
-          "connectorType": { "type": "string" },
-          "powerKw": { "type": "number", "format": "double" },
-          "lat": { "type": "number", "format": "double" },
-          "lon": { "type": "number", "format": "double" },
-          "status": { "type": "string" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "connectorType": {
+            "type": "string"
+          },
+          "powerKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          }
         }
       },
       "ChargingStationsResponse": {
         "type": "object",
         "properties": {
-          "providerAvailable": { "type": "boolean" },
+          "providerAvailable": {
+            "type": "boolean"
+          },
           "stations": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/ChargingStationItem" }
+            "items": {
+              "$ref": "#/components/schemas/ChargingStationItem"
+            }
           }
         }
       },
       "SubscriptionResponse": {
         "type": "object",
         "properties": {
-          "hasSubscription": { "type": "boolean" },
-          "billingSource": { "type": "string" },
-          "status": { "type": "string" },
-          "currentPeriodEnd": { "type": "string", "format": "date-time" },
-          "trialEndsAt": { "type": "string", "format": "date-time" }
+          "hasSubscription": {
+            "type": "boolean"
+          },
+          "billingSource": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "currentPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trialEndsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "UserResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "email": { "type": "string" },
-          "role": { "type": "string" },
-          "tenantId": { "type": "string", "format": "uuid" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          }
         }
       },
       "AffiliatePartnerResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "name": { "type": "string" },
-          "category": { "type": "string" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          }
         }
       }
     }
