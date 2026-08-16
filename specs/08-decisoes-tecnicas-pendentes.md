@@ -37,6 +37,6 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 ## Definition of Done
 
-- [ ] Rota `/frota/:id` no ar substituindo o dialog, com breadcrumb, botão voltar e acesso direto por link funcionando.
-- [ ] Decisão de dado de manutenção (item 2) também registrada como ADR no repositório real (`docs/adr/`), não só aqui — evita a pergunta voltar em 6 meses.
-- [ ] (Quando priorizado) Ícone por tipo de veículo implementado.
+- [x] Rota `/frota/:id` no ar substituindo o dialog, com breadcrumb, botão voltar e acesso direto por link funcionando (PR #44).
+- [x] Decisão de dado de manutenção (item 2) também registrada como ADR no repositório real — [`docs/adr/0017-manutencao-por-modelo-manual.md`](../docs/adr/0017-manutencao-por-modelo-manual.md).
+- [x] Ícone por tipo de veículo implementado (PR #49).
