@@ -4,6 +4,7 @@ import com.autonomousapi.core.chat.dto.ChatConversationResponse;
 import com.autonomousapi.core.chat.dto.ChatMessageResponse;
 import com.autonomousapi.core.chat.dto.CreateConversationRequest;
 import com.autonomousapi.core.chat.dto.SendMessageRequest;
+import com.autonomousapi.core.chat.dto.SendRoutePlanRequest;
 import com.autonomousapi.core.chat.dto.SyncCursorRequest;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
@@ -59,6 +60,15 @@ public class ChatController {
     public ChatMessageResponse sendMessage(
             @PathVariable UUID id, @Valid @RequestBody SendMessageRequest req, Authentication auth) {
         return chatService.sendMessage(principal(auth), id, req.body());
+    }
+
+    /** Gestor-only: anexa uma rota já cadastrada à conversa (spec 07 item 8). */
+    @PostMapping("/conversations/{id}/route-plan")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    public ChatMessageResponse sendRoutePlan(
+            @PathVariable UUID id, @Valid @RequestBody SendRoutePlanRequest req, Authentication auth) {
+        return chatService.sendRoutePlanMessage(principal(auth), id, req.routePlanId());
     }
 
     /** Gestor-only: confirma sincronização do device (habilita a limpeza no servidor). */

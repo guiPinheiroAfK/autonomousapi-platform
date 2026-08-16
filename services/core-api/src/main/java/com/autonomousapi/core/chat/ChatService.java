@@ -8,7 +8,10 @@ import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.error.DriverWithoutLoginException;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.push.PushNotificationService;
+import com.autonomousapi.core.routeplan.RoutePlanService;
+import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.tenant.TenantRepository;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.time.Instant;
@@ -32,8 +35,10 @@ public class ChatService {
     private final ChatSyncCursorRepository syncCursors;
     private final DriverRepository drivers;
     private final VehicleRepository vehicles;
+    private final TenantRepository tenants;
     private final CurrentDriverResolver driverResolver;
     private final PushNotificationService pushNotificationService;
+    private final RoutePlanService routePlanService;
 
     public ChatService(
             ChatConversationRepository conversations,
@@ -41,15 +46,19 @@ public class ChatService {
             ChatSyncCursorRepository syncCursors,
             DriverRepository drivers,
             VehicleRepository vehicles,
+            TenantRepository tenants,
             CurrentDriverResolver driverResolver,
-            PushNotificationService pushNotificationService) {
+            PushNotificationService pushNotificationService,
+            RoutePlanService routePlanService) {
         this.conversations = conversations;
         this.messages = messages;
         this.syncCursors = syncCursors;
         this.drivers = drivers;
         this.vehicles = vehicles;
+        this.tenants = tenants;
         this.driverResolver = driverResolver;
         this.pushNotificationService = pushNotificationService;
+        this.routePlanService = routePlanService;
     }
 
     /** Gestor-only. Idempotente: se a conversa já existe para o par, devolve a existente. */
@@ -73,7 +82,9 @@ public class ChatService {
                 .orElseGet(() -> conversations.save(
                         new ChatConversation(tenantId, gestorPrincipal.userId(), driverId, vehicleId)));
 
-        return ChatConversationResponse.from(conversation, driver.getName(), vehicle != null ? vehicle.getPlate() : null);
+        return ChatConversationResponse.from(
+                conversation, driver.getName(), tenantName(tenantId), vehicle != null ? vehicle.getPlate() : null,
+                null, null);
     }
 
     /** Gestor vê as próprias conversas; motorista vê as conversas em que é o motorista. */
@@ -110,6 +121,30 @@ public class ChatService {
         return ChatMessageResponse.from(message);
     }
 
+    /**
+     * Gestor-only: anexa uma rota já cadastrada à conversa. Delega em
+     * {@link RoutePlanService#assignDriver} — que já cobre os três casos (sem motorista →
+     * designa o motorista desta conversa; mesmo motorista → no-op idempotente; motorista
+     * diferente → lança conflito explícito, propagado daqui pra fora sem engolir). Só grava
+     * a mensagem estruturada se a designação não lançar exceção.
+     */
+    @Transactional
+    public ChatMessageResponse sendRoutePlanMessage(JwtPrincipal gestorPrincipal, UUID conversationId, UUID routePlanId) {
+        ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationId);
+        RoutePlanResponse plan = routePlanService.assignDriver(gestorPrincipal, routePlanId, conversation.getDriverId());
+
+        String body = "Nova rota atribuída — " + plan.stops().size() + " parada(s).";
+        ChatMessage message = messages.save(
+                new ChatMessage(conversation.getId(), gestorPrincipal.userId(), body, ChatMessageType.ROUTE_ASSIGNMENT, routePlanId));
+
+        UUID recipientUserId = drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null);
+        if (recipientUserId != null) {
+            pushNotificationService.notifyUser(recipientUserId, "Nova rota atribuída", body);
+        }
+
+        return ChatMessageResponse.from(message);
+    }
+
     /** Gestor-only: confirma que o device já persistiu localmente tudo até syncedAt. */
     @Transactional
     public void registerSyncCursor(JwtPrincipal gestorPrincipal, String deviceId, Instant syncedAt) {
@@ -139,7 +174,14 @@ public class ChatService {
         String vehiclePlate = c.getVehicleId() != null
                 ? vehicles.findById(c.getVehicleId()).map(Vehicle::getPlate).orElse(null)
                 : null;
-        return ChatConversationResponse.from(c, driverName, vehiclePlate);
+        Optional<ChatMessage> last = messages.findFirstByConversationIdAndAindaNoServidorTrueOrderBySentAtDesc(c.getId());
+        return ChatConversationResponse.from(
+                c, driverName, tenantName(c.getTenantId()), vehiclePlate,
+                last.map(ChatMessage::getBody).orElse(null), last.map(ChatMessage::getSentAt).orElse(null));
+    }
+
+    private String tenantName(UUID tenantId) {
+        return tenants.findById(tenantId).map(t -> t.getName()).orElse(null);
     }
 
     private boolean isMotorista(JwtPrincipal principal) {
