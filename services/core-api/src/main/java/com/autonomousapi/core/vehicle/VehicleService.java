@@ -45,7 +45,7 @@ public class VehicleService {
         Vehicle vehicle = new Vehicle(
                 tenantId, req.plate(), req.brand(), req.model(), req.modelYear(), req.odometerKm());
         vehicle.update(req.plate(), req.brand(), req.model(), req.modelYear(), req.odometerKm(),
-                req.status(), req.proximaManutencaoData(), req.proximaManutencaoKm(), req.atributos());
+                req.status(), req.tipo(), req.proximaManutencaoData(), req.proximaManutencaoKm(), req.atributos());
         vehicles.save(vehicle);
         return VehicleResponse.from(vehicle);
     }
@@ -69,7 +69,7 @@ public class VehicleService {
             throw new PlateAlreadyUsedException();
         }
         vehicle.update(req.plate(), req.brand(), req.model(), req.modelYear(),
-                req.odometerKm(), req.status(), req.proximaManutencaoData(), req.proximaManutencaoKm(),
+                req.odometerKm(), req.status(), req.tipo(), req.proximaManutencaoData(), req.proximaManutencaoKm(),
                 req.atributos());
         return VehicleResponse.from(vehicle);
     }

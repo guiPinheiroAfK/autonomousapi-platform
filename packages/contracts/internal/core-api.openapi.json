@@ -1449,6 +1449,7 @@
           "modelYear": { "type": "integer", "format": "int32" },
           "odometerKm": { "minimum": 0, "type": "integer", "format": "int32" },
           "status": { "type": "string", "enum": ["ATIVO", "MANUTENCAO", "INATIVO"] },
+          "tipo": { "type": "string", "enum": ["CARRO", "MOTO", "VAN", "CAMINHAO", "ONIBUS"] },
           "proximaManutencaoData": { "type": "string", "format": "date" },
           "proximaManutencaoKm": { "type": "integer", "format": "int32" },
           "atributos": { "type": "object", "additionalProperties": { "type": "object" } }
@@ -1464,6 +1465,7 @@
           "modelYear": { "type": "integer", "format": "int32" },
           "odometerKm": { "type": "integer", "format": "int32" },
           "status": { "type": "string" },
+          "tipo": { "type": "string" },
           "proximaManutencaoData": { "type": "string", "format": "date" },
           "proximaManutencaoKm": { "type": "integer", "format": "int32" },
           "atributos": { "type": "object", "additionalProperties": { "type": "object" } },

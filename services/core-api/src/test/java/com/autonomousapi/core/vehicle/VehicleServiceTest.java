@@ -33,7 +33,7 @@ class VehicleServiceTest {
 
     @Test
     void criaVeiculoNoTenantDoPrincipal() {
-        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO, null, null, java.util.Map.of());
+        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO, null, null, null, java.util.Map.of());
         when(repo.existsByTenantIdAndPlateIgnoreCase(tenantId, "ABC1234")).thenReturn(false);
 
         VehicleResponse resp = service.create(principal, req);
@@ -44,7 +44,7 @@ class VehicleServiceTest {
 
     @Test
     void rejeitaPlacaDuplicadaNoMesmoTenant() {
-        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO, null, null, java.util.Map.of());
+        VehicleRequest req = new VehicleRequest("ABC1234", "VW", "Saveiro", 2022, 1000, VehicleStatus.ATIVO, null, null, null, java.util.Map.of());
         when(repo.existsByTenantIdAndPlateIgnoreCase(tenantId, "ABC1234")).thenReturn(true);
 
         assertThrows(PlateAlreadyUsedException.class, () -> service.create(principal, req));
@@ -81,7 +81,7 @@ class VehicleServiceTest {
         when(repo.existsByTenantIdAndPlateIgnoreCaseAndIdNot(tenantId, "NEW0001", vehicleId))
                 .thenReturn(true);
 
-        VehicleRequest req = new VehicleRequest("NEW0001", "VW", "Gol", 2019, 2500, VehicleStatus.ATIVO, null, null, java.util.Map.of());
+        VehicleRequest req = new VehicleRequest("NEW0001", "VW", "Gol", 2019, 2500, VehicleStatus.ATIVO, null, null, null, java.util.Map.of());
 
         assertThrows(PlateAlreadyUsedException.class, () -> service.update(principal, vehicleId, req));
     }
@@ -100,7 +100,7 @@ class VehicleServiceTest {
     @Test
     void alertaManutencaoQuandoDataProxima() {
         Vehicle v = new Vehicle(tenantId, "MNT0001", "Fiat", "Strada", 2022, 1000);
-        v.update("MNT0001", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO,
+        v.update("MNT0001", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO, null,
                 LocalDate.now().plusDays(5), null, java.util.Map.of());
         when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
 
@@ -114,7 +114,7 @@ class VehicleServiceTest {
     @Test
     void alertaManutencaoQuandoKmProximo() {
         Vehicle v = new Vehicle(tenantId, "MNT0002", "Fiat", "Strada", 2022, 9500);
-        v.update("MNT0002", "Fiat", "Strada", 2022, 9500, VehicleStatus.ATIVO, null, 10000, java.util.Map.of());
+        v.update("MNT0002", "Fiat", "Strada", 2022, 9500, VehicleStatus.ATIVO, null, null, 10000, java.util.Map.of());
         when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
 
         List<VehicleMaintenanceAlertResponse> alerts = service.maintenanceDue(principal);
@@ -126,7 +126,7 @@ class VehicleServiceTest {
     @Test
     void naoAlertaQuandoManutencaoDistanteNoTempoENoKm() {
         Vehicle v = new Vehicle(tenantId, "MNT0003", "Fiat", "Strada", 2022, 1000);
-        v.update("MNT0003", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO,
+        v.update("MNT0003", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO, null,
                 LocalDate.now().plusDays(90), 20000, java.util.Map.of());
         when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
 
@@ -138,7 +138,7 @@ class VehicleServiceTest {
     @Test
     void alertaManutencaoIncluiVencidas() {
         Vehicle v = new Vehicle(tenantId, "MNT0004", "Fiat", "Strada", 2022, 1000);
-        v.update("MNT0004", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO,
+        v.update("MNT0004", "Fiat", "Strada", 2022, 1000, VehicleStatus.ATIVO, null,
                 LocalDate.now().minusDays(3), null, java.util.Map.of());
         when(repo.findAllByTenantIdWithManutencaoAgendada(tenantId)).thenReturn(List.of(v));
 

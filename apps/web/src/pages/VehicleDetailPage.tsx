@@ -13,6 +13,7 @@ import {
 } from '../api/client';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgeSeveridade, StatusBadgeVeiculo } from '../components/shared/StatusBadge';
+import { VEHICLE_TYPE_LABEL, VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
@@ -134,11 +135,18 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
 
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
+          <div
+            className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-secondary"
+            title={VEHICLE_TYPE_LABEL[vehicle.tipo ?? ''] ?? 'Tipo não informado'}
+          >
+            <VehicleTypeIcon tipo={vehicle.tipo} className="size-[18px] text-foreground" />
+          </div>
           <PlacaBR placa={vehicle.plate!} />
           <div>
             <h2 className="font-display text-lg font-semibold text-foreground">{vehicle.model}</h2>
             <p className="text-xs text-muted-foreground">
               {vehicle.brand} · {vehicle.modelYear ?? '—'}
+              {vehicle.tipo ? ` · ${VEHICLE_TYPE_LABEL[vehicle.tipo] ?? vehicle.tipo}` : ''}
             </p>
           </div>
         </div>

@@ -15,6 +15,7 @@ import com.autonomousapi.core.user.UserRepository;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import com.autonomousapi.core.vehicle.VehicleStatus;
+import com.autonomousapi.core.vehicle.VehicleType;
 import com.autonomousapi.core.vehicle.cost.VehicleCostCategory;
 import com.autonomousapi.core.vehicle.cost.VehicleCostEntry;
 import com.autonomousapi.core.vehicle.cost.VehicleCostEntryRepository;
@@ -97,27 +98,34 @@ public class DemoDataSeeder implements ApplicationRunner {
         // plate, brand, model, ano, odômetro, status, próxima manutenção (data,km)
         // — data/km nulos = sem manutenção agendada (não entra em nenhum alerta).
         record V(String plate, String brand, String model, int year, int km, VehicleStatus status,
-                LocalDate proxData, Integer proxKm) {}
+                VehicleType tipo, LocalDate proxData, Integer proxKm) {}
 
         LocalDate today = LocalDate.now();
         List<V> defs = List.of(
-                new V("RTC1A23", "Fiat", "Fiorino", 2022, 32000, VehicleStatus.ATIVO, null, 40000),
-                new V("RTC1B45", "Fiat", "Strada", 2023, 18500, VehicleStatus.ATIVO, today.plusDays(60), null),
-                new V("RTC1C67", "Volkswagen", "Saveiro", 2021, 54200, VehicleStatus.ATIVO, null, 55000),
-                new V("RTC1D89", "Renault", "Kangoo", 2020, 71300, VehicleStatus.ATIVO, today.plusDays(10), null),
-                new V("RTC1E12", "Fiat", "Doblo", 2019, 88900, VehicleStatus.MANUTENCAO, null, null),
-                new V("RTC1F34", "Hyundai", "HR", 2022, 41200, VehicleStatus.ATIVO, today.minusDays(5), null),
-                new V("RTC1G56", "Iveco", "Daily", 2021, 62700, VehicleStatus.ATIVO, null, null),
+                new V("RTC1A23", "Fiat", "Fiorino", 2022, 32000, VehicleStatus.ATIVO, VehicleType.VAN, null, 40000),
+                new V("RTC1B45", "Fiat", "Strada", 2023, 18500, VehicleStatus.ATIVO, VehicleType.CARRO,
+                        today.plusDays(60), null),
+                new V("RTC1C67", "Volkswagen", "Saveiro", 2021, 54200, VehicleStatus.ATIVO, VehicleType.CARRO,
+                        null, 55000),
+                new V("RTC1D89", "Renault", "Kangoo", 2020, 71300, VehicleStatus.ATIVO, VehicleType.VAN,
+                        today.plusDays(10), null),
+                new V("RTC1E12", "Fiat", "Doblo", 2019, 88900, VehicleStatus.MANUTENCAO, VehicleType.VAN, null, null),
+                new V("RTC1F34", "Hyundai", "HR", 2022, 41200, VehicleStatus.ATIVO, VehicleType.CAMINHAO,
+                        today.minusDays(5), null),
+                new V("RTC1G56", "Iveco", "Daily", 2021, 62700, VehicleStatus.ATIVO, VehicleType.CAMINHAO, null, null),
                 new V("RTC1H78", "Volkswagen", "Delivery Express", 2023, 15400, VehicleStatus.ATIVO,
-                        today.plusDays(120), null),
-                new V("RTC1I90", "Mercedes-Benz", "Sprinter", 2020, 95600, VehicleStatus.MANUTENCAO, null, null),
-                new V("RTC1J12", "Honda", "CG 160", 2023, 8700, VehicleStatus.ATIVO, null, 9000),
-                new V("RTC1K34", "Yamaha", "Factor 125", 2022, 21300, VehicleStatus.ATIVO, null, null),
-                new V("RTC1L56", "Fiat", "Fiorino", 2018, 132000, VehicleStatus.INATIVO, null, null));
+                        VehicleType.CAMINHAO, today.plusDays(120), null),
+                new V("RTC1I90", "Mercedes-Benz", "Sprinter", 2020, 95600, VehicleStatus.MANUTENCAO, VehicleType.VAN,
+                        null, null),
+                new V("RTC1J12", "Honda", "CG 160", 2023, 8700, VehicleStatus.ATIVO, VehicleType.MOTO, null, 9000),
+                new V("RTC1K34", "Yamaha", "Factor 125", 2022, 21300, VehicleStatus.ATIVO, VehicleType.MOTO,
+                        null, null),
+                new V("RTC1L56", "Fiat", "Fiorino", 2018, 132000, VehicleStatus.INATIVO, VehicleType.VAN,
+                        null, null));
 
         for (V d : defs) {
             Vehicle v = new Vehicle(tenantId, d.plate(), d.brand(), d.model(), d.year(), d.km());
-            v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status(), d.proxData(), d.proxKm(),
+            v.update(d.plate(), d.brand(), d.model(), d.year(), d.km(), d.status(), d.tipo(), d.proxData(), d.proxKm(),
                     atributosDe(d.brand(), d.model()));
             vehicles.save(v);
 

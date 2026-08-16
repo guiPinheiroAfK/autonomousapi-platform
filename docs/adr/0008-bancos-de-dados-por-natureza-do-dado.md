@@ -60,3 +60,8 @@ volume que dilua. Separar cedo demais custa dinheiro e atenção.
 - `vehicle.atributos` (`jsonb`, migration V9) passa a ser onde entram campos que variam por
   tipo de veículo, sem migration nova a cada atributo.
 - Vídeo nunca entra em banco, mesmo quando o produto existir — só a URL e o metadado.
+- Exceção deliberada: a **categoria** do veículo (carro/moto/van/caminhão/ônibus, migration
+  V18, coluna `tipo`) saiu do `jsonb` e virou coluna própria. Não é um atributo que varia por
+  tipo — é o próprio discriminador, um enum pequeno e fechado, usado para filtro e ícone na
+  UI. `jsonb` continua sendo o lugar certo só para o que de fato varia (cilindrada de moto,
+  autonomia de elétrico, capacidade de carga).
