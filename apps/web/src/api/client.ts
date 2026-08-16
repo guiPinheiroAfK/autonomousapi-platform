@@ -48,6 +48,10 @@ export type VehicleIncidentResponse = Schemas['VehicleIncidentResponse'];
 export type VehicleConditionScoreResponse = Schemas['VehicleConditionScoreResponse'];
 export type AffiliatePartnerResponse = Schemas['AffiliatePartnerResponse'];
 export type AffiliateClickResponse = Schemas['AffiliateClickResponse'];
+export type DriverInviteResponse = Schemas['DriverInviteResponse'];
+export type DriverAssignmentResponse = Schemas['DriverAssignmentResponse'];
+export type AssignVehicleRequest = Schemas['AssignVehicleRequest'];
+export type NotifyDriverRequest = Schemas['NotifyDriverRequest'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -125,6 +129,7 @@ export const coreApi = {
 
   vehicles: {
     list: () => request<VehicleResponse[]>('/v1/vehicles'),
+    get: (id: string) => request<VehicleResponse>(`/v1/vehicles/${id}`),
     create: (body: VehicleRequest) =>
       request<VehicleResponse>('/v1/vehicles', { method: 'POST', body: JSON.stringify(body) }),
     update: (id: string, body: VehicleRequest) =>
@@ -147,6 +152,19 @@ export const coreApi = {
       request<DriverResponse>(`/v1/drivers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id: string) => request<void>(`/v1/drivers/${id}`, { method: 'DELETE' }),
     licenseExpiring: () => request<DriverLicenseAlertResponse[]>('/v1/drivers/license-expiring'),
+    /** Envia o convite de acesso ao app (ADR 0013). Exige e-mail cadastrado no motorista. */
+    invite: (id: string) => request<DriverInviteResponse>(`/v1/drivers/${id}/invite`, { method: 'POST' }),
+    /** Designação de veículo (ADR 0014). */
+    assign: (id: string, body: AssignVehicleRequest) =>
+      request<DriverAssignmentResponse>(`/v1/drivers/${id}/assignment`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    endAssignment: (id: string) => request<void>(`/v1/drivers/${id}/assignment/end`, { method: 'POST' }),
+    activeAssignment: (id: string) => request<DriverAssignmentResponse | null>(`/v1/drivers/${id}/assignment`),
+    /** "Aviso do gestor" via push (ADR 0016). */
+    notify: (id: string, body: NotifyDriverRequest) =>
+      request<void>(`/v1/drivers/${id}/notify`, { method: 'POST', body: JSON.stringify(body) }),
   },
 
   /** Avaliação manual de motorista (spec 06) — todo endpoint é GESTOR_FROTA/ADMIN no core-api. */

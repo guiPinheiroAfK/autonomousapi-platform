@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { AppShell, type View } from './components/layout/AppShell';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -18,6 +18,9 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
  */
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const VehiclesPage = lazy(() => import('./pages/VehiclesPage').then((m) => ({ default: m.VehiclesPage })));
+const VehicleDetailPage = lazy(() =>
+  import('./pages/VehicleDetailPage').then((m) => ({ default: m.VehicleDetailPage })),
+);
 const DriversPage = lazy(() => import('./pages/DriversPage').then((m) => ({ default: m.DriversPage })));
 const VehicleCostsPage = lazy(() => import('./pages/VehicleCostsPage').then((m) => ({ default: m.VehicleCostsPage })));
 const WorkOrdersPage = lazy(() => import('./pages/WorkOrdersPage').then((m) => ({ default: m.WorkOrdersPage })));
@@ -36,6 +39,16 @@ function tokenNaUrl(pathname: string): string | null {
   return new URLSearchParams(window.location.search).get('token');
 }
 
+/**
+ * Rota própria do veículo (spec 08 item 1): /frota/:id substitui o antigo dialog. Sem
+ * lib de roteamento — mesmo padrão manual de leitura de pathname do tokenNaUrl acima,
+ * só que com pushState/popstate para navegar sem recarregar a página.
+ */
+function vehicleIdNaUrl(): string | null {
+  const match = window.location.pathname.match(/^\/frota\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
 export function App() {
   const { user, loading, logout } = useAuth();
   const tokenVerificacao = useState(() => tokenNaUrl('/verificar-email'))[0];
@@ -46,8 +59,25 @@ export function App() {
   const [authScreen, setAuthScreen] = useState<
     'landing' | 'login' | 'signup' | 'verify-email' | 'forgot-password' | 'reset-password'
   >(tokenVerificacao ? 'verify-email' : tokenReset ? 'reset-password' : 'landing');
-  const [view, setView] = useState<View>('dashboard');
+  const [vehicleDetailId, setVehicleDetailId] = useState<string | null>(() => vehicleIdNaUrl());
+  const [view, setView] = useState<View>(() => (vehicleIdNaUrl() ? 'vehicle-detail' : 'dashboard'));
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
+
+  // Botão voltar/avançar do navegador: sincroniza view/vehicleDetailId com a URL atual.
+  useEffect(() => {
+    function onPopState() {
+      const id = vehicleIdNaUrl();
+      if (id) {
+        setVehicleDetailId(id);
+        setView('vehicle-detail');
+      } else {
+        setVehicleDetailId(null);
+        setView('vehicles');
+      }
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   if (loading) return null;
 
@@ -108,11 +138,34 @@ export function App() {
     setView('costs');
   }
 
+  function goToVehicleDetail(vehicleId: string) {
+    setVehicleDetailId(vehicleId);
+    window.history.pushState({}, '', `/frota/${vehicleId}`);
+    setView('vehicle-detail');
+  }
+
+  function backFromVehicleDetail() {
+    setVehicleDetailId(null);
+    window.history.pushState({}, '', '/');
+    setView('vehicles');
+  }
+
+  // Navegar para qualquer outra view a partir da sidebar limpa a rota /frota/:id da URL.
+  function navigate(next: View) {
+    if (next !== 'vehicle-detail' && window.location.pathname.startsWith('/frota/')) {
+      window.history.pushState({}, '', '/');
+    }
+    setView(next);
+  }
+
   return (
-    <AppShell user={user} activeView={view} onNavigate={setView} onLogout={logout}>
+    <AppShell user={user} activeView={view} onNavigate={navigate} onLogout={logout}>
       <Suspense fallback={<CarregandoTela />}>
         {view === 'dashboard' && <DashboardPage onViewVehicles={() => setView('vehicles')} />}
-        {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} />}
+        {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} onViewDetail={goToVehicleDetail} />}
+        {view === 'vehicle-detail' && vehicleDetailId && (
+          <VehicleDetailPage vehicleId={vehicleDetailId} onBack={backFromVehicleDetail} />
+        )}
         {view === 'drivers' && <DriversPage />}
         {view === 'work-orders' && <WorkOrdersPage />}
         {view === 'maintenance' && <MaintenancePage />}

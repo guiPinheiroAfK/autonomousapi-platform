@@ -6,6 +6,7 @@ import type { UserResponse } from '../../api/client';
 export type View =
   | 'dashboard'
   | 'vehicles'
+  | 'vehicle-detail'
   | 'drivers'
   | 'costs'
   | 'work-orders'
@@ -17,6 +18,7 @@ export type View =
 const TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
   vehicles: 'Frota',
+  'vehicle-detail': 'Frota',
   drivers: 'Motoristas',
   costs: 'Custos',
   'work-orders': 'Ordens de Serviço',
