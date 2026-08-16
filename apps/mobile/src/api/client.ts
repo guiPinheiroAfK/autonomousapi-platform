@@ -44,6 +44,73 @@ export interface SubmitPingBatchResponse {
   received: number;
 }
 
+// Perfil e veículo do próprio motorista (spec 07, /v1/me/*). Deliberadamente sem
+// nota/avaliação — DriverProfileResponse não tem esse campo no backend, não há o que
+// vazar aqui (spec 06/07: motorista nunca vê a própria avaliação).
+export interface DriverProfileResponse {
+  id: string;
+  name: string;
+  cnh: string;
+  cnhValidade: string | null;
+  phone: string | null;
+}
+
+export interface MyVehicleResponse {
+  id: string;
+  driverId: string;
+  vehicleId: string;
+  plate: string;
+  brand: string;
+  model: string;
+  startedAt: string;
+}
+
+export interface WorkOrderResponse {
+  id: string;
+  numero: string;
+  tipo: string;
+  status: string;
+  prioridade: string;
+  descricaoProblema: string;
+  dataAbertura: string;
+  previsaoConclusao: string | null;
+}
+
+export interface VehicleIncidentRequest {
+  data: string;
+  severidade: 'LEVE' | 'MODERADA' | 'GRAVE';
+  descricao?: string;
+  custoReparo?: number;
+}
+
+export interface VehicleIncidentResponse {
+  id: string;
+  vehicleId: string;
+  data: string;
+  severidade: string;
+  descricao: string | null;
+  custoReparo: number | null;
+}
+
+// Mini-chat gestor↔motorista (spec 07, ADR 0015). O app do motorista não confirma
+// sync-cursor — isso é gestor-only, o motorista não retém histórico longo local.
+export interface ChatConversationResponse {
+  id: string;
+  driverId: string;
+  driverName: string;
+  vehicleId: string | null;
+  vehiclePlate: string | null;
+  createdAt: string;
+}
+
+export interface ChatMessageResponse {
+  id: string;
+  conversationId: string;
+  senderUserId: string;
+  body: string;
+  sentAt: string;
+}
+
 let authToken: string | null = null;
 
 /** Chamado pelo App ao logar/restaurar sessão/deslogar — client sem depender de estado React. */
@@ -59,8 +126,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     throw new Error(`core-api ${res.status} em ${path}`);
   }
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  // Corpo vazio não é só 204: um controller que devolve null (ex. "sem designação
+  // ativa") também sai como 200 com Content-Length 0 — res.json() quebraria nesse
+  // caso. Ler como texto primeiro cobre os dois de uma vez.
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 // Client único: mobile fala SÓ com o core-api (spec 01) — nunca com o geo-api direto.
@@ -77,6 +147,34 @@ export const coreApi = {
 
   vehicles: {
     list: () => request<VehicleResponse[]>('/v1/vehicles'),
+  },
+
+  // Superfície do próprio motorista (spec 07, /v1/me/*) — tudo aqui é escopado pelo
+  // token, nunca por um id que o app manda (ADR 0013).
+  my: {
+    profile: () => request<DriverProfileResponse>('/v1/me/profile'),
+    /** Designação ativa — null se o motorista não tem veículo designado no momento. */
+    vehicle: () => request<MyVehicleResponse | null>('/v1/me/vehicle'),
+    workOrders: () => request<WorkOrderResponse[]>('/v1/me/vehicle/work-orders'),
+    /** O vehicleId nunca é informado aqui — vem da designação ativa, resolvida no servidor. */
+    reportIncident: (body: VehicleIncidentRequest) =>
+      request<VehicleIncidentResponse>('/v1/me/incidents', { method: 'POST', body: JSON.stringify(body) }),
+  },
+
+  chat: {
+    listConversations: () => request<ChatConversationResponse[]>('/v1/chat/conversations'),
+    listMessages: (conversationId: string) =>
+      request<ChatMessageResponse[]>(`/v1/chat/conversations/${conversationId}/messages`),
+    sendMessage: (conversationId: string, body: string) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ body }),
+      }),
+  },
+
+  push: {
+    registerDevice: (token: string, plataforma: 'ANDROID' | 'IOS') =>
+      request<void>('/v1/push/devices', { method: 'POST', body: JSON.stringify({ token, plataforma }) }),
   },
 
   trips: {
