@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { AppShell, type View } from './components/layout/AppShell';
+import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -54,12 +55,21 @@ export function App() {
   const { user, loading, logout } = useAuth();
   const tokenVerificacao = useState(() => tokenNaUrl('/verificar-email'))[0];
   const tokenReset = useState(() => tokenNaUrl('/redefinir-senha'))[0];
+  const tokenConvite = useState(() => tokenNaUrl('/aceitar-convite'))[0];
   // Quem não está logado cai na landing, não direto no formulário: a página pública é
-  // a porta de entrada de quem ainda não é cliente. Chega direto em 'verify-email' ou
-  // 'reset-password' se a URL trouxer o token de um link de e-mail.
+  // a porta de entrada de quem ainda não é cliente. Chega direto em 'verify-email',
+  // 'reset-password' ou 'accept-invite' se a URL trouxer o token de um link de e-mail.
   const [authScreen, setAuthScreen] = useState<
-    'landing' | 'login' | 'signup' | 'verify-email' | 'forgot-password' | 'reset-password'
-  >(tokenVerificacao ? 'verify-email' : tokenReset ? 'reset-password' : 'landing');
+    'landing' | 'login' | 'signup' | 'verify-email' | 'forgot-password' | 'reset-password' | 'accept-invite'
+  >(
+    tokenVerificacao
+      ? 'verify-email'
+      : tokenReset
+        ? 'reset-password'
+        : tokenConvite
+          ? 'accept-invite'
+          : 'landing',
+  );
   const [vehicleDetailId, setVehicleDetailId] = useState<string | null>(() => vehicleIdNaUrl());
   const [view, setView] = useState<View>(() => (vehicleIdNaUrl() ? 'vehicle-detail' : 'dashboard'));
   const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
@@ -96,6 +106,15 @@ export function App() {
       return (
         <ResetPasswordPage
           token={tokenReset}
+          onGoToLogin={() => setAuthScreen('login')}
+          onVoltarParaHome={() => setAuthScreen('landing')}
+        />
+      );
+    }
+    if (authScreen === 'accept-invite' && tokenConvite) {
+      return (
+        <AcceptInvitePage
+          token={tokenConvite}
           onGoToLogin={() => setAuthScreen('login')}
           onVoltarParaHome={() => setAuthScreen('landing')}
         />
