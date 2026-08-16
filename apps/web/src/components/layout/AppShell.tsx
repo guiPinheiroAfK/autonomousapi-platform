@@ -16,7 +16,10 @@ export type View =
   | 'affiliates'
   | 'chat'
   | 'charging-stations'
-  | 'routes';
+  | 'routes'
+  | 'route-plans'
+  | 'driver-home'
+  | 'driver-route';
 
 const TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -32,6 +35,9 @@ const TITLES: Record<View, string> = {
   chat: 'Mensagens',
   'charging-stations': 'Pontos de Recarga',
   routes: 'Rotas',
+  'route-plans': 'Coleta & Entrega',
+  'driver-home': 'Início',
+  'driver-route': 'Minha Rota',
 };
 
 interface AppShellProps {
@@ -45,7 +51,7 @@ interface AppShellProps {
 export function AppShell({ user, activeView, onNavigate, onLogout, children }: AppShellProps) {
   return (
     <div className="flex h-screen w-full bg-background">
-      <Sidebar activeView={activeView} onNavigate={onNavigate} />
+      <Sidebar user={user} activeView={activeView} onNavigate={onNavigate} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar title={TITLES[activeView]} user={user} onLogout={onLogout} />
         <main className="flex-1 overflow-y-auto">{children}</main>

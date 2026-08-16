@@ -1,4 +1,20 @@
-import { BarChart3, Car, ClipboardList, CreditCard, Handshake, LayoutDashboard, MessageCircle, Navigation, Plug, Users, Wrench } from 'lucide-react';
+import {
+  BarChart3,
+  Car,
+  ClipboardList,
+  CreditCard,
+  Handshake,
+  Home,
+  LayoutDashboard,
+  MapPinned,
+  MessageCircle,
+  Navigation,
+  Plug,
+  Route as RouteIcon,
+  Users,
+  Wrench,
+} from 'lucide-react';
+import type { UserResponse } from '../../api/client';
 import { Marca } from '../shared/Logo';
 import { cn } from '../../lib/utils';
 import type { View } from './AppShell';
@@ -10,6 +26,7 @@ const NAV_OPERACAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'drivers', label: 'Motoristas', icon: Users },
   { view: 'chat', label: 'Mensagens', icon: MessageCircle },
   { view: 'routes', label: 'Rotas', icon: Navigation },
+  { view: 'route-plans', label: 'Coleta & Entrega', icon: MapPinned },
 ];
 
 const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
@@ -20,7 +37,19 @@ const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'billing', label: 'Assinatura', icon: CreditCard },
 ];
 
+/**
+ * Painel do motorista deliberadamente enxuto (spec 07): nada de frota inteira, relatórios
+ * ou dashboard analítico — ele é funcionário, não "uma empresa" (pedido explícito do
+ * usuário). Só o que afeta o próprio trabalho: início, rota do dia e o chat com o gestor.
+ */
+const NAV_MOTORISTA: { view: View; label: string; icon: typeof Car }[] = [
+  { view: 'driver-home', label: 'Início', icon: Home },
+  { view: 'driver-route', label: 'Minha Rota', icon: RouteIcon },
+  { view: 'chat', label: 'Mensagens', icon: MessageCircle },
+];
+
 interface SidebarProps {
+  user: UserResponse;
   activeView: View;
   onNavigate: (view: View) => void;
 }
@@ -61,7 +90,9 @@ function NavSection({
   );
 }
 
-export function Sidebar({ activeView, onNavigate }: SidebarProps) {
+export function Sidebar({ user, activeView, onNavigate }: SidebarProps) {
+  const motorista = user.role === 'MOTORISTA';
+
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2.5 px-4 py-4">
@@ -70,15 +101,21 @@ export function Sidebar({ activeView, onNavigate }: SidebarProps) {
         </div>
         <div className="flex flex-col leading-none">
           <span className="font-display text-[14px] font-bold text-white">AutonomousAPI</span>
-          <span className="text-[10px] text-sidebar-muted">Gestão de Frota</span>
+          <span className="text-[10px] text-sidebar-muted">{motorista ? 'App do Motorista' : 'Gestão de Frota'}</span>
         </div>
       </div>
 
       <div className="mx-4 mb-3 h-px bg-sidebar-border" />
 
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4">
-        <NavSection title="Operação" items={NAV_OPERACAO} activeView={activeView} onNavigate={onNavigate} />
-        <NavSection title="Gestão" items={NAV_GESTAO} activeView={activeView} onNavigate={onNavigate} />
+        {motorista ? (
+          <NavSection title="Meu trabalho" items={NAV_MOTORISTA} activeView={activeView} onNavigate={onNavigate} />
+        ) : (
+          <>
+            <NavSection title="Operação" items={NAV_OPERACAO} activeView={activeView} onNavigate={onNavigate} />
+            <NavSection title="Gestão" items={NAV_GESTAO} activeView={activeView} onNavigate={onNavigate} />
+          </>
+        )}
       </nav>
 
       <div className="mx-4 mb-3 h-px bg-sidebar-border" />
