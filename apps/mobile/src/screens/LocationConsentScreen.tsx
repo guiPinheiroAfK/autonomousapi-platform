@@ -7,6 +7,11 @@ interface Props {
 /**
  * Tela de consentimento própria (spec 03) — linguagem clara, não escondida em termos de
  * uso. Aparece uma vez no onboarding, antes de qualquer pedido de permissão do sistema.
+ *
+ * Também cobre a transparência de avaliação de desempenho exigida pela spec 06 item 3:
+ * o motorista precisa ser informado de que existe avaliação (manual do gestor e
+ * automática a partir do dado de condução), mesmo sem ver a nota — não é opcional nem
+ * uma tela à parte, é parte do mesmo aceite de onboarding.
  */
 export function LocationConsentScreen({ onAccept }: Props) {
   return (
@@ -20,6 +25,13 @@ export function LocationConsentScreen({ onAccept }: Props) {
       <Text style={styles.body}>
         Esse dado é usado só para calcular rota, distância e custo por km da frota. Você pode
         revogar o acesso a qualquer momento nas configurações do seu telefone.
+      </Text>
+      <Text style={styles.title}>Avaliação de desempenho</Text>
+      <Text style={styles.body}>
+        A empresa que contratou você avalia seu desempenho como motorista — manualmente pelo
+        gestor e automaticamente a partir do seu padrão de condução (freada brusca, excesso de
+        velocidade). Essa nota é visível só para o gestor da sua frota, nunca fica pública e você
+        não tem acesso a ela pelo app.
       </Text>
       <View style={styles.spacer} />
       <Button title="Entendi, continuar" onPress={onAccept} />
