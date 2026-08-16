@@ -26,4 +26,11 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
     @Query("select v from Vehicle v where v.tenantId = :tenantId "
             + "and (v.proximaManutencaoData is not null or v.proximaManutencaoKm is not null)")
     List<Vehicle> findAllByTenantIdWithManutencaoAgendada(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Cross-tenant de propósito: usado só pelo job diário de push (ADR 0016). Mesma query da
+     * versão por tenant, sem o filtro — o job precisa varrer toda a base numa passada.
+     */
+    @Query("select v from Vehicle v where v.proximaManutencaoData is not null or v.proximaManutencaoKm is not null")
+    List<Vehicle> findAllWithManutencaoAgendada();
 }

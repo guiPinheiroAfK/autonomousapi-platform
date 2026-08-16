@@ -18,8 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DriverService {
 
-    /** Alerta dispara com CNH vencida ou a vencer nos próximos 30 dias. */
-    private static final int CNH_DAYS_THRESHOLD = 30;
+    /**
+     * Alerta dispara com CNH vencida ou a vencer nos próximos 30 dias. Público porque o job
+     * diário de push (ADR 0016) reaproveita o mesmo limiar — evita o número mágico duplicado.
+     */
+    public static final int CNH_DAYS_THRESHOLD = 30;
 
     private final DriverRepository drivers;
 
@@ -71,12 +74,28 @@ public class DriverService {
     public List<DriverLicenseAlertResponse> licenseExpiring(JwtPrincipal principal) {
         LocalDate today = LocalDate.now();
         return drivers.findAllByTenantIdAndCnhValidadeIsNotNull(principal.tenantId()).stream()
-                .map(d -> new DriverLicenseAlertResponse(
-                        d.getId(), d.getName(), d.getCnhValidade(),
-                        ChronoUnit.DAYS.between(today, d.getCnhValidade())))
+                .map(d -> toAlert(d, today))
                 .filter(a -> a.diasRestantes() <= CNH_DAYS_THRESHOLD)
                 .sorted(Comparator.comparingLong(DriverLicenseAlertResponse::diasRestantes))
                 .toList();
+    }
+
+    /**
+     * Cross-tenant de propósito: usado só pelo job diário de push (ADR 0016). Só motoristas
+     * com login (sem login não há pra onde mandar push) — mesmo limiar do alerta do painel.
+     */
+    @Transactional(readOnly = true)
+    public List<DriverLicenseAlertResponse> licenseExpiringAcrossAllTenants() {
+        LocalDate today = LocalDate.now();
+        return drivers.findAllByCnhValidadeIsNotNullAndAppUserIdIsNotNull().stream()
+                .map(d -> toAlert(d, today))
+                .filter(a -> a.diasRestantes() <= CNH_DAYS_THRESHOLD)
+                .toList();
+    }
+
+    private DriverLicenseAlertResponse toAlert(Driver d, LocalDate today) {
+        return new DriverLicenseAlertResponse(
+                d.getId(), d.getName(), d.getCnhValidade(), ChronoUnit.DAYS.between(today, d.getCnhValidade()));
     }
 
     private Driver findOwned(JwtPrincipal principal, UUID id) {

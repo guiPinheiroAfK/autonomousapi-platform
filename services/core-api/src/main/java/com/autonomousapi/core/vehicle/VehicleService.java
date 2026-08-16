@@ -23,9 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class VehicleService {
 
-    /** Alerta dispara com manutenção a até 15 dias OU 1000km de distância (spec 05, Fase 1). */
-    private static final int MAINTENANCE_DAYS_THRESHOLD = 15;
-    private static final int MAINTENANCE_KM_THRESHOLD = 1000;
+    /**
+     * Alerta dispara com manutenção a até 15 dias OU 1000km de distância (spec 05, Fase 1).
+     * Público porque o job diário de push (ADR 0016) reaproveita o mesmo limiar.
+     */
+    public static final int MAINTENANCE_DAYS_THRESHOLD = 15;
+    public static final int MAINTENANCE_KM_THRESHOLD = 1000;
 
     private final VehicleRepository vehicles;
 
@@ -89,6 +92,20 @@ public class VehicleService {
                         a -> Math.min(
                                 a.diasRestantes() != null ? a.diasRestantes() : Long.MAX_VALUE,
                                 a.kmRestante() != null ? a.kmRestante() : Long.MAX_VALUE)))
+                .toList();
+    }
+
+    /**
+     * Cross-tenant de propósito: usado só pelo job diário de push (ADR 0016), mesmos limiares
+     * do alerta do painel.
+     */
+    @Transactional(readOnly = true)
+    public List<VehicleMaintenanceAlertResponse> maintenanceDueAcrossAllTenants() {
+        LocalDate today = LocalDate.now();
+        return vehicles.findAllWithManutencaoAgendada().stream()
+                .map(v -> toAlert(v, today))
+                .filter(a -> (a.diasRestantes() != null && a.diasRestantes() <= MAINTENANCE_DAYS_THRESHOLD)
+                        || (a.kmRestante() != null && a.kmRestante() <= MAINTENANCE_KM_THRESHOLD))
                 .toList();
     }
 
