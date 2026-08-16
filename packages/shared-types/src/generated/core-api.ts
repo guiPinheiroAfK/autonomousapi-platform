@@ -324,6 +324,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/chat/sync-cursor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["syncCursor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listConversations"];
+        put?: never;
+        post: operations["createConversation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMessages"];
+        put?: never;
+        post: operations["sendMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/billing/webhook": {
         parameters: {
             query?: never;
@@ -1063,6 +1111,43 @@ export interface components {
             comentario?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        SyncCursorRequest: {
+            deviceId: string;
+            /** Format: date-time */
+            syncedAt: string;
+        };
+        CreateConversationRequest: {
+            /** Format: uuid */
+            driverId: string;
+            /** Format: uuid */
+            vehicleId?: string;
+        };
+        ChatConversationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            driverId?: string;
+            driverName?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            vehiclePlate?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        SendMessageRequest: {
+            body: string;
+        };
+        ChatMessageResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            conversationId?: string;
+            /** Format: uuid */
+            senderUserId?: string;
+            body?: string;
+            /** Format: date-time */
+            sentAt?: string;
         };
         CheckoutSessionResponse: {
             checkoutUrl?: string;
@@ -2019,6 +2104,120 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DriverRatingResponse"];
+                };
+            };
+        };
+    };
+    syncCursor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncCursorRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listConversations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatConversationResponse"][];
+                };
+            };
+        };
+    };
+    createConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateConversationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatConversationResponse"];
+                };
+            };
+        };
+    };
+    listMessages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"][];
+                };
+            };
+        };
+    };
+    sendMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
                 };
             };
         };
