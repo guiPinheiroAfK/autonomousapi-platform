@@ -197,7 +197,14 @@ export function RoutePlansPage() {
       await coreApi.routePlans.create({
         driverId: driverId || undefined,
         vehicleId: vehicleId || undefined,
-        stops: paradas.map(({ key: _key, ...s }) => s),
+        stops: paradas.map(({ tipo, label, lat, lon, janelaInicio, janelaFim }) => ({
+          tipo,
+          label,
+          lat,
+          lon,
+          janelaInicio,
+          janelaFim,
+        })),
       });
       setModalOpen(false);
       refresh();
