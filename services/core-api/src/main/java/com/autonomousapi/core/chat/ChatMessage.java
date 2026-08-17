@@ -54,10 +54,10 @@ public class ChatMessage {
     }
 
     public ChatMessage(UUID conversationId, UUID senderUserId, String body) {
-        this(conversationId, senderUserId, body, ChatMessageType.TEXT, null);
+        this(conversationId, senderUserId, body, ChatMessageType.TEXTO, null);
     }
 
-    /** Mensagem estruturada (ex. ROUTE_ASSIGNMENT) — {@code body} é sempre o texto de
+    /** Mensagem estruturada (ex. ATRIBUICAO_ROTA) — {@code body} é sempre o texto de
      *  fallback pra quem não interpreta {@code messageType}. */
     public ChatMessage(UUID conversationId, UUID senderUserId, String body, ChatMessageType messageType, UUID routePlanId) {
         this.id = UUID.randomUUID();
@@ -73,6 +73,13 @@ public class ChatMessage {
     /** Removida do servidor pelo job de limpeza — o dispositivo do gestor já sincronizou. */
     public void removerDoServidor() {
         this.aindaNoServidor = false;
+    }
+
+    /** Marca como lida pelo destinatário — idempotente, não sobrescreve o timestamp original. */
+    public void marcarComoLida() {
+        if (this.lidoEm == null) {
+            this.lidoEm = Instant.now();
+        }
     }
 
     public UUID getId() {

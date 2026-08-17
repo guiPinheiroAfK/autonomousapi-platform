@@ -1,5 +1,8 @@
 package com.autonomousapi.core.chat;
 
+import com.autonomousapi.core.routeplan.RoutePlan;
+import com.autonomousapi.core.routeplan.RoutePlanRepository;
+import com.autonomousapi.core.routeplan.RoutePlanStatus;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -26,14 +29,17 @@ public class ChatCleanupJob {
     private final ChatConversationRepository conversations;
     private final ChatMessageRepository messages;
     private final ChatSyncCursorRepository syncCursors;
+    private final RoutePlanRepository routePlans;
 
     public ChatCleanupJob(
             ChatConversationRepository conversations,
             ChatMessageRepository messages,
-            ChatSyncCursorRepository syncCursors) {
+            ChatSyncCursorRepository syncCursors,
+            RoutePlanRepository routePlans) {
         this.conversations = conversations;
         this.messages = messages;
         this.syncCursors = syncCursors;
+        this.routePlans = routePlans;
     }
 
     /** De hora em hora — o chat é mais sensível a tempo que os alertas diários (ADR 0016). */
@@ -71,10 +77,32 @@ public class ChatCleanupJob {
             if (dentroDaJanela) {
                 continue;
             }
+            if (rotaAindaNaoConcluida(message)) {
+                continue;
+            }
             boolean gestorJaSincronizou = !message.getSentAt().isAfter(minSyncedAt);
             if (gestorJaSincronizou) {
                 message.removerDoServidor();
             }
         }
+    }
+
+    /**
+     * Mensagem ATRIBUICAO_ROTA nunca sai da janela de retenção antes de o route_plan
+     * referenciado estar CONCLUIDA — é a única exceção à regra de limpeza por
+     * tempo/quantidade/sync, porque apagar cedo demais quebraria o vínculo "motorista
+     * recebeu a rota" na tela do gestor enquanto a rota ainda está rolando.
+     *
+     * <p>Nota: {@link RoutePlanStatus} ainda não tem CANCELADA (cancelamento de rota não
+     * existe hoje) — a exceção cobre só "ainda não CONCLUIDA", não "cancelada".
+     */
+    private boolean rotaAindaNaoConcluida(ChatMessage message) {
+        if (message.getMessageType() != ChatMessageType.ATRIBUICAO_ROTA || message.getRoutePlanId() == null) {
+            return false;
+        }
+        return routePlans.findById(message.getRoutePlanId())
+                .map(RoutePlan::getStatus)
+                .map(status -> status != RoutePlanStatus.CONCLUIDA)
+                .orElse(false);
     }
 }

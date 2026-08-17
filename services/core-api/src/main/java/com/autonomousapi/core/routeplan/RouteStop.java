@@ -36,6 +36,9 @@ public class RouteStop {
     @Column(name = "lon", nullable = false, updatable = false)
     private double lon;
 
+    @Column(name = "collection_point_id", updatable = false)
+    private UUID collectionPointId;
+
     @Column(name = "janela_inicio")
     private LocalTime janelaInicio;
 
@@ -61,6 +64,7 @@ public class RouteStop {
             String label,
             double lat,
             double lon,
+            UUID collectionPointId,
             LocalTime janelaInicio,
             LocalTime janelaFim,
             int ordemSugerida) {
@@ -70,6 +74,7 @@ public class RouteStop {
         this.label = label;
         this.lat = lat;
         this.lon = lon;
+        this.collectionPointId = collectionPointId;
         this.janelaInicio = janelaInicio;
         this.janelaFim = janelaFim;
         this.ordemSugerida = ordemSugerida;
@@ -106,6 +111,10 @@ public class RouteStop {
 
     public double getLon() {
         return lon;
+    }
+
+    public UUID getCollectionPointId() {
+        return collectionPointId;
     }
 
     public LocalTime getJanelaInicio() {

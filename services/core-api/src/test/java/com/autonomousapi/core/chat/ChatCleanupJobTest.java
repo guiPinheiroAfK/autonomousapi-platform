@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.autonomousapi.core.routeplan.RoutePlan;
+import com.autonomousapi.core.routeplan.RoutePlanRepository;
+import com.autonomousapi.core.routeplan.RoutePlanStatus;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -18,8 +22,9 @@ class ChatCleanupJobTest {
     private final ChatConversationRepository conversations = mock(ChatConversationRepository.class);
     private final ChatMessageRepository messages = mock(ChatMessageRepository.class);
     private final ChatSyncCursorRepository syncCursors = mock(ChatSyncCursorRepository.class);
+    private final RoutePlanRepository routePlans = mock(RoutePlanRepository.class);
 
-    private final ChatCleanupJob job = new ChatCleanupJob(conversations, messages, syncCursors);
+    private final ChatCleanupJob job = new ChatCleanupJob(conversations, messages, syncCursors, routePlans);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -105,5 +110,38 @@ class ChatCleanupJobTest {
         job.run();
 
         assertFalse(antiga.isAindaNoServidor());
+    }
+
+    @Test
+    void nuncaRemoveMensagemDeAtribuicaoDeRotaAntesDaRotaEstarConcluida() {
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, driverId, null);
+        UUID routePlanId = UUID.randomUUID();
+        RoutePlan plan = new RoutePlan(
+                tenantId, gestorUserId, driverId, null, com.autonomousapi.core.routeplan.RouteCategoria.ROTA,
+                java.time.LocalDate.now(), null);
+        setField(plan, "id", routePlanId);
+        // PLANEJADA por padrão no construtor — ainda não CONCLUIDA.
+
+        ChatMessage atribuicao = new ChatMessage(
+                conv.getId(), gestorUserId, "Nova rota atribuída", ChatMessageType.ATRIBUICAO_ROTA, routePlanId);
+        setField(atribuicao, "sentAt", Instant.now().minus(10, ChronoUnit.DAYS));
+
+        when(conversations.findDistinctGestorUserIds()).thenReturn(List.of(gestorUserId));
+        when(syncCursors.findAllByGestorUserId(gestorUserId))
+                .thenReturn(List.of(new ChatSyncCursor(gestorUserId, "device-1", Instant.now())));
+        when(conversations.findAllByGestorUserIdOrderByCreatedAtDesc(gestorUserId)).thenReturn(List.of(conv));
+        when(messages.findAllByConversationIdAndAindaNoServidorTrueOrderBySentAtDesc(conv.getId()))
+                .thenReturn(new ArrayList<>(List.of(atribuicao)));
+        when(routePlans.findById(routePlanId)).thenReturn(Optional.of(plan));
+
+        job.run();
+
+        // Fora da janela e totalmente sincronizada, mas a rota ainda não terminou -> mantém.
+        assertTrue(atribuicao.isAindaNoServidor());
+
+        plan.avancarStatus(RoutePlanStatus.CONCLUIDA);
+        job.run();
+
+        assertFalse(atribuicao.isAindaNoServidor());
     }
 }

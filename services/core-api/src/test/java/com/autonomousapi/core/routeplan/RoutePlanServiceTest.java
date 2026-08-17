@@ -6,15 +6,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.autonomousapi.core.collectionpoint.CollectionPoint;
+import com.autonomousapi.core.collectionpoint.CollectionPointRepository;
 import com.autonomousapi.core.driver.CurrentDriverResolver;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
+import com.autonomousapi.core.error.RoutePlanInvalidException;
+import com.autonomousapi.core.geo.GeoApiClient;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.StopInput;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.VehicleRepository;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +32,25 @@ class RoutePlanServiceTest {
     private final RouteStopRepository routeStops = mock(RouteStopRepository.class);
     private final DriverRepository drivers = mock(DriverRepository.class);
     private final VehicleRepository vehicles = mock(VehicleRepository.class);
+    private final CollectionPointRepository collectionPoints = mock(CollectionPointRepository.class);
     private final CurrentDriverResolver driverResolver = mock(CurrentDriverResolver.class);
 
-    private final RoutePlanService service =
-            new RoutePlanService(routePlans, routeStops, drivers, vehicles, driverResolver);
+    // Instâncias reais, não mock: GeoApiClient aponta para uma porta que não existe, então
+    // toda chamada degrada para "indisponível" (mesmo comportamento de produção com o
+    // geo-api fora do ar) e RouteMatrixService cai no fallback haversine — exercita o
+    // caminho real de fallback em vez de simular com mocks o que já é testado em
+    // OsrmRoutingClient/geo-api. OrToolsRouteOptimizer precisa da libs nativa carregada
+    // manualmente aqui porque @PostConstruct só roda dentro do contexto Spring.
+    private final GeoApiClient geoApiClient = new GeoApiClient("http://localhost:1", "test-token");
+    private final RouteMatrixService routeMatrix = new RouteMatrixService(geoApiClient);
+    private final OrToolsRouteOptimizer optimizer = new OrToolsRouteOptimizer();
+
+    {
+        optimizer.carregarBibliotecaNativa();
+    }
+
+    private final RoutePlanService service = new RoutePlanService(
+            routePlans, routeStops, drivers, vehicles, collectionPoints, driverResolver, routeMatrix, optimizer);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -40,15 +60,19 @@ class RoutePlanServiceTest {
         return new Driver(tenantId, nome, UUID.randomUUID().toString(), null);
     }
 
+    private RoutePlan routePlan(UUID driverId) {
+        return new RoutePlan(tenantId, gestorUserId, driverId, null, RouteCategoria.ROTA, LocalDate.now(), null);
+    }
+
     @Test
     void suggestOrderAgrupaColetasAntesDeEntregas() {
         // Entrega mais perto do ponto de partida do que qualquer coleta — se a heurística
         // não agrupasse por tipo, o vizinho-mais-próximo puro colocaria a entrega primeiro.
-        StopInput coleta1 = new StopInput(StopType.COLETA, "Coleta 1", -23.561, -46.656, null, null);
-        StopInput coleta2 = new StopInput(StopType.COLETA, "Coleta 2", -23.560, -46.650, null, null);
-        StopInput entrega = new StopInput(StopType.ENTREGA, "Entrega", -23.5615, -46.6561, null, null);
+        StopInput coleta1 = new StopInput(StopType.COLETA, "Coleta 1", -23.561, -46.656, null, null, null);
+        StopInput coleta2 = new StopInput(StopType.COLETA, "Coleta 2", -23.560, -46.650, null, null, null);
+        StopInput entrega = new StopInput(StopType.ENTREGA, "Entrega", -23.5615, -46.6561, null, null, null);
 
-        List<StopInput> ordenado = service.suggestOrder(List.of(entrega, coleta1, coleta2));
+        List<StopInput> ordenado = service.suggestOrder(gestorPrincipal, List.of(entrega, coleta1, coleta2));
 
         assertEquals(StopType.COLETA, ordenado.get(0).tipo());
         assertEquals(StopType.COLETA, ordenado.get(1).tipo());
@@ -56,10 +80,91 @@ class RoutePlanServiceTest {
     }
 
     @Test
+    void suggestOrderResolveCaminhoMaisCurtoComOrToolsSobreFallbackHaversine() {
+        // Três coletas em linha reta, começando por A: a ordem mais curta é A -> B -> C, não
+        // A -> C -> B (que passaria por B duas vezes na prática). Geo-api indisponível nos
+        // testes força o fallback haversine (ver bloco de instâncias reais acima) — este
+        // teste garante que o OR-Tools resolve corretamente até sobre essa matriz de fallback.
+        StopInput a = new StopInput(StopType.COLETA, "A", -23.000, -46.000, null, null, null);
+        StopInput b = new StopInput(StopType.COLETA, "B", -23.010, -46.000, null, null, null);
+        StopInput c = new StopInput(StopType.COLETA, "C", -23.020, -46.000, null, null, null);
+
+        List<StopInput> ordenado = service.suggestOrder(gestorPrincipal, List.of(a, c, b));
+
+        assertEquals("A", ordenado.get(0).label());
+        assertEquals("B", ordenado.get(1).label());
+        assertEquals("C", ordenado.get(2).label());
+    }
+
+    @Test
+    void suggestOrderRejeitaMaisDeTrintaParadas() {
+        List<StopInput> paradas = java.util.stream.IntStream.range(0, 31)
+                .mapToObj(i -> new StopInput(StopType.COLETA, "Parada " + i, -23.0 - i * 0.001, -46.0, null, null, null))
+                .toList();
+
+        assertThrows(RoutePlanInvalidException.class, () -> service.suggestOrder(gestorPrincipal, paradas));
+    }
+
+    @Test
+    void createRejeitaDataDeExecucaoNoPassado() {
+        StopInput s = new StopInput(StopType.COLETA, "Parada", -23.5, -46.6, null, null, null);
+        LocalDate ontem = LocalDate.now().minusDays(1);
+
+        assertThrows(RoutePlanInvalidException.class,
+                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, ontem, null, List.of(s)));
+    }
+
+    @Test
+    void createRejeitaTransferComNumeroDeParadasDiferenteDeDois() {
+        StopInput s = new StopInput(StopType.COLETA, "Origem", -23.5, -46.6, null, null, null);
+
+        assertThrows(RoutePlanInvalidException.class,
+                () -> service.create(
+                        gestorPrincipal, null, null, RouteCategoria.TRANSFER, LocalDate.now(), null, List.of(s)));
+    }
+
+    @Test
+    void createRejeitaJanelaComFimAntesDoInicio() {
+        StopInput s = new StopInput(
+                StopType.COLETA, "Parada", -23.5, -46.6, null, LocalTime.of(12, 0), LocalTime.of(10, 0));
+
+        assertThrows(RoutePlanInvalidException.class,
+                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, LocalDate.now(), null, List.of(s)));
+    }
+
+    @Test
+    void createResolveLabelLatLonDoCollectionPointIgnorandoOQueOClienteMandou() {
+        UUID pontoId = UUID.randomUUID();
+        CollectionPoint ponto = new CollectionPoint(
+                tenantId, "Depósito", "Rua Real, 100", -23.111, -46.222, LocalTime.of(8, 0), LocalTime.of(18, 0));
+        when(collectionPoints.findByIdAndTenantId(pontoId, tenantId)).thenReturn(Optional.of(ponto));
+        when(routePlans.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(any())).thenReturn(List.of());
+
+        // Cliente manda label/lat/lon "errados" de propósito -- servidor deve ignorar e usar
+        // o que está cadastrado no CollectionPoint.
+        StopInput spoofado = new StopInput(StopType.COLETA, "Endereço forjado", 0.0, 0.0, pontoId, null, null);
+        StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.3, -46.4, null, null, null);
+
+        service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, LocalDate.now(), null,
+                List.of(spoofado, destino));
+
+        org.mockito.ArgumentCaptor<RouteStop> captor = org.mockito.ArgumentCaptor.forClass(RouteStop.class);
+        org.mockito.Mockito.verify(routeStops, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
+        RouteStop salvo = captor.getAllValues().stream()
+                .filter(rs -> rs.getCollectionPointId() != null)
+                .findFirst()
+                .orElseThrow();
+        assertEquals("Rua Real, 100", salvo.getLabel());
+        assertEquals(-23.111, salvo.getLat());
+        assertEquals(-46.222, salvo.getLon());
+    }
+
+    @Test
     void assignDriverEIdempotenteQuandoJaDesignadaAoMesmoMotorista() {
         UUID routePlanId = UUID.randomUUID();
         Driver d = driver("Eduardo");
-        RoutePlan plan = new RoutePlan(tenantId, gestorUserId, d.getId(), null);
+        RoutePlan plan = routePlan(d.getId());
         when(routePlans.findByIdAndTenantId(routePlanId, tenantId)).thenReturn(Optional.of(plan));
         when(drivers.findByIdAndTenantId(d.getId(), tenantId)).thenReturn(Optional.of(d));
         when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
@@ -75,7 +180,7 @@ class RoutePlanServiceTest {
         UUID routePlanId = UUID.randomUUID();
         Driver jaDesignado = driver("Eduardo");
         Driver outro = driver("Carlos");
-        RoutePlan plan = new RoutePlan(tenantId, gestorUserId, jaDesignado.getId(), null);
+        RoutePlan plan = routePlan(jaDesignado.getId());
         when(routePlans.findByIdAndTenantId(routePlanId, tenantId)).thenReturn(Optional.of(plan));
         when(drivers.findByIdAndTenantId(outro.getId(), tenantId)).thenReturn(Optional.of(outro));
 
@@ -88,8 +193,8 @@ class RoutePlanServiceTest {
         UUID stopId = UUID.randomUUID();
         Driver dono = driver("Eduardo");
         Driver outro = driver("Carlos");
-        RoutePlan plan = new RoutePlan(tenantId, gestorUserId, dono.getId(), null);
-        RouteStop stop = new RouteStop(plan.getId(), StopType.COLETA, "Rua X", -23.5, -46.6, null, null, 0);
+        RoutePlan plan = routePlan(dono.getId());
+        RouteStop stop = new RouteStop(plan.getId(), StopType.COLETA, "Rua X", -23.5, -46.6, null, null, null, 0);
         JwtPrincipal outroMotoristaPrincipal = new JwtPrincipal(UUID.randomUUID(), tenantId, "MOTORISTA");
 
         when(driverResolver.resolve(outroMotoristaPrincipal)).thenReturn(outro);
@@ -102,9 +207,9 @@ class RoutePlanServiceTest {
     @Test
     void completeStopPrimeiraParadaMoveStatusParaEmAndamento() {
         Driver d = driver("Eduardo");
-        RoutePlan plan = new RoutePlan(tenantId, gestorUserId, d.getId(), null);
-        RouteStop stop1 = new RouteStop(plan.getId(), StopType.COLETA, "Parada 1", -23.5, -46.6, null, null, 0);
-        RouteStop stop2 = new RouteStop(plan.getId(), StopType.ENTREGA, "Parada 2", -23.6, -46.7, null, null, 1);
+        RoutePlan plan = routePlan(d.getId());
+        RouteStop stop1 = new RouteStop(plan.getId(), StopType.COLETA, "Parada 1", -23.5, -46.6, null, null, null, 0);
+        RouteStop stop2 = new RouteStop(plan.getId(), StopType.ENTREGA, "Parada 2", -23.6, -46.7, null, null, null, 1);
         JwtPrincipal motoristaPrincipal = new JwtPrincipal(UUID.randomUUID(), tenantId, "MOTORISTA");
 
         when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
@@ -121,11 +226,11 @@ class RoutePlanServiceTest {
     @Test
     void completeStopUltimaParadaMoveStatusParaConcluida() {
         Driver d = driver("Eduardo");
-        RoutePlan plan = new RoutePlan(tenantId, gestorUserId, d.getId(), null);
+        RoutePlan plan = routePlan(d.getId());
         plan.avancarStatus(RoutePlanStatus.EM_ANDAMENTO);
-        RouteStop stop1 = new RouteStop(plan.getId(), StopType.COLETA, "Parada 1", -23.5, -46.6, null, null, 0);
+        RouteStop stop1 = new RouteStop(plan.getId(), StopType.COLETA, "Parada 1", -23.5, -46.6, null, null, null, 0);
         stop1.concluir(1);
-        RouteStop stop2 = new RouteStop(plan.getId(), StopType.ENTREGA, "Parada 2", -23.6, -46.7, null, null, 1);
+        RouteStop stop2 = new RouteStop(plan.getId(), StopType.ENTREGA, "Parada 2", -23.6, -46.7, null, null, null, 1);
         JwtPrincipal motoristaPrincipal = new JwtPrincipal(UUID.randomUUID(), tenantId, "MOTORISTA");
 
         when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);

@@ -65,7 +65,14 @@ public class DriverController {
         return driverService.list(principal(auth));
     }
 
+    /**
+     * Gestor-only. Achado da revisão de spec (2026-08-17): não tinha nenhum @PreAuthorize —
+     * um token MOTORISTA conseguia ler nome, CNH, telefone e e-mail de qualquer motorista
+     * do tenant pelo id, mesmo com {@link #list} já fechado. O próprio motorista consulta
+     * o próprio perfil via {@code GET /v1/me/profile} (MeController), nunca por aqui.
+     */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public DriverResponse get(@PathVariable UUID id, Authentication auth) {
         return driverService.get(principal(auth), id);
     }

@@ -258,6 +258,47 @@
         }
       }
     },
+    "/v1/collection-points/{id}": {
+      "put": {
+        "tags": [
+          "collection-point-controller"
+        ],
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionPointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionPointResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/work-orders": {
       "get": {
         "tags": [
@@ -1236,6 +1277,130 @@
         }
       }
     },
+    "/v1/collection-points": {
+      "get": {
+        "tags": [
+          "collection-point-controller"
+        ],
+        "operationId": "list_7",
+        "parameters": [
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CollectionPointResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "collection-point-controller"
+        ],
+        "operationId": "create_5",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionPointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionPointResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/collection-points/{id}/desativar": {
+      "post": {
+        "tags": [
+          "collection-point-controller"
+        ],
+        "operationId": "desativar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionPointResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/collection-points/{id}/ativar": {
+      "post": {
+        "tags": [
+          "collection-point-controller"
+        ],
+        "operationId": "ativar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionPointResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/chat/sync-cursor": {
       "post": {
         "tags": [
@@ -1310,6 +1475,59 @@
         }
       }
     },
+    "/v1/chat/conversations/{id}/typing": {
+      "get": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "isOtherTyping",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "typing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/v1/chat/conversations/{id}/route-plan": {
       "post": {
         "tags": [
@@ -1347,6 +1565,30 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/chat/conversations/{id}/read": {
+      "post": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "markAsRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -2195,7 +2437,7 @@
         "tags": [
           "charging-station-controller"
         ],
-        "operationId": "list_7",
+        "operationId": "list_8",
         "parameters": [
           {
             "name": "lat",
@@ -2754,6 +2996,76 @@
           }
         }
       },
+      "CollectionPointRequest": {
+        "required": [
+          "endereco",
+          "lat",
+          "lon",
+          "nome"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "endereco": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "janelaInicio": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "janelaFim": {
+            "type": "string",
+            "example": "18:00:00"
+          }
+        }
+      },
+      "CollectionPointResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "endereco": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "janelaInicio": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "janelaFim": {
+            "type": "string",
+            "example": "18:00:00"
+          },
+          "posicaoAjustada": {
+            "type": "boolean"
+          },
+          "ativo": {
+            "type": "boolean"
+          }
+        }
+      },
       "VehicleMarketValueRequest": {
         "required": [
           "dataReferencia",
@@ -3025,6 +3337,8 @@
       },
       "CreateRoutePlanRequest": {
         "required": [
+          "categoria",
+          "dataExecucao",
           "stops"
         ],
         "type": "object",
@@ -3037,6 +3351,20 @@
             "type": "string",
             "format": "uuid"
           },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "ROTA",
+              "TRANSFER"
+            ]
+          },
+          "dataExecucao": {
+            "type": "string",
+            "format": "date"
+          },
+          "valor": {
+            "type": "number"
+          },
           "stops": {
             "type": "array",
             "items": {
@@ -3045,32 +3373,8 @@
           }
         }
       },
-      "LocalTime": {
-        "type": "object",
-        "properties": {
-          "hour": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "minute": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "second": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "nano": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
       "StopInput": {
         "required": [
-          "label",
-          "lat",
-          "lon",
           "tipo"
         ],
         "type": "object",
@@ -3093,11 +3397,17 @@
             "type": "number",
             "format": "double"
           },
+          "collectionPointId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "janelaInicio": {
-            "$ref": "#/components/schemas/LocalTime"
+            "type": "string",
+            "example": "08:00:00"
           },
           "janelaFim": {
-            "$ref": "#/components/schemas/LocalTime"
+            "type": "string",
+            "example": "18:00:00"
           }
         }
       },
@@ -3129,6 +3439,20 @@
               "EM_ANDAMENTO",
               "CONCLUIDA"
             ]
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "ROTA",
+              "TRANSFER"
+            ]
+          },
+          "dataExecucao": {
+            "type": "string",
+            "format": "date"
+          },
+          "valor": {
+            "type": "number"
           },
           "createdAt": {
             "type": "string",
@@ -3167,11 +3491,17 @@
             "type": "number",
             "format": "double"
           },
+          "collectionPointId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "janelaInicio": {
-            "$ref": "#/components/schemas/LocalTime"
+            "type": "string",
+            "example": "08:00:00"
           },
           "janelaFim": {
-            "$ref": "#/components/schemas/LocalTime"
+            "type": "string",
+            "example": "18:00:00"
           },
           "ordemSugerida": {
             "type": "integer",
@@ -3455,11 +3785,16 @@
             "type": "string",
             "format": "date-time"
           },
+          "lidoEm": {
+            "type": "string",
+            "format": "date-time"
+          },
           "messageType": {
             "type": "string",
             "enum": [
-              "TEXT",
-              "ROUTE_ASSIGNMENT"
+              "TEXTO",
+              "ATRIBUICAO_ROTA",
+              "SISTEMA"
             ]
           },
           "routePlanId": {

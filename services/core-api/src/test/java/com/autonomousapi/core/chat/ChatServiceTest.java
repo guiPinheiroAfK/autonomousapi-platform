@@ -41,10 +41,11 @@ class ChatServiceTest {
     private final CurrentDriverResolver driverResolver = mock(CurrentDriverResolver.class);
     private final PushNotificationService pushNotificationService = mock(PushNotificationService.class);
     private final RoutePlanService routePlanService = mock(RoutePlanService.class);
+    private final TypingIndicatorService typingIndicator = new TypingIndicatorService();
 
     private final ChatService service = new ChatService(
             conversations, messages, syncCursors, drivers, vehicles, tenants, driverResolver,
-            pushNotificationService, routePlanService);
+            pushNotificationService, routePlanService, typingIndicator);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -197,13 +198,14 @@ class ChatServiceTest {
         when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
         when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId()))
                 .thenReturn(new RoutePlanResponse(routePlanId, d.getId(), d.getName(), null, null,
-                        RoutePlanStatus.PLANEJADA, java.time.Instant.now(), List.of()));
+                        RoutePlanStatus.PLANEJADA, com.autonomousapi.core.routeplan.RouteCategoria.ROTA,
+                        java.time.LocalDate.now(), null, java.time.Instant.now(), List.of()));
         when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
 
         ChatMessageResponse resp = service.sendRoutePlanMessage(gestorPrincipal, conversationId, routePlanId);
 
-        assertEquals(ChatMessageType.ROUTE_ASSIGNMENT, resp.messageType());
+        assertEquals(ChatMessageType.ATRIBUICAO_ROTA, resp.messageType());
         assertEquals(routePlanId, resp.routePlanId());
         verify(pushNotificationService).notifyUser(eq(d.getAppUserId()), eq("Nova rota atribuída"), any());
     }
@@ -221,5 +223,37 @@ class ChatServiceTest {
         assertThrows(RoutePlanAlreadyAssignedException.class,
                 () -> service.sendRoutePlanMessage(gestorPrincipal, conversationId, routePlanId));
         verify(messages, never()).save(any());
+    }
+
+    @Test
+    void markAsReadMarcaSoMensagensDoOutroParticipanteAindaNaoLidas() {
+        UUID conversationId = UUID.randomUUID();
+        Driver d = driverComLogin();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
+        ChatMessage doMotorista = new ChatMessage(conv.getId(), d.getAppUserId(), "oi");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findAllByConversationIdAndSenderUserIdNotAndLidoEmIsNull(conv.getId(), gestorUserId))
+                .thenReturn(List.of(doMotorista));
+
+        service.markAsRead(gestorPrincipal, conversationId);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(doMotorista.getLidoEm());
+    }
+
+    @Test
+    void typingIndicatorRefleteDigitandoDoOutroParticipante() {
+        UUID conversationId = UUID.randomUUID();
+        Driver d = driverComLogin();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
+        JwtPrincipal motoristaPrincipal = new JwtPrincipal(d.getAppUserId(), tenantId, "MOTORISTA");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
+        when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
+
+        assertEquals(false, service.isOtherParticipantTyping(gestorPrincipal, conversationId));
+
+        service.registerTyping(motoristaPrincipal, conversationId);
+
+        assertEquals(true, service.isOtherParticipantTyping(gestorPrincipal, conversationId));
     }
 }

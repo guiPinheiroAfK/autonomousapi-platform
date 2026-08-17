@@ -18,8 +18,10 @@ export type View =
   | 'charging-stations'
   | 'routes'
   | 'route-plans'
+  | 'collection-points'
   | 'driver-home'
-  | 'driver-route';
+  | 'driver-route'
+  | 'driver-more';
 
 const TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -36,8 +38,10 @@ const TITLES: Record<View, string> = {
   'charging-stations': 'Pontos de Recarga',
   routes: 'Rotas',
   'route-plans': 'Coleta & Entrega',
+  'collection-points': 'Pontos de Coleta',
   'driver-home': 'Início',
   'driver-route': 'Minha Rota',
+  'driver-more': 'Mais',
 };
 
 interface AppShellProps {

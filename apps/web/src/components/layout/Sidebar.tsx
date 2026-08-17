@@ -6,8 +6,10 @@ import {
   Handshake,
   Home,
   LayoutDashboard,
+  MapPin,
   MapPinned,
   MessageCircle,
+  MoreHorizontal,
   Navigation,
   Plug,
   Route as RouteIcon,
@@ -27,6 +29,7 @@ const NAV_OPERACAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'chat', label: 'Mensagens', icon: MessageCircle },
   { view: 'routes', label: 'Rotas', icon: Navigation },
   { view: 'route-plans', label: 'Coleta & Entrega', icon: MapPinned },
+  { view: 'collection-points', label: 'Pontos de Coleta', icon: MapPin },
 ];
 
 const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
@@ -46,6 +49,7 @@ const NAV_MOTORISTA: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'driver-home', label: 'Início', icon: Home },
   { view: 'driver-route', label: 'Minha Rota', icon: RouteIcon },
   { view: 'chat', label: 'Mensagens', icon: MessageCircle },
+  { view: 'driver-more', label: 'Mais', icon: MoreHorizontal },
 ];
 
 interface SidebarProps {

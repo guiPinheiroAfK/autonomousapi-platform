@@ -36,15 +36,17 @@ public class RoutePlanController {
     /** Stateless — não persiste nada, só devolve a sugestão pro gestor revisar. */
     @PostMapping("/suggest-order")
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
-    public List<StopInput> suggestOrder(@Valid @RequestBody SuggestOrderRequest req) {
-        return routePlanService.suggestOrder(req.stops());
+    public List<StopInput> suggestOrder(@Valid @RequestBody SuggestOrderRequest req, Authentication auth) {
+        return routePlanService.suggestOrder(principal(auth), req.stops());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public RoutePlanResponse create(@Valid @RequestBody CreateRoutePlanRequest req, Authentication auth) {
-        return routePlanService.create(principal(auth), req.driverId(), req.vehicleId(), req.stops());
+        return routePlanService.create(
+                principal(auth), req.driverId(), req.vehicleId(), req.categoria(), req.dataExecucao(),
+                req.valor(), req.stops());
     }
 
     @GetMapping

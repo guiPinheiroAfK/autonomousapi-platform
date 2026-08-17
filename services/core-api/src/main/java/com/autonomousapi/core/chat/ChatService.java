@@ -39,6 +39,7 @@ public class ChatService {
     private final CurrentDriverResolver driverResolver;
     private final PushNotificationService pushNotificationService;
     private final RoutePlanService routePlanService;
+    private final TypingIndicatorService typingIndicator;
 
     public ChatService(
             ChatConversationRepository conversations,
@@ -49,7 +50,8 @@ public class ChatService {
             TenantRepository tenants,
             CurrentDriverResolver driverResolver,
             PushNotificationService pushNotificationService,
-            RoutePlanService routePlanService) {
+            RoutePlanService routePlanService,
+            TypingIndicatorService typingIndicator) {
         this.conversations = conversations;
         this.messages = messages;
         this.syncCursors = syncCursors;
@@ -59,6 +61,7 @@ public class ChatService {
         this.driverResolver = driverResolver;
         this.pushNotificationService = pushNotificationService;
         this.routePlanService = routePlanService;
+        this.typingIndicator = typingIndicator;
     }
 
     /** Gestor-only. Idempotente: se a conversa já existe para o par, devolve a existente. */
@@ -135,7 +138,7 @@ public class ChatService {
 
         String body = "Nova rota atribuída — " + plan.stops().size() + " parada(s).";
         ChatMessage message = messages.save(
-                new ChatMessage(conversation.getId(), gestorPrincipal.userId(), body, ChatMessageType.ROUTE_ASSIGNMENT, routePlanId));
+                new ChatMessage(conversation.getId(), gestorPrincipal.userId(), body, ChatMessageType.ATRIBUICAO_ROTA, routePlanId));
 
         UUID recipientUserId = drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null);
         if (recipientUserId != null) {
@@ -143,6 +146,40 @@ public class ChatService {
         }
 
         return ChatMessageResponse.from(message);
+    }
+
+    /**
+     * Marca como lidas todas as mensagens do outro participante que ainda não tinham
+     * {@code lidoEm} — chamado quando o usuário abre/revisita a conversa. Idempotente
+     * (mensagem já lida não é tocada de novo).
+     */
+    @Transactional
+    public void markAsRead(JwtPrincipal principal, UUID conversationId) {
+        ChatConversation conversation = findAsParticipant(principal, conversationId);
+        messages.findAllByConversationIdAndSenderUserIdNotAndLidoEmIsNull(conversation.getId(), principal.userId())
+                .forEach(ChatMessage::marcarComoLida);
+    }
+
+    /**
+     * Indicador de "digitando" (spec 07): estado puramente efêmero, guardado em memória
+     * ({@link TypingIndicatorService}), não em banco — reinicia sozinho se o servidor
+     * reiniciar, e isso é aceitável pro que é (um sinal que expira em segundos de qualquer
+     * jeito). Não justifica WebSocket/SSE (mesma lógica de "poll simples" já aplicada ao
+     * envio/recebimento de mensagem, spec 07).
+     */
+    @Transactional(readOnly = true)
+    public void registerTyping(JwtPrincipal principal, UUID conversationId) {
+        findAsParticipant(principal, conversationId);
+        typingIndicator.markTyping(conversationId, principal.userId());
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isOtherParticipantTyping(JwtPrincipal principal, UUID conversationId) {
+        ChatConversation conversation = findAsParticipant(principal, conversationId);
+        UUID otherUserId = principal.userId().equals(conversation.getGestorUserId())
+                ? drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null)
+                : conversation.getGestorUserId();
+        return otherUserId != null && typingIndicator.isTyping(conversationId, otherUserId);
     }
 
     /** Gestor-only: confirma que o device já persistiu localmente tudo até syncedAt. */

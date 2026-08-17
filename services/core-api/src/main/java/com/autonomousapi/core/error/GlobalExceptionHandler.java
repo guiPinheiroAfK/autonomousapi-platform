@@ -111,6 +111,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("route_plan_already_assigned", ex.getMessage()));
     }
 
+    @ExceptionHandler(RoutePlanInvalidException.class)
+    public ResponseEntity<ApiError> handleRoutePlanInvalid(RoutePlanInvalidException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("route_plan_invalid", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()

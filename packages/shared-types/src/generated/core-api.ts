@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/collection-points/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_3"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/work-orders": {
         parameters: {
             query?: never;
@@ -388,6 +404,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/collection-points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_7"];
+        put?: never;
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/collection-points/{id}/desativar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["desativar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/collection-points/{id}/ativar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ativar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/chat/sync-cursor": {
         parameters: {
             query?: never;
@@ -420,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/chat/conversations/{id}/typing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["isOtherTyping"];
+        put?: never;
+        post: operations["typing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/chat/conversations/{id}/route-plan": {
         parameters: {
             query?: never;
@@ -430,6 +510,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["sendRoutePlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markAsRead"];
         delete?: never;
         options?: never;
         head?: never;
@@ -907,7 +1003,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1118,6 +1214,34 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
         };
+        CollectionPointRequest: {
+            nome: string;
+            endereco: string;
+            /** Format: double */
+            lat: number;
+            /** Format: double */
+            lon: number;
+            /** @example 08:00:00 */
+            janelaInicio?: string;
+            /** @example 18:00:00 */
+            janelaFim?: string;
+        };
+        CollectionPointResponse: {
+            /** Format: uuid */
+            id?: string;
+            nome?: string;
+            endereco?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lon?: number;
+            /** @example 08:00:00 */
+            janelaInicio?: string;
+            /** @example 18:00:00 */
+            janelaFim?: string;
+            posicaoAjustada?: boolean;
+            ativo?: boolean;
+        };
         VehicleMarketValueRequest: {
             valorFipe: number;
             /** Format: date */
@@ -1214,28 +1338,27 @@ export interface components {
             driverId?: string;
             /** Format: uuid */
             vehicleId?: string;
+            /** @enum {string} */
+            categoria: "ROTA" | "TRANSFER";
+            /** Format: date */
+            dataExecucao: string;
+            valor?: number;
             stops: components["schemas"]["StopInput"][];
-        };
-        LocalTime: {
-            /** Format: int32 */
-            hour?: number;
-            /** Format: int32 */
-            minute?: number;
-            /** Format: int32 */
-            second?: number;
-            /** Format: int32 */
-            nano?: number;
         };
         StopInput: {
             /** @enum {string} */
             tipo: "COLETA" | "ENTREGA";
-            label: string;
+            label?: string;
             /** Format: double */
-            lat: number;
+            lat?: number;
             /** Format: double */
-            lon: number;
-            janelaInicio?: components["schemas"]["LocalTime"];
-            janelaFim?: components["schemas"]["LocalTime"];
+            lon?: number;
+            /** Format: uuid */
+            collectionPointId?: string;
+            /** @example 08:00:00 */
+            janelaInicio?: string;
+            /** @example 18:00:00 */
+            janelaFim?: string;
         };
         RoutePlanResponse: {
             /** Format: uuid */
@@ -1248,6 +1371,11 @@ export interface components {
             vehiclePlate?: string;
             /** @enum {string} */
             status?: "PLANEJADA" | "EM_ANDAMENTO" | "CONCLUIDA";
+            /** @enum {string} */
+            categoria?: "ROTA" | "TRANSFER";
+            /** Format: date */
+            dataExecucao?: string;
+            valor?: number;
             /** Format: date-time */
             createdAt?: string;
             stops?: components["schemas"]["RouteStopResponse"][];
@@ -1262,8 +1390,12 @@ export interface components {
             lat?: number;
             /** Format: double */
             lon?: number;
-            janelaInicio?: components["schemas"]["LocalTime"];
-            janelaFim?: components["schemas"]["LocalTime"];
+            /** Format: uuid */
+            collectionPointId?: string;
+            /** @example 08:00:00 */
+            janelaInicio?: string;
+            /** @example 18:00:00 */
+            janelaFim?: string;
             /** Format: int32 */
             ordemSugerida?: number;
             /** Format: int32 */
@@ -1369,8 +1501,10 @@ export interface components {
             body?: string;
             /** Format: date-time */
             sentAt?: string;
+            /** Format: date-time */
+            lidoEm?: string;
             /** @enum {string} */
-            messageType?: "TEXT" | "ROUTE_ASSIGNMENT";
+            messageType?: "TEXTO" | "ATRIBUICAO_ROTA" | "SISTEMA";
             /** Format: uuid */
             routePlanId?: string;
         };
@@ -1775,6 +1909,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    update_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPointRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CollectionPointResponse"];
+                };
             };
         };
     };
@@ -2496,6 +2656,96 @@ export interface operations {
             };
         };
     };
+    list_7: {
+        parameters: {
+            query?: {
+                all?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CollectionPointResponse"][];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPointRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CollectionPointResponse"];
+                };
+            };
+        };
+    };
+    desativar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CollectionPointResponse"];
+                };
+            };
+        };
+    };
+    ativar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CollectionPointResponse"];
+                };
+            };
+        };
+    };
     syncCursor: {
         parameters: {
             query?: never;
@@ -2562,6 +2812,48 @@ export interface operations {
             };
         };
     };
+    isOtherTyping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": boolean;
+                };
+            };
+        };
+    };
+    typing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     sendRoutePlan: {
         parameters: {
             query?: never;
@@ -2585,6 +2877,26 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ChatMessageResponse"];
                 };
+            };
+        };
+    };
+    markAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3247,7 +3559,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 lat?: number;

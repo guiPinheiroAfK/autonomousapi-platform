@@ -16,4 +16,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     /** Prévia da lista de conversas (redesenho visual) — só a janela ainda no servidor,
      *  consistente com o que a lista de conversas consegue mostrar sem histórico local. */
     Optional<ChatMessage> findFirstByConversationIdAndAindaNoServidorTrueOrderBySentAtDesc(UUID conversationId);
+
+    /** Mensagens do outro participante ainda não marcadas como lidas — usado por markAsRead. */
+    List<ChatMessage> findAllByConversationIdAndSenderUserIdNotAndLidoEmIsNull(UUID conversationId, UUID senderUserId);
 }

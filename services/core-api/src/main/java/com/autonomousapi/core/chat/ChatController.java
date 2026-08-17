@@ -71,6 +71,26 @@ public class ChatController {
         return chatService.sendRoutePlanMessage(principal(auth), id, req.routePlanId());
     }
 
+    /** Marca como lidas as mensagens do outro participante ainda não lidas — chamado ao
+     *  abrir/revisitar a conversa, por qualquer um dos dois lados. */
+    @PostMapping("/conversations/{id}/read")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markAsRead(@PathVariable UUID id, Authentication auth) {
+        chatService.markAsRead(principal(auth), id);
+    }
+
+    /** Ping de "estou digitando" — efêmero (ver TypingIndicatorService), qualquer participante. */
+    @PostMapping("/conversations/{id}/typing")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void typing(@PathVariable UUID id, Authentication auth) {
+        chatService.registerTyping(principal(auth), id);
+    }
+
+    @GetMapping("/conversations/{id}/typing")
+    public boolean isOtherTyping(@PathVariable UUID id, Authentication auth) {
+        return chatService.isOtherParticipantTyping(principal(auth), id);
+    }
+
     /** Gestor-only: confirma sincronização do device (habilita a limpeza no servidor). */
     @PostMapping("/sync-cursor")
     @ResponseStatus(HttpStatus.NO_CONTENT)

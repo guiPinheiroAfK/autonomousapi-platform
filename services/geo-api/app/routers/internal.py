@@ -241,6 +241,43 @@ def rota(
     )
 
 
+class TablePoint(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+class TableRequest(BaseModel):
+    # Lista, não par de coordenadas: a ordem enviada aqui é a mesma ordem usada nos índices
+    # de `distances_m`/`durations_s` da resposta — quem chama precisa manter essa ordem para
+    # mapear a matriz de volta às paradas originais.
+    points: list[TablePoint]
+
+
+class TableResponse(BaseModel):
+    available: bool
+    distances_m: list[list[float | None]] = []
+    durations_s: list[list[float | None]] = []
+    unavailable_reason: str | None = None
+
+
+@router.post("/table")
+def table(body: TableRequest) -> TableResponse:
+    """
+    Matriz de distância/duração real entre N pontos (spec 02, "Evolução pendente"),
+    consumida pelo solver VRP do core-api. Mesmo contrato de degradação do `/route`: motor
+    fora do ar, ponto fora da área ou mais pontos que o teto viram `available=false` com
+    motivo legível, sempre 200 — nunca 5xx por causa de um serviço de infraestrutura externo.
+    """
+    cliente = OsrmRoutingClient(settings.osrm_url)
+    resultado = cliente.table([(p.lat, p.lon) for p in body.points])
+    return TableResponse(
+        available=resultado.available,
+        distances_m=resultado.distances_m,
+        durations_s=resultado.durations_s,
+        unavailable_reason=resultado.unavailable_reason,
+    )
+
+
 class PlaceOut(BaseModel):
     display_name: str
     lat: float

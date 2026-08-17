@@ -1,6 +1,8 @@
 package com.autonomousapi.core.geo;
 
 import com.autonomousapi.core.geo.dto.ChargingStationsResponse;
+import com.autonomousapi.core.geo.dto.DistanceMatrixRequest;
+import com.autonomousapi.core.geo.dto.DistanceMatrixResponse;
 import com.autonomousapi.core.geo.dto.DrivingEventsResponse;
 import com.autonomousapi.core.geo.dto.GeoChargingStationsResponse;
 import com.autonomousapi.core.geo.dto.GeoPlace;
@@ -142,6 +144,29 @@ public class GeoApiClient {
                     : RouteResponse.indisponivel("Serviço de roteamento não respondeu.");
         } catch (Exception ex) {
             return RouteResponse.indisponivel("Serviço de roteamento indisponível no momento.");
+        }
+    }
+
+    /**
+     * Matriz de distância/duração real entre N pontos (spec 02, "Evolução pendente"),
+     * consumida pelo solver VRP ({@code RouteMatrixService}). Mesmo padrão de degradação do
+     * {@link #route}: geo-api inacessível vira {@code available=false} em vez de propagar
+     * exceção — quem chama decide o fallback (heurística haversine), não este cliente.
+     */
+    public DistanceMatrixResponse distanceMatrix(List<DistanceMatrixRequest.Point> points) {
+        try {
+            DistanceMatrixResponse response = client
+                    .post()
+                    .uri("/internal/v1/table")
+                    .header("X-Service-Token", serviceToken)
+                    .body(new DistanceMatrixRequest(points))
+                    .retrieve()
+                    .body(DistanceMatrixResponse.class);
+            return response != null
+                    ? response
+                    : DistanceMatrixResponse.indisponivel("Serviço de roteamento não respondeu.");
+        } catch (Exception ex) {
+            return DistanceMatrixResponse.indisponivel("Serviço de roteamento indisponível no momento.");
         }
     }
 

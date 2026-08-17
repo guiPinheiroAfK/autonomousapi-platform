@@ -70,6 +70,11 @@ export type RouteStopResponse = Schemas['RouteStopResponse'];
 export type SuggestOrderRequest = Schemas['SuggestOrderRequest'];
 export type CreateRoutePlanRequest = Schemas['CreateRoutePlanRequest'];
 export type AssignDriverRequest = Schemas['AssignDriverRequest'];
+export type RouteCategoria = 'ROTA' | 'TRANSFER';
+export type CollectionPointRequest = Schemas['CollectionPointRequest'];
+export type CollectionPointResponse = Schemas['CollectionPointResponse'];
+export type DriverProfileResponse = Schemas['DriverProfileResponse'];
+export type TripResponse = Schemas['TripResponse'];
 export type ApiError = { code: string; message: string };
 
 let authToken: string | null = null;
@@ -298,8 +303,26 @@ export const coreApi = {
 
   /** Superfície do app do motorista (spec 07) — escopado ao token, motorista-only no backend. */
   me: {
+    profile: () => request<DriverProfileResponse>('/v1/me/profile'),
     /** Designação ativa (null se não houver veículo designado no momento). */
     vehicle: () => request<DriverAssignmentResponse | null>('/v1/me/vehicle'),
+    vehicleWorkOrders: () => request<WorkOrderResponse[]>('/v1/me/vehicle/work-orders'),
+    trips: () => request<TripResponse[]>('/v1/me/trips'),
+    reportIncident: (body: VehicleIncidentRequest) =>
+      request<VehicleIncidentResponse>('/v1/me/incidents', { method: 'POST', body: JSON.stringify(body) }),
+  },
+
+  /** Pontos de coleta/entrega reutilizáveis (spec 08 item 5) — gestor-only. */
+  collectionPoints: {
+    /** {@code all=true} devolve inclusive inativos (tela de cadastro); por padrão só ativos. */
+    list: (all = false) => request<CollectionPointResponse[]>(`/v1/collection-points${all ? '?all=true' : ''}`),
+    create: (body: CollectionPointRequest) =>
+      request<CollectionPointResponse>('/v1/collection-points', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: string, body: CollectionPointRequest) =>
+      request<CollectionPointResponse>(`/v1/collection-points/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    ativar: (id: string) => request<CollectionPointResponse>(`/v1/collection-points/${id}/ativar`, { method: 'POST' }),
+    desativar: (id: string) =>
+      request<CollectionPointResponse>(`/v1/collection-points/${id}/desativar`, { method: 'POST' }),
   },
 
   /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */
@@ -320,6 +343,14 @@ export const coreApi = {
     /** Gestor-only: confirma que o device já persistiu localmente até syncedAt (habilita a limpeza no servidor). */
     syncCursor: (body: SyncCursorRequest) =>
       request<void>('/v1/chat/sync-cursor', { method: 'POST', body: JSON.stringify(body) }),
+    /** Marca como lidas as mensagens do outro lado — chamar ao abrir/revisitar a conversa. */
+    markAsRead: (conversationId: string) =>
+      request<void>(`/v1/chat/conversations/${conversationId}/read`, { method: 'POST' }),
+    /** Ping de "estou digitando" — efêmero, expira sozinho em alguns segundos no servidor. */
+    typing: (conversationId: string) =>
+      request<void>(`/v1/chat/conversations/${conversationId}/typing`, { method: 'POST' }),
+    isOtherTyping: (conversationId: string) =>
+      request<boolean>(`/v1/chat/conversations/${conversationId}/typing`),
     /** Gestor-only: anexa uma rota já cadastrada à conversa (spec 07 item 8). */
     sendRoutePlan: (conversationId: string, body: SendRoutePlanRequest) =>
       request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/route-plan`, {
