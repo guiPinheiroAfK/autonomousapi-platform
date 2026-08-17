@@ -170,3 +170,116 @@ def test_endpoint_valida_coordenada_fora_de_faixa():
         params={"from_lat": 999, "from_lon": -46.65, "to_lat": -23.57, "to_lon": -46.64},
     )
     assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# /table — matriz de distância/duração (spec 02, "Evolução pendente")
+# ---------------------------------------------------------------------------
+
+OSRM_TABLE_OK = {
+    "code": "Ok",
+    "distances": [[0, 1200.5, 3400.0], [1200.5, 0, 2200.0], [3400.0, 2200.0, 0]],
+    "durations": [[0, 150.0, 300.0], [150.0, 0, 220.0], [300.0, 220.0, 0]],
+}
+
+PONTOS_3 = [(-23.5614, -46.6559), (-23.5700, -46.6400), (-23.5500, -46.6300)]
+
+
+def test_table_sem_url_configurada_devolve_indisponivel_sem_chamar_rede():
+    resultado = OsrmRoutingClient("").table(PONTOS_3)
+
+    assert resultado.available is False
+    assert "não configurado" in resultado.unavailable_reason
+
+
+def test_table_traduz_resposta_do_osrm_para_o_nosso_contrato(osrm_respondendo):
+    osrm_respondendo(_resposta(OSRM_TABLE_OK))
+
+    resultado = OsrmRoutingClient("http://osrm:5000").table(PONTOS_3)
+
+    assert resultado.available is True
+    assert resultado.distances_m == OSRM_TABLE_OK["distances"]
+    assert resultado.durations_s == OSRM_TABLE_OK["durations"]
+
+
+def test_table_envia_coordenadas_na_ordem_lon_lat(osrm_respondendo):
+    capturado: dict = {}
+    osrm_respondendo(_resposta(OSRM_TABLE_OK), capturar=capturado)
+
+    OsrmRoutingClient("http://osrm:5000").table(PONTOS_3)
+
+    assert capturado["url"].endswith(
+        "/table/v1/driving/-46.6559,-23.5614;-46.64,-23.57;-46.63,-23.55"
+    )
+
+
+def test_table_envia_um_raio_de_snap_por_ponto(osrm_respondendo):
+    capturado: dict = {}
+    osrm_respondendo(_resposta(OSRM_TABLE_OK), capturar=capturado)
+
+    OsrmRoutingClient("http://osrm:5000").table(PONTOS_3)
+
+    assert capturado["params"]["radiuses"] == "1000;1000;1000"
+    assert capturado["params"]["annotations"] == "distance,duration"
+
+
+def test_table_rejeita_menos_de_dois_pontos_sem_chamar_rede():
+    resultado = OsrmRoutingClient("http://osrm:5000").table([(-23.56, -46.65)])
+
+    assert resultado.available is False
+    assert "ao menos 2 pontos" in resultado.unavailable_reason
+
+
+def test_table_rejeita_acima_do_teto_de_pontos_sem_chamar_rede():
+    pontos = [(-23.56 + i * 0.001, -46.65) for i in range(31)]
+
+    resultado = OsrmRoutingClient("http://osrm:5000").table(pontos)
+
+    assert resultado.available is False
+    assert "Máximo de 30 pontos" in resultado.unavailable_reason
+
+
+def test_table_motor_fora_do_ar_vira_indisponivel_e_nao_propaga_excecao(osrm_respondendo):
+    osrm_respondendo(httpx.ConnectError("connection refused"))
+
+    resultado = OsrmRoutingClient("http://osrm:5000").table(PONTOS_3)
+
+    assert resultado.available is False
+    assert "indisponível" in resultado.unavailable_reason
+
+
+def test_table_ponto_fora_da_area_vira_indisponivel(osrm_respondendo):
+    osrm_respondendo(_resposta({"code": "NoSegment"}, status=400))
+
+    resultado = OsrmRoutingClient("http://osrm:5000").table(PONTOS_3)
+
+    assert resultado.available is False
+    assert "fora da área coberta" in resultado.unavailable_reason
+
+
+def test_table_endpoint_exige_token_de_servico():
+    resp = client.post("/internal/v1/table", json={"points": [{"lat": -23.56, "lon": -46.65}]})
+    assert resp.status_code == 401
+
+
+def test_table_endpoint_responde_200_com_available_false_quando_motor_desligado():
+    resp = client.post(
+        "/internal/v1/table",
+        headers=HEADERS,
+        json={"points": [{"lat": -23.56, "lon": -46.65}, {"lat": -23.57, "lon": -46.64}]},
+    )
+
+    assert resp.status_code == 200
+    corpo = resp.json()
+    assert corpo["available"] is False
+    assert corpo["unavailable_reason"]
+    assert corpo["distances_m"] == []
+
+
+def test_table_endpoint_valida_coordenada_fora_de_faixa():
+    resp = client.post(
+        "/internal/v1/table",
+        headers=HEADERS,
+        json={"points": [{"lat": 999, "lon": -46.65}, {"lat": -23.57, "lon": -46.64}]},
+    )
+    assert resp.status_code == 422

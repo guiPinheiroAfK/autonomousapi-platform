@@ -11,6 +11,7 @@ const DB_NAME = 'autonomousapi-chat';
 const DB_VERSION = 1;
 const STORE = 'messages';
 const DEVICE_ID_KEY = 'autonomousapi.chatDeviceId';
+const LAST_SEEN_KEY = 'autonomousapi.chatLastSeenAt';
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -35,6 +36,19 @@ export function getDeviceId(): string {
     localStorage.setItem(DEVICE_ID_KEY, id);
   }
   return id;
+}
+
+/**
+ * Badge de "não lida" no Home do motorista (spec 07): não existe read-receipt pro
+ * motorista no backend (só o gestor tem chat_sync_cursor, ADR 0015) — nada a criar lá só
+ * pra isso. Comparar `lastMessageAt` das conversas com este timestamp local já resolve.
+ */
+export function getChatLastSeenAt(): string | null {
+  return localStorage.getItem(LAST_SEEN_KEY);
+}
+
+export function markChatSeenNow(): void {
+  localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
 }
 
 /** Upsert por id — mensagem que já existe localmente é substituída, não duplicada. */

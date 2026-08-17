@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { MapPin, MessageCirclePlus, MessagesSquare, Route as RouteIcon, Send } from 'lucide-react';
+import { Check, CheckCheck, MapPin, MessageCirclePlus, MessagesSquare, Route as RouteIcon, Send } from 'lucide-react';
 import {
   coreApi,
   type ChatConversationResponse,
@@ -17,7 +17,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { cn } from '../lib/utils';
 import { formatRelativeShortBR, formatTimeBR, iniciais } from '../lib/format';
-import { getDeviceId, getMessages, saveMessages } from '../lib/chatDb';
+import { getDeviceId, getMessages, markChatSeenNow, saveMessages } from '../lib/chatDb';
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -30,7 +30,7 @@ function nomeDoOutroLado(c: ChatConversationResponse, user: UserResponse | null)
 }
 
 interface Props {
-  /** Motorista-only: quando fornecido, "ver rota" na bolha ROUTE_ASSIGNMENT navega pra
+  /** Motorista-only: quando fornecido, "ver rota" na bolha ATRIBUICAO_ROTA navega pra
    *  tela dedicada em vez de abrir modal (motorista não tem acesso a routePlans.list()). */
   onOpenActiveRoute?: () => void;
 }
@@ -63,9 +63,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
   const [attachError, setAttachError] = useState('');
 
   const [routeDetail, setRouteDetail] = useState<RoutePlanResponse | null>(null);
+  const [otherTyping, setOtherTyping] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const deviceId = useMemo(() => getDeviceId(), []);
+  const lastTypingPingAt = useRef(0);
 
   function refreshConversations() {
     coreApi.chat
@@ -76,6 +78,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
   }
 
   useEffect(refreshConversations, []);
+
+  // Abrir a tela de Mensagens já conta como "viu o chat" — zera o badge de não lida do
+  // Home do motorista (ver lib/chatDb.ts, sem read-receipt de verdade no backend pra isso).
+  useEffect(() => {
+    if (user?.role === 'MOTORISTA') markChatSeenNow();
+  }, [user?.role]);
 
   // Achado de sessão anterior: sem isso, quem não tinha nenhuma conversa aberta só via
   // uma conversa nova depois de dar F5 — a lista em si nunca era recarregada sozinha.
@@ -107,6 +115,26 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     const interval = setInterval(() => loadServerWindow(selectedId), POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [selectedId]);
+
+  // Indicador de "digitando" (spec 07) — poll mais curto que o de mensagens porque um
+  // sinal que já é efêmero (expira em 6s no servidor, ver TypingIndicatorService) fica
+  // sempre atrasado demais em 5s; 2s é o mínimo pra parecer "ao vivo" sem virar tempo real.
+  useEffect(() => {
+    if (!selectedId) {
+      setOtherTyping(false);
+      return;
+    }
+    const interval = setInterval(() => {
+      coreApi.chat.isOtherTyping(selectedId).then(setOtherTyping).catch(() => {});
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [selectedId]);
+
+  // Abrir/revisitar a conversa marca as mensagens do outro lado como lidas.
+  useEffect(() => {
+    if (!selectedId) return;
+    coreApi.chat.markAsRead(selectedId).catch(() => {});
+  }, [selectedId, messages.length]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
@@ -298,7 +326,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               )}
               {messages.map((m) => {
                 const mine = m.senderUserId === user?.id;
-                if (m.messageType === 'ROUTE_ASSIGNMENT') {
+                if (m.messageType === 'ATRIBUICAO_ROTA') {
                   return (
                     <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
                       <div className="max-w-[75%] rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-xs">
@@ -328,13 +356,24 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                       )}
                     >
                       <p>{m.body}</p>
-                      <p className={cn('mt-1 text-[10px]', mine ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+                      <p
+                        className={cn(
+                          'mt-1 flex items-center justify-end gap-1 text-[10px]',
+                          mine ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                        )}
+                      >
                         {m.sentAt ? formatTimeBR(m.sentAt) : ''}
+                        {mine && (m.lidoEm ? <CheckCheck className="size-3" /> : <Check className="size-3" />)}
                       </p>
                     </div>
                   </div>
                 );
               })}
+              {otherTyping && (
+                <div className="flex justify-start">
+                  <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">digitando...</div>
+                </div>
+              )}
               <div ref={bottomRef} />
             </div>
 
@@ -354,7 +393,14 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               <Input
                 placeholder="Escreva uma mensagem..."
                 value={newBody}
-                onChange={(e) => setNewBody(e.target.value)}
+                onChange={(e) => {
+                  setNewBody(e.target.value);
+                  const now = Date.now();
+                  if (selectedId && now - lastTypingPingAt.current > 2000) {
+                    lastTypingPingAt.current = now;
+                    coreApi.chat.typing(selectedId).catch(() => {});
+                  }
+                }}
                 className="flex-1"
               />
               <Button type="submit" size="sm" disabled={!newBody.trim() || sending}>

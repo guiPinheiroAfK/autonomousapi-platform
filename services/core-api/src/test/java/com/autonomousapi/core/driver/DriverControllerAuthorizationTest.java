@@ -45,6 +45,16 @@ class DriverControllerAuthorizationTest extends IntegrationTestBase {
                 .andExpect(status().isForbidden());
     }
 
+    /** Achado da revisão de spec (2026-08-17): faltava travar a leitura do detalhe de
+     *  outro motorista (nome, CNH, telefone, e-mail) por id direto. */
+    @Test
+    void motoristaRecebe403AoLerDetalheDeOutroMotoristaPorId() throws Exception {
+        String token = tokenMotorista();
+
+        mockMvc.perform(get("/v1/drivers/" + UUID.randomUUID()).header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
     private String tokenMotorista() {
         Tenant tenant = tenants.save(new Tenant("Frota de Teste"));
         return jwtService.issueAccessToken(UUID.randomUUID(), "MOTORISTA", tenant.getId());

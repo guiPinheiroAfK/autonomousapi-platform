@@ -20,7 +20,9 @@ Escopo:
 
 Dois itens identificados depois do MVP inicial, priorizados para entrar juntos no próximo ciclo, antes de avançar para o restante da Fase 2:
 
-- **App do motorista completo**, incluindo o mini-chat gestor↔motorista (spec `07-app-motorista.md`) — hoje o app do motorista só tem login, consentimento e tela de viagem, o que empurra toda comunicação prática pro WhatsApp.
+- **App do motorista completo**, redesenhado em torno do princípio "operador, não gestor" (tela "Hoje" como home, resto secundário) — spec `07-app-motorista.md`. Hoje o app só tem login, consentimento e tela de viagem, o que empurra toda comunicação prática pro WhatsApp.
+- **Mini-chat gestor↔motorista** com acabamento visual equivalente ao dashboard (não genérico) e com atribuição de rota diretamente pela conversa (mensagem estruturada) — spec `07-app-motorista.md`.
+- **Aba "Pontos de Coleta"** no web, para suportar rotas multi-coleta/multi-entrega sem precisar redigitar endereço toda vez — spec `02-dados-mapas-rotas.md` (`collection_point`) e `08-decisoes-tecnicas-pendentes.md`, item 5.
 - **Tela de veículo migrando de dialog para rota própria** `/frota/:id` (spec `08-decisoes-tecnicas-pendentes.md`, item 1).
 
 Justificativa de priorizar isso antes de seguir a Fase 2 "pura": ambos fecham gaps de uso diário do produto já em operação, enquanto a Fase 2 (prontidão viária) é sobre construir a próxima camada de dado — vale fechar a experiência de quem já usa o produto todo dia antes de empilhar mais escopo novo.

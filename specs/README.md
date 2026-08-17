@@ -13,7 +13,7 @@ Antes de escrever código, leia os arquivos nesta ordem:
 | 05 | `05-roadmap-fases.md` | Fases de entrega (a "escada de crescimento"), critério de saída de cada fase |
 | 06 | `06-parcerias-e-dados-futuros.md` | Recarga elétrica, condição do veículo (FIPE + sinistro), avaliação privada de motorista, receita por afiliados |
 | 07 | `07-app-motorista.md` | Front + back do app do motorista: veículo atual, CNH, OS read-only, ocorrência, notificações, histórico de viagens, mini-chat gestor↔motorista |
-| 08 | `08-decisoes-tecnicas-pendentes.md` | Mini-ADRs: tela de veículo (dialog→rota), fonte de dado de manutenção por modelo, status do catálogo de afiliados, ícone por tipo de veículo |
+| 08 | `08-decisoes-tecnicas-pendentes.md` | Mini-ADRs: tela de veículo (dialog→rota), fonte de dado de manutenção por modelo, status do catálogo de afiliados, ícone por tipo de veículo, pontos de coleta via Nominatim, acabamento visual do chat |
 
 ## Como usar isso com o Claude Code
 

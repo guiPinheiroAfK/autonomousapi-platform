@@ -22,6 +22,7 @@
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <stripe.version>33.3.0</stripe.version>
+        <ortools.version>9.11.4210</ortools.version>
         <!--
           Sobrepõe o Testcontainers do BOM do Spring Boot 3.3 (1.19.8). O docker-java que
           o 1.19.x embute negocia uma versão de API antiga demais para o Docker Engine
@@ -113,6 +114,18 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!--
+          VRP/TSP sobre a matriz de distância real do OSRM /table (spec 02: "não implementar
+          o solver do zero" — usar biblioteca madura). ortools-java embute os binários
+          nativos do solver C++ (jar maior, ~200MB, mesmo trade-off documentado no spec para
+          não escrever heurística própria por cima do problema NP-difícil).
+        -->
+        <dependency>
+            <groupId>com.google.ortools</groupId>
+            <artifactId>ortools-java</artifactId>
+            <version>${ortools.version}</version>
         </dependency>
 
         <dependency>

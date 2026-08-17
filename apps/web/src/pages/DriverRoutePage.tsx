@@ -9,7 +9,8 @@ import { cn } from '../lib/utils';
 const TIPO_LABEL: Record<string, string> = { COLETA: 'Coleta', ENTREGA: 'Entrega' };
 
 /** Rota do dia do motorista (spec 07 item 8) — paradas na ordem definida pelo gestor,
- *  com um único botão por parada: marcar concluída. Nada de reordenar ou editar. */
+ *  com um único botão por parada: marcar concluída. Nada de reordenar ou editar.
+ *  TRANSFER (trajeto único, spec 02) renderiza um cartão único em vez da lista numerada. */
 export function DriverRoutePage() {
   const [route, setRoute] = useState<RoutePlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,55 @@ export function DriverRoutePage() {
           <div className="flex flex-col items-center gap-2 p-10 text-center text-xs text-muted-foreground">
             <RouteIcon className="size-6 text-muted-foreground/60" />
             <p>Nenhuma rota atribuída no momento.</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (route.categoria === 'TRANSFER') {
+    const origem = route.stops?.[0];
+    const destino = route.stops?.[1];
+    const proxima = !origem?.concluidaEm ? origem : !destino?.concluidaEm ? destino : null;
+    return (
+      <div className="p-5">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-foreground">Transfer</h2>
+          <StatusBadgeRotaPlan status={route.status} />
+        </div>
+        <Card>
+          <div className="space-y-3 p-5">
+            <div className={cn('flex items-center gap-2.5', origem?.concluidaEm && 'text-muted-foreground')}>
+              <span className={cn('flex size-6 shrink-0 items-center justify-center rounded-full', origem?.concluidaEm ? 'bg-status-success-bg text-status-success' : 'bg-secondary')}>
+                {origem?.concluidaEm ? <Check className="size-3.5" /> : <MapPin className="size-3.5" />}
+              </span>
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Origem</p>
+                <p className="text-sm text-foreground">{origem?.label}</p>
+              </div>
+            </div>
+            <div className={cn('flex items-center gap-2.5', destino?.concluidaEm && 'text-muted-foreground')}>
+              <span className={cn('flex size-6 shrink-0 items-center justify-center rounded-full', destino?.concluidaEm ? 'bg-status-success-bg text-status-success' : 'bg-secondary')}>
+                {destino?.concluidaEm ? <Check className="size-3.5" /> : <MapPin className="size-3.5" />}
+              </span>
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Destino</p>
+                <p className="text-sm text-foreground">{destino?.label}</p>
+              </div>
+            </div>
+            {route.valor != null && (
+              <p className="text-xs text-muted-foreground">Valor combinado: R$ {route.valor.toFixed(2)}</p>
+            )}
+            {error && <p className="text-xs text-status-danger">{error}</p>}
+            {proxima && (
+              <Button
+                size="sm"
+                onClick={() => concluir(proxima.id!)}
+                disabled={completingId === proxima.id}
+              >
+                {completingId === proxima.id ? 'Marcando...' : proxima === origem ? 'Iniciar' : 'Concluir'}
+              </Button>
+            )}
           </div>
         </Card>
       </div>

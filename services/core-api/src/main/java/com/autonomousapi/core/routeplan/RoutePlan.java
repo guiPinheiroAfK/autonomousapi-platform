@@ -6,7 +6,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -38,6 +40,16 @@ public class RoutePlan {
     @Column(name = "status", nullable = false, length = 20)
     private RoutePlanStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "categoria", nullable = false, length = 10, updatable = false)
+    private RouteCategoria categoria;
+
+    @Column(name = "data_execucao", nullable = false, updatable = false)
+    private LocalDate dataExecucao;
+
+    @Column(name = "valor")
+    private BigDecimal valor;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -45,13 +57,18 @@ public class RoutePlan {
         // JPA
     }
 
-    public RoutePlan(UUID tenantId, UUID gestorUserId, UUID driverId, UUID vehicleId) {
+    public RoutePlan(
+            UUID tenantId, UUID gestorUserId, UUID driverId, UUID vehicleId,
+            RouteCategoria categoria, LocalDate dataExecucao, BigDecimal valor) {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.gestorUserId = gestorUserId;
         this.driverId = driverId;
         this.vehicleId = vehicleId;
         this.status = RoutePlanStatus.PLANEJADA;
+        this.categoria = categoria;
+        this.dataExecucao = dataExecucao;
+        this.valor = valor;
         this.createdAt = Instant.now();
     }
 
@@ -85,6 +102,18 @@ public class RoutePlan {
 
     public RoutePlanStatus getStatus() {
         return status;
+    }
+
+    public RouteCategoria getCategoria() {
+        return categoria;
+    }
+
+    public LocalDate getDataExecucao() {
+        return dataExecucao;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
     }
 
     public Instant getCreatedAt() {

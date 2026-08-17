@@ -78,20 +78,16 @@ Modelo de dados (schema `core`):
 - [x] Modelo de dados de cada item acima criado como migration (mesmo que a feature não esteja com UI completa ainda).
       (migration V10 — exceto recarga elétrica, ver nota abaixo; `driver_rating_auto` também
       fica de fora, depende do pipeline de GPS maduro, spec já marca isso como Fase 3)
-- [x] Regra de acesso de `driver_rating` implementada (todas as rotas de
-      `DriverRatingController`, inclusive leitura, são `GESTOR_FROTA`/`ADMIN` via
-      `@PreAuthorize` de classe — não existe rota que um MOTORISTA autenticado consiga
-      chamar). **Não testado com um usuário MOTORISTA real**: não há hoje nenhum fluxo que
-      crie login com essa role (signup só cria GESTOR_FROTA — spec 03 trata isso como
-      feature futura de convite), então o caso "motorista tenta ler a própria nota" ainda
-      não tem como ser exercitado ponta a ponta. Verificado apenas estruturalmente
-      (`@EnableMethodSecurity` ativo, mesmo mecanismo já em uso no resto do app).
+- [x] Regra de acesso de `driver_rating` implementada e testada com token MOTORISTA real
+      (`DriverRatingAuthorizationTest`, HTTP via MockMvc contra Postgres real — 403 confirmado,
+      não só lido no código). O convite de login do motorista (ADR 0013) já existe e está em
+      uso (`eduardo.ramos@teste-chat.com`, testado ponta a ponta no browser), então essa
+      dependência que bloqueava o teste antes não existe mais.
 - [ ] Fallback gracioso implementado para provedor externo de recarga fora do ar.
-      (recarga elétrica não entrou nesta rodada — sem provedor de dado real identificado
-      ainda, ver spec 06 item 1)
+      (recarga elétrica não entrou ainda — sem provedor de dado real identificado, ver spec 06 item 1)
 - [ ] Consentimento de avaliação de desempenho incluído no fluxo de onboarding do motorista.
-      (depende do app mobile ter uma tela de onboarding de motorista com login próprio —
-      ainda não existe, mesma dependência do item de acesso acima)
+      (login do motorista via convite já existe, mas o consentimento específico de avaliação
+      de desempenho no fluxo de aceite ainda não foi implementado — item genuinamente pendente)
 
 ### Nota sobre FIPE (item 2)
 

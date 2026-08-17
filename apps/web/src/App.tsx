@@ -32,11 +32,15 @@ const AffiliatesPage = lazy(() => import('./pages/AffiliatesPage').then((m) => (
 const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })));
 const RoutesPage = lazy(() => import('./pages/RoutesPage').then((m) => ({ default: m.RoutesPage })));
 const RoutePlansPage = lazy(() => import('./pages/RoutePlansPage').then((m) => ({ default: m.RoutePlansPage })));
+const CollectionPointsPage = lazy(() =>
+  import('./pages/CollectionPointsPage').then((m) => ({ default: m.CollectionPointsPage })),
+);
 const ChargingStationsPage = lazy(() =>
   import('./pages/ChargingStationsPage').then((m) => ({ default: m.ChargingStationsPage })),
 );
 const DriverHomePage = lazy(() => import('./pages/DriverHomePage').then((m) => ({ default: m.DriverHomePage })));
 const DriverRoutePage = lazy(() => import('./pages/DriverRoutePage').then((m) => ({ default: m.DriverRoutePage })));
+const DriverMorePage = lazy(() => import('./pages/DriverMorePage').then((m) => ({ default: m.DriverMorePage })));
 
 function CarregandoTela() {
   return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
@@ -201,12 +205,15 @@ export function App() {
       <Suspense fallback={<CarregandoTela />}>
         {view === 'dashboard' &&
           (user.role === 'MOTORISTA' ? (
-            <DriverHomePage onViewRoute={() => setView('driver-route')} />
+            <DriverHomePage onViewRoute={() => setView('driver-route')} onOpenChat={() => setView('chat')} />
           ) : (
             <DashboardPage onViewVehicles={() => setView('vehicles')} />
           ))}
-        {view === 'driver-home' && <DriverHomePage onViewRoute={() => setView('driver-route')} />}
+        {view === 'driver-home' && (
+          <DriverHomePage onViewRoute={() => setView('driver-route')} onOpenChat={() => setView('chat')} />
+        )}
         {view === 'driver-route' && <DriverRoutePage />}
+        {view === 'driver-more' && <DriverMorePage />}
         {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} onViewDetail={goToVehicleDetail} />}
         {view === 'vehicle-detail' && vehicleDetailId && (
           <VehicleDetailPage vehicleId={vehicleDetailId} onBack={backFromVehicleDetail} />
@@ -223,6 +230,7 @@ export function App() {
         {view === 'charging-stations' && <ChargingStationsPage />}
         {view === 'routes' && <RoutesPage />}
         {view === 'route-plans' && <RoutePlansPage />}
+        {view === 'collection-points' && <CollectionPointsPage />}
         {view === 'costs' && costsTarget && (
           <VehicleCostsPage
             vehicleId={costsTarget.vehicleId}

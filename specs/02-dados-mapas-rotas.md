@@ -44,11 +44,36 @@ Abordagem recomendada:
 3. Resultado: sequência ordenada de paradas + rota entre elas, devolvida ao app do motorista já na ordem otimizada (o motorista não decide a sequência manualmente).
 4. Fase 3+: usar `road_readiness_score` também como peso nesse cálculo, do mesmo jeito que no roteamento simples.
 
-Modelo de dados adicional (schema `geo`):
-- `route_plan`: gestor/tenant que criou, veículo/motorista designado, status (planejada, em andamento, concluída).
-- `route_stop`: pertence a um `route_plan`, tipo (coleta/entrega), localização, janela de horário (opcional), ordem sugerida pelo solver, ordem real executada (para depois comparar planejado vs. realizado).
+**Estado real (`RoutePlanService.suggestOrder`):** implementado com matriz de distância real via OSRM `/table` (`geo-api POST /internal/v1/table`) + solver VRP (Google OR-Tools, `OrToolsRouteOptimizer`), agrupando coleta antes de entrega — sempre revisada pelo gestor antes de confirmar (nunca aplicada sem revisão humana). Nearest-neighbor por haversine (linha reta) da v1 continua no código só como fallback de dois níveis: se o `/table` cair ou devolver um par sem ligação viária (`RouteMatrixService`, com log de telemetria, nunca silencioso) e, no limite, se o próprio OR-Tools não achar solução.
 
-Isso é uma extensão da Fase 2 (roteamento básico), não da Fase 1 — depende do motor de roteamento já estar funcionando ponto-a-ponto antes de generalizar para múltiplas paradas.
+Modelo de dados adicional (schema `core`, não `geo` — são entidades operacionais/de tenant, não dado geoespacial agregado):
+- `collection_point`: cadastro reutilizável de ponto de coleta/entrega — nome, endereço, lat/lon, tenant, ativo (bool), **janela de horário padrão** (`janela_inicio`/`janela_fim`, opcional), `posicao_ajustada` (bool — true quando o gestor corrige a posição depois da geocodificação automática). Existe porque, na prática, a mesma empresa cliente costuma coletar/entregar sempre nos mesmos endereços (depósito, filial, cliente recorrente) — sem esse cadastro, o gestor teria que digitar o mesmo endereço toda rota nova.
+- `route_plan`: gestor/tenant que criou, veículo/motorista designado, `data_execucao` (obrigatória, validada contra data passada), status (`PLANEJADA`/`EM_ANDAMENTO`/`CONCLUIDA`, derivado automaticamente do estado das paradas — nunca escrito manualmente), `categoria` (`ROTA` | `TRANSFER` — ver seção própria abaixo), `valor` (opcional).
+- `route_stop`: pertence a um `route_plan`, tipo (coleta/entrega), referência a um `collection_point` (quando o ponto é cadastrado, e nesse caso o servidor resolve label/lat/lon do cadastro, nunca confia no que o cliente mandou) **ou** um endereço avulso, janela de horário própria (pré-preenchida a partir do `collection_point` quando ele tiver janela padrão, sempre editável nessa instância), ordem sugerida, ordem real executada.
+
+Implementado: tela "Pontos de Coleta" no web (`CollectionPointsPage.tsx`) — CRUD simples, geocodificação via Nominatim.
+
+### Travas de validação (implementadas em `RoutePlanService.create`, não só no front)
+
+- [x] `route_plan` não pode ser criado com `data_execucao` no passado.
+- [x] `janela_fim` de uma parada não pode ser `<=` `janela_inicio`, quando as duas estiverem preenchidas.
+- [ ] (Melhoria opcional, não obrigatória) Alertar sem bloquear se `data_execucao` for hoje e `janela_fim` de alguma parada já tiver passado — não implementado.
+
+### Rota como "transfer" — categoria com valor embutido
+
+`route_plan.categoria`: `ROTA` (padrão, multi-parada) ou `TRANSFER` (exatamente 2 paradas — origem/COLETA e destino/ENTREGA — validado no backend). `route_plan.valor` é opcional, editável pelo gestor. Do lado do motorista, `TRANSFER` renderiza como cartão único (origem → destino, valor, botão "iniciar"/"concluir") em vez da lista numerada de paradas — implementado em `DriverHomePage.tsx` e `DriverRoutePage.tsx`.
+
+### Distância real (OSRM `/table`) + OR-Tools — implementado
+
+Os dois passos que a spec pedia juntos (não implementar um "solver" do zero, e não usar distância em linha reta) estão no ar:
+
+1. **Matriz de distância/tempo real via OSRM `/table`** — `geo-api` expõe `POST /internal/v1/table` (mesmo padrão de degradação do `/route`: sempre 200, `available=false` com motivo legível quando o motor está fora do ar ou algum par de pontos não tem ligação viária), consumida por `GeoApiClient.distanceMatrix`.
+2. **OR-Tools (VRP)** sobre essa matriz — `OrToolsRouteOptimizer` resolve um TSP de caminho aberto (nó fantasma de custo zero como truque para não forçar volta ao ponto de partida), substituindo o nearest-neighbor greedy como estratégia primária.
+
+As três salvaguardas exigidas junto dessa troca:
+- **Fallback com log/telemetria** — `RouteMatrixService` cai para a heurística haversine (v1) se o OSRM `/table` estiver indisponível ou devolver qualquer par sem ligação viária, sempre com `log.warn`, nunca silencioso; se mesmo assim o OR-Tools não achar solução, cai para o nearest-neighbor greedy como último recurso.
+- **Teto de paradas por `route_plan`** — 30 (`RoutePlanService.TETO_PARADAS_ROTA`, espelhado em `geo-api` como `TETO_PONTOS_MATRIZ`), validado tanto em `suggestOrder` quanto em `create`.
+- **Cache da matriz por conjunto de pontos** — `RouteMatrixService` mantém a matriz em memória por 5 minutos por conjunto de coordenadas, evitando recalcular a cada ajuste de "sugerir ordem" na mesma tela (mesmo padrão single-instance de `TypingIndicatorService`, Redis como evolução natural se precisar de múltiplas instâncias).
 
 ## Vídeo e visão computacional
 
@@ -64,21 +89,12 @@ Isso é uma extensão da Fase 2 (roteamento básico), não da Fase 1 — depende
 
 ## Definition of Done (dados/mapas, Fase 1-2)
 
-- [x] Schema `geo` com as entidades acima, migrations versionadas. (`road_segment`,
-      `road_segment_observation`, `road_readiness_score` — migration 0002; `route_plan`/
-      `route_stop` ficam para quando o roteamento multi-parada entrar, ver item abaixo)
-- [x] Import de um extrato OSM (ex. região do piloto) rodando localmente.
-      (`scripts/import_osm_pilot.py`, via Overpass API — bbox de exemplo: Av. Paulista/SP)
-- [x] Pipeline de ingestão de GPS → `road_segment_observation` funcionando ponta a ponta com dado de pelo menos 1 veículo real ou simulado.
-      (verificado com dado real importado — Rua Pamplona/SP)
-- [x] Job de agregação para `road_readiness_score` rodando (mesmo que score seja simples, ex. contagem de observações).
-      (`app/aggregation.py`, v1 = contagem normalizada, agendado via `app/scheduler.py`)
-- [x] Política de retenção/anonimização documentada e implementada, não só planejada.
-      (ADR 0009; `app/retention.py`, roda 1x/dia)
-- [x] Roteamento básico via OSRM/GraphHopper. (OSRM em modo MLD sobre extrato da área do
-      piloto — ADR 0018. Grafo preparado por `scripts/prepare_osrm_graph.py`, servido pelo
-      profile `routing` do compose; `GET /v1/routes/preview` no core-api e tela "Rotas" no
-      web, com busca de endereço via Nominatim.)
-- [ ] (Extensão Fase 2+) Roteamento multi-coleta/multi-entrega funcionando com solver existente (ex. OR-Tools), retornando sequência otimizada de paradas.
-      (destravado agora que o motor ponto-a-ponto existe — o solver roda sobre a matriz de
-      distância que o OSRM passa a fornecer. Falta modelar `route_plan`/`route_stop`.)
+- [x] Schema `geo` com as entidades acima, migrations versionadas. (`road_segment`, `road_segment_observation`, `road_readiness_score` — migration 0002)
+- [x] Import de um extrato OSM (ex. região do piloto) rodando localmente. (`scripts/import_osm_pilot.py`, via Overpass API)
+- [x] Pipeline de ingestão de GPS → `road_segment_observation` funcionando ponta a ponta com dado de pelo menos 1 veículo real ou simulado. (verificado com dado real importado)
+- [x] Job de agregação para `road_readiness_score` rodando. (`app/aggregation.py`, agendado via `app/scheduler.py`)
+- [x] Política de retenção/anonimização documentada e implementada. (ADR 0009; `app/retention.py`)
+- [x] Roteamento básico via OSRM/GraphHopper. (OSRM em modo MLD sobre extrato da área do piloto — ADR 0018; `GET /v1/routes/preview` no core-api, tela "Rotas" no web.)
+- [x] Cadastro de pontos de coleta reutilizáveis (`collection_point`), com geocodificação via Nominatim.
+- [x] Rota com categoria `TRANSFER` (trajeto único com valor) além de `ROTA` (multi-parada).
+- [x] **(Extensão Fase 2+) Roteamento multi-coleta/multi-entrega com solver existente (OR-Tools) e matriz de distância real (OSRM `/table`)** — ver seção "Distância real (OSRM `/table`) + OR-Tools" acima; heurística nearest-neighbor por linha reta da v1 preservada como fallback de dois níveis, nunca removida.
