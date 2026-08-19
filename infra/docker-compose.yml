@@ -80,6 +80,10 @@ services:
       CORE_DB_URL: jdbc:postgresql://db:5432/autonomousapi
       CORE_DB_USER: autonomousapi
       CORE_DB_PASSWORD: autonomousapi
+      # Padrão do Spring Boot é 10 — teste de carga (scripts/stress-test) mostrou o
+      # HikariCP enfileirando dezenas de requisição nesse limite bem antes de qualquer
+      # CPU/memória apertar. Configurável pra poder comparar sem recompilar.
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${CORE_DB_POOL_SIZE:-10}
       CORE_JWT_SECRET: ${CORE_JWT_SECRET:-dev-only-secret-change-me-please-0123456789abcdef}
       # A application.yml já lia esta variável; faltava o compose repassá-la. Útil para
       # sessão longa em demonstração/depuração sem recompilar (o padrão segue 15 min).

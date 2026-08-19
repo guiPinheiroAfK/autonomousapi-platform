@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 class VehicleServiceTest {
 
@@ -64,13 +68,26 @@ class VehicleServiceTest {
     @Test
     void listaApenasVeiculosDoProprioTenant() {
         Vehicle v = new Vehicle(tenantId, "XYZ9988", "Fiat", "Strada", 2021, 500);
-        when(repo.findAllByTenantIdOrderByCreatedAtDesc(tenantId)).thenReturn(List.of(v));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Vehicle> page = new PageImpl<>(List.of(v), pageable, 1);
+        when(repo.search(tenantId, null, null, pageable)).thenReturn(page);
 
-        List<VehicleResponse> result = service.list(principal);
+        Page<VehicleResponse> result = service.list(principal, null, null, pageable);
 
-        assertEquals(1, result.size());
-        assertEquals("XYZ9988", result.get(0).plate());
-        verify(repo, times(0)).findAllByTenantIdOrderByCreatedAtDesc(eq(otherTenantId));
+        assertEquals(1, result.getTotalElements());
+        assertEquals("XYZ9988", result.getContent().get(0).plate());
+        verify(repo, times(0)).search(eq(otherTenantId), any(), any(), any());
+    }
+
+    @Test
+    void listaComBuscaMontaPadraoLikeEmMinusculo() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Vehicle> page = new PageImpl<>(List.of(), pageable, 0);
+        when(repo.search(tenantId, "%lt000050%", VehicleStatus.ATIVO, pageable)).thenReturn(page);
+
+        service.list(principal, " LT000050 ", VehicleStatus.ATIVO, pageable);
+
+        verify(repo).search(tenantId, "%lt000050%", VehicleStatus.ATIVO, pageable);
     }
 
     @Test

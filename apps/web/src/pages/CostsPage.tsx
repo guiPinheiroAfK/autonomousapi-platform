@@ -88,7 +88,9 @@ export function CostsPage() {
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
 
   useEffect(() => {
-    coreApi.vehicles.list().then(setVehicles);
+    // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
+    // já que esta tela usa a lista pra popular os seletores de veículo (despesa, orçamento).
+    coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
   }, []);
 
   return (
@@ -233,9 +235,14 @@ function VisaoGeralTab() {
   );
 }
 
+const EXPENSES_PAGE_SIZE = 20;
+
 function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   const [entries, setEntries] = useState<FleetExpenseEntryResponse[]>([]);
   const [categoriaFiltro, setCategoriaFiltro] = useState<ExpenseCategory | 'todas'>('todas');
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<ExpenseEntryRequest>(EMPTY_EXPENSE_FORM);
@@ -244,12 +251,16 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   function refresh() {
     setLoading(true);
     coreApi.expenses
-      .fleetList(categoriaFiltro === 'todas' ? undefined : categoriaFiltro)
-      .then(setEntries)
+      .fleetList(categoriaFiltro === 'todas' ? undefined : categoriaFiltro, page, EXPENSES_PAGE_SIZE)
+      .then((res) => {
+        setEntries(res.content);
+        setTotalElements(res.totalElements);
+        setTotalPages(res.totalPages);
+      })
       .finally(() => setLoading(false));
   }
 
-  useEffect(refresh, [categoriaFiltro]);
+  useEffect(refresh, [categoriaFiltro, page]);
 
   function openCreate() {
     setForm(EMPTY_EXPENSE_FORM);
@@ -282,7 +293,10 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Select
           value={categoriaFiltro}
-          onChange={(e) => setCategoriaFiltro(e.target.value as ExpenseCategory | 'todas')}
+          onChange={(e) => {
+            setCategoriaFiltro(e.target.value as ExpenseCategory | 'todas');
+            setPage(0);
+          }}
           className="w-52"
         >
           <option value="todas">Todas as categorias</option>
@@ -299,7 +313,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Despesas</CardTitle>
+          <CardTitle>Despesas ({totalElements})</CardTitle>
         </CardHeader>
         {loading ? (
           <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
@@ -359,6 +373,31 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-5 py-3">
+            <span className="text-xs text-muted-foreground">
+              Página {page + 1} de {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próxima
+              </Button>
+            </div>
           </div>
         )}
       </Card>

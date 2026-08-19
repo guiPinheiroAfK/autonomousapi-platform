@@ -50,6 +50,22 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!--
+          Observabilidade para teste de carga: sem isso, sob stress a gente só vê
+          timeout/erro do lado do cliente, sem saber se o gargalo é pool de conexão
+          (HikariCP), GC ou uma query lenta específica. Actuator expõe /actuator/metrics
+          e /actuator/prometheus; micrometer-registry-prometheus é o formato que
+          ferramentas de scraping (Prometheus, ou leitura manual via curl) entendem.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- Migrations: Flyway é dono EXCLUSIVO do schema core (ADR 0004) -->
         <dependency>
             <groupId>org.flywaydb</groupId>

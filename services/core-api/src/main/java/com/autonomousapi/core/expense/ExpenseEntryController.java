@@ -1,5 +1,6 @@
 package com.autonomousapi.core.expense;
 
+import com.autonomousapi.core.common.PageResponse;
 import com.autonomousapi.core.expense.dto.CategoryTotal;
 import com.autonomousapi.core.expense.dto.ExpenseEntryRequest;
 import com.autonomousapi.core.expense.dto.ExpenseEntryResponse;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/v1")
 public class ExpenseEntryController {
+
+    /** Mesmo teto de VehicleController — ver comentário lá. */
+    private static final int MAX_PAGE_SIZE = 500;
 
     private final ExpenseEntryService expenseService;
 
@@ -74,10 +79,18 @@ public class ExpenseEntryController {
         return expenseService.create(principal(auth), null, req);
     }
 
+    /** {@code size} limitado a {@value #MAX_PAGE_SIZE} — mesma razão do /v1/vehicles: sob
+     *  carga, 10 mil lançamentos de despesa devolvidos de uma vez era o segundo maior gargalo
+     *  no load test (p99 ~140ms, picos de 330-370ms). */
     @GetMapping("/expenses")
-    public List<FleetExpenseEntryResponse> fleetExpenses(
-            @RequestParam(required = false) ExpenseCategory categoria, Authentication auth) {
-        return expenseService.fleetExpenses(principal(auth), categoria);
+    public PageResponse<FleetExpenseEntryResponse> fleetExpenses(
+            @RequestParam(required = false) ExpenseCategory categoria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+        int cappedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        return PageResponse.from(expenseService.fleetExpenses(
+                principal(auth), categoria, PageRequest.of(Math.max(page, 0), cappedSize)));
     }
 
     @GetMapping("/expenses/summary")

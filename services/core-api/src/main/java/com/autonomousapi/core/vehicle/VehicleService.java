@@ -11,6 +11,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,11 +52,20 @@ public class VehicleService {
         return VehicleResponse.from(vehicle);
     }
 
+    /**
+     * {@code search} (placa/marca/modelo) e {@code status} são opcionais — nulos = sem aquele
+     * filtro. Existem porque /v1/vehicles pagina (spec de escala): antes a página de Frota
+     * carregava a frota inteira e filtrava em memória, então buscar um veículo que caía numa
+     * página diferente da atual "sumia" mesmo ele existindo.
+     */
     @Transactional(readOnly = true)
-    public List<VehicleResponse> list(JwtPrincipal principal) {
-        return vehicles.findAllByTenantIdOrderByCreatedAtDesc(principal.tenantId()).stream()
-                .map(VehicleResponse::from)
-                .toList();
+    public Page<VehicleResponse> list(
+            JwtPrincipal principal, String search, VehicleStatus status, Pageable pageable) {
+        String likePattern = (search == null || search.isBlank())
+                ? null
+                : "%" + search.trim().toLowerCase() + "%";
+        return vehicles.search(principal.tenantId(), likePattern, status, pageable)
+                .map(VehicleResponse::from);
     }
 
     @Transactional(readOnly = true)
