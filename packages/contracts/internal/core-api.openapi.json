@@ -4285,6 +4285,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "kmRodado": {
+            "type": "integer",
+            "format": "int32"
+          },
           "custoPorKm": {
             "type": "number"
           }

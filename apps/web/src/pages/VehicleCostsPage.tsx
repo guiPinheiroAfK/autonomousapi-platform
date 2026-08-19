@@ -104,7 +104,14 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
       {summary && (
         <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatCard label="Total Gasto" value={`R$ ${summary.totalValor?.toFixed(2)}`} />
-          <StatCard label="Odômetro" value={`${summary.odometerKm} km`} />
+          {/* Km rodado desde o cadastro é o número grande — é sobre ele que o custo por km
+              é calculado. Odômetro total vai só como hint pequeno: contexto de canto, sem
+              disputar espaço com o que de fato importa pra essa conta. */}
+          <StatCard
+            label="Km Rodado (desde o cadastro)"
+            value={`${summary.kmRodado} km`}
+            hint={`Odômetro total: ${summary.odometerKm} km`}
+          />
           <StatCard
             label="Custo por Km"
             value={summary.custoPorKm != null ? `R$ ${summary.custoPorKm.toFixed(2)}` : '—'}

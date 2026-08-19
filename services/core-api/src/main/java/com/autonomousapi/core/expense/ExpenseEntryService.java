@@ -27,9 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Despesas categorizadas (spec 10) — evolução do custo por km original (spec 05, Fase 1):
- * {@code totalValor / odometerKm} atual do veículo continua o cálculo de MVP, agora sobre
- * {@link ExpenseEntry} em vez de {@code vehicle_cost_entry} (migration V23).
+ * Despesas categorizadas (spec 10), agora sobre {@link ExpenseEntry} em vez de
+ * {@code vehicle_cost_entry} (migration V23). Custo por km é {@code totalValor / kmRodado
+ * desde o cadastro} (migration V24), não mais {@code totalValor / odometerKm} total do
+ * veículo — ver {@link ExpenseSummaryResponse}.
  */
 @Service
 public class ExpenseEntryService {
@@ -83,10 +84,11 @@ public class ExpenseEntryService {
         Vehicle vehicle = findOwnedVehicle(principal, vehicleId);
         BigDecimal total = expenses.sumValorByVehicleId(vehicle.getId());
         int odometerKm = vehicle.getOdometerKm();
-        BigDecimal custoPorKm = odometerKm == 0
+        int kmRodado = odometerKm - vehicle.getOdometroInicial();
+        BigDecimal custoPorKm = kmRodado <= 0
                 ? null
-                : total.divide(BigDecimal.valueOf(odometerKm), 2, RoundingMode.HALF_UP);
-        return new ExpenseSummaryResponse(vehicle.getId(), total, odometerKm, custoPorKm);
+                : total.divide(BigDecimal.valueOf(kmRodado), 2, RoundingMode.HALF_UP);
+        return new ExpenseSummaryResponse(vehicle.getId(), total, odometerKm, kmRodado, custoPorKm);
     }
 
     /**
