@@ -1,27 +1,9 @@
-# scripts/test-e2e — onde colocar estes arquivos
+# scripts/test-e2e
 
-Branch já criada no GitHub a partir de `develop`: **`chore/scripts-seed-e2e`**.
-
-Coloque os 3 arquivos dentro dela em:
-
-```
-scripts/test-e2e/00-reset-env.sh
-scripts/test-e2e/01-seed.sh
-scripts/test-e2e/run-e2e-test.sh
-```
-
-Forma mais rápida: peça pro Claude Code (que já tem acesso de escrita ao repo) criar
-essa pasta com esses 3 arquivos nessa branch e commitar. Ou copie manualmente e rode:
-
-```bash
-git checkout chore/scripts-seed-e2e
-mkdir -p scripts/test-e2e
-# copiar os 3 arquivos pra lá
-chmod +x scripts/test-e2e/*.sh
-git add scripts/test-e2e
-git commit -m "chore(scripts): script de reset + seed e2e para teste manual local"
-git push -u origin chore/scripts-seed-e2e
-```
+Scripts pra testar o ambiente local ponta a ponta: apaga tudo, sobe de novo, e
+popula um cenário de teste completo via API real do `core-api` — pra dar pra ver
+como o front-end fica depois de cada mudança, sempre a partir de um estado
+limpo e conhecido.
 
 ## O que cada um faz
 
@@ -42,6 +24,12 @@ git push -u origin chore/scripts-seed-e2e
      token de lá sozinho, não precisa fazer nada manual.
   5. Despesas por veículo (combustível, manutenção, pedágio) e de frota (seguro,
      IPVA) — spec 10.
+  6. 2 pontos de coleta reutilizáveis (spec 08 item 5).
+  7. 2 rotas designadas ao motorista: uma multi-parada (`ROTA`, combinando pontos
+     cadastrados + endereço avulso) e uma `TRANSFER` com valor combinado (spec 02).
+  8. 2 ordens de serviço (uma preventiva já concluída, uma corretiva aberta) — é o
+     que alimenta a aba Relatórios (financeiro de OS).
+  9. Uma conversa de chat gestor→motorista com uma mensagem (ADR 0015).
 
   No final imprime o login do gestor e do motorista pra você logar no front-end e
   conferir.
@@ -67,3 +55,26 @@ assim podia estar em um estado que a API nunca deixaria existir de verdade, e vo
 estaria testando o front contra um cenário que não reflete o sistema real. Por isso
 os scripts sempre passam pela API, e o "apaga" é a nível de ambiente inteiro
 (`docker compose down -v`), não de linha de tabela.
+
+## Cuidado ao rodar os testes de integração depois da seed
+
+Os testes de integração do `core-api` (`ExpenseEntryQueriesIntegrationTest`,
+`VehicleAtributosJsonbIntegrationTest`, etc.) fazem `deleteAll()` em tabelas como
+`vehicle`/`expense_entry` no `@BeforeEach`, presumindo um banco "só deles". Se você
+rodar `bash scripts/test-e2e/run-e2e-test.sh` e, **sem resetar de novo**, rodar
+`.\mvnw.cmd test` (ou `./mvnw test`) apontando pro mesmo Postgres (porta 5433), os
+veículos/despesas que a seed deixou lá podem colidir com esse `deleteAll()` (erro de
+FK, tipo `driver_vehicle_assignment_vehicle_id_fkey`). Não é bug — é o mesmo banco
+sendo usado pelos dois propósitos ao mesmo tempo. Rode `00-reset-env.sh` de novo
+antes da suíte de testes se isso acontecer, ou aponte os testes pra um Postgres
+separado.
+
+## Nota sobre acentuação (Windows)
+
+`01-seed.sh` manda todo corpo de requisição via stdin (`--data-binary @-`), nunca
+como argumento `-d "..."` do curl. Em `curl.exe` rodando de dentro do Git Bash no
+Windows, um argumento de processo com acentuação (ex. "Troca de óleo") pode ser
+corrompido na fronteira MSYS2 → processo nativo, e o backend responde `401` sem
+relação nenhuma com o JWT — nada a ver com autenticação, é só corrupção de bytes
+antes de chegar no servidor. Passar o corpo por stdin evita isso em qualquer
+plataforma.
