@@ -26,7 +26,10 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-ui.html",
             // A própria Stripe chama isso, sem JWT — a assinatura HMAC do payload é a segurança.
-            "/v1/billing/webhook"
+            "/v1/billing/webhook",
+            // Observabilidade (métricas/health do Actuator) para acompanhar teste de carga
+            // local — mesma postura de exposição sem JWT que /v3/api-docs já tem hoje.
+            "/actuator/**"
     };
 
     @Bean

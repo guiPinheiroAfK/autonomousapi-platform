@@ -23,6 +23,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,10 +127,9 @@ public class ExpenseEntryService {
      * veículo. Resolve em uma query o que antes eram 1+N requisições vindas do front.
      */
     @Transactional(readOnly = true)
-    public List<FleetExpenseEntryResponse> fleetExpenses(JwtPrincipal principal, ExpenseCategory categoria) {
-        return categoria == null
-                ? expenses.findFleetExpenses(principal.tenantId())
-                : expenses.findFleetExpensesByCategoria(principal.tenantId(), categoria);
+    public Page<FleetExpenseEntryResponse> fleetExpenses(
+            JwtPrincipal principal, ExpenseCategory categoria, Pageable pageable) {
+        return expenses.findFleetExpenses(principal.tenantId(), categoria, pageable);
     }
 
     /** Soma por categoria num intervalo — alimenta a "Visão geral" da aba Custos. */

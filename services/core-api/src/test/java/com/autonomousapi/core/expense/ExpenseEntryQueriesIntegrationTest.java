@@ -24,6 +24,9 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Executa contra Postgres real as queries que mock não consegue validar: JPQL com left join,
@@ -31,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * de SQL — se a cláusula de tenant sumir de uma query, aqui quebra.
  */
 class ExpenseEntryQueriesIntegrationTest extends IntegrationTestBase {
+
+    private static final Pageable PAGE0_SIZE20 = PageRequest.of(0, 20);
 
     @Autowired TenantRepository tenants;
     @Autowired VehicleRepository vehicles;
@@ -90,26 +95,47 @@ class ExpenseEntryQueriesIntegrationTest extends IntegrationTestBase {
         // A constructor expression referencia a classe pelo nome completo em string:
         // um erro de digitação compila normalmente e só falha em runtime. Só um teste
         // que executa a query de verdade pega isso.
-        List<FleetExpenseEntryResponse> todos = service.fleetExpenses(donoDaFrota, null);
+        Page<FleetExpenseEntryResponse> todos = service.fleetExpenses(donoDaFrota, null, PAGE0_SIZE20);
 
-        assertEquals(2, todos.size());
-        assertTrue(todos.stream().allMatch(c -> "RTC1A23".equals(c.plate())), "placa vem do join");
-        assertTrue(todos.stream().allMatch(c -> "Fiat".equals(c.brand())));
+        assertEquals(2, todos.getTotalElements());
+        assertTrue(todos.getContent().stream().allMatch(c -> "RTC1A23".equals(c.plate())), "placa vem do join");
+        assertTrue(todos.getContent().stream().allMatch(c -> "Fiat".equals(c.brand())));
     }
 
     @Test
     void fleetExpensesFiltraPorCategoria() {
-        List<FleetExpenseEntryResponse> manutencao =
-                service.fleetExpenses(donoDaFrota, ExpenseCategory.MANUTENCAO);
+        Page<FleetExpenseEntryResponse> manutencao =
+                service.fleetExpenses(donoDaFrota, ExpenseCategory.MANUTENCAO, PAGE0_SIZE20);
 
-        assertEquals(1, manutencao.size());
-        assertEquals(new BigDecimal("350.00"), manutencao.get(0).valor());
+        assertEquals(1, manutencao.getTotalElements());
+        assertEquals(new BigDecimal("350.00"), manutencao.getContent().get(0).valor());
     }
 
     @Test
     void fleetExpensesNaoVazaEntreTenants() {
-        assertTrue(service.fleetExpenses(outroTenant, ExpenseCategory.COMBUSTIVEL).isEmpty());
-        assertEquals(1, service.fleetExpenses(outroTenant, ExpenseCategory.MANUTENCAO).size());
+        assertTrue(service.fleetExpenses(outroTenant, ExpenseCategory.COMBUSTIVEL, PAGE0_SIZE20).isEmpty());
+        assertEquals(1, service.fleetExpenses(outroTenant, ExpenseCategory.MANUTENCAO, PAGE0_SIZE20).getTotalElements());
+    }
+
+    @Test
+    void fleetExpensesPaginaCorretamenteComCountQueryExplicita() {
+        // countQuery é explícita no @Query porque o Spring Data não deriva bem a contagem de
+        // uma constructor-expression com left join — esse teste garante que totalElements e
+        // o conteúdo da página batem com o Postgres de verdade, não só com o mock.
+        Page<FleetExpenseEntryResponse> primeiraPagina =
+                service.fleetExpenses(donoDaFrota, null, PageRequest.of(0, 1));
+
+        assertEquals(1, primeiraPagina.getContent().size(), "página com size=1 devolve só 1 item");
+        assertEquals(2, primeiraPagina.getTotalElements(), "mas o total reflete os 2 lançamentos do tenant");
+        assertEquals(2, primeiraPagina.getTotalPages());
+
+        Page<FleetExpenseEntryResponse> segundaPagina =
+                service.fleetExpenses(donoDaFrota, null, PageRequest.of(1, 1));
+
+        assertEquals(1, segundaPagina.getContent().size());
+        assertTrue(segundaPagina.isLast());
+        assertFalse(primeiraPagina.getContent().get(0).id().equals(segundaPagina.getContent().get(0).id()),
+                "páginas diferentes não podem repetir o mesmo lançamento");
     }
 
     @Test
@@ -129,11 +155,11 @@ class ExpenseEntryQueriesIntegrationTest extends IntegrationTestBase {
         expenses.save(new ExpenseEntry(rotaCertaId, null, ExpenseCategory.SEGURO,
                 new BigDecimal("800.00"), "Seguro corporativo", LocalDate.now().minusDays(1), null, null));
 
-        List<FleetExpenseEntryResponse> todos = service.fleetExpenses(donoDaFrota, ExpenseCategory.SEGURO);
+        Page<FleetExpenseEntryResponse> todos = service.fleetExpenses(donoDaFrota, ExpenseCategory.SEGURO, PAGE0_SIZE20);
 
-        assertEquals(1, todos.size());
-        assertEquals(null, todos.get(0).vehicleId());
-        assertEquals(null, todos.get(0).plate());
+        assertEquals(1, todos.getTotalElements());
+        assertEquals(null, todos.getContent().get(0).vehicleId());
+        assertEquals(null, todos.getContent().get(0).plate());
     }
 
     @Test

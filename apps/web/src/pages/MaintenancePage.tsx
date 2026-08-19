@@ -47,11 +47,13 @@ export function MaintenancePage() {
   useEffect(() => {
     // Duas requisições fixas, independente do tamanho da frota. Antes era 1 + uma por
     // veículo: o backend agora devolve os custos já com os dados do veículo embutidos.
-    Promise.all([coreApi.vehicles.list(), coreApi.expenses.fleetList('MANUTENCAO')])
+    // Ambas paginadas (spec de escala) — size grande cobre o histórico inteiro na maioria
+    // dos tenants; esta tela mostra o histórico completo de manutenção, não uma página por vez.
+    Promise.all([coreApi.vehicles.list(0, 500), coreApi.expenses.fleetList('MANUTENCAO', 0, 500)])
       .then(([vehicleList, costs]) => {
-        setVehicles(vehicleList);
+        setVehicles(vehicleList.content);
         setRows(
-          costs.map((c) => ({
+          costs.content.map((c) => ({
             id: c.id!,
             data: c.data!,
             placa: c.plate!,

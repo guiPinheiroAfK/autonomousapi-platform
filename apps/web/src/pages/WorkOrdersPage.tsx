@@ -76,7 +76,9 @@ export function WorkOrdersPage() {
 
   useEffect(refresh, []);
   useEffect(() => {
-    coreApi.vehicles.list().then(setVehicles);
+    // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
+    // já que esta tela usa a lista pra popular o filtro e o seletor de veículo da OS.
+    coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
     coreApi.drivers.list().then(setDrivers);
   }, []);
 

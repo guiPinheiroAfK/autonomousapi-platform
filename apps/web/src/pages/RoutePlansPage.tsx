@@ -119,7 +119,9 @@ export function RoutePlansPage() {
     setValorSugerido(null);
     setFormError('');
     coreApi.drivers.list().then((all) => setDrivers(all.filter((d) => d.hasLogin)));
-    coreApi.vehicles.list().then(setVehicles);
+    // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
+    // já que esta tela usa a lista pra popular o seletor de veículo da rota.
+    coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
     coreApi.collectionPoints.list().then(setCollectionPoints);
     setModalOpen(true);
   }

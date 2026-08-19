@@ -1656,6 +1656,17 @@ export interface components {
         AffiliateClickResponse: {
             redirectUrl?: string;
         };
+        PageResponseVehicleResponse: {
+            content?: components["schemas"]["VehicleResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         ExpenseSummaryResponse: {
             /** Format: uuid */
             vehicleId?: string;
@@ -1762,6 +1773,17 @@ export interface components {
             descricao?: string;
             /** Format: date */
             data?: string;
+        };
+        PageResponseFleetExpenseEntryResponse: {
+            content?: components["schemas"]["FleetExpenseEntryResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         CategoryTotal: {
             /** @enum {string} */
@@ -2090,7 +2112,12 @@ export interface operations {
     };
     list_1: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string;
+                status?: "ATIVO" | "MANUTENCAO" | "INATIVO";
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2103,7 +2130,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VehicleResponse"][];
+                    "*/*": components["schemas"]["PageResponseVehicleResponse"];
                 };
             };
         };
@@ -2558,6 +2585,8 @@ export interface operations {
         parameters: {
             query?: {
                 categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2571,7 +2600,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FleetExpenseEntryResponse"][];
+                    "*/*": components["schemas"]["PageResponseFleetExpenseEntryResponse"];
                 };
             };
         };

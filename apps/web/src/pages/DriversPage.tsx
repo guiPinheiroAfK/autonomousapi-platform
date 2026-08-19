@@ -84,7 +84,9 @@ export function DriversPage() {
 
   useEffect(refresh, []);
   useEffect(() => {
-    coreApi.vehicles.list().then(setVehicles);
+    // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
+    // já que essa tela usa a lista pra popular o seletor de veículo na designação.
+    coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
   }, []);
 
   function openCreate() {

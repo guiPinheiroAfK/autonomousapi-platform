@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,21 +28,24 @@ public interface ExpenseEntryRepository extends JpaRepository<ExpenseEntry, UUID
     /**
      * Despesas da frota inteira já com os dados do veículo (quando houver — despesa de frota
      * não tem veículo), em UMA query. left join de propósito: vehicleId é nullable.
+     * {@code categoria} nulo = sem filtro (mesmo padrão de {@link #sumForBudgetScope}).
+     *
+     * Paginada — countQuery explícita porque o Spring Data não deriva bem a contagem de uma
+     * constructor-expression com left join. Mantém {@code order by e.data desc} fixo em vez de
+     * expor Sort dinâmico via Pageable: evita ORDER BY duplicado (o da JPQL + o do Pageable).
      */
-    @Query("select new com.autonomousapi.core.expense.dto.FleetExpenseEntryResponse("
-            + "e.id, v.id, v.plate, v.brand, v.model, e.categoria, e.valor, e.descricao, e.data) "
-            + "from ExpenseEntry e left join com.autonomousapi.core.vehicle.Vehicle v on v.id = e.vehicleId "
-            + "where e.tenantId = :tenantId "
-            + "order by e.data desc")
-    List<FleetExpenseEntryResponse> findFleetExpenses(@Param("tenantId") UUID tenantId);
-
-    @Query("select new com.autonomousapi.core.expense.dto.FleetExpenseEntryResponse("
-            + "e.id, v.id, v.plate, v.brand, v.model, e.categoria, e.valor, e.descricao, e.data) "
-            + "from ExpenseEntry e left join com.autonomousapi.core.vehicle.Vehicle v on v.id = e.vehicleId "
-            + "where e.tenantId = :tenantId and e.categoria = :categoria "
-            + "order by e.data desc")
-    List<FleetExpenseEntryResponse> findFleetExpensesByCategoria(
-            @Param("tenantId") UUID tenantId, @Param("categoria") ExpenseCategory categoria);
+    @Query(
+            value = "select new com.autonomousapi.core.expense.dto.FleetExpenseEntryResponse("
+                    + "e.id, v.id, v.plate, v.brand, v.model, e.categoria, e.valor, e.descricao, e.data) "
+                    + "from ExpenseEntry e left join com.autonomousapi.core.vehicle.Vehicle v on v.id = e.vehicleId "
+                    + "where e.tenantId = :tenantId and (:categoria is null or e.categoria = :categoria) "
+                    + "order by e.data desc",
+            countQuery = "select count(e) from ExpenseEntry e "
+                    + "where e.tenantId = :tenantId and (:categoria is null or e.categoria = :categoria)")
+    Page<FleetExpenseEntryResponse> findFleetExpenses(
+            @Param("tenantId") UUID tenantId,
+            @Param("categoria") ExpenseCategory categoria,
+            Pageable pageable);
 
     /** Soma por categoria no intervalo — alimenta a "Visão geral" da aba Custos. */
     @Query("select new com.autonomousapi.core.expense.dto.CategoryTotal(e.categoria, sum(e.valor)) "

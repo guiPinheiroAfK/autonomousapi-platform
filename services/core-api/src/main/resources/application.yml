@@ -92,3 +92,28 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # health/metrics/prometheus: o mínimo pra enxergar pool HikariCP, GC e latência
+        # por endpoint durante um teste de carga. Nada de env/beans/heapdump aqui.
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      # "always": rota já é pública (sem JWT) pra facilitar o teste de carga, então
+      # "when-authorized" nunca mostraria detalhe nenhum — só o status agregado.
+      show-details: always
+  health:
+    mail:
+      # Sem MAIL_SMTP_HOST é o padrão em dev/demo (cai no LoggingEmailSender, ver
+      # comentário em spring.mail acima) — não é uma falha real, então não deve
+      # derrubar o status agregado de /actuator/health.
+      enabled: false
+  metrics:
+    distribution:
+      percentiles-histogram:
+        # Sem isso, http.server.requests só dá média — que esconde a cauda (p95/p99)
+        # que é exatamente o que interessa num teste de carga.
+        http.server.requests: true

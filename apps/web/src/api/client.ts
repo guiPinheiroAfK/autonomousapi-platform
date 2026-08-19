@@ -89,6 +89,19 @@ export type DriverProfileResponse = Schemas['DriverProfileResponse'];
 export type TripResponse = Schemas['TripResponse'];
 export type ApiError = { code: string; message: string };
 
+/** Envelope de paginação — usado por endpoints de listagem grandes o bastante pra não
+ *  devolver o resultado inteiro de uma vez (ex. /v1/vehicles, /v1/expenses). Definido à mão
+ *  em vez de vir de shared-types porque o Springdoc gera um schema nomeado por tipo genérico
+ *  (PageResponseVehicleResponse, PageResponseFleetExpenseEntryResponse, ...) — a forma é
+ *  sempre a mesma, então um tipo genérico local evita depender do nome gerado por endpoint. */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 let authToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
@@ -169,7 +182,16 @@ export const coreApi = {
   },
 
   vehicles: {
-    list: () => request<VehicleResponse[]>('/v1/vehicles'),
+    /** Paginado (size máx. 500 no backend) — a frota inteira não vem mais numa request só,
+     *  ver nota de escala no load test (2000 veículos, p99 ~68ms com pico de 330ms sem isso).
+     *  `search`/`status` viram filtro no servidor: com a listagem paginada, filtrar em
+     *  memória (como antes) "escondia" veículo que caísse fora da página carregada. */
+    list: (page = 0, size = 20, search?: string, status?: string) => {
+      const params = new URLSearchParams({ page: String(page), size: String(size) });
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      return request<PageResponse<VehicleResponse>>(`/v1/vehicles?${params.toString()}`);
+    },
     get: (id: string) => request<VehicleResponse>(`/v1/vehicles/${id}`),
     create: (body: VehicleRequest) =>
       request<VehicleResponse>('/v1/vehicles', { method: 'POST', body: JSON.stringify(body) }),
@@ -293,9 +315,14 @@ export const coreApi = {
       request<void>(`/v1/vehicles/${vehicleId}/costs/${costId}`, { method: 'DELETE' }),
     summary: (vehicleId: string) =>
       request<ExpenseSummaryResponse>(`/v1/vehicles/${vehicleId}/cost-summary`),
-    /** Fleet-wide, com os dados do veículo já resolvidos (null = despesa de frota, sem veículo). */
-    fleetList: (categoria?: ExpenseCategory) =>
-      request<FleetExpenseEntryResponse[]>(`/v1/expenses${categoria ? `?categoria=${categoria}` : ''}`),
+    /** Fleet-wide, com os dados do veículo já resolvidos (null = despesa de frota, sem veículo).
+     *  Paginado (size máx. 500 no backend) — 10 mil lançamentos era o segundo maior gargalo
+     *  no load test (p99 ~140ms, picos de 330-370ms). */
+    fleetList: (categoria?: ExpenseCategory, page = 0, size = 20) => {
+      const params = new URLSearchParams({ page: String(page), size: String(size) });
+      if (categoria) params.set('categoria', categoria);
+      return request<PageResponse<FleetExpenseEntryResponse>>(`/v1/expenses?${params.toString()}`);
+    },
     createFleet: (body: ExpenseEntryRequest) =>
       request<ExpenseEntryResponse>('/v1/expenses', { method: 'POST', body: JSON.stringify(body) }),
     removeFleet: (id: string) => request<void>(`/v1/expenses/${id}`, { method: 'DELETE' }),

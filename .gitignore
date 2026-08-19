@@ -35,6 +35,9 @@ venv/
 .ruff_cache/
 *.egg-info/
 
+# === Teste de carga: resultados de execução, não código ===
+scripts/stress-test/*.csv
+
 # === Banco / dados locais ===
 *.db
 *.sqlite

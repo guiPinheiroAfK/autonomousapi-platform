@@ -48,18 +48,23 @@ export function DashboardPage({ onViewVehicles }: Props) {
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<VehicleMaintenanceAlertResponse[]>([]);
   const [licenseAlerts, setLicenseAlerts] = useState<DriverLicenseAlertResponse[]>([]);
   const [costTrend, setCostTrend] = useState<MonthlyCostResponse[]>([]);
+  const [totalVehicles, setTotalVehicles] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // vehicles.list é paginado (spec de escala) — size grande o bastante pra cobrir a frota
+    // inteira na imensa maioria dos tenants nos gráficos por status abaixo. O total exibido
+    // no card, porém, vem de totalElements (exato), não de vehicles.length (só a página).
     Promise.all([
-      coreApi.vehicles.list(),
+      coreApi.vehicles.list(0, 500),
       coreApi.drivers.list(),
       coreApi.vehicles.maintenanceDue(),
       coreApi.drivers.licenseExpiring(),
       coreApi.vehicles.costTrend(),
     ])
       .then(([v, d, m, l, t]) => {
-        setVehicles(v);
+        setVehicles(v.content);
+        setTotalVehicles(v.totalElements);
         setDrivers(d);
         setMaintenanceAlerts(m);
         setLicenseAlerts(l);
@@ -85,7 +90,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Veículos" value={vehicles.length} hint="Total da frota" icon={Truck} />
+        <StatCard label="Veículos" value={totalVehicles} hint="Total da frota" icon={Truck} />
         <StatCard label="Em Operação" value={ativos} tone="success" hint="Veículos ativos" icon={ClipboardList} />
         <StatCard label="Em Manutenção" value={manutencao} tone="warning" hint="Fora de operação" icon={Wrench} />
         <StatCard label="Motoristas" value={drivers.length} hint="Cadastrados" icon={Users} />
