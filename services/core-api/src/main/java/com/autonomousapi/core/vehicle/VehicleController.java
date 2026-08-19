@@ -1,10 +1,8 @@
 package com.autonomousapi.core.vehicle;
 
+import com.autonomousapi.core.expense.ExpenseEntryService;
+import com.autonomousapi.core.expense.dto.MonthlyCostResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
-import com.autonomousapi.core.vehicle.cost.VehicleCostCategory;
-import com.autonomousapi.core.vehicle.cost.VehicleCostService;
-import com.autonomousapi.core.vehicle.cost.dto.FleetCostEntryResponse;
-import com.autonomousapi.core.vehicle.cost.dto.MonthlyCostResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import com.autonomousapi.core.vehicle.dto.VehicleRequest;
 import com.autonomousapi.core.vehicle.dto.VehicleResponse;
@@ -21,7 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,11 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class VehicleController {
 
     private final VehicleService vehicleService;
-    private final VehicleCostService costService;
+    private final ExpenseEntryService expenseService;
 
-    public VehicleController(VehicleService vehicleService, VehicleCostService costService) {
+    public VehicleController(VehicleService vehicleService, ExpenseEntryService expenseService) {
         this.vehicleService = vehicleService;
-        this.costService = costService;
+        this.expenseService = expenseService;
     }
 
     @PostMapping
@@ -64,17 +61,7 @@ public class VehicleController {
     /** Custo somado por mês, últimos 6 meses, em toda a frota (gráfico de tendência do dashboard). */
     @GetMapping("/cost-trend")
     public List<MonthlyCostResponse> costTrend(Authentication auth) {
-        return costService.monthlyTrend(principal(auth));
-    }
-
-    /**
-     * Custos de toda a frota, já com os dados do veículo, opcionalmente por categoria.
-     * Existe para a tela de Manutenção não precisar de uma requisição por veículo.
-     */
-    @GetMapping("/costs")
-    public List<FleetCostEntryResponse> fleetCosts(
-            @RequestParam(required = false) VehicleCostCategory category, Authentication auth) {
-        return costService.fleetCosts(principal(auth), category);
+        return expenseService.monthlyTrend(principal(auth));
     }
 
     @PutMapping("/{id}")

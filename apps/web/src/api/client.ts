@@ -16,12 +16,24 @@ export type VehicleResponse = Schemas['VehicleResponse'];
 export type VehicleRequest = Schemas['VehicleRequest'];
 export type DriverResponse = Schemas['DriverResponse'];
 export type DriverRequest = Schemas['DriverRequest'];
-export type VehicleCostEntryResponse = Schemas['VehicleCostEntryResponse'];
-export type VehicleCostEntryRequest = Schemas['VehicleCostEntryRequest'];
-export type VehicleCostSummaryResponse = Schemas['VehicleCostSummaryResponse'];
+export type ExpenseEntryResponse = Schemas['ExpenseEntryResponse'];
+export type ExpenseEntryRequest = Schemas['ExpenseEntryRequest'];
+export type ExpenseSummaryResponse = Schemas['ExpenseSummaryResponse'];
+export type FleetExpenseEntryResponse = Schemas['FleetExpenseEntryResponse'];
+export type CategoryTotal = Schemas['CategoryTotal'];
+export type ExpenseCategory =
+  | 'COMBUSTIVEL'
+  | 'MANUTENCAO'
+  | 'SEGURO'
+  | 'IPVA'
+  | 'MULTA'
+  | 'PEDAGIO'
+  | 'LAVAGEM'
+  | 'OUTRO';
+export type BudgetRequest = Schemas['BudgetRequest'];
+export type BudgetResponse = Schemas['BudgetResponse'];
 export type VehicleMaintenanceAlertResponse = Schemas['VehicleMaintenanceAlertResponse'];
 export type MonthlyCostResponse = Schemas['MonthlyCostResponse'];
-export type FleetCostEntryResponse = Schemas['FleetCostEntryResponse'];
 export type SubscriptionResponse = Schemas['SubscriptionResponse'];
 export type CheckoutSessionResponse = Schemas['CheckoutSessionResponse'];
 export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
@@ -166,11 +178,6 @@ export const coreApi = {
     remove: (id: string) => request<void>(`/v1/vehicles/${id}`, { method: 'DELETE' }),
     maintenanceDue: () => request<VehicleMaintenanceAlertResponse[]>('/v1/vehicles/maintenance-due'),
     costTrend: () => request<MonthlyCostResponse[]>('/v1/vehicles/cost-trend'),
-    /** Custos da frota inteira em UMA requisição (evita 1+N por veículo). */
-    fleetCosts: (category?: 'COMBUSTIVEL' | 'MANUTENCAO' | 'OUTRO') =>
-      request<FleetCostEntryResponse[]>(
-        `/v1/vehicles/costs${category ? `?category=${category}` : ''}`,
-      ),
   },
 
   drivers: {
@@ -243,11 +250,15 @@ export const coreApi = {
       }),
   },
 
-  /** Roteamento ponto-a-ponto e busca de endereço (spec 02) — ver geo-api/OSRM. */
+  /** Roteamento ponto-a-ponto e busca de endereço (spec 02) — ver geo-api/OSRM.
+   *  {@code vehicleId} (spec 09) anexa custoEstimado/valorSugerido à resposta quando o
+   *  veículo tem consumo e o tenant tem preço de referência cadastrados; nunca falha o
+   *  preview por falta deles, só deixa os dois campos null. */
   routes: {
-    preview: (fromLat: number, fromLon: number, toLat: number, toLon: number) =>
+    preview: (fromLat: number, fromLon: number, toLat: number, toLon: number, vehicleId?: string) =>
       request<RouteResponse>(
-        `/v1/routes/preview?fromLat=${fromLat}&fromLon=${fromLon}&toLat=${toLat}&toLon=${toLon}`,
+        `/v1/routes/preview?fromLat=${fromLat}&fromLon=${fromLon}&toLat=${toLat}&toLon=${toLon}` +
+          (vehicleId ? `&vehicleId=${vehicleId}` : ''),
       ),
   },
 
@@ -267,18 +278,38 @@ export const coreApi = {
     },
   },
 
-  vehicleCosts: {
+  /** Despesas categorizadas (spec 10) — evolução do antigo "custo por veículo" (spec 05).
+   *  Duas famílias de rota: escopada por veículo (uso já existente, ex. VehicleCostsPage)
+   *  e fleet-wide (nova, aba "Custos" — despesa pode não ter veículo, ex. seguro corporativo). */
+  expenses: {
     list: (vehicleId: string) =>
-      request<VehicleCostEntryResponse[]>(`/v1/vehicles/${vehicleId}/costs`),
-    add: (vehicleId: string, body: VehicleCostEntryRequest) =>
-      request<VehicleCostEntryResponse>(`/v1/vehicles/${vehicleId}/costs`, {
+      request<ExpenseEntryResponse[]>(`/v1/vehicles/${vehicleId}/costs`),
+    add: (vehicleId: string, body: ExpenseEntryRequest) =>
+      request<ExpenseEntryResponse>(`/v1/vehicles/${vehicleId}/costs`, {
         method: 'POST',
         body: JSON.stringify(body),
       }),
     remove: (vehicleId: string, costId: string) =>
       request<void>(`/v1/vehicles/${vehicleId}/costs/${costId}`, { method: 'DELETE' }),
     summary: (vehicleId: string) =>
-      request<VehicleCostSummaryResponse>(`/v1/vehicles/${vehicleId}/cost-summary`),
+      request<ExpenseSummaryResponse>(`/v1/vehicles/${vehicleId}/cost-summary`),
+    /** Fleet-wide, com os dados do veículo já resolvidos (null = despesa de frota, sem veículo). */
+    fleetList: (categoria?: ExpenseCategory) =>
+      request<FleetExpenseEntryResponse[]>(`/v1/expenses${categoria ? `?categoria=${categoria}` : ''}`),
+    createFleet: (body: ExpenseEntryRequest) =>
+      request<ExpenseEntryResponse>('/v1/expenses', { method: 'POST', body: JSON.stringify(body) }),
+    removeFleet: (id: string) => request<void>(`/v1/expenses/${id}`, { method: 'DELETE' }),
+    /** Soma por categoria no intervalo — alimenta a aba "Custos" → Visão geral. */
+    summaryByCategory: (from: string, to: string) =>
+      request<CategoryTotal[]>(`/v1/expenses/summary?from=${from}&to=${to}`),
+  },
+
+  /** Orçamento com alerta de estouro (spec 10, item 2) — gestor-only. */
+  budgets: {
+    list: () => request<BudgetResponse[]>('/v1/budgets'),
+    create: (body: BudgetRequest) =>
+      request<BudgetResponse>('/v1/budgets', { method: 'POST', body: JSON.stringify(body) }),
+    remove: (id: string) => request<void>(`/v1/budgets/${id}`, { method: 'DELETE' }),
   },
 
   workOrders: {

@@ -1,11 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
-import {
-  coreApi,
-  type VehicleCostEntryRequest,
-  type VehicleCostEntryResponse,
-  type VehicleCostSummaryResponse,
-} from '../api/client';
+import { coreApi, type ExpenseEntryRequest, type ExpenseEntryResponse, type ExpenseSummaryResponse } from '../api/client';
 import { StatusBadgeCusto } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
@@ -14,14 +9,24 @@ import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
+import { formatDateBR } from '../lib/format';
 
-const CATEGORY_OPTIONS = ['COMBUSTIVEL', 'MANUTENCAO', 'OUTRO'] as const;
+const CATEGORY_OPTIONS = [
+  'COMBUSTIVEL',
+  'MANUTENCAO',
+  'SEGURO',
+  'IPVA',
+  'MULTA',
+  'PEDAGIO',
+  'LAVAGEM',
+  'OUTRO',
+] as const;
 
-const EMPTY_FORM: VehicleCostEntryRequest = {
-  category: 'COMBUSTIVEL',
-  amount: 0,
-  description: '',
-  occurredAt: new Date().toISOString().slice(0, 10),
+const EMPTY_FORM: ExpenseEntryRequest = {
+  categoria: 'COMBUSTIVEL',
+  valor: 0,
+  descricao: '',
+  data: new Date().toISOString().slice(0, 10),
 };
 
 interface Props {
@@ -31,15 +36,15 @@ interface Props {
 }
 
 export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
-  const [entries, setEntries] = useState<VehicleCostEntryResponse[]>([]);
-  const [summary, setSummary] = useState<VehicleCostSummaryResponse | null>(null);
-  const [form, setForm] = useState<VehicleCostEntryRequest>(EMPTY_FORM);
+  const [entries, setEntries] = useState<ExpenseEntryResponse[]>([]);
+  const [summary, setSummary] = useState<ExpenseSummaryResponse | null>(null);
+  const [form, setForm] = useState<ExpenseEntryRequest>(EMPTY_FORM);
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   function refresh() {
-    Promise.all([coreApi.vehicleCosts.list(vehicleId), coreApi.vehicleCosts.summary(vehicleId)])
+    Promise.all([coreApi.expenses.list(vehicleId), coreApi.expenses.summary(vehicleId)])
       .then(([e, s]) => {
         setEntries(e);
         setSummary(s);
@@ -60,7 +65,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
     e.preventDefault();
     setError('');
     try {
-      await coreApi.vehicleCosts.add(vehicleId, form);
+      await coreApi.expenses.add(vehicleId, form);
       setModalOpen(false);
       refresh();
     } catch (err) {
@@ -71,12 +76,14 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
   async function handleDelete(costId: string) {
     if (!confirm('Excluir este lançamento?')) return;
     try {
-      await coreApi.vehicleCosts.remove(vehicleId, costId);
+      await coreApi.expenses.remove(vehicleId, costId);
       refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao excluir lançamento');
     }
   }
+
+  const categoriaCombustivel = form.categoria === 'COMBUSTIVEL';
 
   return (
     <div className="p-5">
@@ -96,11 +103,11 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
 
       {summary && (
         <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard label="Total Gasto" value={`R$ ${summary.totalCost?.toFixed(2)}`} />
+          <StatCard label="Total Gasto" value={`R$ ${summary.totalValor?.toFixed(2)}`} />
           <StatCard label="Odômetro" value={`${summary.odometerKm} km`} />
           <StatCard
             label="Custo por Km"
-            value={summary.costPerKm != null ? `R$ ${summary.costPerKm.toFixed(2)}` : '—'}
+            value={summary.custoPorKm != null ? `R$ ${summary.custoPorKm.toFixed(2)}` : '—'}
             tone="success"
           />
         </div>
@@ -141,12 +148,12 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
               <tbody className="divide-y divide-border">
                 {entries.map((c) => (
                   <tr key={c.id} className="hover:bg-muted/50">
-                    <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(c.occurredAt!)}</td>
+                    <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(c.data!)}</td>
                     <td className="px-5 py-2.5">
-                      <StatusBadgeCusto categoria={c.category} />
+                      <StatusBadgeCusto categoria={c.categoria} />
                     </td>
-                    <td className="px-5 py-2.5 font-data font-medium text-foreground">R$ {c.amount?.toFixed(2)}</td>
-                    <td className="px-5 py-2.5 text-muted-foreground">{c.description ?? '—'}</td>
+                    <td className="px-5 py-2.5 font-data font-medium text-foreground">R$ {c.valor?.toFixed(2)}</td>
+                    <td className="px-5 py-2.5 text-muted-foreground">{c.descricao ?? '—'}</td>
                     <td className="px-5 py-2.5">
                       <Button
                         variant="link"
@@ -175,11 +182,18 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Lançar Custo">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="categoria">Categoria</Label>
             <Select
-              id="category"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value as VehicleCostEntryRequest['category'] })}
+              id="categoria"
+              value={form.categoria}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  categoria: e.target.value as ExpenseEntryRequest['categoria'],
+                  litrosOuKwh: undefined,
+                  odometro: undefined,
+                })
+              }
             >
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>
@@ -190,34 +204,63 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="amount">Valor (R$)</Label>
+              <Label htmlFor="valor">Valor (R$)</Label>
               <Input
-                id="amount"
+                id="valor"
                 type="number"
                 min={0.01}
                 step="0.01"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                value={form.valor}
+                onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="occurredAt">Data</Label>
+              <Label htmlFor="data">Data</Label>
               <Input
-                id="occurredAt"
+                id="data"
                 type="date"
-                value={form.occurredAt}
-                onChange={(e) => setForm({ ...form, occurredAt: e.target.value })}
+                value={form.data}
+                onChange={(e) => setForm({ ...form, data: e.target.value })}
                 required
               />
             </div>
           </div>
+          {categoriaCombustivel && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="litrosOuKwh">Litros (ou kWh)</Label>
+                <Input
+                  id="litrosOuKwh"
+                  type="number"
+                  min={0}
+                  step="0.001"
+                  value={form.litrosOuKwh ?? ''}
+                  onChange={(e) =>
+                    setForm({ ...form, litrosOuKwh: e.target.value === '' ? undefined : Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="odometro">Odômetro (km)</Label>
+                <Input
+                  id="odometro"
+                  type="number"
+                  min={0}
+                  value={form.odometro ?? ''}
+                  onChange={(e) =>
+                    setForm({ ...form, odometro: e.target.value === '' ? undefined : Number(e.target.value) })
+                  }
+                />
+              </div>
+            </div>
+          )}
           <div>
-            <Label htmlFor="description">Descrição (opcional)</Label>
+            <Label htmlFor="descricao">Descrição (opcional)</Label>
             <Input
-              id="description"
-              value={form.description ?? ''}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              id="descricao"
+              value={form.descricao ?? ''}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             />
           </div>
 
@@ -233,11 +276,4 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
       </Modal>
     </div>
   );
-}
-
-/** Formata "YYYY-MM-DD" (LocalDate, sem timezone) como "DD/MM/YYYY" via string,
- *  sem passar por Date — evita deslocar o dia pra quem está a oeste de UTC. */
-function formatDateBR(isoDate: string): string {
-  const [y, m, d] = isoDate.split('-');
-  return `${d}/${m}/${y}`;
 }

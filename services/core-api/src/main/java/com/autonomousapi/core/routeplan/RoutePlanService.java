@@ -8,6 +8,7 @@ import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
 import com.autonomousapi.core.error.RoutePlanInvalidException;
+import com.autonomousapi.core.pricing.RouteCostEstimator;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.RouteStopResponse;
 import com.autonomousapi.core.routeplan.dto.StopInput;
@@ -47,6 +48,7 @@ public class RoutePlanService {
     private final CurrentDriverResolver driverResolver;
     private final RouteMatrixService routeMatrix;
     private final OrToolsRouteOptimizer optimizer;
+    private final RouteCostEstimator costEstimator;
 
     public RoutePlanService(
             RoutePlanRepository routePlans,
@@ -56,7 +58,8 @@ public class RoutePlanService {
             CollectionPointRepository collectionPoints,
             CurrentDriverResolver driverResolver,
             RouteMatrixService routeMatrix,
-            OrToolsRouteOptimizer optimizer) {
+            OrToolsRouteOptimizer optimizer,
+            RouteCostEstimator costEstimator) {
         this.routePlans = routePlans;
         this.routeStops = routeStops;
         this.drivers = drivers;
@@ -65,6 +68,7 @@ public class RoutePlanService {
         this.driverResolver = driverResolver;
         this.routeMatrix = routeMatrix;
         this.optimizer = optimizer;
+        this.costEstimator = costEstimator;
     }
 
     /**
@@ -158,6 +162,18 @@ public class RoutePlanService {
         }
     }
 
+    /**
+     * Distância origem→destino via a mesma matriz real (OSRM /table, com fallback haversine)
+     * usada em {@link #suggestOrder} — reaproveita {@link RouteMatrixService} em vez de abrir
+     * um segundo caminho de cálculo de distância só para custo estimado.
+     */
+    private java.util.Optional<RouteCostEstimator.Estimate> calcularCustoEstimado(
+            UUID tenantId, Vehicle vehicle, List<StopInput> paradasTransfer) {
+        RouteMatrixService.Matriz matriz = routeMatrix.obter(paradasTransfer);
+        double distanciaKm = matriz.distanciasM()[0][1] / 1000.0;
+        return costEstimator.estimar(tenantId, vehicle, distanciaKm);
+    }
+
     private void validarTetoDeParadas(List<StopInput> stops) {
         if (stops.size() > TETO_PARADAS_ROTA) {
             throw new RoutePlanInvalidException(
@@ -211,16 +227,23 @@ public class RoutePlanService {
             drivers.findByIdAndTenantId(driverId, tenantId)
                     .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
         }
+        Vehicle vehicle = null;
         if (vehicleId != null) {
-            vehicles.findByIdAndTenantId(vehicleId, tenantId)
+            vehicle = vehicles.findByIdAndTenantId(vehicleId, tenantId)
                     .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
         }
 
         List<StopInput> resolvidos = resolveStops(tenantId, stops);
         validar(categoria, dataExecucao, resolvidos);
 
-        RoutePlan plan = routePlans.save(
-                new RoutePlan(tenantId, gestorPrincipal.userId(), driverId, vehicleId, categoria, dataExecucao, valor));
+        RoutePlan plan =
+                new RoutePlan(tenantId, gestorPrincipal.userId(), driverId, vehicleId, categoria, dataExecucao, valor);
+        if (categoria == RouteCategoria.TRANSFER && vehicle != null) {
+            calcularCustoEstimado(tenantId, vehicle, resolvidos)
+                    .ifPresent(e -> plan.registrarCustoEstimado(
+                            e.custoEstimado(), RouteCostEstimator.PRICING_FORMULA_VERSION));
+        }
+        routePlans.save(plan);
         for (int i = 0; i < resolvidos.size(); i++) {
             StopInput s = resolvidos.get(i);
             routeStops.save(new RouteStop(

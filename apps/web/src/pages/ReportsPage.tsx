@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, ClipboardList, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowRight, ClipboardList, TrendingUp, Wallet } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -29,9 +29,11 @@ const TIPO_COLORS: Record<string, string> = {
 
 const anoAtual = new Date().getFullYear();
 
-export function ReportsPage() {
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState('');
+interface Props {
+  onGoToExpenses?: () => void;
+}
+
+export function ReportsPage({ onGoToExpenses }: Props) {
   const [report, setReport] = useState<WorkOrderReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,18 +43,6 @@ export function ReportsPage() {
       .then(setReport)
       .finally(() => setLoading(false));
   }, []);
-
-  async function handleExport() {
-    setExporting(true);
-    setExportError('');
-    try {
-      await coreApi.reports.exportCostsCsv();
-    } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Falha ao exportar relatório');
-    } finally {
-      setExporting(false);
-    }
-  }
 
   const monthly = report?.monthly ?? [];
   const ranking = (report?.vehicleRanking ?? []).map((r) => ({
@@ -101,12 +91,11 @@ export function ReportsPage() {
             Visão consolidada de custos de manutenção · ano de {anoAtual}
           </p>
         </div>
-        <div className="text-right">
-          <Button variant="outline" onClick={handleExport} disabled={exporting}>
-            <Download /> {exporting ? 'Exportando...' : 'Exportar relatório'}
+        {onGoToExpenses && (
+          <Button variant="outline" onClick={onGoToExpenses}>
+            Ver lançamentos detalhados em Custos <ArrowRight />
           </Button>
-          {exportError && <p className="mt-1 text-xs text-status-danger">{exportError}</p>}
-        </div>
+        )}
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">

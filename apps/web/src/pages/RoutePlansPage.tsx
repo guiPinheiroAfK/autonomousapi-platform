@@ -58,9 +58,41 @@ export function RoutePlansPage() {
   const [collectionPoints, setCollectionPoints] = useState<CollectionPointResponse[]>([]);
   const [driverId, setDriverId] = useState('');
   const [vehicleId, setVehicleId] = useState('');
+  const [custoEstimado, setCustoEstimado] = useState<number | null>(null);
+  const [valorSugerido, setValorSugerido] = useState<number | null>(null);
 
   const isTransfer = categoria === 'TRANSFER';
   const limiteParadasAtingido = isTransfer && paradas.length >= 2;
+
+  // Custo estimado (spec 09): só faz sentido pra TRANSFER com veículo selecionado e as duas
+  // paradas já definidas — puramente informativo, nunca trava a criação da rota (o veículo
+  // pode não ter consumo cadastrado, ou o tenant não ter preço de referência, e nesses casos
+  // o preview simplesmente devolve os campos null).
+  useEffect(() => {
+    if (!isTransfer || paradas.length !== 2 || !vehicleId) {
+      setCustoEstimado(null);
+      setValorSugerido(null);
+      return;
+    }
+    const [origem, destino] = paradas;
+    let cancelado = false;
+    coreApi.routes
+      .preview(origem.lat!, origem.lon!, destino.lat!, destino.lon!, vehicleId)
+      .then((r) => {
+        if (cancelado) return;
+        setCustoEstimado(r.custoEstimado != null ? Number(r.custoEstimado) : null);
+        setValorSugerido(r.valorSugerido != null ? Number(r.valorSugerido) : null);
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setCustoEstimado(null);
+          setValorSugerido(null);
+        }
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [isTransfer, paradas, vehicleId]);
 
   function refresh() {
     coreApi.routePlans
@@ -83,6 +115,8 @@ export function RoutePlansPage() {
     setPontoEscolhidoId('');
     setDriverId('');
     setVehicleId('');
+    setCustoEstimado(null);
+    setValorSugerido(null);
     setFormError('');
     coreApi.drivers.list().then((all) => setDrivers(all.filter((d) => d.hasLogin)));
     coreApi.vehicles.list().then(setVehicles);
@@ -377,6 +411,20 @@ export function RoutePlansPage() {
               </Select>
             </div>
           </div>
+
+          {isTransfer && vehicleId && paradas.length === 2 && (custoEstimado != null || valorSugerido != null) && (
+            <div className="rounded-md border border-border bg-secondary/40 p-3 text-xs">
+              <p className="font-medium text-foreground">Custo estimado (referência, spec 09)</p>
+              <div className="mt-1 grid grid-cols-2 gap-2 text-muted-foreground">
+                <p>
+                  Custo estimado: <span className="font-data text-foreground">{custoEstimado != null ? `R$ ${custoEstimado.toFixed(2)}` : '—'}</span>
+                </p>
+                <p>
+                  Valor sugerido: <span className="font-data text-foreground">{valorSugerido != null ? `R$ ${valorSugerido.toFixed(2)}` : '—'}</span>
+                </p>
+              </div>
+            </div>
+          )}
 
           {formError && <p className="text-xs text-status-danger">{formError}</p>}
 

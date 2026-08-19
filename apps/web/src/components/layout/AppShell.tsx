@@ -9,6 +9,7 @@ export type View =
   | 'vehicle-detail'
   | 'drivers'
   | 'costs'
+  | 'expenses'
   | 'work-orders'
   | 'maintenance'
   | 'reports'
@@ -28,7 +29,8 @@ const TITLES: Record<View, string> = {
   vehicles: 'Frota',
   'vehicle-detail': 'Frota',
   drivers: 'Motoristas',
-  costs: 'Custos',
+  costs: 'Custos do Veículo',
+  expenses: 'Custos',
   'work-orders': 'Ordens de Serviço',
   maintenance: 'Manutenção',
   reports: 'Relatórios & Financeiro',

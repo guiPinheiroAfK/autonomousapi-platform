@@ -50,6 +50,16 @@ public class RoutePlan {
     @Column(name = "valor")
     private BigDecimal valor;
 
+    /** Só preenchido para TRANSFER com veículo informado e consumo/preço de referência
+     *  cadastrados (spec 09) — ver {@link com.autonomousapi.core.pricing.RouteCostEstimator}.
+     *  Calculado uma vez na criação, nunca recalculado depois: é o valor usado como base de
+     *  {@code margemRealizada} quando a rota concluir. */
+    @Column(name = "custo_estimado")
+    private BigDecimal custoEstimado;
+
+    @Column(name = "pricing_formula_version", length = 10)
+    private String pricingFormulaVersion;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -74,6 +84,12 @@ public class RoutePlan {
 
     public void designarMotorista(UUID driverId) {
         this.driverId = driverId;
+    }
+
+    /** Chamado só na criação (RoutePlanService.create), nunca recalculado depois. */
+    public void registrarCustoEstimado(BigDecimal custoEstimado, String pricingFormulaVersion) {
+        this.custoEstimado = custoEstimado;
+        this.pricingFormulaVersion = pricingFormulaVersion;
     }
 
     public void avancarStatus(RoutePlanStatus novo) {
@@ -114,6 +130,14 @@ public class RoutePlan {
 
     public BigDecimal getValor() {
         return valor;
+    }
+
+    public BigDecimal getCustoEstimado() {
+        return custoEstimado;
+    }
+
+    public String getPricingFormulaVersion() {
+        return pricingFormulaVersion;
     }
 
     public Instant getCreatedAt() {

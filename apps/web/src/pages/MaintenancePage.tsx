@@ -47,19 +47,19 @@ export function MaintenancePage() {
   useEffect(() => {
     // Duas requisições fixas, independente do tamanho da frota. Antes era 1 + uma por
     // veículo: o backend agora devolve os custos já com os dados do veículo embutidos.
-    Promise.all([coreApi.vehicles.list(), coreApi.vehicles.fleetCosts('MANUTENCAO')])
+    Promise.all([coreApi.vehicles.list(), coreApi.expenses.fleetList('MANUTENCAO')])
       .then(([vehicleList, costs]) => {
         setVehicles(vehicleList);
         setRows(
           costs.map((c) => ({
             id: c.id!,
-            data: c.occurredAt!,
+            data: c.data!,
             placa: c.plate!,
             veiculo: `${c.brand} ${c.model}`,
-            descricao: c.description ?? '',
+            descricao: c.descricao ?? '',
             pecas: pick(PECAS_POOL, c.id!),
             oficina: pick(OFICINA_POOL, c.vehicleId!),
-            custo: Number(c.amount),
+            custo: Number(c.valor),
           })),
         );
       })

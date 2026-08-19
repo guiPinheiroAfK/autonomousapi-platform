@@ -95,7 +95,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
         <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Custo de manutenção — últimos 6 meses</CardTitle>
+              <CardTitle>Custo total — últimos 6 meses</CardTitle>
             </CardHeader>
             <div className="h-64 px-2 pb-4">
               <ResponsiveContainer width="100%" height="100%">

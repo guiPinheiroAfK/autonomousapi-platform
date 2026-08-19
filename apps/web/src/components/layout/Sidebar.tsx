@@ -14,6 +14,7 @@ import {
   Plug,
   Route as RouteIcon,
   Users,
+  Wallet,
   Wrench,
 } from 'lucide-react';
 import type { UserResponse } from '../../api/client';
@@ -34,6 +35,7 @@ const NAV_OPERACAO: { view: View; label: string; icon: typeof Car }[] = [
 
 const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
   { view: 'maintenance', label: 'Manutenção', icon: Wrench },
+  { view: 'expenses', label: 'Custos', icon: Wallet },
   { view: 'reports', label: 'Relatórios', icon: BarChart3 },
   { view: 'affiliates', label: 'Parceiros', icon: Handshake },
   { view: 'charging-stations', label: 'Pontos de Recarga', icon: Plug },

@@ -35,6 +35,8 @@ public record GeoRouteResponse(
                 durationS,
                 geometry != null ? geometry : List.of(),
                 steps != null ? steps.stream().map(GeoRouteStep::toPublic).toList() : List.of(),
-                unavailableReason);
+                unavailableReason,
+                null,
+                null);
     }
 }

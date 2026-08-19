@@ -66,11 +66,21 @@ export function StatusBadgeMotorista({ status, className }: { status?: string; c
 const COST_TONE: Record<string, Tone> = {
   COMBUSTIVEL: 'info',
   MANUTENCAO: 'warning',
+  SEGURO: 'neutral',
+  IPVA: 'neutral',
+  MULTA: 'danger',
+  PEDAGIO: 'neutral',
+  LAVAGEM: 'neutral',
   OUTRO: 'neutral',
 };
 const COST_LABEL: Record<string, string> = {
   COMBUSTIVEL: 'Combustível',
   MANUTENCAO: 'Manutenção',
+  SEGURO: 'Seguro',
+  IPVA: 'IPVA',
+  MULTA: 'Multa',
+  PEDAGIO: 'Pedágio',
+  LAVAGEM: 'Lavagem',
   OUTRO: 'Outro',
 };
 

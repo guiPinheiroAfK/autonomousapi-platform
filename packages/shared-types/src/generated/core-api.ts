@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["fleetExpenses"];
+        put?: never;
+        post: operations["createFleetExpense"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/drivers": {
         parameters: {
             query?: never;
@@ -548,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/budgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_9"];
+        put?: never;
+        post: operations["create_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/billing/webhook": {
         parameters: {
             query?: never;
@@ -772,22 +804,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/vehicles/costs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["fleetCosts"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/vehicles/cost-trend": {
         parameters: {
             query?: never;
@@ -964,6 +980,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/expenses/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summaryByCategory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/drivers/{driverId}/ratings/summary": {
         parameters: {
             query?: never;
@@ -1071,6 +1103,38 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/expenses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteFleetExpense"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/budgets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1276,22 +1340,32 @@ export interface components {
             descricao?: string;
             custoReparo?: number;
         };
-        VehicleCostEntryRequest: {
+        ExpenseEntryRequest: {
+            /** Format: uuid */
+            vehicleId?: string;
             /** @enum {string} */
-            category: "COMBUSTIVEL" | "MANUTENCAO" | "OUTRO";
-            amount: number;
-            description?: string;
+            categoria: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+            valor: number;
+            descricao?: string;
             /** Format: date */
-            occurredAt: string;
+            data: string;
+            litrosOuKwh?: number;
+            /** Format: int32 */
+            odometro?: number;
         };
-        VehicleCostEntryResponse: {
+        ExpenseEntryResponse: {
             /** Format: uuid */
             id?: string;
-            category?: string;
-            amount?: number;
-            description?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            categoria?: string;
+            valor?: number;
+            descricao?: string;
             /** Format: date */
-            occurredAt?: string;
+            data?: string;
+            litrosOuKwh?: number;
+            /** Format: int32 */
+            odometro?: number;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -1376,6 +1450,8 @@ export interface components {
             /** Format: date */
             dataExecucao?: string;
             valor?: number;
+            custoEstimado?: number;
+            margemRealizada?: number;
             /** Format: date-time */
             createdAt?: string;
             stops?: components["schemas"]["RouteStopResponse"][];
@@ -1511,6 +1587,25 @@ export interface components {
         SendMessageRequest: {
             body: string;
         };
+        BudgetRequest: {
+            /** Format: uuid */
+            vehicleId?: string;
+            /** @enum {string} */
+            categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+            valorLimite: number;
+        };
+        BudgetResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            /** @enum {string} */
+            categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+            periodo?: string;
+            valorLimite?: number;
+            valorConsumido?: number;
+            percentualConsumido?: number;
+        };
         CheckoutSessionResponse: {
             checkoutUrl?: string;
         };
@@ -1561,13 +1656,13 @@ export interface components {
         AffiliateClickResponse: {
             redirectUrl?: string;
         };
-        VehicleCostSummaryResponse: {
+        ExpenseSummaryResponse: {
             /** Format: uuid */
             vehicleId?: string;
-            totalCost?: number;
+            totalValor?: number;
             /** Format: int32 */
             odometerKm?: number;
-            costPerKm?: number;
+            custoPorKm?: number;
         };
         VehicleConditionScoreResponse: {
             /** Format: uuid */
@@ -1590,21 +1685,6 @@ export interface components {
             /** Format: int32 */
             kmRestante?: number;
         };
-        FleetCostEntryResponse: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            vehicleId?: string;
-            plate?: string;
-            brand?: string;
-            model?: string;
-            /** @enum {string} */
-            category?: "COMBUSTIVEL" | "MANUTENCAO" | "OUTRO";
-            amount?: number;
-            description?: string;
-            /** Format: date */
-            occurredAt?: string;
-        };
         MonthlyCostResponse: {
             month?: string;
             total?: number;
@@ -1618,6 +1698,8 @@ export interface components {
             geometry?: number[][];
             steps?: components["schemas"]["RouteStep"][];
             unavailableReason?: string;
+            custoEstimado?: number;
+            valorSugerido?: number;
         };
         RouteStep: {
             instructionType?: string;
@@ -1663,6 +1745,26 @@ export interface components {
             /** Format: date */
             cnhValidade?: string;
             phone?: string;
+        };
+        FleetExpenseEntryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            plate?: string;
+            brand?: string;
+            model?: string;
+            /** @enum {string} */
+            categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+            valor?: number;
+            descricao?: string;
+            /** Format: date */
+            data?: string;
+        };
+        CategoryTotal: {
+            /** @enum {string} */
+            categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+            total?: number;
         };
         DriverRatingSummaryResponse: {
             /** Format: uuid */
@@ -2141,7 +2243,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VehicleCostEntryResponse"][];
+                    "*/*": components["schemas"]["ExpenseEntryResponse"][];
                 };
             };
         };
@@ -2157,7 +2259,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VehicleCostEntryRequest"];
+                "application/json": components["schemas"]["ExpenseEntryRequest"];
             };
         };
         responses: {
@@ -2167,7 +2269,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VehicleCostEntryResponse"];
+                    "*/*": components["schemas"]["ExpenseEntryResponse"];
                 };
             };
         };
@@ -2446,6 +2548,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleIncidentResponse"];
+                };
+            };
+        };
+    };
+    fleetExpenses: {
+        parameters: {
+            query?: {
+                categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FleetExpenseEntryResponse"][];
+                };
+            };
+        };
+    };
+    createFleetExpense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ExpenseEntryResponse"];
                 };
             };
         };
@@ -2948,6 +3096,50 @@ export interface operations {
             };
         };
     };
+    list_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetResponse"][];
+                };
+            };
+        };
+    };
+    create_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetResponse"];
+                };
+            };
+        };
+    };
     webhook: {
         parameters: {
             query?: never;
@@ -3219,7 +3411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["VehicleCostSummaryResponse"];
+                    "*/*": components["schemas"]["ExpenseSummaryResponse"];
                 };
             };
         };
@@ -3266,28 +3458,6 @@ export interface operations {
             };
         };
     };
-    fleetCosts: {
-        parameters: {
-            query?: {
-                category?: "COMBUSTIVEL" | "MANUTENCAO" | "OUTRO";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FleetCostEntryResponse"][];
-                };
-            };
-        };
-    };
     costTrend: {
         parameters: {
             query?: never;
@@ -3315,6 +3485,7 @@ export interface operations {
                 fromLon: number;
                 toLat: number;
                 toLon: number;
+                vehicleId?: string;
             };
             header?: never;
             path?: never;
@@ -3517,6 +3688,29 @@ export interface operations {
             };
         };
     };
+    summaryByCategory: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CategoryTotal"][];
+                };
+            };
+        };
+    };
     summary_1: {
         parameters: {
             query?: never;
@@ -3650,6 +3844,46 @@ export interface operations {
             path: {
                 vehicleId: string;
                 costId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteFleetExpense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
             };
             cookie?: never;
         };
