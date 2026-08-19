@@ -35,9 +35,12 @@ class ExpenseEntryServiceTest {
             new JwtPrincipal(UUID.randomUUID(), tenantId, "GESTOR_FROTA");
 
     @Test
-    void calculaCustoPorKm() {
+    void calculaCustoPorKmSobreKmRodadoDesdeOCadastro() {
         UUID vehicleId = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "VW", "Saveiro", 2022, 1000);
+        // Cadastrado com 500 km (odometroInicial) e depois atualizado pra 1000 km: só os
+        // 500 km rodados desde o cadastro entram na conta, não o odômetro total.
+        Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "VW", "Saveiro", 2022, 500);
+        vehicle.update("ABC1234", "VW", "Saveiro", 2022, 1000, vehicle.getStatus(), null, null, null, null);
         when(vehicleRepo.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.of(vehicle));
         when(expenseRepo.sumValorByVehicleId(vehicle.getId())).thenReturn(new BigDecimal("500.00"));
 
@@ -45,11 +48,12 @@ class ExpenseEntryServiceTest {
 
         assertEquals(new BigDecimal("500.00"), summary.totalValor());
         assertEquals(1000, summary.odometerKm());
-        assertEquals(new BigDecimal("0.50"), summary.custoPorKm());
+        assertEquals(500, summary.kmRodado());
+        assertEquals(new BigDecimal("1.00"), summary.custoPorKm());
     }
 
     @Test
-    void custoPorKmNuloQuandoOdometroZero() {
+    void custoPorKmNuloQuandoAindaNaoRodouKmDesdeOCadastro() {
         UUID vehicleId = UUID.randomUUID();
         Vehicle vehicle = new Vehicle(tenantId, "ZER0000", "VW", "Novo", 2024, 0);
         when(vehicleRepo.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.of(vehicle));
@@ -57,6 +61,7 @@ class ExpenseEntryServiceTest {
 
         ExpenseSummaryResponse summary = service.summary(principal, vehicleId);
 
+        assertEquals(0, summary.kmRodado());
         assertNull(summary.custoPorKm());
     }
 

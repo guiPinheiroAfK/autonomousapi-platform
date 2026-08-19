@@ -41,6 +41,16 @@ public class Vehicle {
     @Column(name = "odometer_km", nullable = false)
     private int odometerKm;
 
+    /**
+     * Odômetro no momento do cadastro (migration V24) — nunca muda depois, mesmo que
+     * {@link #odometerKm} seja atualizado via {@link #update}. É o "km zero" do custo por
+     * km (ver {@code ExpenseEntryService.summary}): dividir pelo odômetro total incluiria
+     * km rodado antes do veículo entrar no sistema, o que não tem relação com o gasto
+     * rastreado aqui.
+     */
+    @Column(name = "odometro_inicial", nullable = false, updatable = false)
+    private int odometroInicial;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private VehicleStatus status;
@@ -88,6 +98,7 @@ public class Vehicle {
         this.model = model;
         this.modelYear = modelYear;
         this.odometerKm = odometerKm;
+        this.odometroInicial = odometerKm;
         this.status = VehicleStatus.ATIVO;
         Instant now = Instant.now();
         this.createdAt = now;
@@ -138,6 +149,10 @@ public class Vehicle {
 
     public int getOdometerKm() {
         return odometerKm;
+    }
+
+    public int getOdometroInicial() {
+        return odometroInicial;
     }
 
     public VehicleStatus getStatus() {

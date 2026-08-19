@@ -1662,6 +1662,8 @@ export interface components {
             totalValor?: number;
             /** Format: int32 */
             odometerKm?: number;
+            /** Format: int32 */
+            kmRodado?: number;
             custoPorKm?: number;
         };
         VehicleConditionScoreResponse: {
