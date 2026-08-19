@@ -3,6 +3,8 @@ package com.autonomousapi.core.routeplan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -15,10 +17,13 @@ import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
 import com.autonomousapi.core.error.RoutePlanInvalidException;
 import com.autonomousapi.core.geo.GeoApiClient;
+import com.autonomousapi.core.pricing.RouteCostEstimator;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.StopInput;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
+import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -49,8 +54,10 @@ class RoutePlanServiceTest {
         optimizer.carregarBibliotecaNativa();
     }
 
-    private final RoutePlanService service = new RoutePlanService(
-            routePlans, routeStops, drivers, vehicles, collectionPoints, driverResolver, routeMatrix, optimizer);
+    private final RouteCostEstimator costEstimator = mock(RouteCostEstimator.class);
+
+    private final RoutePlanService service = new RoutePlanService(routePlans, routeStops, drivers, vehicles,
+            collectionPoints, driverResolver, routeMatrix, optimizer, costEstimator);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -121,6 +128,59 @@ class RoutePlanServiceTest {
         assertThrows(RoutePlanInvalidException.class,
                 () -> service.create(
                         gestorPrincipal, null, null, RouteCategoria.TRANSFER, LocalDate.now(), null, List.of(s)));
+    }
+
+    @Test
+    void createPersisteCustoEstimadoParaTransferComVeiculo() {
+        UUID vehicleId = UUID.randomUUID();
+        Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "Fiat", "Fiorino", 2022, 1000);
+        when(vehicles.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.of(vehicle));
+        when(costEstimator.estimar(eq(tenantId), eq(vehicle), anyDouble())).thenReturn(
+                Optional.of(new RouteCostEstimator.Estimate(new BigDecimal("42.50"), new BigDecimal("51.00"))));
+        when(routePlans.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(any())).thenReturn(List.of());
+
+        StopInput origem = new StopInput(StopType.COLETA, "Origem", -23.5, -46.6, null, null, null);
+        StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.6, -46.7, null, null, null);
+
+        RoutePlanResponse resp = service.create(gestorPrincipal, null, vehicleId, RouteCategoria.TRANSFER,
+                LocalDate.now(), new BigDecimal("100.00"), List.of(origem, destino));
+
+        assertEquals(new BigDecimal("42.50"), resp.custoEstimado());
+    }
+
+    @Test
+    void createNaoCalculaCustoEstimadoParaRotaMultiParada() {
+        // Fórmula v1 é só pra TRANSFER (spec 09) — ROTA multi-parada não tem valor combinado
+        // único pra comparar, então custo estimado não se aplica.
+        UUID vehicleId = UUID.randomUUID();
+        Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "Fiat", "Fiorino", 2022, 1000);
+        when(vehicles.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.of(vehicle));
+        when(routePlans.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(any())).thenReturn(List.of());
+
+        StopInput s = new StopInput(StopType.COLETA, "Parada", -23.5, -46.6, null, null, null);
+
+        RoutePlanResponse resp = service.create(gestorPrincipal, null, vehicleId, RouteCategoria.ROTA,
+                LocalDate.now(), null, List.of(s));
+
+        assertEquals(null, resp.custoEstimado());
+        org.mockito.Mockito.verifyNoInteractions(costEstimator);
+    }
+
+    @Test
+    void margemRealizadaSoApareceQuandoRotaConcluida() {
+        RoutePlan plan = new RoutePlan(tenantId, gestorUserId, null, null,
+                RouteCategoria.TRANSFER, LocalDate.now(), new BigDecimal("100.00"));
+        plan.registrarCustoEstimado(new BigDecimal("40.00"), "v1");
+
+        RoutePlanResponse planejada = RoutePlanResponse.from(plan, null, null, List.of());
+        assertEquals(null, planejada.margemRealizada());
+
+        plan.avancarStatus(RoutePlanStatus.EM_ANDAMENTO);
+        plan.avancarStatus(RoutePlanStatus.CONCLUIDA);
+        RoutePlanResponse concluida = RoutePlanResponse.from(plan, null, null, List.of());
+        assertEquals(new BigDecimal("60.00"), concluida.margemRealizada());
     }
 
     @Test

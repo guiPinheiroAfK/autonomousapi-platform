@@ -1,4 +1,4 @@
-package com.autonomousapi.core.vehicle.cost;
+package com.autonomousapi.core.expense;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -9,12 +9,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.RoutePlanInvalidException;
+import com.autonomousapi.core.expense.dto.ExpenseEntryRequest;
+import com.autonomousapi.core.expense.dto.ExpenseSummaryResponse;
+import com.autonomousapi.core.expense.dto.MonthlyCostResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
-import com.autonomousapi.core.vehicle.cost.dto.MonthlyCostResponse;
-import com.autonomousapi.core.vehicle.cost.dto.VehicleCostEntryRequest;
-import com.autonomousapi.core.vehicle.cost.dto.VehicleCostSummaryResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -23,11 +24,11 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class VehicleCostServiceTest {
+class ExpenseEntryServiceTest {
 
     private final VehicleRepository vehicleRepo = mock(VehicleRepository.class);
-    private final VehicleCostEntryRepository costRepo = mock(VehicleCostEntryRepository.class);
-    private final VehicleCostService service = new VehicleCostService(vehicleRepo, costRepo);
+    private final ExpenseEntryRepository expenseRepo = mock(ExpenseEntryRepository.class);
+    private final ExpenseEntryService service = new ExpenseEntryService(vehicleRepo, expenseRepo);
 
     private final UUID tenantId = UUID.randomUUID();
     private final JwtPrincipal principal =
@@ -38,13 +39,13 @@ class VehicleCostServiceTest {
         UUID vehicleId = UUID.randomUUID();
         Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "VW", "Saveiro", 2022, 1000);
         when(vehicleRepo.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.of(vehicle));
-        when(costRepo.sumAmountByVehicleId(vehicle.getId())).thenReturn(new BigDecimal("500.00"));
+        when(expenseRepo.sumValorByVehicleId(vehicle.getId())).thenReturn(new BigDecimal("500.00"));
 
-        VehicleCostSummaryResponse summary = service.summary(principal, vehicleId);
+        ExpenseSummaryResponse summary = service.summary(principal, vehicleId);
 
-        assertEquals(new BigDecimal("500.00"), summary.totalCost());
+        assertEquals(new BigDecimal("500.00"), summary.totalValor());
         assertEquals(1000, summary.odometerKm());
-        assertEquals(new BigDecimal("0.50"), summary.costPerKm());
+        assertEquals(new BigDecimal("0.50"), summary.custoPorKm());
     }
 
     @Test
@@ -52,11 +53,11 @@ class VehicleCostServiceTest {
         UUID vehicleId = UUID.randomUUID();
         Vehicle vehicle = new Vehicle(tenantId, "ZER0000", "VW", "Novo", 2024, 0);
         when(vehicleRepo.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.of(vehicle));
-        when(costRepo.sumAmountByVehicleId(vehicle.getId())).thenReturn(BigDecimal.ZERO);
+        when(expenseRepo.sumValorByVehicleId(vehicle.getId())).thenReturn(BigDecimal.ZERO);
 
-        VehicleCostSummaryResponse summary = service.summary(principal, vehicleId);
+        ExpenseSummaryResponse summary = service.summary(principal, vehicleId);
 
-        assertNull(summary.costPerKm());
+        assertNull(summary.custoPorKm());
     }
 
     @Test
@@ -66,13 +67,13 @@ class VehicleCostServiceTest {
         UUID veiculoA = UUID.randomUUID();
         UUID veiculoB = UUID.randomUUID();
 
-        when(costRepo.findAllByTenantIdSince(eq(tenantId), any())).thenReturn(List.of(
-                new VehicleCostEntry(veiculoA, VehicleCostCategory.COMBUSTIVEL,
-                        new BigDecimal("100.00"), "Posto", mesAnterior.atDay(5)),
-                new VehicleCostEntry(veiculoB, VehicleCostCategory.MANUTENCAO,
-                        new BigDecimal("50.00"), "Troca de óleo", mesAnterior.atDay(10)),
-                new VehicleCostEntry(veiculoA, VehicleCostCategory.OUTRO,
-                        new BigDecimal("30.00"), "Pedágio", currentMonth.atDay(1))));
+        when(expenseRepo.findAllByTenantIdAndDataGreaterThanEqualOrderByData(eq(tenantId), any())).thenReturn(List.of(
+                new ExpenseEntry(tenantId, veiculoA, ExpenseCategory.COMBUSTIVEL,
+                        new BigDecimal("100.00"), "Posto", mesAnterior.atDay(5), null, null),
+                new ExpenseEntry(tenantId, veiculoB, ExpenseCategory.MANUTENCAO,
+                        new BigDecimal("50.00"), "Troca de óleo", mesAnterior.atDay(10), null, null),
+                new ExpenseEntry(tenantId, veiculoA, ExpenseCategory.OUTRO,
+                        new BigDecimal("30.00"), "Pedágio", currentMonth.atDay(1), null, null)));
 
         List<MonthlyCostResponse> trend = service.monthlyTrend(principal);
 
@@ -92,9 +93,9 @@ class VehicleCostServiceTest {
     void exportaCsvComCabecalhoEDadosDoVeiculo() {
         Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "VW", "Saveiro", 2022, 1000);
         when(vehicleRepo.findAllByTenantIdOrderByCreatedAtDesc(tenantId)).thenReturn(List.of(vehicle));
-        when(costRepo.findAllByTenantIdSince(eq(tenantId), any())).thenReturn(List.of(
-                new VehicleCostEntry(vehicle.getId(), VehicleCostCategory.COMBUSTIVEL,
-                        new BigDecimal("150.50"), "Abastecimento; posto X", LocalDate.of(2026, 1, 10))));
+        when(expenseRepo.findAllByTenantIdAndDataGreaterThanEqualOrderByData(eq(tenantId), any())).thenReturn(List.of(
+                new ExpenseEntry(tenantId, vehicle.getId(), ExpenseCategory.COMBUSTIVEL,
+                        new BigDecimal("150.50"), "Abastecimento; posto X", LocalDate.of(2026, 1, 10), null, null)));
 
         String csv = service.exportCsv(principal);
 
@@ -104,12 +105,32 @@ class VehicleCostServiceTest {
     }
 
     @Test
-    void naoAdicionaCustoEmVeiculoDeOutroTenant() {
+    void naoAdicionaDespesaEmVeiculoDeOutroTenant() {
         UUID vehicleId = UUID.randomUUID();
         when(vehicleRepo.findByIdAndTenantId(vehicleId, tenantId)).thenReturn(Optional.empty());
-        VehicleCostEntryRequest req = new VehicleCostEntryRequest(
-                VehicleCostCategory.COMBUSTIVEL, new BigDecimal("100.00"), "Abastecimento", LocalDate.now());
+        ExpenseEntryRequest req = new ExpenseEntryRequest(
+                null, ExpenseCategory.COMBUSTIVEL, new BigDecimal("100.00"), "Abastecimento", LocalDate.now(), null, null);
 
-        assertThrows(NotFoundException.class, () -> service.addEntry(principal, vehicleId, req));
+        assertThrows(NotFoundException.class, () -> service.create(principal, vehicleId, req));
+    }
+
+    @Test
+    void aceitaDespesaDeFrotaSemVeiculo() {
+        ExpenseEntryRequest req = new ExpenseEntryRequest(
+                null, ExpenseCategory.SEGURO, new BigDecimal("1200.00"), "Seguro corporativo", LocalDate.now(), null, null);
+
+        var resp = service.create(principal, null, req);
+
+        assertNull(resp.vehicleId());
+        assertEquals("SEGURO", resp.categoria());
+    }
+
+    @Test
+    void rejeitaLitrosOuOdometroForaDeCombustivel() {
+        ExpenseEntryRequest req = new ExpenseEntryRequest(
+                null, ExpenseCategory.MANUTENCAO, new BigDecimal("300.00"), "Revisão", LocalDate.now(),
+                new BigDecimal("10.0"), null);
+
+        assertThrows(RoutePlanInvalidException.class, () -> service.create(principal, null, req));
     }
 }

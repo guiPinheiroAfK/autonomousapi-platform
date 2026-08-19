@@ -1,7 +1,7 @@
 package com.autonomousapi.core.report;
 
+import com.autonomousapi.core.expense.ExpenseEntryService;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
-import com.autonomousapi.core.vehicle.cost.VehicleCostService;
 import com.autonomousapi.core.workorder.WorkOrderService;
 import com.autonomousapi.core.workorder.dto.WorkOrderReportResponse;
 import java.nio.charset.StandardCharsets;
@@ -19,18 +19,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/reports")
 public class ReportController {
 
-    private final VehicleCostService costService;
+    private final ExpenseEntryService expenseService;
     private final WorkOrderService workOrderService;
 
-    public ReportController(VehicleCostService costService, WorkOrderService workOrderService) {
-        this.costService = costService;
+    public ReportController(ExpenseEntryService expenseService, WorkOrderService workOrderService) {
+        this.expenseService = expenseService;
         this.workOrderService = workOrderService;
     }
 
     @GetMapping(value = "/costs.csv", produces = "text/csv")
     public ResponseEntity<byte[]> costsCsv(Authentication auth) {
         JwtPrincipal principal = (JwtPrincipal) auth.getPrincipal();
-        byte[] body = costService.exportCsv(principal).getBytes(StandardCharsets.UTF_8);
+        byte[] body = expenseService.exportCsv(principal).getBytes(StandardCharsets.UTF_8);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(

@@ -16,9 +16,9 @@ import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import com.autonomousapi.core.vehicle.VehicleStatus;
 import com.autonomousapi.core.vehicle.VehicleType;
-import com.autonomousapi.core.vehicle.cost.VehicleCostCategory;
-import com.autonomousapi.core.vehicle.cost.VehicleCostEntry;
-import com.autonomousapi.core.vehicle.cost.VehicleCostEntryRepository;
+import com.autonomousapi.core.expense.ExpenseCategory;
+import com.autonomousapi.core.expense.ExpenseEntry;
+import com.autonomousapi.core.expense.ExpenseEntryRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -53,7 +53,7 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final UserRepository users;
     private final VehicleRepository vehicles;
     private final DriverRepository drivers;
-    private final VehicleCostEntryRepository costs;
+    private final ExpenseEntryRepository expenses;
     private final SubscriptionRepository subscriptions;
     private final PasswordEncoder passwordEncoder;
 
@@ -62,14 +62,14 @@ public class DemoDataSeeder implements ApplicationRunner {
             UserRepository users,
             VehicleRepository vehicles,
             DriverRepository drivers,
-            VehicleCostEntryRepository costs,
+            ExpenseEntryRepository expenses,
             SubscriptionRepository subscriptions,
             PasswordEncoder passwordEncoder) {
         this.tenants = tenants;
         this.users = users;
         this.vehicles = vehicles;
         this.drivers = drivers;
-        this.costs = costs;
+        this.expenses = expenses;
         this.subscriptions = subscriptions;
         this.passwordEncoder = passwordEncoder;
     }
@@ -132,7 +132,7 @@ public class DemoDataSeeder implements ApplicationRunner {
             // Histórico de custo só nos veículos operacionais (ATIVO/MANUTENCAO) — reflete
             // custo real de operação, não de um veículo já desativado da frota.
             if (d.status() != VehicleStatus.INATIVO) {
-                seedCostHistory(v.getId(), d.plate(), d.km());
+                seedCostHistory(tenantId, v.getId(), d.plate(), d.km());
             }
         }
     }
@@ -150,11 +150,13 @@ public class DemoDataSeeder implements ApplicationRunner {
             attrs.put("categoria", "motocicleta");
             attrs.put("cilindradas", modelo.contains("160") ? 162 : 125);
             attrs.put("combustivel", "flex");
+            attrs.put("consumoMedioKmPorLitro", 32.0); // spec 09 — dado manual, gestor preenche no cadastro
         } else {
             attrs.put("categoria", "utilitario");
             attrs.put("combustivel", "diesel");
             attrs.put("capacidadeCargaKg",
                     modelo.contains("Sprinter") || modelo.contains("Daily") ? 1500 : 650);
+            attrs.put("consumoMedioKmPorLitro", 9.5);
         }
         return attrs;
     }
@@ -164,18 +166,18 @@ public class DemoDataSeeder implements ApplicationRunner {
      * do próprio odômetro/placa (determinístico, sem lib de aleatoriedade) — para o
      * histórico não parecer um template copiado igual em todo veículo.
      */
-    private void seedCostHistory(UUID vehicleId, String plate, int odometerKm) {
-        record C(int diasAtras, VehicleCostCategory categoria, String valor, String descricao) {}
+    private void seedCostHistory(UUID tenantId, UUID vehicleId, String plate, int odometerKm) {
+        record C(int diasAtras, ExpenseCategory categoria, String valor, String descricao) {}
 
         List<C> pool = List.of(
-                new C(88, VehicleCostCategory.COMBUSTIVEL, "215.40", "Abastecimento Posto Ipiranga"),
-                new C(74, VehicleCostCategory.COMBUSTIVEL, "198.90", "Abastecimento Posto Shell BR-116"),
-                new C(61, VehicleCostCategory.MANUTENCAO, "380.00", "Troca de óleo e filtro"),
-                new C(49, VehicleCostCategory.OUTRO, "48.50", "Pedágio Rodovia Anhanguera"),
-                new C(37, VehicleCostCategory.COMBUSTIVEL, "227.60", "Abastecimento Posto Ipiranga"),
-                new C(26, VehicleCostCategory.MANUTENCAO, "165.00", "Alinhamento e balanceamento"),
-                new C(14, VehicleCostCategory.OUTRO, "35.00", "Lavagem e higienização"),
-                new C(4, VehicleCostCategory.COMBUSTIVEL, "241.10", "Abastecimento Posto Shell BR-116"));
+                new C(88, ExpenseCategory.COMBUSTIVEL, "215.40", "Abastecimento Posto Ipiranga"),
+                new C(74, ExpenseCategory.COMBUSTIVEL, "198.90", "Abastecimento Posto Shell BR-116"),
+                new C(61, ExpenseCategory.MANUTENCAO, "380.00", "Troca de óleo e filtro"),
+                new C(49, ExpenseCategory.PEDAGIO, "48.50", "Pedágio Rodovia Anhanguera"),
+                new C(37, ExpenseCategory.COMBUSTIVEL, "227.60", "Abastecimento Posto Ipiranga"),
+                new C(26, ExpenseCategory.MANUTENCAO, "165.00", "Alinhamento e balanceamento"),
+                new C(14, ExpenseCategory.LAVAGEM, "35.00", "Lavagem e higienização"),
+                new C(4, ExpenseCategory.COMBUSTIVEL, "241.10", "Abastecimento Posto Shell BR-116"));
 
         // Fator de custo proporcional ao uso (~0.7x a 1.2x) e quantidade de lançamentos
         // (4 a 8) variando por veículo — mesma ideia, números diferentes por veículo.
@@ -183,11 +185,15 @@ public class DemoDataSeeder implements ApplicationRunner {
         int count = 4 + Math.abs(plate.hashCode()) % (pool.size() - 3);
 
         for (C c : pool.subList(pool.size() - count, pool.size())) {
-            BigDecimal amount = new BigDecimal(c.valor())
+            BigDecimal valor = new BigDecimal(c.valor())
                     .multiply(BigDecimal.valueOf(factor))
                     .setScale(2, java.math.RoundingMode.HALF_UP);
-            costs.save(new VehicleCostEntry(
-                    vehicleId, c.categoria(), amount, c.descricao(), LocalDate.now().minusDays(c.diasAtras())));
+            BigDecimal litros = c.categoria() == ExpenseCategory.COMBUSTIVEL
+                    ? valor.divide(BigDecimal.valueOf(6.2), 3, java.math.RoundingMode.HALF_UP)
+                    : null;
+            expenses.save(new ExpenseEntry(
+                    tenantId, vehicleId, c.categoria(), valor, c.descricao(),
+                    LocalDate.now().minusDays(c.diasAtras()), litros, litros != null ? odometerKm : null));
         }
     }
 

@@ -3,7 +3,7 @@ package com.autonomousapi.core.config;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-import com.autonomousapi.core.vehicle.cost.dto.MonthlyCostResponse;
+import com.autonomousapi.core.expense.dto.MonthlyCostResponse;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;

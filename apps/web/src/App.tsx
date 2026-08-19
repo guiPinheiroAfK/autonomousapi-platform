@@ -24,6 +24,7 @@ const VehicleDetailPage = lazy(() =>
 );
 const DriversPage = lazy(() => import('./pages/DriversPage').then((m) => ({ default: m.DriversPage })));
 const VehicleCostsPage = lazy(() => import('./pages/VehicleCostsPage').then((m) => ({ default: m.VehicleCostsPage })));
+const CostsPage = lazy(() => import('./pages/CostsPage').then((m) => ({ default: m.CostsPage })));
 const WorkOrdersPage = lazy(() => import('./pages/WorkOrdersPage').then((m) => ({ default: m.WorkOrdersPage })));
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) => ({ default: m.MaintenancePage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
@@ -221,7 +222,8 @@ export function App() {
         {view === 'drivers' && <DriversPage />}
         {view === 'work-orders' && <WorkOrdersPage />}
         {view === 'maintenance' && <MaintenancePage />}
-        {view === 'reports' && <ReportsPage />}
+        {view === 'reports' && <ReportsPage onGoToExpenses={() => setView('expenses')} />}
+        {view === 'expenses' && <CostsPage />}
         {view === 'billing' && <BillingPage />}
         {view === 'affiliates' && <AffiliatesPage />}
         {view === 'chat' && (

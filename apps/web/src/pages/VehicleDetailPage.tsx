@@ -3,7 +3,7 @@ import { ChevronLeft, Gauge, ShieldAlert } from 'lucide-react';
 import {
   coreApi,
   type VehicleConditionScoreResponse,
-  type VehicleCostEntryResponse,
+  type ExpenseEntryResponse,
   type VehicleIncidentRequest,
   type VehicleIncidentResponse,
   type VehicleMarketValueRequest,
@@ -36,7 +36,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState('');
 
-  const [costs, setCosts] = useState<VehicleCostEntryResponse[]>([]);
+  const [costs, setCosts] = useState<ExpenseEntryResponse[]>([]);
   const [os, setOs] = useState<WorkOrderResponse[]>([]);
   const [fipe, setFipe] = useState<VehicleMarketValueResponse | null>(null);
   const [score, setScore] = useState<VehicleConditionScoreResponse | null>(null);
@@ -70,7 +70,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
 
-    coreApi.vehicleCosts.list(vehicleId).then(setCosts);
+    coreApi.expenses.list(vehicleId).then(setCosts);
     coreApi.workOrders.list(vehicleId).then(setOs);
     coreApi.vehicleMarketValue.latest(vehicleId).then(setFipe);
     coreApi.vehicleCondition.score(vehicleId).then(setScore);
@@ -127,7 +127,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
     );
   }
 
-  const manutencao = costs.filter((c) => c.category === 'MANUTENCAO');
+  const manutencao = costs.filter((c) => c.categoria === 'MANUTENCAO');
 
   return (
     <div className="p-5">
@@ -171,7 +171,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
         />
         <InfoStat
           label="Gasto histórico"
-          value={formatBRL(costs.reduce((sum, c) => sum + Number(c.amount ?? 0), 0))}
+          value={formatBRL(costs.reduce((sum, c) => sum + Number(c.valor ?? 0), 0))}
         />
       </div>
 
@@ -191,10 +191,10 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
               {manutencao.map((c) => (
                 <li key={c.id} className="rounded-md border border-border p-3 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-foreground">{c.description}</span>
-                    <span className="font-data font-semibold text-foreground">{formatBRL(Number(c.amount))}</span>
+                    <span className="font-medium text-foreground">{c.descricao}</span>
+                    <span className="font-data font-semibold text-foreground">{formatBRL(Number(c.valor))}</span>
                   </div>
-                  <span className="text-[11px] text-muted-foreground">{formatDateBR(c.occurredAt!)}</span>
+                  <span className="text-[11px] text-muted-foreground">{formatDateBR(c.data!)}</span>
                 </li>
               ))}
             </ul>

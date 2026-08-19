@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.autonomousapi.core.IntegrationTestBase;
 import com.autonomousapi.core.tenant.Tenant;
 import com.autonomousapi.core.tenant.TenantRepository;
-import com.autonomousapi.core.vehicle.cost.VehicleCostEntryRepository;
+import com.autonomousapi.core.expense.ExpenseEntryRepository;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +29,7 @@ class VehicleAtributosJsonbIntegrationTest extends IntegrationTestBase {
 
     @Autowired VehicleRepository vehicles;
     @Autowired TenantRepository tenants;
-    @Autowired VehicleCostEntryRepository custos;
+    @Autowired ExpenseEntryRepository custos;
     @Autowired EntityManager em;
 
     private UUID tenantId;
@@ -37,7 +37,7 @@ class VehicleAtributosJsonbIntegrationTest extends IntegrationTestBase {
     @BeforeEach
     void limparEPreparar() {
         // Custo antes de veículo: o banco de teste é compartilhado entre as classes de
-        // integração, e vehicle_cost_entry tem FK para vehicle.
+        // integração, e expense_entry tem FK para vehicle.
         custos.deleteAll();
         vehicles.deleteAll();
         tenantId = tenants.save(new Tenant("Frota jsonb " + UUID.randomUUID())).getId();

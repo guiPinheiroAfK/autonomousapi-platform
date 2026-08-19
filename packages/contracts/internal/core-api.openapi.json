@@ -558,7 +558,7 @@
     "/v1/vehicles/{vehicleId}/costs": {
       "get": {
         "tags": [
-          "vehicle-cost-controller"
+          "expense-entry-controller"
         ],
         "operationId": "list_2",
         "parameters": [
@@ -580,7 +580,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/VehicleCostEntryResponse"
+                    "$ref": "#/components/schemas/ExpenseEntryResponse"
                   }
                 }
               }
@@ -590,7 +590,7 @@
       },
       "post": {
         "tags": [
-          "vehicle-cost-controller"
+          "expense-entry-controller"
         ],
         "operationId": "addEntry",
         "parameters": [
@@ -608,7 +608,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VehicleCostEntryRequest"
+                "$ref": "#/components/schemas/ExpenseEntryRequest"
               }
             }
           },
@@ -620,7 +620,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/VehicleCostEntryResponse"
+                  "$ref": "#/components/schemas/ExpenseEntryResponse"
                 }
               }
             }
@@ -987,6 +987,77 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/VehicleIncidentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/expenses": {
+      "get": {
+        "tags": [
+          "expense-entry-controller"
+        ],
+        "operationId": "fleetExpenses",
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COMBUSTIVEL",
+                "MANUTENCAO",
+                "SEGURO",
+                "IPVA",
+                "MULTA",
+                "PEDAGIO",
+                "LAVAGEM",
+                "OUTRO"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FleetExpenseEntryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "expense-entry-controller"
+        ],
+        "operationId": "createFleetExpense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseEntryResponse"
                 }
               }
             }
@@ -1666,6 +1737,57 @@
         }
       }
     },
+    "/v1/budgets": {
+      "get": {
+        "tags": [
+          "budget-controller"
+        ],
+        "operationId": "list_9",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "budget-controller"
+        ],
+        "operationId": "create_6",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/billing/webhook": {
       "post": {
         "tags": [
@@ -1974,7 +2096,7 @@
     "/v1/vehicles/{vehicleId}/cost-summary": {
       "get": {
         "tags": [
-          "vehicle-cost-controller"
+          "expense-entry-controller"
         ],
         "operationId": "summary",
         "parameters": [
@@ -1994,7 +2116,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/VehicleCostSummaryResponse"
+                  "$ref": "#/components/schemas/ExpenseSummaryResponse"
                 }
               }
             }
@@ -2048,44 +2170,6 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/VehicleMaintenanceAlertResponse"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/vehicles/costs": {
-      "get": {
-        "tags": [
-          "vehicle-controller"
-        ],
-        "operationId": "fleetCosts",
-        "parameters": [
-          {
-            "name": "category",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "COMBUSTIVEL",
-                "MANUTENCAO",
-                "OUTRO"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FleetCostEntryResponse"
                   }
                 }
               }
@@ -2158,6 +2242,15 @@
             "schema": {
               "type": "number",
               "format": "double"
+            }
+          },
+          {
+            "name": "vehicleId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2378,6 +2471,49 @@
         }
       }
     },
+    "/v1/expenses/summary": {
+      "get": {
+        "tags": [
+          "expense-entry-controller"
+        ],
+        "operationId": "summaryByCategory",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryTotal"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/drivers/{driverId}/ratings/summary": {
       "get": {
         "tags": [
@@ -2547,7 +2683,7 @@
     "/v1/vehicles/{vehicleId}/costs/{costId}": {
       "delete": {
         "tags": [
-          "vehicle-cost-controller"
+          "expense-entry-controller"
         ],
         "operationId": "delete_1",
         "parameters": [
@@ -2562,6 +2698,54 @@
           },
           {
             "name": "costId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/v1/expenses/{id}": {
+      "delete": {
+        "tags": [
+          "expense-entry-controller"
+        ],
+        "operationId": "deleteFleetExpense",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/v1/budgets/{id}": {
+      "delete": {
+        "tags": [
+          "budget-controller"
+        ],
+        "operationId": "delete_4",
+        "parameters": [
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -3170,57 +3354,84 @@
           }
         }
       },
-      "VehicleCostEntryRequest": {
+      "ExpenseEntryRequest": {
         "required": [
-          "amount",
-          "category",
-          "occurredAt"
+          "categoria",
+          "data",
+          "valor"
         ],
         "type": "object",
         "properties": {
-          "category": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoria": {
             "type": "string",
             "enum": [
               "COMBUSTIVEL",
               "MANUTENCAO",
+              "SEGURO",
+              "IPVA",
+              "MULTA",
+              "PEDAGIO",
+              "LAVAGEM",
               "OUTRO"
             ]
           },
-          "amount": {
+          "valor": {
             "minimum": 0.01,
             "exclusiveMinimum": false,
             "type": "number"
           },
-          "description": {
+          "descricao": {
             "maxLength": 255,
             "minLength": 0,
             "type": "string"
           },
-          "occurredAt": {
+          "data": {
             "type": "string",
             "format": "date"
+          },
+          "litrosOuKwh": {
+            "type": "number"
+          },
+          "odometro": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
-      "VehicleCostEntryResponse": {
+      "ExpenseEntryResponse": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "category": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoria": {
             "type": "string"
           },
-          "amount": {
+          "valor": {
             "type": "number"
           },
-          "description": {
+          "descricao": {
             "type": "string"
           },
-          "occurredAt": {
+          "data": {
             "type": "string",
             "format": "date"
+          },
+          "litrosOuKwh": {
+            "type": "number"
+          },
+          "odometro": {
+            "type": "integer",
+            "format": "int32"
           },
           "createdAt": {
             "type": "string",
@@ -3452,6 +3663,12 @@
             "format": "date"
           },
           "valor": {
+            "type": "number"
+          },
+          "custoEstimado": {
+            "type": "number"
+          },
+          "margemRealizada": {
             "type": "number"
           },
           "createdAt": {
@@ -3816,6 +4033,74 @@
           }
         }
       },
+      "BudgetRequest": {
+        "required": [
+          "valorLimite"
+        ],
+        "type": "object",
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "COMBUSTIVEL",
+              "MANUTENCAO",
+              "SEGURO",
+              "IPVA",
+              "MULTA",
+              "PEDAGIO",
+              "LAVAGEM",
+              "OUTRO"
+            ]
+          },
+          "valorLimite": {
+            "minimum": 0.01,
+            "exclusiveMinimum": false,
+            "type": "number"
+          }
+        }
+      },
+      "BudgetResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "COMBUSTIVEL",
+              "MANUTENCAO",
+              "SEGURO",
+              "IPVA",
+              "MULTA",
+              "PEDAGIO",
+              "LAVAGEM",
+              "OUTRO"
+            ]
+          },
+          "periodo": {
+            "type": "string"
+          },
+          "valorLimite": {
+            "type": "number"
+          },
+          "valorConsumido": {
+            "type": "number"
+          },
+          "percentualConsumido": {
+            "type": "number"
+          }
+        }
+      },
       "CheckoutSessionResponse": {
         "type": "object",
         "properties": {
@@ -3986,21 +4271,21 @@
           }
         }
       },
-      "VehicleCostSummaryResponse": {
+      "ExpenseSummaryResponse": {
         "type": "object",
         "properties": {
           "vehicleId": {
             "type": "string",
             "format": "uuid"
           },
-          "totalCost": {
+          "totalValor": {
             "type": "number"
           },
           "odometerKm": {
             "type": "integer",
             "format": "int32"
           },
-          "costPerKm": {
+          "custoPorKm": {
             "type": "number"
           }
         }
@@ -4054,46 +4339,6 @@
           }
         }
       },
-      "FleetCostEntryResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "vehicleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "plate": {
-            "type": "string"
-          },
-          "brand": {
-            "type": "string"
-          },
-          "model": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "COMBUSTIVEL",
-              "MANUTENCAO",
-              "OUTRO"
-            ]
-          },
-          "amount": {
-            "type": "number"
-          },
-          "description": {
-            "type": "string"
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      },
       "MonthlyCostResponse": {
         "type": "object",
         "properties": {
@@ -4137,6 +4382,12 @@
           },
           "unavailableReason": {
             "type": "string"
+          },
+          "custoEstimado": {
+            "type": "number"
+          },
+          "valorSugerido": {
+            "type": "number"
           }
         }
       },
@@ -4256,6 +4507,72 @@
           },
           "phone": {
             "type": "string"
+          }
+        }
+      },
+      "FleetExpenseEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "COMBUSTIVEL",
+              "MANUTENCAO",
+              "SEGURO",
+              "IPVA",
+              "MULTA",
+              "PEDAGIO",
+              "LAVAGEM",
+              "OUTRO"
+            ]
+          },
+          "valor": {
+            "type": "number"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "CategoryTotal": {
+        "type": "object",
+        "properties": {
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "COMBUSTIVEL",
+              "MANUTENCAO",
+              "SEGURO",
+              "IPVA",
+              "MULTA",
+              "PEDAGIO",
+              "LAVAGEM",
+              "OUTRO"
+            ]
+          },
+          "total": {
+            "type": "number"
           }
         }
       },
