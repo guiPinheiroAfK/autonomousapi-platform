@@ -13,6 +13,13 @@
 #      token de lá. Depois designa um veículo a ele.
 #   5. Lança despesas por veículo (combustível, manutenção, pedágio) e de frota
 #      (seguro, IPVA) — spec 10.
+#   6. Cadastra pontos de coleta reutilizáveis (spec 08 item 5).
+#   7. Monta uma rota multi-parada (ROTA) usando pontos cadastrados + endereço
+#      avulso, e uma rota TRANSFER com valor combinado (spec 02) — as duas já
+#      designadas ao motorista com login.
+#   8. Abre ordens de serviço de manutenção (preventiva concluída, corretiva
+#      aberta) — é o que alimenta a tela de Relatórios (financeiro de OS).
+#   9. Cria uma conversa de chat gestor→motorista com uma mensagem (ADR 0015).
 #
 # Uso:
 #   bash scripts/test-e2e/01-seed.sh
@@ -65,6 +72,9 @@ extract_link_token() {
 days_ago() {
   date -d "-$1 day" +%F 2>/dev/null || date -v-"$1"d +%F
 }
+days_ahead() {
+  date -d "+$1 day" +%F 2>/dev/null || date -v+"$1"d +%F
+}
 
 # Manda o corpo JSON via stdin (--data-binary @-) em vez de argumento de linha de
 # comando (-d "..."): em curl.exe rodando de dentro do Git Bash no Windows, um
@@ -79,7 +89,7 @@ post_json() {
   curl -sf -X POST "$url" -H 'Content-Type: application/json' --data-binary @- "$@"
 }
 
-echo "==> [1/6] Criando conta (signup) — ${GESTOR_EMAIL} / tenant '${TENANT_NAME}'"
+echo "==> [1/9] Criando conta (signup) — ${GESTOR_EMAIL} / tenant '${TENANT_NAME}'"
 post_json "${BASE_URL}/auth/signup" <<< "{\"email\":\"${GESTOR_EMAIL}\",\"password\":\"${GESTOR_PASSWORD}\",\"tenantName\":\"${TENANT_NAME}\"}" \
   > /dev/null
 
@@ -89,7 +99,7 @@ GESTOR_TOKEN=$(post_json "${BASE_URL}/auth/verify-email" <<< "{\"token\":\"${VER
 AUTH_HEADER="Authorization: Bearer ${GESTOR_TOKEN}"
 echo "    Conta confirmada."
 
-echo "==> [2/6] Cadastrando veículos..."
+echo "==> [2/9] Cadastrando veículos..."
 VEHICLE_IDS=()
 VEHICLE_DEFS=(
   'RTE1A11|Fiat|Fiorino|2022|32000|ATIVO|VAN'
@@ -106,7 +116,7 @@ for def in "${VEHICLE_DEFS[@]}"; do
   VEHICLE_IDS+=("$id")
 done
 
-echo "==> [3/6] Cadastrando motoristas..."
+echo "==> [3/9] Cadastrando motoristas..."
 DRIVER_IDS=()
 DRIVER_ID_LINKED=""
 DRIVER_DEFS=(
@@ -126,7 +136,7 @@ for def in "${DRIVER_DEFS[@]}"; do
 done
 
 if [ -n "$DRIVER_ID_LINKED" ]; then
-  echo "==> [4/6] Convidando e vinculando motorista (${MOTORISTA_EMAIL})..."
+  echo "==> [4/9] Convidando e vinculando motorista (${MOTORISTA_EMAIL})..."
   curl -sf -X POST "${BASE_URL}/drivers/${DRIVER_ID_LINKED}/invite" -H "$AUTH_HEADER" > /dev/null
   INVITE_TOKEN=$(extract_link_token "email de convite de motorista" "$MOTORISTA_EMAIL")
   post_json "${BASE_URL}/auth/accept-invite" \
@@ -137,10 +147,10 @@ if [ -n "$DRIVER_ID_LINKED" ]; then
   post_json "${BASE_URL}/drivers/${DRIVER_ID_LINKED}/assignment" -H "$AUTH_HEADER" \
     <<< "{\"vehicleId\":\"${VEHICLE_IDS[0]}\"}" > /dev/null
 else
-  echo "==> [4/6] (pulado — nenhum motorista com e-mail definido)"
+  echo "==> [4/9] (pulado — nenhum motorista com e-mail definido)"
 fi
 
-echo "==> [5/6] Lançando despesas por veículo..."
+echo "==> [5/9] Lançando despesas por veículo..."
 for vid in "${VEHICLE_IDS[@]}"; do
   post_json "${BASE_URL}/vehicles/${vid}/costs" -H "$AUTH_HEADER" \
     <<< "{\"categoria\":\"COMBUSTIVEL\",\"valor\":220.50,\"descricao\":\"Abastecimento (seed e2e)\",\"data\":\"$(days_ago 5)\",\"litrosOuKwh\":35.5,\"odometro\":1000}" > /dev/null
@@ -150,11 +160,69 @@ for vid in "${VEHICLE_IDS[@]}"; do
     <<< "{\"categoria\":\"PEDAGIO\",\"valor\":48.50,\"descricao\":\"Pedágio (seed e2e)\",\"data\":\"$(days_ago 2)\"}" > /dev/null
 done
 
-echo "==> [6/6] Lançando despesas de frota (sem veículo específico)..."
+echo "==> [6/9] Lançando despesas de frota (sem veículo específico)..."
 post_json "${BASE_URL}/expenses" -H "$AUTH_HEADER" \
   <<< "{\"categoria\":\"SEGURO\",\"valor\":1450.00,\"descricao\":\"Seguro corporativo mensal (seed e2e)\",\"data\":\"$(days_ago 10)\"}" > /dev/null
 post_json "${BASE_URL}/expenses" -H "$AUTH_HEADER" \
   <<< "{\"categoria\":\"IPVA\",\"valor\":890.00,\"descricao\":\"IPVA (seed e2e)\",\"data\":\"$(days_ago 15)\"}" > /dev/null
+
+echo "==> [7/9] Cadastrando pontos de coleta..."
+# Coordenadas da área do piloto (São Paulo, mesma região usada no grafo OSRM local).
+DEPOSITO_ID=$(post_json "${BASE_URL}/collection-points" -H "$AUTH_HEADER" \
+  <<< '{"nome":"Depósito Central (seed e2e)","endereco":"Avenida Paulista, 1000, São Paulo","lat":-23.5613,"lon":-46.6565,"janelaInicio":"08:00:00","janelaFim":"18:00:00"}' \
+  | jq -r '.id')
+FILIAL_ID=$(post_json "${BASE_URL}/collection-points" -H "$AUTH_HEADER" \
+  <<< '{"nome":"Filial Augusta (seed e2e)","endereco":"Rua Augusta, 500, São Paulo","lat":-23.5551,"lon":-46.6621}' \
+  | jq -r '.id')
+echo "    - Depósito Central -> ${DEPOSITO_ID}"
+echo "    - Filial Augusta -> ${FILIAL_ID}"
+
+echo "==> [8/9] Montando rotas..."
+if [ -n "$DRIVER_ID_LINKED" ]; then
+  echo "    - Rota multi-parada (ROTA), designada ao motorista..."
+  post_json "${BASE_URL}/routes/plans" -H "$AUTH_HEADER" <<EOF > /dev/null
+{"driverId":"${DRIVER_ID_LINKED}","vehicleId":"${VEHICLE_IDS[0]}","categoria":"ROTA","dataExecucao":"$(days_ahead 1)",
+ "stops":[
+   {"tipo":"COLETA","collectionPointId":"${DEPOSITO_ID}"},
+   {"tipo":"ENTREGA","collectionPointId":"${FILIAL_ID}"},
+   {"tipo":"ENTREGA","label":"Rua Oscar Freire, 200, São Paulo","lat":-23.5629,"lon":-46.6707}
+ ]}
+EOF
+
+  echo "    - Rota TRANSFER com valor combinado, designada ao motorista..."
+  post_json "${BASE_URL}/routes/plans" -H "$AUTH_HEADER" <<EOF > /dev/null
+{"driverId":"${DRIVER_ID_LINKED}","vehicleId":"${VEHICLE_IDS[1]}","categoria":"TRANSFER","dataExecucao":"$(days_ahead 1)","valor":180.00,
+ "stops":[
+   {"tipo":"COLETA","collectionPointId":"${DEPOSITO_ID}"},
+   {"tipo":"ENTREGA","label":"Aeroporto de Congonhas, São Paulo","lat":-23.6261,"lon":-46.6564}
+ ]}
+EOF
+else
+  echo "    (pulado — nenhum motorista com e-mail definido pra designar)"
+fi
+
+echo "==> [9/9] Abrindo ordens de serviço..."
+post_json "${BASE_URL}/work-orders" -H "$AUTH_HEADER" <<EOF > /dev/null
+{"vehicleId":"${VEHICLE_IDS[0]}","tipo":"PREVENTIVA","status":"CONCLUIDA","prioridade":"MEDIA",
+ "descricaoProblema":"Revisão programada dos 30.000 km (seed e2e)","responsavelOficina":"Oficina Central RotaTeste",
+ "dataAbertura":"$(days_ago 12)","previsaoConclusao":"$(days_ago 10)","kmAbertura":30000,
+ "itens":[{"descricao":"Troca de óleo e filtro","quantidade":1,"valorUnitario":280.00},
+          {"descricao":"Alinhamento e balanceamento","quantidade":1,"valorUnitario":150.00}]}
+EOF
+post_json "${BASE_URL}/work-orders" -H "$AUTH_HEADER" <<EOF > /dev/null
+{"vehicleId":"${VEHICLE_IDS[3]}","tipo":"CORRETIVA","status":"ABERTA","prioridade":"ALTA",
+ "descricaoProblema":"Ruído no sistema de freios (seed e2e)","responsavelOficina":"Bosch Service RotaTeste",
+ "dataAbertura":"$(days_ago 1)","previsaoConclusao":"$(days_ahead 2)","kmAbertura":62700,
+ "itens":[{"descricao":"Pastilha de freio dianteira","quantidade":2,"valorUnitario":95.00}]}
+EOF
+
+if [ -n "$DRIVER_ID_LINKED" ]; then
+  echo "    Abrindo conversa de chat com o motorista e enviando mensagem..."
+  CONV_ID=$(post_json "${BASE_URL}/chat/conversations" -H "$AUTH_HEADER" \
+    <<< "{\"driverId\":\"${DRIVER_ID_LINKED}\",\"vehicleId\":\"${VEHICLE_IDS[0]}\"}" | jq -r '.id')
+  post_json "${BASE_URL}/chat/conversations/${CONV_ID}/messages" -H "$AUTH_HEADER" \
+    <<< '{"body":"Bom dia! A rota de hoje já está designada pra você, confira no app. Qualquer dúvida me chama por aqui (seed e2e)."}' > /dev/null
+fi
 
 cat <<EOF
 
@@ -164,8 +232,12 @@ Cenário de teste pronto.
 Gestor:    ${GESTOR_EMAIL} / ${GESTOR_PASSWORD}
 $( [ -n "$DRIVER_ID_LINKED" ] && echo "Motorista: ${MOTORISTA_EMAIL} / ${MOTORISTA_PASSWORD}" )
 
-Veículos criados:   ${#VEHICLE_IDS[@]}
-Motoristas criados: ${#DRIVER_IDS[@]}
+Veículos criados:      ${#VEHICLE_IDS[@]}
+Motoristas criados:    ${#DRIVER_IDS[@]}
+Pontos de coleta:      2
+Rotas designadas:      $( [ -n "$DRIVER_ID_LINKED" ] && echo "2 (1 ROTA multi-parada, 1 TRANSFER)" || echo "0 (sem motorista com login)" )
+Ordens de serviço:     2 (1 preventiva concluída, 1 corretiva aberta)
+Mensagens de chat:     $( [ -n "$DRIVER_ID_LINKED" ] && echo "1" || echo "0" )
 
 Front-end: npm run dev:web (http://localhost:5173) e logue com o gestor acima.
 ==================================================================
