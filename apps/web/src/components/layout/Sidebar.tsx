@@ -17,29 +17,30 @@ import {
   Wallet,
   Wrench,
 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import type { UserResponse } from '../../api/client';
 import { Marca } from '../shared/Logo';
 import { cn } from '../../lib/utils';
-import type { View } from './AppShell';
+import { ROUTES } from '../../routes';
 
-const NAV_OPERACAO: { view: View; label: string; icon: typeof Car }[] = [
-  { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { view: 'vehicles', label: 'Frota', icon: Car },
-  { view: 'work-orders', label: 'Ordens de Serviço', icon: ClipboardList },
-  { view: 'drivers', label: 'Motoristas', icon: Users },
-  { view: 'chat', label: 'Mensagens', icon: MessageCircle },
-  { view: 'routes', label: 'Rotas', icon: Navigation },
-  { view: 'route-plans', label: 'Coleta & Entrega', icon: MapPinned },
-  { view: 'collection-points', label: 'Pontos de Coleta', icon: MapPin },
+const NAV_OPERACAO: { path: string; label: string; icon: typeof Car }[] = [
+  { path: ROUTES.home, label: 'Dashboard', icon: LayoutDashboard },
+  { path: ROUTES.vehicles, label: 'Frota', icon: Car },
+  { path: ROUTES.workOrders, label: 'Ordens de Serviço', icon: ClipboardList },
+  { path: ROUTES.drivers, label: 'Motoristas', icon: Users },
+  { path: ROUTES.chat, label: 'Mensagens', icon: MessageCircle },
+  { path: ROUTES.routes, label: 'Rotas', icon: Navigation },
+  { path: ROUTES.routePlans, label: 'Coleta & Entrega', icon: MapPinned },
+  { path: ROUTES.collectionPoints, label: 'Pontos de Coleta', icon: MapPin },
 ];
 
-const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
-  { view: 'maintenance', label: 'Manutenção', icon: Wrench },
-  { view: 'expenses', label: 'Custos', icon: Wallet },
-  { view: 'reports', label: 'Relatórios', icon: BarChart3 },
-  { view: 'affiliates', label: 'Parceiros', icon: Handshake },
-  { view: 'charging-stations', label: 'Pontos de Recarga', icon: Plug },
-  { view: 'billing', label: 'Assinatura', icon: CreditCard },
+const NAV_GESTAO: { path: string; label: string; icon: typeof Car }[] = [
+  { path: ROUTES.maintenance, label: 'Manutenção', icon: Wrench },
+  { path: ROUTES.expenses, label: 'Custos', icon: Wallet },
+  { path: ROUTES.reports, label: 'Relatórios', icon: BarChart3 },
+  { path: ROUTES.affiliates, label: 'Parceiros', icon: Handshake },
+  { path: ROUTES.chargingStations, label: 'Pontos de Recarga', icon: Plug },
+  { path: ROUTES.billing, label: 'Assinatura', icon: CreditCard },
 ];
 
 /**
@@ -47,57 +48,58 @@ const NAV_GESTAO: { view: View; label: string; icon: typeof Car }[] = [
  * ou dashboard analítico — ele é funcionário, não "uma empresa" (pedido explícito do
  * usuário). Só o que afeta o próprio trabalho: início, rota do dia e o chat com o gestor.
  */
-const NAV_MOTORISTA: { view: View; label: string; icon: typeof Car }[] = [
-  { view: 'driver-home', label: 'Início', icon: Home },
-  { view: 'driver-route', label: 'Minha Rota', icon: RouteIcon },
-  { view: 'chat', label: 'Mensagens', icon: MessageCircle },
-  { view: 'driver-more', label: 'Mais', icon: MoreHorizontal },
+const NAV_MOTORISTA: { path: string; label: string; icon: typeof Car }[] = [
+  { path: ROUTES.home, label: 'Início', icon: Home },
+  { path: ROUTES.driverRoute, label: 'Minha Rota', icon: RouteIcon },
+  { path: ROUTES.chat, label: 'Mensagens', icon: MessageCircle },
+  { path: ROUTES.driverMore, label: 'Mais', icon: MoreHorizontal },
 ];
 
-interface SidebarProps {
-  user: UserResponse;
-  activeView: View;
-  onNavigate: (view: View) => void;
+/** /frota também fica ativo em /frota/:id e /frota/:id/custos — todo o resto é match exato. */
+function isActive(path: string, pathname: string): boolean {
+  return path === ROUTES.vehicles ? pathname.startsWith(ROUTES.vehicles) : pathname === path;
 }
 
 function NavSection({
   title,
   items,
-  activeView,
-  onNavigate,
+  pathname,
 }: {
   title: string;
-  items: { view: View; label: string; icon: typeof Car }[];
-  activeView: View;
-  onNavigate: (view: View) => void;
+  items: { path: string; label: string; icon: typeof Car }[];
+  pathname: string;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
         {title}
       </span>
-      {items.map(({ view, label, icon: Icon }) => (
-        <button
-          key={view}
-          type="button"
-          onClick={() => onNavigate(view)}
+      {items.map(({ path, label, icon: Icon }) => (
+        <Link
+          key={path}
+          to={path}
           className={cn(
             'flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors',
-            activeView === view
+            isActive(path, pathname)
               ? 'bg-sidebar-active text-white'
               : 'text-sidebar-foreground hover:bg-white/5 hover:text-white',
           )}
         >
           <Icon className="size-[16px] shrink-0" />
           {label}
-        </button>
+        </Link>
       ))}
     </div>
   );
 }
 
-export function Sidebar({ user, activeView, onNavigate }: SidebarProps) {
+interface SidebarProps {
+  user: UserResponse;
+}
+
+export function Sidebar({ user }: SidebarProps) {
   const motorista = user.role === 'MOTORISTA';
+  const { pathname } = useLocation();
 
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -115,11 +117,11 @@ export function Sidebar({ user, activeView, onNavigate }: SidebarProps) {
 
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4">
         {motorista ? (
-          <NavSection title="Meu trabalho" items={NAV_MOTORISTA} activeView={activeView} onNavigate={onNavigate} />
+          <NavSection title="Meu trabalho" items={NAV_MOTORISTA} pathname={pathname} />
         ) : (
           <>
-            <NavSection title="Operação" items={NAV_OPERACAO} activeView={activeView} onNavigate={onNavigate} />
-            <NavSection title="Gestão" items={NAV_GESTAO} activeView={activeView} onNavigate={onNavigate} />
+            <NavSection title="Operação" items={NAV_OPERACAO} pathname={pathname} />
+            <NavSection title="Gestão" items={NAV_GESTAO} pathname={pathname} />
           </>
         )}
       </nav>

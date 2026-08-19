@@ -31,11 +31,14 @@ const EMPTY_FORM: ExpenseEntryRequest = {
 
 interface Props {
   vehicleId: string;
-  plate: string;
   onBack: () => void;
 }
 
-export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
+export function VehicleCostsPage({ vehicleId, onBack }: Props) {
+  // Busca a placa em vez de receber por prop: essa tela agora tem URL própria
+  // (/frota/:id/custos), então precisa se sustentar sozinha num F5 ou link direto —
+  // o vehicleId da URL é o único dado garantido, o resto (placa) o front tem que buscar.
+  const [plate, setPlate] = useState('');
   const [entries, setEntries] = useState<ExpenseEntryResponse[]>([]);
   const [summary, setSummary] = useState<ExpenseSummaryResponse | null>(null);
   const [form, setForm] = useState<ExpenseEntryRequest>(EMPTY_FORM);
@@ -44,8 +47,9 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
   const [loading, setLoading] = useState(true);
 
   function refresh() {
-    Promise.all([coreApi.expenses.list(vehicleId), coreApi.expenses.summary(vehicleId)])
-      .then(([e, s]) => {
+    Promise.all([coreApi.vehicles.get(vehicleId), coreApi.expenses.list(vehicleId), coreApi.expenses.summary(vehicleId)])
+      .then(([v, e, s]) => {
+        setPlate(v.plate ?? '');
         setEntries(e);
         setSummary(s);
       })
