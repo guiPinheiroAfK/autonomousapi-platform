@@ -1,5 +1,6 @@
 package com.autonomousapi.core.driver;
 
+import com.autonomousapi.core.common.PageResponse;
 import com.autonomousapi.core.driver.dto.AssignVehicleRequest;
 import com.autonomousapi.core.driver.dto.DriverAssignmentResponse;
 import com.autonomousapi.core.driver.dto.DriverInviteResponse;
@@ -11,6 +12,7 @@ import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/v1/drivers")
 public class DriverController {
+
+    private static final int MAX_PAGE_SIZE = 200;
 
     private final DriverService driverService;
     private final DriverInviteService inviteService;
@@ -61,8 +66,12 @@ public class DriverController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
-    public List<DriverResponse> list(Authentication auth) {
-        return driverService.list(principal(auth));
+    public PageResponse<DriverResponse> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+        int cappedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        return PageResponse.from(driverService.list(principal(auth), PageRequest.of(Math.max(page, 0), cappedSize)));
     }
 
     /**

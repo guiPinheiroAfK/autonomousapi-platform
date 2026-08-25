@@ -203,7 +203,10 @@ export const coreApi = {
   },
 
   drivers: {
-    list: () => request<DriverResponse[]>('/v1/drivers'),
+    /** Paginado (cleanup de performance). `size` alto cobre a equipe inteira na
+     *  imensa maioria dos tenants numa request só, mesmo padrão de `vehicles.list`. */
+    list: (page = 0, size = 200) =>
+      request<PageResponse<DriverResponse>>(`/v1/drivers?page=${page}&size=${size}`),
     create: (body: DriverRequest) =>
       request<DriverResponse>('/v1/drivers', { method: 'POST', body: JSON.stringify(body) }),
     update: (id: string, body: DriverRequest) =>
@@ -227,7 +230,12 @@ export const coreApi = {
 
   /** Avaliação manual de motorista (spec 06) — todo endpoint é GESTOR_FROTA/ADMIN no core-api. */
   driverRatings: {
-    list: (driverId: string) => request<DriverRatingResponse[]>(`/v1/drivers/${driverId}/ratings`),
+    /** Paginado (cleanup de performance) — histórico de avaliações de um motorista
+     *  cresce ao longo do tempo, não faz sentido trazer tudo de uma vez. */
+    list: (driverId: string, page = 0, size = 20) =>
+      request<PageResponse<DriverRatingResponse>>(
+        `/v1/drivers/${driverId}/ratings?page=${page}&size=${size}`,
+      ),
     summary: (driverId: string) =>
       request<DriverRatingSummaryResponse>(`/v1/drivers/${driverId}/ratings/summary`),
     create: (driverId: string, body: DriverRatingRequest) =>
@@ -430,7 +438,10 @@ export const coreApi = {
       request<StopInput[]>('/v1/routes/plans/suggest-order', { method: 'POST', body: JSON.stringify(body) }),
     create: (body: CreateRoutePlanRequest) =>
       request<RoutePlanResponse>('/v1/routes/plans', { method: 'POST', body: JSON.stringify(body) }),
-    list: () => request<RoutePlanResponse[]>('/v1/routes/plans'),
+    /** Paginado (cleanup de performance). `size` alto cobre o volume típico de rotas
+     *  numa request só, mesmo padrão de `vehicles.list`. */
+    list: (page = 0, size = 100) =>
+      request<PageResponse<RoutePlanResponse>>(`/v1/routes/plans?page=${page}&size=${size}`),
     assign: (id: string, body: AssignDriverRequest) =>
       request<RoutePlanResponse>(`/v1/routes/plans/${id}/assign`, { method: 'POST', body: JSON.stringify(body) }),
     /** Motorista-only: rota ativa do próprio token (null se não houver). */

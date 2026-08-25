@@ -82,7 +82,7 @@ export function DriversPage() {
   function refresh() {
     coreApi.drivers
       .list()
-      .then(setDrivers)
+      .then((res) => setDrivers(res.content))
       .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.drivers.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
@@ -163,7 +163,7 @@ export function DriversPage() {
   }
 
   function refreshRatings(driverId: string) {
-    coreApi.driverRatings.list(driverId).then(setDetailRatings);
+    coreApi.driverRatings.list(driverId).then((res) => setDetailRatings(res.content));
     coreApi.driverRatings.summary(driverId).then(setDetailSummary);
   }
 

@@ -708,9 +708,13 @@ function RentabilidadeTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // size grande: esta aba agrega TRANSFER concluído de todo o histórico pra
+    // relatório de receita — paginação padrão (100) truncaria o número mostrado,
+    // não só "carregaria menos rápido" (mesmo motivo do teto no backend ter subido
+    // pra 500, ver RoutePlanController.MAX_PAGE_SIZE).
     coreApi.routePlans
-      .list()
-      .then(setPlans)
+      .list(0, 500)
+      .then((res) => setPlans(res.content))
       .finally(() => setLoading(false));
   }, []);
 

@@ -75,7 +75,7 @@ export function WorkOrdersPage() {
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o filtro e o seletor de veículo da OS.
     coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
-    coreApi.drivers.list().then(setDrivers);
+    coreApi.drivers.list().then((res) => setDrivers(res.content));
   }, []);
 
   const filtered = useMemo(() => {

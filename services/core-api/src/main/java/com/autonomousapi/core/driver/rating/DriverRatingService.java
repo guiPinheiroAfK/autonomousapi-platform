@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,11 +64,10 @@ public class DriverRatingService {
     }
 
     @Transactional(readOnly = true)
-    public List<DriverRatingResponse> list(JwtPrincipal principal, UUID driverId) {
+    public Page<DriverRatingResponse> list(JwtPrincipal principal, UUID driverId, Pageable pageable) {
         Driver driver = findOwnedDriver(principal, driverId);
-        return manualRatings.findAllByDriverIdOrderByCreatedAtDesc(driver.getId()).stream()
-                .map(DriverRatingResponse::from)
-                .toList();
+        return manualRatings.findAllByDriverIdOrderByCreatedAtDesc(driver.getId(), pageable)
+                .map(DriverRatingResponse::from);
     }
 
     @Transactional(readOnly = true)

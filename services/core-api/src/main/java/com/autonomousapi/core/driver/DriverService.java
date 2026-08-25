@@ -11,6 +11,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,10 +45,9 @@ public class DriverService {
     }
 
     @Transactional(readOnly = true)
-    public List<DriverResponse> list(JwtPrincipal principal) {
-        return drivers.findAllByTenantIdOrderByCreatedAtDesc(principal.tenantId()).stream()
-                .map(DriverResponse::from)
-                .toList();
+    public Page<DriverResponse> list(JwtPrincipal principal, Pageable pageable) {
+        return drivers.findAllByTenantIdOrderByCreatedAtDesc(principal.tenantId(), pageable)
+                .map(DriverResponse::from);
     }
 
     @Transactional(readOnly = true)

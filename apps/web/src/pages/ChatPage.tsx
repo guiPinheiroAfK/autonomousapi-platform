@@ -187,9 +187,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
   function openPicker() {
     setPickedDriverId('');
-    coreApi.drivers.list().then((all) => {
+    coreApi.drivers.list().then((res) => {
       const jaTemConversa = new Set(conversations.map((c) => c.driverId));
-      setEligibleDrivers(all.filter((d) => d.hasLogin && !jaTemConversa.has(d.id!)));
+      setEligibleDrivers(res.content.filter((d) => d.hasLogin && !jaTemConversa.has(d.id!)));
     });
     setPickerOpen(true);
   }
@@ -212,11 +212,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     if (!selected) return;
     setPickedRouteId('');
     setAttachError('');
-    coreApi.routePlans.list().then((all) => {
+    coreApi.routePlans.list().then((res) => {
       // Rotas ainda sem motorista, ou já designadas a este mesmo motorista (reenvio) —
       // uma designada a outro motorista fica de fora: RoutePlanService.assignDriver
       // rejeitaria de qualquer forma (achado da revisão do plano).
-      setAttachableRoutes(all.filter((r) => !r.driverId || r.driverId === selected.driverId));
+      setAttachableRoutes(res.content.filter((r) => !r.driverId || r.driverId === selected.driverId));
     });
     setAttachOpen(true);
   }
@@ -245,8 +245,8 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
       onOpenActiveRoute?.();
       return;
     }
-    coreApi.routePlans.list().then((all) => {
-      setRouteDetail(all.find((r) => r.id === routePlanId) ?? null);
+    coreApi.routePlans.list().then((res) => {
+      setRouteDetail(res.content.find((r) => r.id === routePlanId) ?? null);
     });
   }
 

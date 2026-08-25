@@ -5,7 +5,6 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import {
   coreApi,
   type DriverLicenseAlertResponse,
-  type DriverResponse,
   type MonthlyCostResponse,
   type VehicleMaintenanceAlertResponse,
   type VehicleResponse,
@@ -33,17 +32,18 @@ interface Props {
 export function DashboardPage({ onViewVehicles }: Props) {
   const { t } = useTranslation();
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
-  const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<VehicleMaintenanceAlertResponse[]>([]);
   const [licenseAlerts, setLicenseAlerts] = useState<DriverLicenseAlertResponse[]>([]);
   const [costTrend, setCostTrend] = useState<MonthlyCostResponse[]>([]);
   const [totalVehicles, setTotalVehicles] = useState(0);
+  const [totalDrivers, setTotalDrivers] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // vehicles.list é paginado (spec de escala) — size grande o bastante pra cobrir a frota
-    // inteira na imensa maioria dos tenants nos gráficos por status abaixo. O total exibido
-    // no card, porém, vem de totalElements (exato), não de vehicles.length (só a página).
+    // vehicles.list e drivers.list são paginados (spec de escala) — size grande o
+    // bastante pra cobrir frota/equipe inteiras na imensa maioria dos tenants nos
+    // gráficos abaixo. O total exibido no card vem de totalElements (exato), não de
+    // vehicles.length/drivers.length (só a página).
     Promise.all([
       coreApi.vehicles.list(0, 500),
       coreApi.drivers.list(),
@@ -54,7 +54,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
       .then(([v, d, m, l, t]) => {
         setVehicles(v.content);
         setTotalVehicles(v.totalElements);
-        setDrivers(d);
+        setTotalDrivers(d.totalElements);
         setMaintenanceAlerts(m);
         setLicenseAlerts(l);
         setCostTrend(t);
@@ -97,7 +97,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
             hint={t('pages.dashboard.foraDeOperacao')}
             icon={Wrench}
           />
-          <StatCard label={t('pages.dashboard.motoristas')} value={drivers.length} hint={t('pages.dashboard.cadastrados')} icon={Users} />
+          <StatCard label={t('pages.dashboard.motoristas')} value={totalDrivers} hint={t('pages.dashboard.cadastrados')} icon={Users} />
         </div>
       )}
 

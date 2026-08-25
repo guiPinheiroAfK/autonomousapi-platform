@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -253,8 +255,10 @@ public class RoutePlanService {
     }
 
     @Transactional(readOnly = true)
-    public List<RoutePlanResponse> listForGestor(JwtPrincipal gestorPrincipal) {
-        return toResponses(routePlans.findAllByTenantIdOrderByCreatedAtDesc(gestorPrincipal.tenantId()));
+    public Page<RoutePlanResponse> listForGestor(JwtPrincipal gestorPrincipal, Pageable pageable) {
+        Page<RoutePlan> plans = routePlans.findAllByTenantIdOrderByCreatedAtDesc(gestorPrincipal.tenantId(), pageable);
+        return new org.springframework.data.domain.PageImpl<>(
+                toResponses(plans.getContent()), pageable, plans.getTotalElements());
     }
 
     /**

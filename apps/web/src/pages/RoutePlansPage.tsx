@@ -99,7 +99,7 @@ export function RoutePlansPage() {
   function refresh() {
     coreApi.routePlans
       .list()
-      .then(setPlans)
+      .then((res) => setPlans(res.content))
       .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
@@ -120,7 +120,7 @@ export function RoutePlansPage() {
     setCustoEstimado(null);
     setValorSugerido(null);
     setFormError('');
-    coreApi.drivers.list().then((all) => setDrivers(all.filter((d) => d.hasLogin)));
+    coreApi.drivers.list().then((res) => setDrivers(res.content.filter((d) => d.hasLogin)));
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o seletor de veículo da rota.
     coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
