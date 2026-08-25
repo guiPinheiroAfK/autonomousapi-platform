@@ -2,7 +2,7 @@ package com.autonomousapi.core.budget;
 
 import com.autonomousapi.core.budget.dto.BudgetRequest;
 import com.autonomousapi.core.budget.dto.BudgetResponse;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.expense.ExpenseEntryRepository;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.VehicleRepository;
@@ -31,8 +31,7 @@ public class BudgetService {
     @Transactional
     public BudgetResponse create(JwtPrincipal principal, BudgetRequest req) {
         if (req.vehicleId() != null) {
-            vehicles.findByIdAndTenantId(req.vehicleId(), principal.tenantId())
-                    .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+            Lookups.orNotFound(vehicles.findByIdAndTenantId(req.vehicleId(), principal.tenantId()), "Veículo não encontrado.");
         }
         Budget budget = new Budget(principal.tenantId(), req.vehicleId(), req.categoria(), req.valorLimite());
         budgets.save(budget);
@@ -48,8 +47,7 @@ public class BudgetService {
 
     @Transactional
     public void delete(JwtPrincipal principal, UUID budgetId) {
-        Budget budget = budgets.findByIdAndTenantId(budgetId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Orçamento não encontrado."));
+        Budget budget = Lookups.orNotFound(budgets.findByIdAndTenantId(budgetId, principal.tenantId()), "Orçamento não encontrado.");
         budgets.delete(budget);
     }
 

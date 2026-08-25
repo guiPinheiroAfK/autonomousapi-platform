@@ -30,6 +30,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 class MeServiceTest {
 
@@ -79,7 +81,7 @@ class MeServiceTest {
         List<WorkOrderResponse> result = service.vehicleWorkOrders(principal);
 
         assertTrue(result.isEmpty());
-        verify(workOrderService, never()).list(any(), any());
+        verify(workOrderService, never()).list(any(), any(), any());
     }
 
     @Test
@@ -90,22 +92,23 @@ class MeServiceTest {
                 UUID.randomUUID(), d.getId(), vehicleId, "ABC1D23", "Fiat", "Toro", Instant.now());
         when(driverResolver.resolve(principal)).thenReturn(d);
         when(assignmentService.activeForDriver(principal, d.getId())).thenReturn(assignment);
-        when(workOrderService.list(principal, vehicleId)).thenReturn(List.of());
+        when(workOrderService.list(eq(principal), eq(vehicleId), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
 
         service.vehicleWorkOrders(principal);
 
-        verify(workOrderService).list(principal, vehicleId);
+        verify(workOrderService).list(eq(principal), eq(vehicleId), any(Pageable.class));
     }
 
     @Test
     void tripsDelegaDiretoParaTripServiceJaEscopadoPorUserId() {
         TripResponse trip = new TripResponse(UUID.randomUUID(), UUID.randomUUID(), "EM_ANDAMENTO", Instant.now(), null);
-        when(tripService.list(principal)).thenReturn(List.of(trip));
+        when(tripService.list(eq(principal), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(trip)));
 
         List<TripResponse> result = service.trips(principal);
 
         assertEquals(1, result.size());
-        verify(tripService).list(principal);
+        verify(tripService).list(eq(principal), any(Pageable.class));
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.autonomousapi.core.vehicle.condition;
 
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
@@ -81,7 +81,6 @@ public class VehicleConditionService {
     }
 
     private Vehicle findOwnedVehicle(JwtPrincipal principal, UUID vehicleId) {
-        return vehicles.findByIdAndTenantId(vehicleId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+        return Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, principal.tenantId()), "Veículo não encontrado.");
     }
 }

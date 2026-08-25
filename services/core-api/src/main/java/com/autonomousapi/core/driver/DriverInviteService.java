@@ -5,7 +5,7 @@ import com.autonomousapi.core.email.EmailSender;
 import com.autonomousapi.core.error.DriverEmailRequiredException;
 import com.autonomousapi.core.error.EmailAlreadyUsedException;
 import com.autonomousapi.core.error.InvalidDriverInviteTokenException;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.user.Role;
 import com.autonomousapi.core.user.User;
@@ -64,8 +64,7 @@ public class DriverInviteService {
      */
     @Transactional
     public DriverInviteResponse invite(JwtPrincipal principal, UUID driverId) {
-        Driver driver = drivers.findByIdAndTenantId(driverId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        Driver driver = Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, principal.tenantId()), "Motorista não encontrado.");
         if (driver.getEmail() == null || driver.getEmail().isBlank()) {
             throw new DriverEmailRequiredException();
         }

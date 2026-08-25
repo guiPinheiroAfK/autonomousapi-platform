@@ -12,7 +12,7 @@ import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.auth.dto.UserResponse;
 import com.autonomousapi.core.auth.dto.VerifyEmailRequest;
 import com.autonomousapi.core.driver.DriverInviteService;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.ratelimit.LoginRateLimitGuard;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
@@ -104,8 +104,7 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse me(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        User user = users.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+        User user = Lookups.orNotFound(users.findById(userId), "Usuário não encontrado.");
         return UserResponse.from(user);
     }
 }

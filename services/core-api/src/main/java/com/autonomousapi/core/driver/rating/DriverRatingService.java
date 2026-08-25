@@ -5,7 +5,7 @@ import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.driver.rating.dto.DriverRatingRequest;
 import com.autonomousapi.core.driver.rating.dto.DriverRatingResponse;
 import com.autonomousapi.core.driver.rating.dto.DriverRatingSummaryResponse;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -132,7 +132,6 @@ public class DriverRatingService {
     }
 
     private Driver findOwnedDriver(JwtPrincipal principal, UUID driverId) {
-        return drivers.findByIdAndTenantId(driverId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        return Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, principal.tenantId()), "Motorista não encontrado.");
     }
 }

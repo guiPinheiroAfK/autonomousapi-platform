@@ -1,11 +1,12 @@
 package com.autonomousapi.core.workorder;
 
+import com.autonomousapi.core.common.PageResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.workorder.dto.WorkOrderRequest;
 import com.autonomousapi.core.workorder.dto.WorkOrderResponse;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/work-orders")
 public class WorkOrderController {
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final WorkOrderService workOrderService;
 
     public WorkOrderController(WorkOrderService workOrderService) {
@@ -39,9 +42,14 @@ public class WorkOrderController {
     }
 
     @GetMapping
-    public List<WorkOrderResponse> list(
-            @RequestParam(required = false) UUID vehicleId, Authentication auth) {
-        return workOrderService.list(principal(auth), vehicleId);
+    public PageResponse<WorkOrderResponse> list(
+            @RequestParam(required = false) UUID vehicleId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+        int cappedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        return PageResponse.from(
+                workOrderService.list(principal(auth), vehicleId, PageRequest.of(Math.max(page, 0), cappedSize)));
     }
 
     @PutMapping("/{id}")

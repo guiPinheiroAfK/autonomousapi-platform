@@ -7,6 +7,8 @@ import com.autonomousapi.core.geo.dto.DrivingEventsResponse;
 import com.autonomousapi.core.geo.dto.GeoChargingStationsResponse;
 import com.autonomousapi.core.geo.dto.GeoPlace;
 import com.autonomousapi.core.geo.dto.GeoRouteResponse;
+import com.autonomousapi.core.geo.dto.GpsPingBatchAccepted;
+import com.autonomousapi.core.geo.dto.GpsPingBatchRequest;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
 import com.autonomousapi.core.geo.dto.PlaceResponse;
 import com.autonomousapi.core.geo.dto.RouteResponse;
@@ -66,6 +68,29 @@ public class GeoApiClient {
                 .body(ping)
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    /**
+     * Versão em lote de {@link #ingestGpsPing} (ADR 0019, pré-requisito A) — usada por
+     * {@code TripService#submitPings} pra encaminhar o lote inteiro que o app manda numa
+     * chamada só, em vez de uma requisição HTTP por ping. Diferente de {@link
+     * #ingestGpsPing}, degrada em vez de lançar: em caso de falha devolve 0 aceitos, e quem
+     * chama já tem o mesmo contrato pra decidir o quê fazer (fila offline do app reenvia o
+     * lote inteiro — ver ADR 0019, "Anexo — contrato da ingestão em lote").
+     */
+    public int ingestGpsPingBatch(List<GpsPingRequest> pings) {
+        try {
+            GpsPingBatchAccepted response = client
+                    .post()
+                    .uri("/internal/v1/gps/pings/batch")
+                    .header("X-Service-Token", serviceToken)
+                    .body(new GpsPingBatchRequest(pings))
+                    .retrieve()
+                    .body(GpsPingBatchAccepted.class);
+            return response != null ? response.accepted() : 0;
+        } catch (Exception ex) {
+            return 0;
+        }
     }
 
     /**

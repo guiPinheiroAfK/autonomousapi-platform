@@ -6,6 +6,7 @@ import com.autonomousapi.core.driver.CurrentDriverResolver;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.error.DriverWithoutLoginException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.push.PushNotificationService;
 import com.autonomousapi.core.routeplan.RoutePlanService;
@@ -69,15 +70,13 @@ public class ChatService {
     public ChatConversationResponse getOrCreateConversation(
             JwtPrincipal gestorPrincipal, UUID driverId, UUID vehicleId) {
         UUID tenantId = gestorPrincipal.tenantId();
-        Driver driver = drivers.findByIdAndTenantId(driverId, tenantId)
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        Driver driver = Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, tenantId), "Motorista não encontrado.");
         if (!driver.hasLogin()) {
             throw new DriverWithoutLoginException();
         }
         Vehicle vehicle = null;
         if (vehicleId != null) {
-            vehicle = vehicles.findByIdAndTenantId(vehicleId, tenantId)
-                    .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+            vehicle = Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, tenantId), "Veículo não encontrado.");
         }
 
         ChatConversation conversation = conversations
@@ -97,7 +96,7 @@ public class ChatService {
                 ? conversations.findAllByDriverIdOrderByCreatedAtDesc(driverResolver.resolve(principal).getId())
                 : conversations.findAllByGestorUserIdOrderByCreatedAtDesc(principal.userId());
 
-        return list.stream().map(this::toResponse).toList();
+        return toResponses(list);
     }
 
     @Transactional(readOnly = true)
@@ -193,9 +192,8 @@ public class ChatService {
     }
 
     private ChatConversation findAsParticipant(JwtPrincipal principal, UUID conversationId) {
-        ChatConversation conversation = conversations
-                .findByIdAndTenantId(conversationId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Conversa não encontrada."));
+        ChatConversation conversation = Lookups.orNotFound(
+                conversations.findByIdAndTenantId(conversationId, principal.tenantId()), "Conversa não encontrada.");
 
         UUID participantDriverId = isMotorista(principal) ? driverResolver.resolve(principal).getId() : null;
         if (!conversation.hasParticipant(principal.userId(), participantDriverId)) {
@@ -215,6 +213,46 @@ public class ChatService {
         return ChatConversationResponse.from(
                 c, driverName, tenantName(c.getTenantId()), vehiclePlate,
                 last.map(ChatMessage::getBody).orElse(null), last.map(ChatMessage::getSentAt).orElse(null));
+    }
+
+    /**
+     * Versão em lote de {@link #toResponse}: resolve nomes de motorista/veículo/tenant e a
+     * última mensagem de cada conversa com uma query cada, em vez de 3 por conversa
+     * (ver {@code ChatMessageRepository#findAllByConversationIdInAndAindaNoServidorTrueOrderBySentAtDesc}).
+     */
+    private List<ChatConversationResponse> toResponses(List<ChatConversation> list) {
+        if (list.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> driverIds = list.stream().map(ChatConversation::getDriverId).distinct().toList();
+        List<UUID> vehicleIds = list.stream().map(ChatConversation::getVehicleId)
+                .filter(java.util.Objects::nonNull).distinct().toList();
+        List<UUID> tenantIds = list.stream().map(ChatConversation::getTenantId).distinct().toList();
+        List<UUID> conversationIds = list.stream().map(ChatConversation::getId).toList();
+
+        java.util.Map<UUID, String> driverNames = drivers.findAllById(driverIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Driver::getId, Driver::getName));
+        java.util.Map<UUID, String> vehiclePlates = vehicles.findAllById(vehicleIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Vehicle::getId, Vehicle::getPlate));
+        java.util.Map<UUID, String> tenantNames = tenants.findAllById(tenantIds).stream()
+                .collect(java.util.stream.Collectors.toMap(t -> t.getId(), t -> t.getName()));
+        java.util.Map<UUID, ChatMessage> lastMessageByConversation =
+                messages.findAllByConversationIdInAndAindaNoServidorTrueOrderBySentAtDesc(conversationIds).stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                ChatMessage::getConversationId, m -> m, (first, dup) -> first));
+
+        return list.stream()
+                .map(c -> {
+                    ChatMessage last = lastMessageByConversation.get(c.getId());
+                    return ChatConversationResponse.from(
+                            c,
+                            driverNames.get(c.getDriverId()),
+                            tenantNames.get(c.getTenantId()),
+                            c.getVehicleId() != null ? vehiclePlates.get(c.getVehicleId()) : null,
+                            last != null ? last.getBody() : null,
+                            last != null ? last.getSentAt() : null);
+                })
+                .toList();
     }
 
     private String tenantName(UUID tenantId) {

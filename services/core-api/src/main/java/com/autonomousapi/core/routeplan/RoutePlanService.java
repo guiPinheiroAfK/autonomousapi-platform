@@ -5,6 +5,7 @@ import com.autonomousapi.core.collectionpoint.CollectionPointRepository;
 import com.autonomousapi.core.driver.CurrentDriverResolver;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
 import com.autonomousapi.core.error.RoutePlanInvalidException;
@@ -125,8 +126,8 @@ public class RoutePlanService {
                 resolvidos.add(s);
                 continue;
             }
-            CollectionPoint ponto = collectionPoints.findByIdAndTenantId(s.collectionPointId(), tenantId)
-                    .orElseThrow(() -> new NotFoundException("Ponto de coleta não encontrado."));
+            CollectionPoint ponto = Lookups.orNotFound(
+                    collectionPoints.findByIdAndTenantId(s.collectionPointId(), tenantId), "Ponto de coleta não encontrado.");
             resolvidos.add(new StopInput(
                     s.tipo(),
                     ponto.getEndereco(),
@@ -224,13 +225,11 @@ public class RoutePlanService {
             List<StopInput> stops) {
         UUID tenantId = gestorPrincipal.tenantId();
         if (driverId != null) {
-            drivers.findByIdAndTenantId(driverId, tenantId)
-                    .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+            Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, tenantId), "Motorista não encontrado.");
         }
         Vehicle vehicle = null;
         if (vehicleId != null) {
-            vehicle = vehicles.findByIdAndTenantId(vehicleId, tenantId)
-                    .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+            vehicle = Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, tenantId), "Veículo não encontrado.");
         }
 
         List<StopInput> resolvidos = resolveStops(tenantId, stops);
@@ -255,9 +254,7 @@ public class RoutePlanService {
 
     @Transactional(readOnly = true)
     public List<RoutePlanResponse> listForGestor(JwtPrincipal gestorPrincipal) {
-        return routePlans.findAllByTenantIdOrderByCreatedAtDesc(gestorPrincipal.tenantId()).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(routePlans.findAllByTenantIdOrderByCreatedAtDesc(gestorPrincipal.tenantId()));
     }
 
     /**
@@ -267,10 +264,9 @@ public class RoutePlanService {
      */
     @Transactional
     public RoutePlanResponse assignDriver(JwtPrincipal gestorPrincipal, UUID routePlanId, UUID driverId) {
-        RoutePlan plan = routePlans.findByIdAndTenantId(routePlanId, gestorPrincipal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Rota não encontrada."));
-        drivers.findByIdAndTenantId(driverId, gestorPrincipal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        RoutePlan plan = Lookups.orNotFound(
+                routePlans.findByIdAndTenantId(routePlanId, gestorPrincipal.tenantId()), "Rota não encontrada.");
+        Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, gestorPrincipal.tenantId()), "Motorista não encontrado.");
 
         if (plan.getDriverId() != null && !plan.getDriverId().equals(driverId)) {
             throw new RoutePlanAlreadyAssignedException();
@@ -307,9 +303,8 @@ public class RoutePlanService {
     @Transactional
     public RouteStopResponse completeStop(JwtPrincipal driverPrincipal, UUID stopId) {
         Driver driver = driverResolver.resolve(driverPrincipal);
-        RouteStop stop = routeStops.findById(stopId).orElseThrow(() -> new NotFoundException("Parada não encontrada."));
-        RoutePlan plan = routePlans.findById(stop.getRoutePlanId())
-                .orElseThrow(() -> new NotFoundException("Parada não encontrada."));
+        RouteStop stop = Lookups.orNotFound(routeStops.findById(stopId), "Parada não encontrada.");
+        RoutePlan plan = Lookups.orNotFound(routePlans.findById(stop.getRoutePlanId()), "Parada não encontrada.");
 
         if (!driver.getId().equals(plan.getDriverId())) {
             throw new NotFoundException("Parada não encontrada.");
@@ -343,5 +338,38 @@ public class RoutePlanService {
                 .map(RouteStopResponse::from)
                 .toList();
         return RoutePlanResponse.from(plan, driverName, vehiclePlate, stops);
+    }
+
+    /**
+     * Versão em lote de {@link #toResponse} para telas de listagem — resolve nomes de
+     * motorista/veículo e paradas com uma query cada (via {@code findAllById}/
+     * {@code findAllByRoutePlanIdIn}) em vez de uma por plano, evitando N+1 em
+     * {@link #listForGestor}.
+     */
+    private List<RoutePlanResponse> toResponses(List<RoutePlan> plans) {
+        if (plans.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> driverIds = plans.stream().map(RoutePlan::getDriverId).filter(java.util.Objects::nonNull).toList();
+        List<UUID> vehicleIds = plans.stream().map(RoutePlan::getVehicleId).filter(java.util.Objects::nonNull).toList();
+        List<UUID> planIds = plans.stream().map(RoutePlan::getId).toList();
+
+        java.util.Map<UUID, String> driverNames = drivers.findAllById(driverIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Driver::getId, Driver::getName));
+        java.util.Map<UUID, String> vehiclePlates = vehicles.findAllById(vehicleIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Vehicle::getId, Vehicle::getPlate));
+        java.util.Map<UUID, List<RouteStopResponse>> stopsByPlan =
+                routeStops.findAllByRoutePlanIdInOrderByOrdemSugeridaAsc(planIds).stream()
+                        .collect(java.util.stream.Collectors.groupingBy(
+                                RouteStop::getRoutePlanId,
+                                java.util.stream.Collectors.mapping(RouteStopResponse::from, java.util.stream.Collectors.toList())));
+
+        return plans.stream()
+                .map(plan -> RoutePlanResponse.from(
+                        plan,
+                        driverNames.get(plan.getDriverId()),
+                        vehiclePlates.get(plan.getVehicleId()),
+                        stopsByPlan.getOrDefault(plan.getId(), List.of())))
+                .toList();
     }
 }

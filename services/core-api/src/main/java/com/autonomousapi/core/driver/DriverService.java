@@ -4,7 +4,7 @@ import com.autonomousapi.core.driver.dto.DriverLicenseAlertResponse;
 import com.autonomousapi.core.driver.dto.DriverRequest;
 import com.autonomousapi.core.driver.dto.DriverResponse;
 import com.autonomousapi.core.error.CnhAlreadyUsedException;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -99,7 +99,6 @@ public class DriverService {
     }
 
     private Driver findOwned(JwtPrincipal principal, UUID id) {
-        return drivers.findByIdAndTenantId(id, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        return Lookups.orNotFound(drivers.findByIdAndTenantId(id, principal.tenantId()), "Motorista não encontrado.");
     }
 }
