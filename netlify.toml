@@ -1,0 +1,20 @@
+# Deploy do apps/web (painel do gestor). Monorepo com npm workspaces — `base` aponta
+# o build pra dentro de apps/web, mas o `npm ci` roda a partir da raiz do repo (onde
+# está o package-lock.json), senão os workspaces não resolvem.
+[build]
+  base = "apps/web"
+  command = "npm ci --prefix ../.. && npm run build"
+  publish = "dist"
+
+# Fallback de SPA (spec pendente desde o PR de migração pra React Router): sem isso,
+# F5 ou link direto numa rota tipo /frota/:id devolve 404 do Netlify em vez de deixar
+# o React Router decidir o que mostrar.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# VITE_CORE_API_URL (usada só em dev pelo proxy do Vite, ver vite.config.ts) não se
+# aplica em produção — o client (src/api/client.ts) já fala direto com a URL pública
+# do core-api via variável de build, configurar isso no painel do Netlify quando o
+# projeto existir (Site settings > Environment variables), não aqui.
