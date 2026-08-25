@@ -1,0 +1,1451 @@
+{
+  "components": {
+    "schemas": {
+      "ChargingStationItem": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "connector_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connector Type"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "power_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Kw"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "address",
+          "connector_type",
+          "power_kw",
+          "lat",
+          "lon",
+          "status"
+        ],
+        "title": "ChargingStationItem",
+        "type": "object"
+      },
+      "ChargingStationsResponse": {
+        "properties": {
+          "provider_available": {
+            "title": "Provider Available",
+            "type": "boolean"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/ChargingStationItem"
+            },
+            "title": "Stations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider_available",
+          "stations"
+        ],
+        "title": "ChargingStationsResponse",
+        "type": "object"
+      },
+      "DrivingEventsResponse": {
+        "properties": {
+          "hard_braking_count": {
+            "title": "Hard Braking Count",
+            "type": "integer"
+          },
+          "overspeed_count": {
+            "title": "Overspeed Count",
+            "type": "integer"
+          },
+          "ping_count": {
+            "title": "Ping Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ping_count",
+          "hard_braking_count",
+          "overspeed_count"
+        ],
+        "title": "DrivingEventsResponse",
+        "type": "object"
+      },
+      "GpsPingAccepted": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "GpsPingAccepted",
+        "type": "object"
+      },
+      "GpsPingBatchAccepted": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "received": {
+            "title": "Received",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accepted",
+          "received"
+        ],
+        "title": "GpsPingBatchAccepted",
+        "type": "object"
+      },
+      "GpsPingBatchIn": {
+        "properties": {
+          "pings": {
+            "items": {
+              "$ref": "#/components/schemas/GpsPingIn"
+            },
+            "title": "Pings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pings"
+        ],
+        "title": "GpsPingBatchIn",
+        "type": "object"
+      },
+      "GpsPingIn": {
+        "properties": {
+          "accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy"
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading"
+          },
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "type": "number"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "vehicle_id": {
+            "format": "uuid",
+            "title": "Vehicle Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "recorded_at",
+          "lat",
+          "lon"
+        ],
+        "title": "GpsPingIn",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "PassagesReconstructed": {
+        "properties": {
+          "passages_created": {
+            "title": "Passages Created",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "passages_created"
+        ],
+        "title": "PassagesReconstructed",
+        "type": "object"
+      },
+      "PlaceOut": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "display_name",
+          "lat",
+          "lon"
+        ],
+        "title": "PlaceOut",
+        "type": "object"
+      },
+      "QualityMetrics": {
+        "properties": {
+          "average_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Confidence"
+          },
+          "average_observations_per_cell": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Observations Per Cell"
+          },
+          "coverage_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Ratio"
+          },
+          "late_ping_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Late Ping Ratio"
+          },
+          "low_confidence_cell_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Confidence Cell Ratio"
+          },
+          "segments_with_score": {
+            "title": "Segments With Score",
+            "type": "integer"
+          },
+          "total_cells": {
+            "title": "Total Cells",
+            "type": "integer"
+          },
+          "total_pings": {
+            "title": "Total Pings",
+            "type": "integer"
+          },
+          "total_segments": {
+            "title": "Total Segments",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_segments",
+          "segments_with_score",
+          "coverage_ratio",
+          "total_cells",
+          "average_confidence",
+          "low_confidence_cell_ratio",
+          "average_observations_per_cell",
+          "total_pings",
+          "late_ping_ratio"
+        ],
+        "title": "QualityMetrics",
+        "type": "object"
+      },
+      "RoadReadinessRecalculated": {
+        "properties": {
+          "segments_updated": {
+            "title": "Segments Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segments_updated"
+        ],
+        "title": "RoadReadinessRecalculated",
+        "type": "object"
+      },
+      "RoadReadinessV2Recalculated": {
+        "properties": {
+          "cells_updated": {
+            "title": "Cells Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cells_updated"
+        ],
+        "title": "RoadReadinessV2Recalculated",
+        "type": "object"
+      },
+      "RouteResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "duration_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration S"
+          },
+          "geometry": {
+            "default": [],
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Geometry",
+            "type": "array"
+          },
+          "steps": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "RouteResponse",
+        "type": "object"
+      },
+      "RouteStepOut": {
+        "properties": {
+          "distance_m": {
+            "title": "Distance M",
+            "type": "number"
+          },
+          "duration_s": {
+            "title": "Duration S",
+            "type": "number"
+          },
+          "instruction_type": {
+            "title": "Instruction Type",
+            "type": "string"
+          },
+          "modifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modifier"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "instruction_type",
+          "modifier",
+          "name",
+          "distance_m",
+          "duration_s"
+        ],
+        "title": "RouteStepOut",
+        "type": "object"
+      },
+      "TablePoint": {
+        "properties": {
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "TablePoint",
+        "type": "object"
+      },
+      "TableRequest": {
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TablePoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "title": "TableRequest",
+        "type": "object"
+      },
+      "TableResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "distances_m": {
+            "default": [],
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Distances M",
+            "type": "array"
+          },
+          "durations_s": {
+            "default": [],
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Durations S",
+            "type": "array"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "TableResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Serviço geoespacial interno (GPS, rotas, prontidão viária). Não exposto à internet pública — só o core-api chama (spec 01).",
+    "title": "geo-api",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Liveness sem token, para orquestradores (não expõe nada sensível).",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Root  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Root",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/internal/v1/charging-stations": {
+      "get": {
+        "description": "Lista estações com o status mais recente de cada uma (spec 06, item 1). RNF011: uma\nestação sem status observado recentemente (provedor nunca sincronizou, ou está fora\ndo ar há tempo) aparece com status \"DESCONHECIDO\" em vez de ser omitida ou quebrar a\nresposta — a tela do usuário nunca vê erro por causa disso.",
+        "operationId": "listar_estacoes_recarga_internal_v1_charging_stations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "lat",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90.0,
+                  "minimum": -90.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lat"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lon",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180.0,
+                  "minimum": -180.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lon"
+            }
+          },
+          {
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "default": 20.0,
+              "exclusiveMinimum": 0.0,
+              "title": "Radius Km",
+              "type": "number"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargingStationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Listar Estacoes Recarga",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/driving-events": {
+      "get": {
+        "description": "Componentes de avaliação automática de motorista (spec 06, item 3): frenagem brusca\ne excesso de velocidade calculados a partir do ping de GPS da viagem. Chamado só\npelo job diário do core-api (DriverAutoRatingJob) — nunca em tempo real na tela.",
+        "operationId": "driving_events_internal_v1_driving_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "vehicle_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vehicle Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "title": "From",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "title": "To",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrivingEventsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Driving Events",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/geocode": {
+      "get": {
+        "description": "Endereço -> coordenada, restrito à área do piloto (spec 02). Lista vazia é resposta\nválida (\"não achei aqui\"), não erro — o front distingue isso de falha por já ter\nrecebido 200.",
+        "operationId": "geocode_internal_v1_geocode_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "minLength": 3,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceOut"
+                  },
+                  "title": "Response Geocode Internal V1 Geocode Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Geocode",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/gps/pings": {
+      "post": {
+        "description": "Ingestão de ping de GPS + map matching (Fase 2, spec 02). Persiste o ping bruto\n(expurgado depois pelo job de retenção, ver app/retention.py) e, se cair perto o\nbastante de um `road_segment` conhecido, gera uma `road_segment_observation` —\nisso é síncrono e barato (uma consulta indexada), diferente da agregação do score,\nque o spec proíbe explicitamente de rodar em tempo real (fica para o job periódico).",
+        "operationId": "ingest_ping_internal_v1_gps_pings_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GpsPingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GpsPingAccepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Ping",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/gps/pings/batch": {
+      "post": {
+        "description": "Versão em lote de `ingest_ping` (ADR 0019, pré-requisito A) — uma transação para o\nlote inteiro em vez de uma chamada HTTP por ping (era o caminho antes: o app manda\no lote pro core-api, mas `TripService#submitPings` chamava `POST /gps/pings` uma\nvez por ping).\n\nContrato com a fila offline do app (ver ADR 0019, \"Anexo — contrato da ingestão em\nlote\", A1/A2), não mudar sem reler aquilo:\n\n- `INSERT ... ON CONFLICT DO NOTHING` na chave natural (vehicle_id, recorded_at,\n  migration 0004) — ping duplicado (reenvio de lote parcial) não vira erro nem\n  linha nova, só é ignorado.\n- `accepted` sempre conta o lote inteiro quando a transação teve sucesso, nunca só\n  as linhas de fato inseridas — duplicata é sucesso do ponto de vista do cliente\n  (A1). Só uma falha real de transação (exceção) resulta em resposta de erro, e aí\n  o app reenvia o lote inteiro (idempotente por construção, graças ao ON CONFLICT).\n- Observação só é gerada para o ping que a query `RETURNING` de fato devolveu — ou\n  seja, só para quem foi inserido agora. Ping deduplicado não gera observação de\n  novo (A2): a linha já existia, então a observação dela (se algum dia existiu)\n  também já foi gravada na primeira vez.\n\nMatching roda ANTES do insert, pra todo ping do lote (inclusive os que acabam sendo\nconflito e descartados pelo `ON CONFLICT` — barato, é só uma consulta indexada a\nmais por duplicata). É o que permite gravar `road_segment_id` na mesma linha do\nping (ADR 0019, Decisão 1) sem uma segunda ida ao banco pós-insert.",
+        "operationId": "ingest_ping_batch_internal_v1_gps_pings_batch_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GpsPingBatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GpsPingBatchAccepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Ping Batch",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/health": {
+      "get": {
+        "description": "Health interno consumido pelo core-api para compor o health agregado.",
+        "operationId": "health_internal_v1_health_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Internal V1 Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/road-readiness/quality-metrics": {
+      "get": {
+        "description": "Métricas de qualidade do score (ADR 0019, passo 6 — DoD da Fase 3): cobertura,\ndistribuição de confiança, densidade de observação e taxa de ping atrasado. Ver\napp/quality_metrics.py para o porquê de cada uma. Read-only, computado sob\ndemanda — não é um job agendado (não há necessidade: barato de calcular, e não\nexiste consumidor automatizado ainda que precise de valor sempre fresco em\nbackground).",
+        "operationId": "road_readiness_quality_metrics_internal_v1_road_readiness_quality_metrics_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualityMetrics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Road Readiness Quality Metrics",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/road-readiness/recalculate": {
+      "post": {
+        "description": "Dispara o job de agregação sob demanda (o scheduler já roda isso periodicamente,\nver app/scheduler.py) — útil para operação manual e para testes determinísticos,\nsem depender do timing do agendador em background.",
+        "operationId": "recalculate_road_readiness_internal_v1_road_readiness_recalculate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadReadinessRecalculated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recalculate Road Readiness",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/road-readiness/recalculate-v2": {
+      "post": {
+        "description": "Dispara o score v2 sob demanda (ADR 0019, Decisões 2/3) — mesmo padrão de\n`/road-readiness/recalculate` (v1). Lê de `road_segment_passage`, não de\n`road_segment_observation`; rodar a sessionização antes (endpoint acima) se a\njanela de passagens ainda não tiver sido reconstruída.",
+        "operationId": "recalculate_road_readiness_v2_internal_v1_road_readiness_recalculate_v2_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadReadinessV2Recalculated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recalculate Road Readiness V2",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/road-segment-passages/reconstruct": {
+      "post": {
+        "description": "Dispara a sessionização sob demanda (ADR 0019, Decisão 1) — o scheduler já roda\nisso periodicamente (ver app/scheduler.py); útil para operação manual e para\ntestes determinísticos, mesmo padrão de `/road-readiness/recalculate`.",
+        "operationId": "reconstruct_road_segment_passages_internal_v1_road_segment_passages_reconstruct_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassagesReconstructed"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reconstruct Road Segment Passages",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/route": {
+      "get": {
+        "description": "Rota ponto-a-ponto (spec 02, Fase 1-2 do roteamento). Sempre 200: motor fora do ar ou\npar de pontos sem rota devolvem `available=false` com motivo legível, em vez de 5xx —\na diferença entre \"não configurado\", \"caiu\" e \"não existe rota aqui\" importa pra quem\nlê a tela, e um 503 genérico apaga essa diferença.",
+        "operationId": "rota_internal_v1_route_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from_lat",
+            "required": true,
+            "schema": {
+              "maximum": 90.0,
+              "minimum": -90.0,
+              "title": "From Lat",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_lon",
+            "required": true,
+            "schema": {
+              "maximum": 180.0,
+              "minimum": -180.0,
+              "title": "From Lon",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_lat",
+            "required": true,
+            "schema": {
+              "maximum": 90.0,
+              "minimum": -90.0,
+              "title": "To Lat",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_lon",
+            "required": true,
+            "schema": {
+              "maximum": 180.0,
+              "minimum": -180.0,
+              "title": "To Lon",
+              "type": "number"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rota",
+        "tags": [
+          "internal"
+        ]
+      }
+    },
+    "/internal/v1/table": {
+      "post": {
+        "description": "Matriz de distância/duração real entre N pontos (spec 02, \"Evolução pendente\"),\nconsumida pelo solver VRP do core-api. Mesmo contrato de degradação do `/route`: motor\nfora do ar, ponto fora da área ou mais pontos que o teto viram `available=false` com\nmotivo legível, sempre 200 — nunca 5xx por causa de um serviço de infraestrutura externo.",
+        "operationId": "table_internal_v1_table_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Table",
+        "tags": [
+          "internal"
+        ]
+      }
+    }
+  }
+}
