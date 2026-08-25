@@ -22,6 +22,16 @@ export interface VehicleResponse {
   status: string;
 }
 
+/** Envelope de paginação do core-api (PageResponse<T> no backend) — mesma forma usada
+ *  no cliente web. GET /v1/vehicles e GET /v1/trips devolvem isso, não um array puro. */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface TripResponse {
   id: string;
   vehicleId: string;
@@ -185,7 +195,12 @@ export const coreApi = {
   me: () => request<UserResponse>('/v1/auth/me'),
 
   vehicles: {
-    list: () => request<VehicleResponse[]>('/v1/vehicles'),
+    // /v1/vehicles é paginado no backend (PageResponse<VehicleResponse>) — corrigido aqui
+    // (achado da auditoria de cleanup: o tipo antigo `VehicleResponse[]` não batia com a
+    // resposta real, então `vehicles.map(...)` na tela de viagem quebraria em runtime
+    // assim que a frota do tenant passasse a existir de verdade). Size alto cobre a frota
+    // inteira numa request só — a mesma lógica do cliente web.
+    list: () => request<PageResponse<VehicleResponse>>('/v1/vehicles?size=500'),
   },
 
   // Superfície do próprio motorista (spec 07, /v1/me/*) — tudo aqui é escopado pelo
@@ -220,7 +235,10 @@ export const coreApi = {
     start: (vehicleId: string) =>
       request<TripResponse>('/v1/trips', { method: 'POST', body: JSON.stringify({ vehicleId }) }),
     stop: (tripId: string) => request<TripResponse>(`/v1/trips/${tripId}/stop`, { method: 'POST' }),
-    list: () => request<TripResponse[]>('/v1/trips'),
+    // Paginado (cleanup de performance) — o histórico de viagens cresce sem limite. A
+    // viagem em andamento, se houver, está sempre na primeira página (ordenação por
+    // started_at desc no backend garante isso).
+    list: () => request<PageResponse<TripResponse>>('/v1/trips'),
     /**
      * Manda um lote da fila em uma requisição; devolve quantos foram aceitos.
      * O app sempre envia em lote — o endpoint unitário do core-api (POST /pings) segue

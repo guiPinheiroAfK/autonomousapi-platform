@@ -32,9 +32,9 @@ export function TripScreen({ onLogout }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const [vehicleList, trips] = await Promise.all([coreApi.vehicles.list(), coreApi.trips.list()]);
-        setVehicles(vehicleList);
-        const emAndamento = trips.find((t) => t.status === 'EM_ANDAMENTO') ?? null;
+        const [vehiclePage, tripPage] = await Promise.all([coreApi.vehicles.list(), coreApi.trips.list()]);
+        setVehicles(vehiclePage.content);
+        const emAndamento = tripPage.content.find((t) => t.status === 'EM_ANDAMENTO') ?? null;
         setTrip(emAndamento);
         if (emAndamento) {
           setSelectedVehicleId(emAndamento.vehicleId);
