@@ -27,11 +27,14 @@
 # Pré-requisitos: ambiente já no ar (rode 00-reset-env.sh antes), curl, jq, docker.
 # Variáveis de ambiente opcionais para sobrescrever os dados de teste:
 #   TENANT_NAME, GESTOR_EMAIL, GESTOR_PASSWORD, MOTORISTA_EMAIL, MOTORISTA_PASSWORD
+# Também dá pra apontar pra outro ambiente (ex. o piloto na Oracle) via:
+#   COMPOSE_FILE=infra/docker-compose.prod.yml CORE_API_URL=https://163-176-224-227.sslip.io \
+#     bash scripts/test-e2e/01-seed.sh
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/infra/docker-compose.yml"
+COMPOSE_FILE="${COMPOSE_FILE:-${ROOT_DIR}/infra/docker-compose.yml}"
 BASE_URL="${CORE_API_URL:-http://localhost:8080}/v1"
 
 TENANT_NAME="${TENANT_NAME:-RotaTeste E2E}"
