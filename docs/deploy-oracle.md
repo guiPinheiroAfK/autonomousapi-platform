@@ -4,6 +4,10 @@ Runbook pra rodar **na VM**, via SSH (`ssh -i "sua-chave.key" opc@163.176.224.22
 Não precisa colar nada sensível de volta pro chat — só me avise se algum passo der erro
 (cola o output do comando que falhou).
 
+E-mail transacional (confirmação de conta, convite de motorista) é opcional — sem
+configurar, o link só aparece no log do container. Ver `docs/setup-email-resend.md`
+quando quiser ligar isso de verdade.
+
 ## 1. Instalar Docker (Oracle Linux)
 
 ```bash
