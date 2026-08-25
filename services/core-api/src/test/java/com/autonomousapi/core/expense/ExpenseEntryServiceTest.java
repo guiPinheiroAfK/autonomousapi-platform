@@ -97,7 +97,7 @@ class ExpenseEntryServiceTest {
     @Test
     void exportaCsvComCabecalhoEDadosDoVeiculo() {
         Vehicle vehicle = new Vehicle(tenantId, "ABC1234", "VW", "Saveiro", 2022, 1000);
-        when(vehicleRepo.findAllByTenantIdOrderByCreatedAtDesc(tenantId)).thenReturn(List.of(vehicle));
+        when(vehicleRepo.findAllById(List.of(vehicle.getId()))).thenReturn(List.of(vehicle));
         when(expenseRepo.findAllByTenantIdAndDataGreaterThanEqualOrderByData(eq(tenantId), any())).thenReturn(List.of(
                 new ExpenseEntry(tenantId, vehicle.getId(), ExpenseCategory.COMBUSTIVEL,
                         new BigDecimal("150.50"), "Abastecimento; posto X", LocalDate.of(2026, 1, 10), null, null)));

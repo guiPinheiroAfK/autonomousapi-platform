@@ -57,7 +57,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # jsdom 30 (vitest) usa uma API do undici que o webidl do Node 20 não tem
+          # ("webidl.util.markAsUncloneable is not a function") — Node 22 corrige.
+          # mobile/contracts continuam em 20 (não usam jsdom, não são afetados).
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run lint --workspace @autonomousapi/web

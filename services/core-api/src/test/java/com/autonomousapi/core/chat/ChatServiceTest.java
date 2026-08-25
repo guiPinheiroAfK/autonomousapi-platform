@@ -173,14 +173,17 @@ class ChatServiceTest {
     @Test
     void listConversationsResolveTenantNamePraOMotoristaVer() {
         UUID driverId = UUID.randomUUID();
-        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, driverId, null);
         Driver d = driverComLogin();
+        // Tenant não expõe construtor com id fixo (gera UUID aleatório no construtor) — usa
+        // o id gerado por ele em vez de um tenantId arbitrário, senão o lookup em lote
+        // (tenants.findAllById) nunca bate com a chave certa no Map.
         Tenant tenant = new Tenant("Frota Rota Certa");
-        JwtPrincipal motoristaPrincipal = new JwtPrincipal(UUID.randomUUID(), tenantId, "MOTORISTA");
+        ChatConversation conv = new ChatConversation(tenant.getId(), gestorUserId, driverId, null);
+        JwtPrincipal motoristaPrincipal = new JwtPrincipal(UUID.randomUUID(), tenant.getId(), "MOTORISTA");
         when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
         when(conversations.findAllByDriverIdOrderByCreatedAtDesc(d.getId())).thenReturn(List.of(conv));
-        when(drivers.findById(driverId)).thenReturn(Optional.of(d));
-        when(tenants.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(drivers.findAllById(List.of(driverId))).thenReturn(List.of(d));
+        when(tenants.findAllById(List.of(tenant.getId()))).thenReturn(List.of(tenant));
         when(messages.findFirstByConversationIdAndAindaNoServidorTrueOrderBySentAtDesc(conv.getId()))
                 .thenReturn(Optional.empty());
 
