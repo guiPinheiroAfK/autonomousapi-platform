@@ -8,6 +8,8 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
@@ -18,6 +20,9 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignupPage } from './pages/SignupPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ROUTES } from './routes';
+import { useTheme } from './lib/theme';
+import { ConfirmDialogHost } from './lib/confirm';
+import { MarcaAnimada } from './components/shared/Logo';
 import type { UserResponse } from './api/client';
 
 /*
@@ -55,7 +60,13 @@ const DriverRoutePage = lazy(() => import('./pages/DriverRoutePage').then((m) =>
 const DriverMorePage = lazy(() => import('./pages/DriverMorePage').then((m) => ({ default: m.DriverMorePage })));
 
 function CarregandoTela() {
-  return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center gap-3 p-16 text-muted-foreground">
+      <MarcaAnimada tamanho={36} />
+      <p className="text-xs">{t('common.carregando')}</p>
+    </div>
+  );
 }
 
 /** Wrapper pra rota com token vindo de link de e-mail (ADR 0011/0012): sem ?token=, não tem
@@ -367,8 +378,25 @@ function AppRoutes() {
 }
 
 export function App() {
+  const { theme } = useTheme();
   return (
     <Router>
+      {/* Toast fica no nível raiz, fora do <Suspense/> das rotas: uma ação numa página não
+       *  pode ter a confirmação sumindo se a navegação trocar de tela logo em seguida. */}
+      <Toaster
+        theme={theme}
+        position="bottom-right"
+        toastOptions={{
+          classNames: {
+            toast: 'rounded-lg border border-border bg-card text-card-foreground shadow-lg',
+            title: 'text-foreground',
+            description: 'text-muted-foreground',
+            success: '!border-status-success-bg [&_[data-icon]]:text-status-success',
+            error: '!border-status-danger-bg [&_[data-icon]]:text-status-danger',
+          },
+        }}
+      />
+      <ConfirmDialogHost />
       <Suspense fallback={<CarregandoTela />}>
         <AppRoutes />
       </Suspense>

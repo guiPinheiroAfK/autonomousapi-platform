@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -45,11 +46,16 @@ export function AppShell({ user, onLogout }: AppShellProps) {
   const motorista = user.role === 'MOTORISTA';
   const title = titleForPath(location.pathname, motorista);
 
+  // Abaixo de lg a sidebar vira gaveta (off-canvas) — precisa fechar sozinha a cada
+  // troca de rota, senão o usuário navega e o menu continua aberto por cima da tela.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => setSidebarOpen(false), [location.pathname]);
+
   return (
     <div className="flex h-screen w-full bg-background">
-      <Sidebar user={user} />
+      <Sidebar user={user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar title={title} user={user} onLogout={onLogout} />
+        <Topbar title={title} user={user} onLogout={onLogout} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>

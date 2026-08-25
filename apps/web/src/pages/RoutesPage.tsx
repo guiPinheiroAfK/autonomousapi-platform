@@ -1,35 +1,38 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, Clock, MapPin, Navigation, Route as RouteIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { coreApi, type PlaceResponse, type RouteResponse } from '../api/client';
 import { BuscaEndereco } from '../components/shared/BuscaEndereco';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { cn } from '../lib/utils';
 
-const MANOBRA_LABEL: Record<string, string> = {
-  depart: 'Siga',
-  turn: 'Vire',
-  'new name': 'Continue',
-  continue: 'Continue',
-  merge: 'Entre',
-  'on ramp': 'Pegue o acesso',
-  'off ramp': 'Pegue a saída',
-  fork: 'Mantenha-se',
-  'end of road': 'No fim da via, vire',
-  roundabout: 'Na rotatória, siga',
-  rotary: 'Na rotatória, siga',
-  'exit roundabout': 'Saia da rotatória',
-  'exit rotary': 'Saia da rotatória',
-  notification: 'Atenção',
+/** Chave OSRM crua (com espaço, ex.: "on ramp") → chave i18n (camelCase). */
+const MANOBRA_KEY: Record<string, string> = {
+  depart: 'depart',
+  turn: 'turn',
+  'new name': 'newName',
+  continue: 'continue',
+  merge: 'merge',
+  'on ramp': 'onRamp',
+  'off ramp': 'offRamp',
+  fork: 'fork',
+  'end of road': 'endOfRoad',
+  roundabout: 'roundabout',
+  rotary: 'roundabout',
+  'exit roundabout': 'exitRoundabout',
+  'exit rotary': 'exitRoundabout',
+  notification: 'notification',
 };
 
-const MODIFICADOR_LABEL: Record<string, string> = {
-  left: 'à esquerda',
-  right: 'à direita',
-  'slight left': 'levemente à esquerda',
-  'slight right': 'levemente à direita',
-  'sharp left': 'fechado à esquerda',
-  'sharp right': 'fechado à direita',
+const MODIFICADOR_KEY: Record<string, string> = {
+  left: 'left',
+  right: 'right',
+  'slight left': 'slightLeft',
+  'slight right': 'slightRight',
+  'sharp left': 'sharpLeft',
+  'sharp right': 'sharpRight',
 };
 
 /**
@@ -39,13 +42,15 @@ const MODIFICADOR_LABEL: Record<string, string> = {
  * colar o modificador direto produzia "Vire em frente" e "Continue em em frente". Esses
  * dois casos têm frase própria, independente do tipo de manobra.
  */
-function descreverManobra(tipo?: string, modificador?: string | null): string {
-  if (tipo === 'arrive') return 'Chegada';
-  if (modificador === 'uturn') return 'Faça o retorno';
-  if (modificador === 'straight') return 'Siga em frente';
+function descreverManobra(t: TFunction, tipo?: string, modificador?: string | null): string {
+  if (tipo === 'arrive') return t('pages.routes.manobra.chegada');
+  if (modificador === 'uturn') return t('pages.routes.manobra.facaRetorno');
+  if (modificador === 'straight') return t('pages.routes.manobra.sigaEmFrente');
 
-  const verbo = MANOBRA_LABEL[tipo ?? ''] ?? tipo ?? '';
-  const mod = modificador ? MODIFICADOR_LABEL[modificador] : undefined;
+  const chaveVerbo = MANOBRA_KEY[tipo ?? ''];
+  const verbo = chaveVerbo ? t(`pages.routes.manobra.${chaveVerbo}`) : (tipo ?? '');
+  const chaveMod = modificador ? MODIFICADOR_KEY[modificador] : undefined;
+  const mod = chaveMod ? t(`pages.routes.modificador.${chaveMod}`) : undefined;
   return mod ? `${verbo} ${mod}` : verbo;
 }
 
@@ -138,6 +143,7 @@ function TracadoDaRota({ geometry }: { geometry: number[][] }) {
  * `road_readiness_score` é Fase 3 e entra no OSRM, não aqui.
  */
 export function RoutesPage() {
+  const { t } = useTranslation();
   const [origem, setOrigem] = useState<PlaceResponse | null>(null);
   const [destino, setDestino] = useState<PlaceResponse | null>(null);
   const [rota, setRota] = useState<RouteResponse | null>(null);
@@ -152,7 +158,7 @@ export function RoutesPage() {
     try {
       setRota(await coreApi.routes.preview(origem.lat!, origem.lon!, destino.lat!, destino.lon!));
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Falha ao calcular a rota');
+      setErro(e instanceof Error ? e.message : t('pages.routes.falhaCalcular'));
     } finally {
       setCalculando(false);
     }
@@ -163,23 +169,21 @@ export function RoutesPage() {
   return (
     <div className="p-5">
       <div className="mb-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">Rotas</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Rota sugerida entre dois pontos, calculada sobre o mapa da área do piloto.
-        </p>
+        <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.routes.titulo')}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.routes.subtitulo')}</p>
       </div>
 
       <Card className="mb-5">
         <div className="grid gap-4 p-4 md:grid-cols-2">
-          <BuscaEndereco id="origem" label="Origem" selecionado={origem} onSelecionar={setOrigem} />
-          <BuscaEndereco id="destino" label="Destino" selecionado={destino} onSelecionar={setDestino} />
+          <BuscaEndereco id="origem" label={t('pages.routes.origem')} selecionado={origem} onSelecionar={setOrigem} />
+          <BuscaEndereco id="destino" label={t('pages.routes.destino')} selecionado={destino} onSelecionar={setDestino} />
         </div>
         <div className="flex items-center gap-3 border-t border-border px-4 py-3">
           <Button onClick={calcular} disabled={!origem || !destino || calculando}>
-            <Navigation /> {calculando ? 'Calculando...' : 'Calcular rota'}
+            <Navigation /> {calculando ? t('pages.routes.calculando') : t('pages.routes.calcularRota')}
           </Button>
           {(!origem || !destino) && (
-            <span className="text-xs text-muted-foreground">Escolha origem e destino para calcular.</span>
+            <span className="text-xs text-muted-foreground">{t('pages.routes.escolhaParaCalcular')}</span>
           )}
         </div>
       </Card>
@@ -193,7 +197,7 @@ export function RoutesPage() {
       {rota && !rota.available && (
         <div className="mb-4 flex items-start gap-2.5 rounded-md border border-status-warning-bg bg-status-warning-bg px-3 py-2.5 text-xs text-status-warning">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <span>{rota.unavailableReason ?? 'Não foi possível calcular a rota.'}</span>
+          <span>{rota.unavailableReason ?? t('pages.routes.naoFoiPossivelCalcular')}</span>
         </div>
       )}
 
@@ -201,12 +205,12 @@ export function RoutesPage() {
         <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Resumo</CardTitle>
+              <CardTitle>{t('pages.routes.resumo')}</CardTitle>
             </CardHeader>
             <div className="grid grid-cols-2 gap-3 px-4 pb-3">
               <div className="rounded-md border border-border p-2.5">
                 <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <RouteIcon className="size-3" /> Distância
+                  <RouteIcon className="size-3" /> {t('pages.routes.distancia')}
                 </p>
                 <p className="mt-0.5 font-data text-sm font-semibold text-foreground">
                   {formatarDistancia(rota.distanceM ?? 0)}
@@ -214,7 +218,7 @@ export function RoutesPage() {
               </div>
               <div className="rounded-md border border-border p-2.5">
                 <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <Clock className="size-3" /> Tempo estimado
+                  <Clock className="size-3" /> {t('pages.routes.tempoEstimado')}
                 </p>
                 <p className="mt-0.5 font-data text-sm font-semibold text-foreground">
                   {formatarDuracao(rota.durationS ?? 0)}
@@ -223,15 +227,13 @@ export function RoutesPage() {
             </div>
             <div className="px-4 pb-4">
               <TracadoDaRota geometry={rota.geometry ?? []} />
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">
-                Traçado do percurso (sem mapa de fundo)
-              </p>
+              <p className="mt-1 text-center text-[10px] text-muted-foreground">{t('pages.routes.tracadoSemMapa')}</p>
             </div>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Itinerário</CardTitle>
+              <CardTitle>{t('pages.routes.itinerario')}</CardTitle>
             </CardHeader>
             <ol className="divide-y divide-border">
               {passos.map((passo, i) => (
@@ -241,11 +243,11 @@ export function RoutesPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] text-foreground">
-                      {descreverManobra(passo.instructionType, passo.modifier)}
+                      {descreverManobra(t, passo.instructionType, passo.modifier)}
                       {passo.name ? (
                         <span className="font-medium"> · {passo.name}</span>
                       ) : (
-                        <span className="text-muted-foreground"> · via sem nome</span>
+                        <span className="text-muted-foreground"> · {t('pages.routes.viaSemNome')}</span>
                       )}
                     </p>
                   </div>
@@ -263,7 +265,7 @@ export function RoutesPage() {
         <Card>
           <div className="flex flex-col items-center gap-2 p-10 text-center text-xs text-muted-foreground">
             <MapPin className="size-6 text-muted-foreground/60" />
-            <p>Escolha uma origem e um destino para ver a rota sugerida.</p>
+            <p>{t('pages.routes.escolhaParaVerRota')}</p>
           </div>
         </Card>
       )}

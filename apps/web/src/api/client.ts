@@ -340,8 +340,14 @@ export const coreApi = {
   },
 
   workOrders: {
-    list: (vehicleId?: string) =>
-      request<WorkOrderResponse[]>(`/v1/work-orders${vehicleId ? `?vehicleId=${vehicleId}` : ''}`),
+    /** Paginado (cleanup de performance) — o histórico de OS do tenant cresce sem limite
+     *  ao longo dos anos. `size` no teto do backend (100) cobre o volume típico numa
+     *  request só, como já feito em outras listas grandes (ver nota em `vehicles.list`). */
+    list: (vehicleId?: string, page = 0, size = 100) => {
+      const params = new URLSearchParams({ page: String(page), size: String(size) });
+      if (vehicleId) params.set('vehicleId', vehicleId);
+      return request<PageResponse<WorkOrderResponse>>(`/v1/work-orders?${params.toString()}`);
+    },
     create: (body: WorkOrderRequest) =>
       request<WorkOrderResponse>('/v1/work-orders', { method: 'POST', body: JSON.stringify(body) }),
     update: (id: string, body: WorkOrderRequest) =>

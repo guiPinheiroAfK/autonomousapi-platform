@@ -2,10 +2,6 @@ export function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-export function formatKm(value: number): string {
-  return `${value.toLocaleString('pt-BR')} km`;
-}
-
 /** Formata "YYYY-MM-DD" (LocalDate, sem timezone) como "DD/MM/YYYY" via string,
  *  sem passar por Date — evita deslocar o dia pra quem está a oeste de UTC. */
 export function formatDateBR(isoDate: string): string {

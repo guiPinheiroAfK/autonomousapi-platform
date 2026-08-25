@@ -1,14 +1,24 @@
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AutonomousAPI">
-  <!-- Fundo quadrado arredondado na cor da superfície pública (--breu): favicon SVG não
-       herda CSS da página, então as cores precisam ser fixas aqui, não currentColor. -->
-  <rect width="64" height="64" rx="14" fill="#101113" />
+  <!-- Fundo quadrado arredondado na cor da superfície pública (token "breu"): favicon SVG
+       não herda CSS da página, então as cores precisam ser fixas aqui, não currentColor.
+       Gradiente sutil (em vez de chapado) dá profundidade sem custar legibilidade a 16px. -->
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#17181b" />
+      <stop offset="1" stop-color="#0b0c0d" />
+    </linearGradient>
+    <linearGradient id="via" x1="0" y1="51" x2="0" y2="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f0a23a" />
+      <stop offset="1" stop-color="#f6bc6a" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#fundo)" />
 
-  <!-- Mesma marca da Logo.tsx (via em perspectiva), redesenhada na grade 64 e em âmbar
-       fixo (--acento) para ficar legível em aba clara ou escura do navegador. -->
-  <path d="M12 51 L23.6 15" stroke="#f0a23a" stroke-width="3.6" stroke-linecap="round" />
-  <path d="M52 51 L40.4 15" stroke="#f0a23a" stroke-width="3.6" stroke-linecap="round" />
+  <!-- Mesma marca da Logo.tsx (via em perspectiva), redesenhada na grade 64. -->
+  <path d="M12 51 L23.6 15" stroke="url(#via)" stroke-width="3.6" stroke-linecap="round" />
+  <path d="M52 51 L40.4 15" stroke="url(#via)" stroke-width="3.6" stroke-linecap="round" />
 
-  <rect x="28.6" y="40.2" width="4.8" height="10.4" rx="2.4" fill="#f0a23a" />
-  <rect x="29.3" y="27.4" width="3.3" height="7.1" rx="1.65" fill="#f0a23a" />
-  <rect x="29.85" y="18.2" width="2.15" height="4.8" rx="1.075" fill="#f0a23a" />
+  <rect x="29.6" y="40.2" width="4.8" height="10.4" rx="2.4" fill="url(#via)" />
+  <rect x="30.35" y="27.4" width="3.3" height="7.1" rx="1.65" fill="url(#via)" />
+  <rect x="30.925" y="18.2" width="2.15" height="4.8" rx="1.075" fill="url(#via)" />
 </svg>

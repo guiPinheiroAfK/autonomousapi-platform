@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, ClipboardList, Truck, Users, Wrench } from 'lucide-react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { useTranslation } from 'react-i18next';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   coreApi,
   type DriverLicenseAlertResponse,
@@ -24,6 +14,9 @@ import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { StatCard } from '../components/shared/StatCard';
+import { DonutChart } from '../components/shared/DonutChart';
+import { StatCardsSkeleton } from '../components/shared/StatCardsSkeleton';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
 import { cn } from '../lib/utils';
 import { monthLabel } from '../lib/format';
 
@@ -32,17 +25,13 @@ const VEHICLE_STATUS_COLOR: Record<string, string> = {
   MANUTENCAO: 'var(--color-status-warning)',
   INATIVO: 'var(--color-status-neutral)',
 };
-const VEHICLE_STATUS_LABEL: Record<string, string> = {
-  ATIVO: 'Ativo',
-  MANUTENCAO: 'Em manutenção',
-  INATIVO: 'Inativo',
-};
 
 interface Props {
   onViewVehicles: () => void;
 }
 
 export function DashboardPage({ onViewVehicles }: Props) {
+  const { t } = useTranslation();
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<VehicleMaintenanceAlertResponse[]>([]);
@@ -85,22 +74,38 @@ export function DashboardPage({ onViewVehicles }: Props) {
   return (
     <div className="p-5">
       <div className="mb-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">Dashboard</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">Visão geral da frota</p>
+        <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.dashboard.titulo')}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.dashboard.subtitulo')}</p>
       </div>
 
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Veículos" value={totalVehicles} hint="Total da frota" icon={Truck} />
-        <StatCard label="Em Operação" value={ativos} tone="success" hint="Veículos ativos" icon={ClipboardList} />
-        <StatCard label="Em Manutenção" value={manutencao} tone="warning" hint="Fora de operação" icon={Wrench} />
-        <StatCard label="Motoristas" value={drivers.length} hint="Cadastrados" icon={Users} />
-      </div>
+      {loading ? (
+        <StatCardsSkeleton />
+      ) : (
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label={t('pages.dashboard.veiculos')} value={totalVehicles} hint={t('pages.dashboard.totalDaFrota')} icon={Truck} />
+          <StatCard
+            label={t('pages.dashboard.emOperacao')}
+            value={ativos}
+            tone="success"
+            hint={t('pages.dashboard.veiculosAtivos')}
+            icon={ClipboardList}
+          />
+          <StatCard
+            label={t('pages.dashboard.emManutencao')}
+            value={manutencao}
+            tone="warning"
+            hint={t('pages.dashboard.foraDeOperacao')}
+            icon={Wrench}
+          />
+          <StatCard label={t('pages.dashboard.motoristas')} value={drivers.length} hint={t('pages.dashboard.cadastrados')} icon={Users} />
+        </div>
+      )}
 
       {!loading && (
         <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Custo total — últimos 6 meses</CardTitle>
+              <CardTitle>{t('pages.dashboard.custoTotal6Meses')}</CardTitle>
             </CardHeader>
             <div className="h-64 px-2 pb-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -129,7 +134,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
                     }}
                     formatter={(v) => [
                       Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-                      'Custo',
+                      t('pages.dashboard.custo'),
                     ]}
                   />
                   <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
@@ -140,42 +145,16 @@ export function DashboardPage({ onViewVehicles }: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Veículos por status</CardTitle>
+              <CardTitle>{t('pages.dashboard.veiculosPorStatus')}</CardTitle>
             </CardHeader>
             {statusData.length === 0 ? (
-              <p className="p-8 text-center text-xs text-muted-foreground">Sem veículos cadastrados.</p>
+              <p className="p-8 text-center text-xs text-muted-foreground">{t('pages.dashboard.semVeiculosCadastrados')}</p>
             ) : (
               <>
-                <div className="h-40 px-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        dataKey="count"
-                        nameKey="status"
-                        innerRadius={45}
-                        outerRadius={70}
-                        paddingAngle={2}
-                        strokeWidth={0}
-                      >
-                        {statusData.map((d) => (
-                          <Cell key={d.status} fill={VEHICLE_STATUS_COLOR[d.status]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          background: 'var(--color-card)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: 8,
-                          fontSize: 12,
-                        }}
-                        formatter={(v, _n, entry) => [
-                          Number(v),
-                          VEHICLE_STATUS_LABEL[(entry.payload as { status: string }).status],
-                        ]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className="flex justify-center py-4">
+                  <DonutChart
+                    segments={statusData.map((d) => ({ value: d.count, color: VEHICLE_STATUS_COLOR[d.status] }))}
+                  />
                 </div>
                 <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 px-5 pb-4 text-[11px] text-muted-foreground">
                   {statusData.map((d) => (
@@ -184,7 +163,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
                         className="size-1.5 rounded-full"
                         style={{ background: VEHICLE_STATUS_COLOR[d.status] }}
                       />
-                      {VEHICLE_STATUS_LABEL[d.status]} ({d.count})
+                      {t(`status.veiculo.${d.status}`)} ({d.count})
                     </li>
                   ))}
                 </ul>
@@ -199,16 +178,16 @@ export function DashboardPage({ onViewVehicles }: Props) {
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5">
               <AlertTriangle className="size-4 text-status-warning" />
-              Alertas de manutenção e CNH
+              {t('pages.dashboard.alertasManutencaoCnh')}
             </CardTitle>
           </CardHeader>
           <div className="grid grid-cols-1 gap-4 px-5 pb-5 sm:grid-cols-2">
             <div>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Manutenção de veículos
+                {t('pages.dashboard.manutencaoDeVeiculos')}
               </p>
               {maintenanceAlerts.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nenhum alerta.</p>
+                <p className="text-xs text-muted-foreground">{t('common.nenhumAlerta')}</p>
               ) : (
                 <ul className="space-y-2">
                   {maintenanceAlerts.map((a) => (
@@ -218,7 +197,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
                       diasRestantes={a.diasRestantes ?? null}
                       detalhe={
                         a.kmRestante != null
-                          ? `${a.kmRestante} km restantes`
+                          ? t('common.kmRestantes', { n: a.kmRestante })
                           : a.diasRestantes != null
                             ? `${a.proximaManutencaoData}`
                             : ''
@@ -230,10 +209,10 @@ export function DashboardPage({ onViewVehicles }: Props) {
             </div>
             <div>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                CNH de motoristas
+                {t('pages.dashboard.cnhDeMotoristas')}
               </p>
               {licenseAlerts.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nenhum alerta.</p>
+                <p className="text-xs text-muted-foreground">{t('common.nenhumAlerta')}</p>
               ) : (
                 <ul className="space-y-2">
                   {licenseAlerts.map((a) => (
@@ -253,29 +232,29 @@ export function DashboardPage({ onViewVehicles }: Props) {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Veículos recentes</CardTitle>
+          <CardTitle>{t('pages.dashboard.veiculosRecentes')}</CardTitle>
           <button type="button" onClick={onViewVehicles} className="text-xs font-medium text-primary hover:underline">
-            Ver todos →
+            {t('common.verTodos')}
           </button>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <TableSkeleton rows={5} columns={4} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Placa
+                    {t('pages.dashboard.tabela.placa')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Marca/Modelo
+                    {t('pages.dashboard.tabela.marcaModelo')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Odômetro
+                    {t('pages.dashboard.tabela.odometro')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Status
+                    {t('pages.dashboard.tabela.status')}
                   </th>
                 </tr>
               </thead>
@@ -297,7 +276,7 @@ export function DashboardPage({ onViewVehicles }: Props) {
                 {vehicles.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhum veículo cadastrado ainda.
+                      {t('pages.dashboard.nenhumVeiculoCadastrado')}
                     </td>
                   </tr>
                 )}
@@ -320,6 +299,7 @@ function AlertRow({
   diasRestantes: number | null;
   detalhe: string;
 }) {
+  const { t } = useTranslation();
   const vencido = diasRestantes != null && diasRestantes < 0;
   return (
     <li className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
@@ -333,7 +313,11 @@ function AlertRow({
           vencido ? 'bg-status-danger-bg text-status-danger' : 'bg-status-warning-bg text-status-warning',
         )}
       >
-        {diasRestantes == null ? '—' : vencido ? `${Math.abs(diasRestantes)}d vencido` : `em ${diasRestantes}d`}
+        {diasRestantes == null
+          ? '—'
+          : vencido
+            ? t('common.diasVencido', { n: Math.abs(diasRestantes) })
+            : t('common.emDiasCurto', { n: diasRestantes })}
       </span>
     </li>
   );

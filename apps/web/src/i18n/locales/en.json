@@ -1,0 +1,750 @@
+{
+  "landing": {
+    "nav": { "comoOperar": "How it works", "planos": "Plans", "perguntas": "FAQ" },
+    "header": { "entrar": "Log in", "comecar": "Get started" },
+    "hero": {
+      "titleLine1": "Your fleet already",
+      "titleLine2": "knows the streets",
+      "subtitle": "Track vehicles, drivers, maintenance and cost per km. Do it yourself or let one of our fleet managers run it for you.",
+      "ctaPrimary": "Register my fleet",
+      "ctaSecondary": "I already have an account"
+    },
+    "vitrine": {
+      "ilustrativo": "Illustrative examples. Every screen comes from data your operation already has.",
+      "verExemplo": "View example: {{titulo}}",
+      "veiculo": {
+        "titulo": "Vehicle record",
+        "custoPorKm": "Cost per km",
+        "proximaPreventiva": "Next maintenance",
+        "emDias": "in {{n}} days",
+        "cnhMotorista": "Driver's license",
+        "valida": "valid",
+        "trajetoRegistrado": "Distance logged",
+        "kmNoMes": "{{km}} km this month"
+      },
+      "extrato": { "titulo": "Cost statement", "totalDoMes": "Total this month" },
+      "frota": {
+        "titulo": "Fleet",
+        "emRota": "On route",
+        "preventivaEmDias": "Maintenance in {{n}} days",
+        "disponivel": "Available",
+        "emManutencao": "In maintenance"
+      },
+      "painel": {
+        "titulo": "Dashboard",
+        "veiculos": "Vehicles",
+        "emOperacao": "In operation",
+        "manutencao": "In maintenance",
+        "motoristas": "Drivers",
+        "legenda": "Active ({{ativo}}) · In maintenance ({{manutencao}}) · Inactive ({{inativo}})"
+      }
+    },
+    "espectro": {
+      "eyebrow": "How you want to run it",
+      "titulo": "Not every fleet wants the same amount of hands-on work.",
+      "texto": "Some people want to open the dashboard every day and touch everything. Others just want the finished report with what they need to decide. Both are customers.",
+      "paraQuemLabel": "Best for:",
+      "cartoes": {
+        "auto": {
+          "etapa": "You're in control",
+          "titulo": "Self-service",
+          "texto": "You register, log and track everything. The system calculates cost per km, warns about maintenance and license expiration, and exports whatever you need.",
+          "paraQuem": "Small fleets with someone dedicated to running them."
+        },
+        "acompanhado": {
+          "etapa": "Shared",
+          "titulo": "Guided",
+          "texto": "You run the day-to-day and one of our fleet managers periodically reviews the fleet, flags what's off and helps course-correct.",
+          "paraQuem": "Teams with the operation running but no time to watch the data."
+        },
+        "dedicado": {
+          "etapa": "Hands-off",
+          "titulo": "Dedicated manager",
+          "texto": "One of our fleet managers takes over the routine: logs costs, schedules maintenance, tracks documentation and delivers the monthly closing ready to go.",
+          "paraQuem": "Anyone who wants results without building internal structure."
+        }
+      }
+    },
+    "tese": {
+      "eyebrow": "Why we built this",
+      "titulo": "No generic map knows what it means for a motorbike to weave between two cars stopped at a light.",
+      "p1": "Self-driving companies looking at Brazil don't have real data about our traffic. Inconsistent signage, lane markings that disappear, behavior no model trained abroad ever predicted.",
+      "p2": "That data isn't collected by test cars driving around empty. It's already being produced, every day, by whoever delivers, transports and rents — nobody's just keeping it.",
+      "p3": "Fleet management is a complete product on its own. The real-traffic map is what it leaves behind while it works.",
+      "mapaLegenda": "Route logged by the driver's app",
+      "mapaEmBreve": "coming soon: real video"
+    },
+    "recursos": {
+      "eyebrow": "What the dashboard already does",
+      "titulo": "Six things that probably live in a spreadsheet today.",
+      "itens": {
+        "custo": { "titulo": "Automatic cost per km", "texto": "Every entry becomes a traceable line item — no parallel spreadsheet, no retyping at month's end." },
+        "alerta": { "titulo": "Maintenance and license alerts", "texto": "The system warns before something expires — maintenance or paperwork — not after it already has." },
+        "export": { "titulo": "Export with no lock-in", "texto": "Everything exports to CSV whenever you want. The data is yours; the tool is just where it lives while you're with us." },
+        "unidades": { "titulo": "Multiple locations", "texto": "One fleet across three cities, or three separate fleets — the dashboard consolidates without mixing what shouldn't mix." },
+        "api": { "titulo": "API access", "texto": "If you already have an internal system, integrate whatever you need without rebuilding what AutonomousAPI already solves." },
+        "gestor": { "titulo": "Manager on demand", "texto": "Start on your own and ask for help only when it makes sense — the plan grows with you instead of locking you into an early choice." }
+      }
+    },
+    "confianca": {
+      "titulo": "Your data stays yours.",
+      "texto": "Fleet management deals with the location, cost and documents of real people. We don't treat that as a footnote.",
+      "garantias": {
+        "isolamento": { "titulo": "Isolated by account", "texto": "Each subscriber sees only their own fleet. It's a database rule, not a screen convention — even a UI bug can't leak another company's data." },
+        "transito": { "titulo": "Traffic data, never identity", "texto": "What becomes an aggregate road-condition index is how the road behaves, not who drove on it. Nothing identifies a driver, vehicle or end client." },
+        "export": { "titulo": "Take your data out anytime", "texto": "CSV export whenever you want, no permission needed and no fee. Cancelling your subscription doesn't lock away what's yours." },
+        "instalacao": { "titulo": "No install, no intrusion", "texto": "There's no hardware to install in the vehicle. The driver's app only logs a route with explicit consent, given at every opening." }
+      }
+    },
+    "planos": {
+      "titulo": "Plans",
+      "subtitulo": "Priced per active vehicle. You pay for what's on the road, not per seat or per license.",
+      "porVeiculoMes": "per vehicle/month",
+      "rodape": "Launch pricing. No lock-in contracts and no hardware to install in the vehicle.",
+      "starter": {
+        "nome": "Starter", "faixa": "1 to 10 vehicles", "preco": "R$ 66", "nota": "R$ 56 on the annual plan", "acao": "Get started",
+        "recursos": ["Vehicle and driver registration", "Cost per km and history", "Maintenance and license alerts", "CSV export", "Driver app"]
+      },
+      "growth": {
+        "nome": "Growth", "faixa": "11 to 50 vehicles", "preco": "R$ 58", "nota": "R$ 49 on the annual plan", "heranca": "Everything in Starter, plus:", "acao": "Get started",
+        "recursos": ["Service orders", "Consolidated reports", "Multiple locations"]
+      },
+      "scale": {
+        "nome": "Scale", "faixa": "51 to 200 vehicles", "preco": "R$ 49", "nota": "R$ 42 on the annual plan", "heranca": "Everything in Growth, plus:", "acao": "Get started",
+        "recursos": ["Periodic review by a fleet manager", "API access", "Priority support"]
+      },
+      "dedicado": {
+        "nome": "Dedicated manager", "faixa": "Operation run by us", "preco": "By quote", "unidade": "depends on fleet size", "heranca": "Everything in Scale, plus:", "acao": "Talk to us",
+        "recursos": ["A manager running the routine", "Cost entries logged on your behalf", "Maintenance scheduling", "Monthly closing delivered ready"]
+      }
+    },
+    "perguntas": {
+      "titulo": "FAQ",
+      "itens": [
+        { "q": "Do I need to install a tracker in the vehicles?", "a": "No. The operation is logged through the driver's app, which already runs on their phone. If you want route precision, the app collects the trip while it happens, always with explicit consent given on first open." },
+        { "q": "What exactly is \"cost per km\"?", "a": "Every entry you log — fuel, maintenance, tolls — is summed and divided by that vehicle's mileage. You can export everything to CSV and check it against your own spreadsheet; no number appears without you being able to reconstruct it." },
+        { "q": "How does the dedicated manager work?", "a": "One of our fleet managers takes over the routine that eats your time today: logs costs, schedules maintenance, tracks document expiration and delivers the month's closing. Price varies with fleet size and how deep the follow-up goes — that's why it's by quote." },
+        { "q": "What do you do with my operation's data?", "a": "Your fleet's data is yours and stays isolated by account. Derived traffic data (how a road behaves at a given time) can feed, in aggregated and anonymized form, a road-conditions index — never in a way that identifies your company, your drivers or your clients." },
+        { "q": "Is there a contract or cancellation fee?", "a": "No. The plan is monthly and you can cancel whenever you want. The annual plan gives a discount, it doesn't lock you in." }
+      ]
+    },
+    "rodape": { "status": "Product in development · Phase 1" }
+  },
+  "auth": {
+    "login": {
+      "titulo": "Log in",
+      "chamada1": "Yesterday's operation is already a number. ",
+      "chamada2": "Come see.",
+      "email": "Email",
+      "senha": "Password",
+      "entrando": "Logging in...",
+      "entrar": "Log in",
+      "esqueceuSenha": "Forgot your password?",
+      "semConta": "Don't have an account yet?",
+      "cadastrarMinhaFrota": "Register my fleet",
+      "falha": "Login failed"
+    },
+    "signup": {
+      "titulo": "Register my fleet",
+      "chamadaPre": "Start with the vehicles ",
+      "chamadaEm": "already out",
+      "chamadaPos": " on the road.",
+      "descricao": "No install, no new hardware in the vehicle. Register your fleet and the dashboard starts filling in.",
+      "nomeFrota": "Fleet or company name",
+      "email": "Email",
+      "senha": "Password",
+      "minimoCaracteres": "minimum 8 characters",
+      "criandoConta": "Creating account...",
+      "criarConta": "Create account",
+      "jaTemConta": "Already have an account?",
+      "entrar": "Log in",
+      "falha": "Signup failed"
+    },
+    "confirmeEmail": {
+      "titulo": "Confirm your email",
+      "chamadaPre": "Just ",
+      "chamadaEm": "one click",
+      "chamadaPos": " to get started.",
+      "descricaoPre": "We sent a confirmation link to ",
+      "descricaoPos": ". Open the email and click the link — your account only becomes active after that.",
+      "linkReenviado": "Link resent",
+      "reenviando": "Resending...",
+      "reenviarEmail": "Resend email",
+      "jaConfirmou": "Already confirmed?",
+      "entrar": "Log in"
+    },
+    "forgotPassword": {
+      "verifiqueEmail": "Check your email", "quaseLa": "Almost there.",
+      "seEmailTiverContaPre": "If ", "seEmailTiverContaPos": " has an account, we sent a link to reset the password. It's valid for 1 hour.",
+      "voltarParaLogin": "Back to login",
+      "esqueceuSenha": "Forgot your password?", "semProblemaPre": "No problem, ", "semProblemaEm": "send it again", "semProblemaPos": ".",
+      "informeEmail": "Enter your account email and we'll send a link to choose a new password.",
+      "email": "Email", "enviando": "Sending...", "enviarLink": "Send link"
+    },
+    "resetPassword": {
+      "senhaRedefinida": "Password reset", "prontoPre": "Done, ", "prontoEm": "you can log in now", "prontoPos": ".",
+      "senhaTrocada": "Your password was changed and any old session was ended, for security.",
+      "irParaLogin": "Go to login",
+      "escolhaSenhaNova": "Choose a new password", "umaSenhaPre": "A password, ", "umaSenhaEm": "again", "umaSenhaPos": ".",
+      "novaSenha": "New password", "minimoCaracteres": "minimum 8 characters",
+      "salvando": "Saving...", "redefinirSenha": "Reset password",
+      "falha": "Couldn't reset the password."
+    },
+    "verifyEmail": {
+      "confirmandoTitulo": "Confirming your email...", "jaJaVoceEstaLa": "You'll be in shortly.", "umSegundo": "One second...",
+      "naoDeuCerto": "Didn't work", "linkPodeTerPre": "The link may have ", "linkPodeTerEm": "expired", "linkPodeTerPos": ".",
+      "linksValemPre": "Confirmation links are valid for 24 hours. ",
+      "cadastreSeDeNovo": "Sign up again",
+      "linksValemPos": " to get a new link, or ask for a resend on the signup screen.",
+      "voltarParaInicio": "Back to home",
+      "falha": "Couldn't confirm the email."
+    },
+    "acceptInvite": {
+      "acessoLiberado": "Access granted", "bemVindoPre": "Welcome, ", "bemVindoEm": "you can log in now", "bemVindoPos": ".",
+      "senhaDefinida": "Your password has been set. Log in to the AutonomousAPI app with your email and the password you just chose.",
+      "irParaLogin": "Go to login",
+      "defineSuaSenha": "Set your password", "gestorConvidouPre": "Your manager ", "gestorConvidouEm": "invited you", "gestorConvidouPos": ".",
+      "escolhaSenha": "Choose a password to access the AutonomousAPI app with your email.",
+      "senha": "Password", "minimoCaracteres": "minimum 8 characters",
+      "salvando": "Saving...", "definirSenha": "Set password",
+      "falha": "Couldn't accept the invite."
+    },
+    "vitrineLogin": {
+      "veiculo": "Renault Kangoo",
+      "km": "71,300 km",
+      "proximaPreventiva": "Next maintenance",
+      "emDias": "in {{n}} days"
+    },
+    "rodape": "Fleet management · Road data · Brazil"
+  },
+  "app": {
+    "sidebar": {
+      "gestaoDeFrota": "Fleet Management",
+      "appDoMotorista": "Driver App",
+      "operacao": "Operations",
+      "gestao": "Management",
+      "meuTrabalho": "My work",
+      "fecharMenu": "Close menu",
+      "abrirMenu": "Open menu",
+      "nav": {
+        "dashboard": "Dashboard", "frota": "Fleet", "ordensServico": "Service Orders",
+        "motoristas": "Drivers", "mensagens": "Messages", "rotas": "Routes",
+        "coletaEntrega": "Pickup & Delivery", "pontosColeta": "Pickup Points",
+        "manutencao": "Maintenance", "custos": "Costs", "relatorios": "Reports",
+        "parceiros": "Partners", "pontosRecarga": "Charging Points", "assinatura": "Subscription",
+        "inicio": "Home", "minhaRota": "My Route", "mais": "More"
+      }
+    },
+    "topbar": {
+      "buscarPlaceholder": "Search order, plate, driver...",
+      "todasUnidades": "All locations",
+      "temaClaroTitulo": "Switch to light theme",
+      "temaEscuroTitulo": "Switch to dark theme",
+      "notificacoes": "Notifications",
+      "notif1Titulo": "2 vehicles with overdue maintenance",
+      "notif1Sub": "Check the alerts on the Dashboard",
+      "notif2Titulo": "Licenses expiring in 30 days",
+      "notif2Sub": "Drivers with a license close to expiring",
+      "sair": "Log out",
+      "idioma": "Language"
+    }
+  },
+  "buscaEndereco": {
+    "placeholder": "Search address in the pilot area...",
+    "nenhumEndereco": "No address found within the pilot area."
+  },
+  "common": {
+    "carregando": "Loading...",
+    "verTodos": "View all →",
+    "nenhumAlerta": "No alerts.",
+    "kmRestantes": "{{n}} km left",
+    "diasVencido": "{{n}}d overdue",
+    "emDiasCurto": "in {{n}}d"
+  },
+  "status": {
+    "veiculo": { "ATIVO": "Active", "MANUTENCAO": "In maintenance", "INATIVO": "Inactive" },
+    "motorista": { "ATIVO": "Active", "INATIVO": "Inactive" },
+    "custo": {
+      "COMBUSTIVEL": "Fuel", "MANUTENCAO": "Maintenance", "SEGURO": "Insurance", "IPVA": "Vehicle tax",
+      "MULTA": "Fine", "PEDAGIO": "Toll", "LAVAGEM": "Wash", "OUTRO": "Other"
+    },
+    "os": { "ABERTA": "Open", "EM_ANDAMENTO": "In progress", "CONCLUIDA": "Completed", "ATRASADA": "Overdue", "CANCELADA": "Cancelled" },
+    "prioridade": { "BAIXA": "Low", "MEDIA": "Medium", "ALTA": "High" },
+    "severidade": { "LEVE": "Minor", "MODERADA": "Moderate", "GRAVE": "Severe" },
+    "rotaPlan": { "PLANEJADA": "Planned", "EM_ANDAMENTO": "In progress", "CONCLUIDA": "Completed" },
+    "tipoVeiculo": { "CARRO": "Car", "MOTO": "Motorcycle", "VAN": "Van", "CAMINHAO": "Truck", "ONIBUS": "Bus" },
+    "tipoOS": { "PREVENTIVA": "Preventive", "CORRETIVA": "Corrective", "REVISAO": "Inspection", "SINISTRO": "Incident" }
+  },
+  "pages": {
+    "dashboard": {
+      "titulo": "Dashboard",
+      "subtitulo": "Fleet overview",
+      "veiculos": "Vehicles", "totalDaFrota": "Total fleet",
+      "emOperacao": "In Operation", "veiculosAtivos": "Active vehicles",
+      "emManutencao": "In Maintenance", "foraDeOperacao": "Out of operation",
+      "motoristas": "Drivers", "cadastrados": "Registered",
+      "custoTotal6Meses": "Total cost — last 6 months",
+      "custo": "Cost",
+      "veiculosPorStatus": "Vehicles by status",
+      "semVeiculosCadastrados": "No vehicles registered.",
+      "alertasManutencaoCnh": "Maintenance and license alerts",
+      "manutencaoDeVeiculos": "Vehicle maintenance",
+      "cnhDeMotoristas": "Driver licenses",
+      "veiculosRecentes": "Recent vehicles",
+      "nenhumVeiculoCadastrado": "No vehicles registered yet.",
+      "tabela": { "placa": "Plate", "marcaModelo": "Make/Model", "odometro": "Odometer", "status": "Status" }
+    },
+    "vehicles": {
+      "titulo": "Fleet",
+      "subtitulo": "Registered vehicles",
+      "novoVeiculo": "New Vehicle",
+      "editarVeiculo": "Edit Vehicle",
+      "totalDeVeiculos": "Total Vehicles",
+      "nestaBusca": "In this search",
+      "todaAFrota": "Whole fleet",
+      "ativos": "Active",
+      "nestaPagina": "On this page",
+      "emManutencao": "In Maintenance",
+      "inativos": "Inactive",
+      "buscarPlaceholder": "Search by plate, make or model...",
+      "todosOsStatus": "All statuses",
+      "veiculosContagem": "{{n}} vehicle(s)",
+      "todosOsVeiculos": "All vehicles",
+      "tabela": { "tipo": "Type", "placa": "Plate", "marcaModelo": "Make/Model", "ano": "Year", "odometro": "Odometer", "status": "Status" },
+      "tipoNaoInformado": "Type not informed",
+      "custos": "Costs",
+      "editar": "Edit",
+      "excluir": "Delete",
+      "nenhumVeiculoEncontrado": "No vehicles found.",
+      "paginaXDeY": "Page {{atual}} of {{total}}",
+      "anterior": "Previous",
+      "proxima": "Next",
+      "form": {
+        "placa": "Plate", "marca": "Make", "modelo": "Model", "ano": "Year", "odometroKm": "Odometer (km)",
+        "status": "Status", "tipo": "Type", "naoInformado": "Not informed",
+        "proximaManutencaoData": "Next maintenance (date)", "proximaManutencaoKm": "Next maintenance (km)",
+        "cancelar": "Cancel", "salvar": "Save", "adicionar": "Add"
+      },
+      "toasts": {
+        "atualizado": "Vehicle updated.", "cadastrado": "Vehicle registered.",
+        "falhaCarregar": "Error loading vehicles", "falhaSalvar": "Failed to save vehicle",
+        "confirmarExcluir": "Delete this vehicle?", "excluido": "Vehicle deleted.", "falhaExcluir": "Failed to delete vehicle"
+      }
+    },
+    "drivers": {
+      "titulo": "Drivers",
+      "subtitulo": "{{n}} registered drivers",
+      "novoMotorista": "New Driver",
+      "editarMotorista": "Edit Driver",
+      "buscarPlaceholder": "Search by name or license...",
+      "todosOsStatus": "All statuses",
+      "motoristasContagem": "{{n}} driver(s)",
+      "todosOsMotoristas": "All drivers",
+      "tabela": { "motorista": "Driver", "cnh": "License", "validade": "Expiry", "telefone": "Phone", "status": "Status" },
+      "categoriaAbrev": "Cat. {{cat}}",
+      "vencida": "expired",
+      "venceEmDias": "expires in {{n}}d",
+      "editar": "Edit",
+      "excluir": "Delete",
+      "nenhumMotoristaEncontrado": "No drivers found.",
+      "form": {
+        "nome": "Name", "cnh": "License (11 digits)", "cnh11Digitos": "11 numeric digits",
+        "telefone": "Phone", "email": "Email (for app access)", "status": "Status",
+        "validadeCnh": "License expiry", "cancelar": "Cancel", "salvar": "Save", "adicionar": "Add"
+      },
+      "toasts": {
+        "falhaCarregar": "Error loading drivers", "atualizado": "Driver updated.",
+        "cadastrado": "Driver registered.", "falhaSalvar": "Failed to save driver",
+        "confirmarExcluir": "Delete this driver?", "excluido": "Driver deleted.", "falhaExcluir": "Failed to delete driver",
+        "falhaAvaliacao": "Failed to record rating", "conviteEnviado": "Invite sent to {{email}}.",
+        "falhaConvite": "Failed to send invite", "falhaDesignar": "Failed to assign vehicle",
+        "falhaEncerrar": "Failed to end assignment", "avisoDoGestor": "Message from manager", "falhaAviso": "Failed to send message"
+      },
+      "detalhe": {
+        "avaliacaoSoGestor": "Rating (visible only to the manager)",
+        "acessoAppAtivo": "App access active",
+        "convitePendente": "Invite pending",
+        "semEmailCadastrado": "No email on file",
+        "cadastreEmailConvidar": "Add an email to invite",
+        "enviando": "Sending...",
+        "convidar": "Invite",
+        "avisoRapidoPlaceholder": "Send a quick message via the app...",
+        "enviar": "Send",
+        "avisoEnviado": "Message sent.",
+        "veiculoDesignado": "Assigned vehicle",
+        "encerrar": "End",
+        "selecioneVeiculo": "Select a vehicle...",
+        "designando": "Assigning...",
+        "designar": "Assign",
+        "avaliacoesContagem": "{{n}} rating(s)",
+        "novaAvaliacao": "New rating",
+        "comentarioOpcional": "Comment (optional)",
+        "salvando": "Saving...",
+        "registrarAvaliacao": "Record rating"
+      }
+    },
+    "workOrders": {
+      "titulo": "Service Orders",
+      "subtitulo": "Tracking the shop's service orders",
+      "novaOS": "New Order",
+      "editarOS": "Edit Order",
+      "buscarPlaceholder": "Search by number, plate or model...",
+      "todosOsStatus": "All statuses",
+      "todosOsTipos": "All types",
+      "osContagem": "{{n}} order(s)",
+      "todasAsOS": "All service orders",
+      "tabela": {
+        "os": "Order", "veiculo": "Vehicle", "motorista": "Driver", "tipo": "Type", "prioridade": "Priority",
+        "abertura": "Opened", "previsao": "Due", "status": "Status", "custo": "Cost"
+      },
+      "editar": "Edit",
+      "excluir": "Delete",
+      "nenhumaOSEncontrada": "No service orders found.",
+      "form": {
+        "veiculo": "Vehicle", "selecione": "Select...", "motoristaOpcional": "Driver (optional)", "semMotorista": "No driver",
+        "tipo": "Type", "status": "Status", "prioridade": "Priority",
+        "descricaoProblema": "Problem description", "observacoesOpcional": "Notes (optional)",
+        "oficina": "Shop", "abertura": "Opened", "previsao": "Due", "odometroAbertura": "Odometer at opening (km)",
+        "itens": "Items", "item": "Item", "descricao": "Description",
+        "cancelar": "Cancel", "salvando": "Saving...", "salvar": "Save", "criarOS": "Create Order"
+      },
+      "toasts": {
+        "falhaCarregar": "Error loading service orders", "atualizada": "Service order updated.",
+        "criada": "Service order created.", "falhaSalvar": "Failed to save service order",
+        "confirmarExcluir": "Delete this service order?", "excluida": "Service order deleted.",
+        "falhaExcluir": "Failed to delete service order"
+      },
+      "detalhe": {
+        "abertaEm": "Opened on {{data}}", "semMotorista": "No driver",
+        "descricaoProblema": "Problem description", "itensDaOS": "Order items",
+        "qtd": "Qty", "unitario": "Unit price", "subtotal": "Subtotal"
+      }
+    },
+    "maintenance": {
+      "titulo": "Maintenance",
+      "subtitulo": "Maintenance history for the whole fleet",
+      "manutencoesRegistradas": "Recorded maintenances",
+      "custoEmPecas": "Parts cost",
+      "custoEmMaoDeObra": "Labor cost",
+      "todosOsVeiculos": "All vehicles",
+      "totalDoPeriodo": "Period total:",
+      "registrosDeManutencao": "Maintenance records",
+      "tabela": { "data": "Date", "veiculo": "Vehicle", "descricao": "Description", "pecasTrocadas": "Parts replaced", "oficina": "Shop", "custoTotal": "Total cost" },
+      "nenhumaManutencao": "No maintenance recorded."
+    },
+    "costs": {
+      "titulo": "Costs",
+      "subtitulo": "Categorized expenses, budget and transfer profitability",
+      "tabs": { "visaoGeral": "Overview", "despesas": "Expenses", "orcamento": "Budget", "rentabilidade": "Transfer profitability" },
+      "visaoGeral": {
+        "de": "From", "ate": "To", "exportando": "Exporting...", "exportarCsv": "Export CSV",
+        "totalNoPeriodo": "Total for period", "maiorCategoria": "Top category",
+        "despesasPorCategoria": "Expenses by category", "nenhumaDespesaPeriodo": "No expenses in this period.",
+        "csvExportado": "CSV exported.", "falhaExportar": "Failed to export CSV"
+      },
+      "despesas": {
+        "todasAsCategorias": "All categories", "novaDespesa": "New expense",
+        "despesasContagem": "Expenses ({{n}})",
+        "tabela": { "data": "Date", "veiculo": "Vehicle", "categoria": "Category", "valor": "Amount", "descricao": "Description" },
+        "frota": "Fleet", "excluir": "Delete", "nenhumaDespesa": "No expenses logged yet.",
+        "paginaXDeY": "Page {{atual}} of {{total}}", "anterior": "Previous", "proxima": "Next",
+        "form": {
+          "veiculoOpcional": "Vehicle (optional — blank = fleet expense)", "despesaDeFrota": "Fleet expense (no vehicle)",
+          "categoria": "Category", "valorReais": "Amount (R$)", "data": "Date",
+          "litrosOuKwh": "Liters (or kWh)", "odometroKm": "Odometer (km)", "descricaoOpcional": "Description (optional)",
+          "cancelar": "Cancel", "lancar": "Log expense"
+        },
+        "toasts": { "lancada": "Expense logged.", "falhaLancar": "Failed to log expense", "confirmarExcluir": "Delete this expense?", "excluida": "Expense deleted.", "falhaExcluir": "Failed to delete expense" }
+      },
+      "orcamento": {
+        "novoOrcamento": "New budget", "nenhumOrcamento": "No budget configured yet.",
+        "frotaInteira": "Whole fleet", "todasAsCategorias": "All categories", "mensal": "monthly",
+        "deValor": "{{consumido}} of {{limite}}", "excluir": "Delete", "percentualConsumido": "{{p}}% used",
+        "form": {
+          "escopo": "Scope", "categoriaOpcional": "Category (optional)", "valorLimiteMensal": "Monthly limit (R$)",
+          "cancelar": "Cancel", "criar": "Create"
+        },
+        "toasts": { "criado": "Budget created.", "falhaCriar": "Failed to create budget", "confirmarExcluir": "Delete this budget?", "excluido": "Budget deleted.", "falhaExcluir": "Failed to delete budget" }
+      },
+      "rentabilidade": {
+        "valorCombinadoTotal": "Agreed value (total)", "custoEstimadoTotal": "Estimated cost (total)", "margemRealizadaTotal": "Realized margin (total)",
+        "transfersConcluidos": "Completed transfers", "nenhumTransfer": "No completed transfers yet — realized margin only appears once the route is finished.",
+        "tabela": { "motorista": "Driver", "data": "Date", "valor": "Value", "custoEstimado": "Estimated cost", "margem": "Margin" }
+      }
+    },
+    "reports": {
+      "titulo": "Reports & Finance",
+      "subtitulo": "Consolidated view of maintenance costs · year {{ano}}",
+      "verLancamentosCustos": "View detailed entries in Costs",
+      "custoAcumulado": "Accumulated cost {{ano}}",
+      "custoMedioPorOS": "Average cost per order",
+      "osNoAno": "Orders this year",
+      "custoPorTipo12Meses": "Cost by maintenance type — 12 months",
+      "distribuicaoAno": "Distribution {{ano}}",
+      "semCustoNoAno": "No maintenance cost this year.",
+      "veiculosMaiorCusto": "Vehicles with highest maintenance cost"
+    },
+    "billing": {
+      "titulo": "Subscription",
+      "subtitulo": "Your fleet's plan and billing",
+      "planoAtual": "Current plan",
+      "assinaturaStatus": "Subscription {{status}}",
+      "canal": "Channel",
+      "renovaEm": "Renews on",
+      "trialAte": "Trial until",
+      "avisoTrial": "After the trial, registering a new vehicle/driver requires an active subscription — what's already registered stays accessible.",
+      "abrindoCheckout": "Opening checkout...",
+      "assinarAgora": "Subscribe now",
+      "gerenciamentoStripe": "Payment method and cancellation are managed through the Stripe portal (direct link coming soon).",
+      "semAssinaturaAtiva": "You don't have an active subscription yet. The plan is billed per active vehicle in the fleet.",
+      "status": { "ACTIVE": "Active", "TRIALING": "Trial", "PAST_DUE": "Payment pending", "CANCELED": "Cancelled", "INCOMPLETE": "Incomplete" },
+      "toasts": { "falhaCarregar": "Error loading subscription", "falhaCheckout": "Billing isn't configured in this environment yet (missing Stripe key)." }
+    },
+    "affiliates": {
+      "titulo": "Partners",
+      "subtitulo": "Equipment and services for your fleet, recommended by us — free for you to use.",
+      "nenhumParceiro": "No partners available yet.",
+      "abrindo": "Opening...",
+      "verOferta": "View offer",
+      "categoria": { "dashcam": "Dashcam", "rastreador": "Tracker", "seguro": "Insurance" },
+      "toasts": { "falhaCarregar": "Error loading partners", "falhaAbrir": "Failed to open partner" }
+    },
+    "chat": {
+      "conversas": "Conversations",
+      "iniciarConversa": "Start conversation",
+      "nenhumaConversa": "No conversations yet.",
+      "semMensagensAinda": "No messages yet",
+      "selecioneOuInicie": "Select a conversation or start a new one.",
+      "nenhumaMensagem": "No messages yet.",
+      "verDetalhes": "View details",
+      "digitando": "typing...",
+      "anexarRota": "Attach route",
+      "escrevaMensagem": "Write a message...",
+      "nenhumMotoristaDisponivel": "No drivers available — only those who accepted the app access invite can chat.",
+      "selecioneMotorista": "Select a driver...",
+      "cancelar": "Cancel",
+      "iniciar": "Start",
+      "nenhumaRotaDisponivel": "No routes available for this driver — create one in \"Routes\".",
+      "selecioneRota": "Select a route...",
+      "paradaContagem": "{{n}} stop(s)",
+      "jaDesignadaMotorista": "· already assigned to this driver",
+      "anexar": "Attach",
+      "paradasDaRota": "Route stops",
+      "toasts": {
+        "falhaCarregarConversas": "Error loading conversations", "falhaEnviar": "Failed to send message",
+        "conversaIniciada": "Conversation started.", "falhaIniciar": "Failed to start conversation",
+        "rotaAnexada": "Route attached.", "falhaAnexar": "Failed to attach route"
+      }
+    },
+    "routes": {
+      "titulo": "Routes",
+      "subtitulo": "Suggested route between two points, calculated over the pilot area's map.",
+      "origem": "Origin",
+      "destino": "Destination",
+      "calculando": "Calculating...",
+      "calcularRota": "Calculate route",
+      "escolhaParaCalcular": "Choose an origin and destination to calculate.",
+      "naoFoiPossivelCalcular": "Couldn't calculate the route.",
+      "resumo": "Summary",
+      "distancia": "Distance",
+      "tempoEstimado": "Estimated time",
+      "tracadoSemMapa": "Route path (no basemap)",
+      "itinerario": "Itinerary",
+      "viaSemNome": "unnamed road",
+      "escolhaParaVerRota": "Choose an origin and destination to see the suggested route.",
+      "falhaCalcular": "Failed to calculate the route",
+      "manobra": {
+        "chegada": "Arrival", "facaRetorno": "Make a U-turn", "sigaEmFrente": "Go straight",
+        "depart": "Head", "turn": "Turn", "newName": "Continue", "continue": "Continue", "merge": "Merge",
+        "onRamp": "Take the ramp", "offRamp": "Take the exit", "fork": "Keep",
+        "endOfRoad": "At the end of the road, turn", "roundabout": "At the roundabout, take", "exitRoundabout": "Exit the roundabout",
+        "notification": "Attention"
+      },
+      "modificador": {
+        "left": "left", "right": "right", "slightLeft": "slightly left", "slightRight": "slightly right",
+        "sharpLeft": "sharp left", "sharpRight": "sharp right"
+      }
+    },
+    "collectionPoints": {
+      "titulo": "Pickup Points",
+      "subtitulo": "Recurring addresses (warehouse, branch, client) — reuse them when building a route.",
+      "novoPonto": "New point",
+      "nenhumPonto": "No pickup points registered yet.",
+      "janelaPadrao": "Default window: {{inicio}} to {{fim}}",
+      "ativo": "Active",
+      "inativo": "Inactive",
+      "desativar": "Deactivate",
+      "ativar": "Activate",
+      "editarPonto": "Edit point",
+      "novoPontoTitulo": "New point",
+      "form": {
+        "nome": "Name", "nomePlaceholder": "Central warehouse", "endereco": "Address",
+        "janelaInicio": "Default window — start", "janelaFim": "Default window — end",
+        "cancelar": "Cancel", "salvando": "Saving...", "salvar": "Save"
+      },
+      "toasts": {
+        "falhaCarregar": "Error loading pickup points", "atualizado": "Pickup point updated.",
+        "cadastrado": "Pickup point registered.", "falhaSalvar": "Failed to save pickup point",
+        "desativado": "Pickup point deactivated.", "ativado": "Pickup point activated.",
+        "falhaAtualizar": "Failed to update pickup point"
+      }
+    },
+    "chargingStations": {
+      "titulo": "Charging Points",
+      "subtitulo": "Electric charging stations aggregated from external providers — useful for planning the electric fleet's routes.",
+      "provedorNaoConfigurado": "Charging data provider not configured yet — no stations synced at the moment. This isn't an error, it's a feature not yet turned on.",
+      "estacoesConhecidas": "Known stations",
+      "nenhumaEstacao": "No charging stations synced yet.",
+      "estacaoSemNome": "Unnamed station",
+      "status": { "DISPONIVEL": "Available", "OCUPADO": "Occupied", "FORA_DE_SERVICO": "Out of service", "DESCONHECIDO": "Unknown status" },
+      "toasts": { "falhaCarregar": "Error loading charging points" }
+    },
+    "routePlans": {
+      "titulo": "Routes",
+      "subtitulo": "Pickup and delivery points — build the route, review the suggested order and assign a driver.",
+      "novaRota": "New route",
+      "nenhumaRota": "No routes registered yet.",
+      "transfer": "Transfer",
+      "paradaContagem": "{{n}} stop(s)",
+      "semMotoristaDesignado": "No driver assigned",
+      "categoria": "Category",
+      "categoriaRota": "Route (multi-stop)",
+      "categoriaTransfer": "Transfer (A → B)",
+      "dataExecucao": "Execution date",
+      "valorCombinadoOpcional": "Agreed value (optional)",
+      "coleta": "Pickup",
+      "entrega": "Delivery",
+      "enderecoAvulso": "One-off address",
+      "pontoCadastrado": "Registered point",
+      "selecionePontoCadastrado": "Select a registered point...",
+      "adicionar": "Add",
+      "sugerindo": "Suggesting...",
+      "sugerirOrdem": "Suggest order",
+      "motoristaOpcional": "Driver (optional)",
+      "designarDepois": "Assign later",
+      "veiculoOpcional": "Vehicle (optional)",
+      "semVeiculo": "No vehicle",
+      "custoEstimadoReferencia": "Estimated cost (reference, spec 09)",
+      "custoEstimado": "Estimated cost:",
+      "valorSugerido": "Suggested value:",
+      "cancelar": "Cancel",
+      "salvando": "Saving...",
+      "criarRota": "Create route",
+      "toasts": {
+        "falhaCarregar": "Error loading routes", "falhaSugerir": "Failed to suggest order",
+        "dataNoPassado": "Execution date can't be in the past.",
+        "transferExige2Paradas": "Transfer requires exactly 2 stops: origin and destination.",
+        "criada": "Route created.", "falhaCriar": "Failed to create route"
+      }
+    },
+    "vehicleDetail": {
+      "veiculoNaoEncontrado": "Vehicle not found.",
+      "frota": "Fleet",
+      "kmAtual": "Current mileage",
+      "proximaPreventiva": "Next maintenance",
+      "preventivaPorKm": "Maintenance by mileage",
+      "gastoHistorico": "Historical spend",
+      "tabs": { "manutencao": "Maintenance", "os": "Service Orders", "fipe": "Market value", "sinistros": "Incidents" },
+      "nenhumLancamentoManutencao": "No maintenance entries.",
+      "nenhumaOS": "No service orders yet.",
+      "osTabela": { "os": "Order", "tipo": "Type", "abertura": "Opened", "status": "Status" },
+      "referencia": "Reference {{data}}",
+      "codigoAbrev": " · code {{codigo}}",
+      "nenhumFipe": "No market value entered yet.",
+      "valorReais": "Amount (R$)",
+      "codigoFipeOpcional": "Reference code (optional)",
+      "salvando": "Saving...",
+      "lancarValor": "Log value",
+      "condicao": "Condition: {{score}}/100",
+      "semSinistroRegistrado": "no incidents recorded",
+      "nenhumSinistro": "No incidents recorded.",
+      "reparo": "Repair: {{valor}}",
+      "descricaoOpcional": "Description (optional)",
+      "custoReparoOpcional": "Repair cost (optional)",
+      "registrando": "Recording...",
+      "registrarSinistro": "Record incident",
+      "toasts": {
+        "fipeLancado": "Market value logged.", "falhaFipe": "Failed to log market value",
+        "sinistroRegistrado": "Incident recorded.", "falhaSinistro": "Failed to record incident"
+      }
+    },
+    "vehicleCosts": {
+      "voltarParaVeiculos": "Back to Vehicles",
+      "custosDe": "Costs — {{placa}}",
+      "subtitulo": "Fuel, maintenance and other entries",
+      "lancarCusto": "Log Cost",
+      "totalGasto": "Total Spent",
+      "kmRodadoDesdeCadastro": "Mileage (since registration)",
+      "odometroTotal": "Total odometer: {{km}} km",
+      "custoPorKm": "Cost per Km",
+      "lancamentos": "Entries",
+      "tabela": { "data": "Date", "categoria": "Category", "valor": "Amount", "descricao": "Description" },
+      "excluir": "Delete",
+      "nenhumCusto": "No costs logged yet.",
+      "form": {
+        "categoria": "Category", "valorReais": "Amount (R$)", "data": "Date",
+        "litrosOuKwh": "Liters (or kWh)", "odometroKm": "Odometer (km)", "descricaoOpcional": "Description (optional)",
+        "cancelar": "Cancel", "lancar": "Log"
+      },
+      "toasts": {
+        "falhaCarregar": "Error loading costs", "lancado": "Cost logged.", "falhaLancar": "Failed to log cost",
+        "confirmarExcluir": "Delete this entry?", "excluido": "Entry deleted.", "falhaExcluir": "Failed to delete entry"
+      }
+    },
+    "driverHome": {
+      "ola": "Hi{{email}}",
+      "oQueVoceSaberHoje": "What you need to know today.",
+      "rotaDeHoje": "Today's route",
+      "nenhumaRotaHoje": "No route assigned today.",
+      "proximaParada": "Next stop",
+      "todasParadasConcluidas": "All stops completed.",
+      "verRotaCompleta": "View full route ({{n}} stop(s))",
+      "seuVeiculo": "Your vehicle",
+      "nenhumVeiculoDesignado": "No vehicle assigned at the moment.",
+      "alertas": "Alerts",
+      "tudoEmDia": "All up to date.",
+      "cnhVencida": "License expired",
+      "cnhVenceEmDias": "License expires in {{n}} day(s)",
+      "osPendentes": "{{n}} pending order(s) on the vehicle",
+      "mensagens": "Messages",
+      "valorCombinado": "Agreed value: R$ {{valor}}",
+      "iniciar": "Start",
+      "concluir": "Complete",
+      "origem": "Origin",
+      "destino": "Destination"
+    },
+    "driverRoute": {
+      "nenhumaRotaAtribuida": "No route assigned at the moment.",
+      "transfer": "Transfer",
+      "origem": "Origin",
+      "destino": "Destination",
+      "valorCombinado": "Agreed value: R$ {{valor}}",
+      "marcando": "Marking...",
+      "iniciar": "Start",
+      "concluir": "Complete",
+      "minhaRota": "My route",
+      "paradaContagem": "{{n}} stop(s)",
+      "toasts": {
+        "falhaCarregar": "Error loading route", "paradaConcluida": "Stop completed.", "falhaConcluir": "Failed to complete stop"
+      }
+    },
+    "driverMore": {
+      "mais": "More",
+      "seuVeiculo": "Your vehicle",
+      "reportarOcorrencia": "Report incident",
+      "nenhumVeiculoDesignado": "No vehicle assigned at the moment.",
+      "cnh": "License",
+      "validaAte": "Valid until {{data}}",
+      "semValidadeCadastrada": "No expiry date on file.",
+      "ordensDeServicoDoVeiculo": "Vehicle service orders",
+      "nenhumaOS": "No service orders yet.",
+      "historicoDeViagens": "Trip history",
+      "nenhumaViagem": "No trips recorded yet.",
+      "oQueAconteceu": "What happened?",
+      "cancelar": "Cancel",
+      "enviando": "Sending...",
+      "enviar": "Send",
+      "toasts": { "ocorrenciaReportada": "Incident reported — the manager will review it.", "falhaReportar": "Failed to report the incident" }
+    }
+  }
+}

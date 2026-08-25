@@ -1,27 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Check, MapPin, Route as RouteIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { coreApi, type RoutePlanResponse } from '../api/client';
 import { StatusBadgeRotaPlan } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { cn } from '../lib/utils';
-
-const TIPO_LABEL: Record<string, string> = { COLETA: 'Coleta', ENTREGA: 'Entrega' };
+import { toast } from '../lib/toast';
 
 /** Rota do dia do motorista (spec 07 item 8) — paradas na ordem definida pelo gestor,
  *  com um único botão por parada: marcar concluída. Nada de reordenar ou editar.
  *  TRANSFER (trajeto único, spec 02) renderiza um cartão único em vez da lista numerada. */
 export function DriverRoutePage() {
+  const { t } = useTranslation();
   const [route, setRoute] = useState<RoutePlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
-  const [error, setError] = useState('');
 
   function refresh() {
     coreApi.routePlans
       .active()
       .then(setRoute)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar rota'))
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : t('pages.driverRoute.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
 
@@ -29,18 +29,18 @@ export function DriverRoutePage() {
 
   async function concluir(stopId: string) {
     setCompletingId(stopId);
-    setError('');
     try {
       await coreApi.routePlans.completeStop(stopId);
       refresh();
+      toast.success(t('pages.driverRoute.toasts.paradaConcluida'));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao concluir parada');
+      toast.error(e instanceof Error ? e.message : t('pages.driverRoute.toasts.falhaConcluir'));
     } finally {
       setCompletingId(null);
     }
   }
 
-  if (loading) return <p className="p-5 text-xs text-muted-foreground">Carregando...</p>;
+  if (loading) return <p className="p-5 text-xs text-muted-foreground">{t('common.carregando')}</p>;
 
   if (!route) {
     return (
@@ -48,7 +48,7 @@ export function DriverRoutePage() {
         <Card>
           <div className="flex flex-col items-center gap-2 p-10 text-center text-xs text-muted-foreground">
             <RouteIcon className="size-6 text-muted-foreground/60" />
-            <p>Nenhuma rota atribuída no momento.</p>
+            <p>{t('pages.driverRoute.nenhumaRotaAtribuida')}</p>
           </div>
         </Card>
       </div>
@@ -62,7 +62,7 @@ export function DriverRoutePage() {
     return (
       <div className="p-5">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-foreground">Transfer</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.driverRoute.transfer')}</h2>
           <StatusBadgeRotaPlan status={route.status} />
         </div>
         <Card>
@@ -72,7 +72,7 @@ export function DriverRoutePage() {
                 {origem?.concluidaEm ? <Check className="size-3.5" /> : <MapPin className="size-3.5" />}
               </span>
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Origem</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('pages.driverRoute.origem')}</p>
                 <p className="text-sm text-foreground">{origem?.label}</p>
               </div>
             </div>
@@ -81,21 +81,24 @@ export function DriverRoutePage() {
                 {destino?.concluidaEm ? <Check className="size-3.5" /> : <MapPin className="size-3.5" />}
               </span>
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Destino</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('pages.driverRoute.destino')}</p>
                 <p className="text-sm text-foreground">{destino?.label}</p>
               </div>
             </div>
             {route.valor != null && (
-              <p className="text-xs text-muted-foreground">Valor combinado: R$ {route.valor.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">{t('pages.driverRoute.valorCombinado', { valor: route.valor.toFixed(2) })}</p>
             )}
-            {error && <p className="text-xs text-status-danger">{error}</p>}
             {proxima && (
               <Button
                 size="sm"
                 onClick={() => concluir(proxima.id!)}
                 disabled={completingId === proxima.id}
               >
-                {completingId === proxima.id ? 'Marcando...' : proxima === origem ? 'Iniciar' : 'Concluir'}
+                {completingId === proxima.id
+                  ? t('pages.driverRoute.marcando')
+                  : proxima === origem
+                    ? t('pages.driverRoute.iniciar')
+                    : t('pages.driverRoute.concluir')}
               </Button>
             )}
           </div>
@@ -108,17 +111,11 @@ export function DriverRoutePage() {
     <div className="p-5">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Minha rota</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">{route.stops?.length ?? 0} parada(s)</p>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.driverRoute.minhaRota')}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.driverRoute.paradaContagem', { n: route.stops?.length ?? 0 })}</p>
         </div>
         <StatusBadgeRotaPlan status={route.status} />
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-md border border-status-danger-bg bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
-          {error}
-        </div>
-      )}
 
       <Card>
         <ol className="divide-y divide-border">
@@ -139,11 +136,13 @@ export function DriverRoutePage() {
                     <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">{s.label}</span>
                   </p>
-                  <p className="text-[11px] text-muted-foreground">{TIPO_LABEL[s.tipo ?? ''] ?? s.tipo}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {s.tipo === 'COLETA' ? t('pages.routePlans.coleta') : t('pages.routePlans.entrega')}
+                  </p>
                 </div>
                 {!concluida && (
                   <Button size="sm" variant="secondary" onClick={() => concluir(s.id!)} disabled={completingId === s.id!}>
-                    {completingId === s.id ? 'Marcando...' : 'Concluir'}
+                    {completingId === s.id ? t('pages.driverRoute.marcando') : t('pages.driverRoute.concluir')}
                   </Button>
                 )}
               </li>

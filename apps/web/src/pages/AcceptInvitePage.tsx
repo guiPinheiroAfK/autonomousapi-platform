@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { coreApi } from '../api/client';
 import { AuthLayout, BotaoPublico, CampoPublico, ErroPublico } from '../components/layout/AuthLayout';
 
@@ -14,6 +15,7 @@ interface Props {
  * de confirmação (mesmo raciocínio do verifyEmail).
  */
 export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +29,7 @@ export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props
       await coreApi.auth.acceptInvite({ token, password });
       setSucesso(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível aceitar o convite.');
+      setError(err instanceof Error ? err.message : t('auth.acceptInvite.falha'));
     } finally {
       setSubmitting(false);
     }
@@ -35,14 +37,21 @@ export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props
 
   if (sucesso) {
     return (
-      <AuthLayout titulo="Acesso liberado" chamada={<>Bem-vindo, <em className="italic">já pode entrar</em>.</>} onVoltar={onVoltarParaHome}>
-        <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
-          Sua senha foi definida. Entre no app da AutonomousAPI com o seu e-mail e a senha que
-          você acabou de escolher.
-        </p>
+      <AuthLayout
+        titulo={t('auth.acceptInvite.acessoLiberado')}
+        chamada={
+          <>
+            {t('auth.acceptInvite.bemVindoPre')}
+            <em className="italic">{t('auth.acceptInvite.bemVindoEm')}</em>
+            {t('auth.acceptInvite.bemVindoPos')}
+          </>
+        }
+        onVoltar={onVoltarParaHome}
+      >
+        <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">{t('auth.acceptInvite.senhaDefinida')}</p>
         <div className="mt-8">
           <BotaoPublico type="button" onClick={onGoToLogin}>
-            Ir para o login
+            {t('auth.acceptInvite.irParaLogin')}
           </BotaoPublico>
         </div>
       </AuthLayout>
@@ -50,17 +59,25 @@ export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props
   }
 
   return (
-    <AuthLayout titulo="Defina sua senha" chamada={<>Seu gestor te <em className="italic">convidou</em>.</>} onVoltar={onVoltarParaHome}>
-      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
-        Escolha uma senha pra acessar o app da AutonomousAPI com o seu e-mail.
-      </p>
+    <AuthLayout
+      titulo={t('auth.acceptInvite.defineSuaSenha')}
+      chamada={
+        <>
+          {t('auth.acceptInvite.gestorConvidouPre')}
+          <em className="italic">{t('auth.acceptInvite.gestorConvidouEm')}</em>
+          {t('auth.acceptInvite.gestorConvidouPos')}
+        </>
+      }
+      onVoltar={onVoltarParaHome}
+    >
+      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">{t('auth.acceptInvite.escolhaSenha')}</p>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <CampoPublico
           id="password"
-          rotulo="Senha"
+          rotulo={t('auth.acceptInvite.senha')}
           type="password"
           autoComplete="new-password"
-          placeholder="mínimo de 8 caracteres"
+          placeholder={t('auth.acceptInvite.minimoCaracteres')}
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -69,7 +86,7 @@ export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props
         {error && <ErroPublico>{error}</ErroPublico>}
         <div className="pt-2">
           <BotaoPublico type="submit" disabled={submitting}>
-            {submitting ? 'Salvando...' : 'Definir senha'}
+            {submitting ? t('auth.acceptInvite.salvando') : t('auth.acceptInvite.definirSenha')}
           </BotaoPublico>
         </div>
       </form>

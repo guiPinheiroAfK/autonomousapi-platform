@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import {
   AuthLayout,
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword }: Props) {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +29,7 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
     try {
       await login({ email, password });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha no login');
+      setError(err instanceof Error ? err.message : t('auth.login.falha'));
     } finally {
       setSubmitting(false);
     }
@@ -35,10 +37,11 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
 
   return (
     <AuthLayout
-      titulo="Entrar"
+      titulo={t('auth.login.titulo')}
       chamada={
         <>
-          A operação de ontem já virou número. <em className="italic">Vem ver.</em>
+          {t('auth.login.chamada1')}
+          <em className="italic">{t('auth.login.chamada2')}</em>
         </>
       }
       onVoltar={onVoltarParaHome}
@@ -46,7 +49,7 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <CampoPublico
           id="email"
-          rotulo="E-mail"
+          rotulo={t('auth.login.email')}
           type="email"
           autoComplete="email"
           placeholder="voce@suafrota.com.br"
@@ -56,7 +59,7 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
         />
         <CampoPublico
           id="password"
-          rotulo="Senha"
+          rotulo={t('auth.login.senha')}
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"
@@ -69,21 +72,21 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
 
         <div className="pt-2">
           <BotaoPublico type="submit" disabled={submitting}>
-            {submitting ? 'Entrando...' : 'Entrar'}
+            {submitting ? t('auth.login.entrando') : t('auth.login.entrar')}
           </BotaoPublico>
         </div>
       </form>
 
       <p className="mt-4 text-[13px] text-[var(--tinta-suave)]">
         <button type="button" onClick={onGoToForgotPassword} className="link-sublinhado text-[var(--tinta)]">
-          Esqueceu a senha?
+          {t('auth.login.esqueceuSenha')}
         </button>
       </p>
 
       <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
-        Ainda não tem conta?{' '}
+        {t('auth.login.semConta')}{' '}
         <button type="button" onClick={onGoToSignup} className="link-sublinhado text-[var(--tinta)]">
-          Cadastrar minha frota
+          {t('auth.login.cadastrarMinhaFrota')}
         </button>
       </p>
     </AuthLayout>

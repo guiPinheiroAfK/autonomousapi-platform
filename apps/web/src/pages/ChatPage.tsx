@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Check, CheckCheck, MapPin, MessageCirclePlus, MessagesSquare, Route as RouteIcon, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type ChatConversationResponse,
@@ -18,6 +19,7 @@ import { Select } from '../components/ui/select';
 import { cn } from '../lib/utils';
 import { formatRelativeShortBR, formatTimeBR, iniciais } from '../lib/format';
 import { getDeviceId, getMessages, markChatSeenNow, saveMessages } from '../lib/chatDb';
+import { toast } from '../lib/toast';
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -42,12 +44,12 @@ interface Props {
  * o que autoriza o job de limpeza no backend a agir.
  */
 export function ChatPage({ onOpenActiveRoute }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [conversations, setConversations] = useState<ChatConversationResponse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const [newBody, setNewBody] = useState('');
   const [sending, setSending] = useState(false);
@@ -73,7 +75,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     coreApi.chat
       .listConversations()
       .then(setConversations)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar conversas'))
+      // Toast, não banner: uma falha aqui pode acontecer com a lista de conversas vazia
+      // (sem nenhum <Card/> pra "hospedar" um banner ainda visível nesse estado).
+      .catch((e: unknown) => toast.error(e instanceof Error ? e.message : t('pages.chat.toasts.falhaCarregarConversas')))
       .finally(() => setLoading(false));
   }
 
@@ -166,7 +170,6 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     e.preventDefault();
     if (!selectedId || !newBody.trim()) return;
     setSending(true);
-    setError('');
     try {
       const sent = await coreApi.chat.sendMessage(selectedId, { body: newBody.trim() });
       await saveMessages([sent]);
@@ -174,7 +177,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
       setNewBody('');
       refreshConversations();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao enviar mensagem');
+      // Sem toast de sucesso aqui de propósito: a mensagem aparecendo na conversa já é a
+      // confirmação — um toast a mais seria ruído numa tela pensada pra troca rápida.
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaEnviar'));
     } finally {
       setSending(false);
     }
@@ -197,8 +202,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
       setPickerOpen(false);
       refreshConversations();
       setSelectedId(conv.id!);
+      toast.success(t('pages.chat.toasts.conversaIniciada'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao iniciar conversa');
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaIniciar'));
     }
   }
 
@@ -226,8 +232,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
       setMessages((prev) => [...prev, sent]);
       setAttachOpen(false);
       refreshConversations();
+      toast.success(t('pages.chat.toasts.rotaAnexada'));
     } catch (err) {
-      setAttachError(err instanceof Error ? err.message : 'Falha ao anexar rota');
+      setAttachError(err instanceof Error ? err.message : t('pages.chat.toasts.falhaAnexar'));
     } finally {
       setAttachSending(false);
     }
@@ -249,13 +256,13 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     <div className="flex h-full gap-3 overflow-hidden p-3">
       <Card className="flex w-72 shrink-0 flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-border p-4">
-          <h2 className="font-display text-sm font-semibold text-foreground">Conversas</h2>
+          <h2 className="font-display text-sm font-semibold text-foreground">{t('pages.chat.conversas')}</h2>
           {user?.role !== 'MOTORISTA' && (
             <button
               type="button"
               onClick={openPicker}
               className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-              title="Iniciar conversa"
+              title={t('pages.chat.iniciarConversa')}
             >
               <MessageCirclePlus className="size-4" />
             </button>
@@ -263,11 +270,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <p className="p-4 text-center text-xs text-muted-foreground">Carregando...</p>
+            <p className="p-4 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center gap-2 p-8 text-center">
               <MessagesSquare className="size-6 text-muted-foreground/60" />
-              <p className="text-xs text-muted-foreground">Nenhuma conversa ainda.</p>
+              <p className="text-xs text-muted-foreground">{t('pages.chat.nenhumaConversa')}</p>
             </div>
           ) : (
             conversations.map((c) => (
@@ -293,7 +300,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     )}
                   </div>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {c.lastMessageBody ?? (c.vehiclePlate ? c.vehiclePlate : 'Sem mensagens ainda')}
+                    {c.lastMessageBody ?? (c.vehiclePlate ? c.vehiclePlate : t('pages.chat.semMensagensAinda'))}
                   </p>
                 </div>
               </button>
@@ -306,7 +313,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         {!selected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <MessagesSquare className="size-6 text-muted-foreground/60" />
-            <p className="text-xs text-muted-foreground">Selecione uma conversa ou inicie uma nova.</p>
+            <p className="text-xs text-muted-foreground">{t('pages.chat.selecioneOuInicie')}</p>
           </div>
         ) : (
           <>
@@ -322,7 +329,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
             <div className="flex-1 space-y-2 overflow-y-auto p-4">
               {messages.length === 0 && (
-                <p className="pt-8 text-center text-xs text-muted-foreground">Nenhuma mensagem ainda.</p>
+                <p className="pt-8 text-center text-xs text-muted-foreground">{t('pages.chat.nenhumaMensagem')}</p>
               )}
               {messages.map((m) => {
                 const mine = m.senderUserId === user?.id;
@@ -338,7 +345,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                           onClick={() => openRouteDetail(m.routePlanId!)}
                           className="mt-1.5 text-[11px] font-medium text-primary hover:underline"
                         >
-                          Ver detalhes
+                          {t('pages.chat.verDetalhes')}
                         </button>
                         <p className="mt-1 text-[10px] text-muted-foreground">
                           {m.sentAt ? formatTimeBR(m.sentAt) : ''}
@@ -371,27 +378,25 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               })}
               {otherTyping && (
                 <div className="flex justify-start">
-                  <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">digitando...</div>
+                  <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{t('pages.chat.digitando')}</div>
                 </div>
               )}
               <div ref={bottomRef} />
             </div>
-
-            {error && <p className="px-4 text-xs text-status-danger">{error}</p>}
 
             <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-border p-3">
               {user?.role !== 'MOTORISTA' && (
                 <button
                   type="button"
                   onClick={openAttach}
-                  title="Anexar rota"
+                  title={t('pages.chat.anexarRota')}
                   className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
                   <RouteIcon className="size-4" />
                 </button>
               )}
               <Input
-                placeholder="Escreva uma mensagem..."
+                placeholder={t('pages.chat.escrevaMensagem')}
                 value={newBody}
                 onChange={(e) => {
                   setNewBody(e.target.value);
@@ -411,15 +416,13 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         )}
       </Card>
 
-      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Iniciar conversa">
+      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('pages.chat.iniciarConversa')}>
         {eligibleDrivers.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Nenhum motorista disponível — só quem já aceitou o convite de acesso ao app pode conversar.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('pages.chat.nenhumMotoristaDisponivel')}</p>
         ) : (
           <form onSubmit={handleStartConversation} className="space-y-3">
             <Select value={pickedDriverId} onChange={(e) => setPickedDriverId(e.target.value)}>
-              <option value="">Selecione um motorista...</option>
+              <option value="">{t('pages.chat.selecioneMotorista')}</option>
               {eligibleDrivers.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -428,45 +431,44 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             </Select>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => setPickerOpen(false)}>
-                Cancelar
+                {t('pages.chat.cancelar')}
               </Button>
               <Button type="submit" size="sm" disabled={!pickedDriverId}>
-                Iniciar
+                {t('pages.chat.iniciar')}
               </Button>
             </div>
           </form>
         )}
       </Modal>
 
-      <Modal open={attachOpen} onClose={() => setAttachOpen(false)} title="Anexar rota">
+      <Modal open={attachOpen} onClose={() => setAttachOpen(false)} title={t('pages.chat.anexarRota')}>
         {attachableRoutes.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Nenhuma rota disponível pra este motorista — cadastre uma em "Rotas".
-          </p>
+          <p className="text-xs text-muted-foreground">{t('pages.chat.nenhumaRotaDisponivel')}</p>
         ) : (
           <form onSubmit={handleAttachRoute} className="space-y-3">
             <Select value={pickedRouteId} onChange={(e) => setPickedRouteId(e.target.value)}>
-              <option value="">Selecione uma rota...</option>
+              <option value="">{t('pages.chat.selecioneRota')}</option>
               {attachableRoutes.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {(r.stops?.length ?? 0)} parada(s) {r.driverId ? '· já designada a este motorista' : ''}
+                  {t('pages.chat.paradaContagem', { n: r.stops?.length ?? 0 })}{' '}
+                  {r.driverId ? t('pages.chat.jaDesignadaMotorista') : ''}
                 </option>
               ))}
             </Select>
             {attachError && <p className="text-xs text-status-danger">{attachError}</p>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => setAttachOpen(false)}>
-                Cancelar
+                {t('pages.chat.cancelar')}
               </Button>
               <Button type="submit" size="sm" disabled={!pickedRouteId || attachSending}>
-                Anexar
+                {t('pages.chat.anexar')}
               </Button>
             </div>
           </form>
         )}
       </Modal>
 
-      <Modal open={!!routeDetail} onClose={() => setRouteDetail(null)} title="Paradas da rota">
+      <Modal open={!!routeDetail} onClose={() => setRouteDetail(null)} title={t('pages.chat.paradasDaRota')}>
         {routeDetail && (
           <ol className="space-y-2">
             {(routeDetail.stops ?? []).map((s, i) => (

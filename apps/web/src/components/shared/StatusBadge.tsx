@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 
 type Tone = 'info' | 'warning' | 'success' | 'danger' | 'neutral';
@@ -38,29 +39,22 @@ const VEHICLE_TONE: Record<string, Tone> = {
   MANUTENCAO: 'warning',
   INATIVO: 'neutral',
 };
-const VEHICLE_LABEL: Record<string, string> = {
-  ATIVO: 'Ativo',
-  MANUTENCAO: 'Em manutenção',
-  INATIVO: 'Inativo',
-};
 
 export function StatusBadgeVeiculo({ status, className }: { status?: string; className?: string }) {
+  const { t } = useTranslation();
   const s = status ?? '';
-  return <Base tone={VEHICLE_TONE[s] ?? 'neutral'} label={VEHICLE_LABEL[s] ?? s} className={className} />;
+  return <Base tone={VEHICLE_TONE[s] ?? 'neutral'} label={t(`status.veiculo.${s}`, { defaultValue: s })} className={className} />;
 }
 
 const DRIVER_TONE: Record<string, Tone> = {
   ATIVO: 'success',
   INATIVO: 'neutral',
 };
-const DRIVER_LABEL: Record<string, string> = {
-  ATIVO: 'Ativo',
-  INATIVO: 'Inativo',
-};
 
 export function StatusBadgeMotorista({ status, className }: { status?: string; className?: string }) {
+  const { t } = useTranslation();
   const s = status ?? '';
-  return <Base tone={DRIVER_TONE[s] ?? 'neutral'} label={DRIVER_LABEL[s] ?? s} className={className} />;
+  return <Base tone={DRIVER_TONE[s] ?? 'neutral'} label={t(`status.motorista.${s}`, { defaultValue: s })} className={className} />;
 }
 
 const COST_TONE: Record<string, Tone> = {
@@ -73,20 +67,11 @@ const COST_TONE: Record<string, Tone> = {
   LAVAGEM: 'neutral',
   OUTRO: 'neutral',
 };
-const COST_LABEL: Record<string, string> = {
-  COMBUSTIVEL: 'Combustível',
-  MANUTENCAO: 'Manutenção',
-  SEGURO: 'Seguro',
-  IPVA: 'IPVA',
-  MULTA: 'Multa',
-  PEDAGIO: 'Pedágio',
-  LAVAGEM: 'Lavagem',
-  OUTRO: 'Outro',
-};
 
 export function StatusBadgeCusto({ categoria, className }: { categoria?: string; className?: string }) {
+  const { t } = useTranslation();
   const c = categoria ?? '';
-  return <Base tone={COST_TONE[c] ?? 'neutral'} label={COST_LABEL[c] ?? c} className={className} />;
+  return <Base tone={COST_TONE[c] ?? 'neutral'} label={t(`status.custo.${c}`, { defaultValue: c })} className={className} />;
 }
 
 const OS_TONE: Record<string, Tone> = {
@@ -96,17 +81,11 @@ const OS_TONE: Record<string, Tone> = {
   ATRASADA: 'danger',
   CANCELADA: 'neutral',
 };
-const OS_LABEL: Record<string, string> = {
-  ABERTA: 'Aberta',
-  EM_ANDAMENTO: 'Em andamento',
-  CONCLUIDA: 'Concluída',
-  ATRASADA: 'Atrasada',
-  CANCELADA: 'Cancelada',
-};
 
 export function StatusBadgeOS({ status, className }: { status?: string; className?: string }) {
+  const { t } = useTranslation();
   const s = status ?? '';
-  return <Base tone={OS_TONE[s] ?? 'neutral'} label={OS_LABEL[s] ?? s} className={className} />;
+  return <Base tone={OS_TONE[s] ?? 'neutral'} label={t(`status.os.${s}`, { defaultValue: s })} className={className} />;
 }
 
 const PRIORIDADE_TONE: Record<string, Tone> = {
@@ -114,15 +93,11 @@ const PRIORIDADE_TONE: Record<string, Tone> = {
   MEDIA: 'warning',
   ALTA: 'danger',
 };
-const PRIORIDADE_LABEL: Record<string, string> = {
-  BAIXA: 'Baixa',
-  MEDIA: 'Média',
-  ALTA: 'Alta',
-};
 
 export function StatusBadgePrioridade({ prioridade, className }: { prioridade?: string; className?: string }) {
+  const { t } = useTranslation();
   const p = prioridade ?? '';
-  return <Base tone={PRIORIDADE_TONE[p] ?? 'neutral'} label={PRIORIDADE_LABEL[p] ?? p} className={className} />;
+  return <Base tone={PRIORIDADE_TONE[p] ?? 'neutral'} label={t(`status.prioridade.${p}`, { defaultValue: p })} className={className} />;
 }
 
 const SEVERIDADE_TONE: Record<string, Tone> = {
@@ -130,15 +105,11 @@ const SEVERIDADE_TONE: Record<string, Tone> = {
   MODERADA: 'warning',
   GRAVE: 'danger',
 };
-const SEVERIDADE_LABEL: Record<string, string> = {
-  LEVE: 'Leve',
-  MODERADA: 'Moderada',
-  GRAVE: 'Grave',
-};
 
 export function StatusBadgeSeveridade({ severidade, className }: { severidade?: string; className?: string }) {
+  const { t } = useTranslation();
   const s = severidade ?? '';
-  return <Base tone={SEVERIDADE_TONE[s] ?? 'neutral'} label={SEVERIDADE_LABEL[s] ?? s} className={className} />;
+  return <Base tone={SEVERIDADE_TONE[s] ?? 'neutral'} label={t(`status.severidade.${s}`, { defaultValue: s })} className={className} />;
 }
 
 const ROUTE_PLAN_TONE: Record<string, Tone> = {
@@ -146,13 +117,9 @@ const ROUTE_PLAN_TONE: Record<string, Tone> = {
   EM_ANDAMENTO: 'warning',
   CONCLUIDA: 'success',
 };
-const ROUTE_PLAN_LABEL: Record<string, string> = {
-  PLANEJADA: 'Planejada',
-  EM_ANDAMENTO: 'Em andamento',
-  CONCLUIDA: 'Concluída',
-};
 
 export function StatusBadgeRotaPlan({ status, className }: { status?: string; className?: string }) {
+  const { t } = useTranslation();
   const s = status ?? '';
-  return <Base tone={ROUTE_PLAN_TONE[s] ?? 'neutral'} label={ROUTE_PLAN_LABEL[s] ?? s} className={className} />;
+  return <Base tone={ROUTE_PLAN_TONE[s] ?? 'neutral'} label={t(`status.rotaPlan.${s}`, { defaultValue: s })} className={className} />;
 }

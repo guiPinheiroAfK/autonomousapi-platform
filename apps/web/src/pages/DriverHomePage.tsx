@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, ArrowRight, Car, Check, MapPin, MessageCircle, Route as RouteIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type ChatConversationResponse,
@@ -33,6 +34,7 @@ interface Props {
  * explícito do usuário). Veículo completo, CNH, OS e histórico moram em "Mais".
  */
 export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [vehicle, setVehicle] = useState<DriverAssignmentResponse | null>(null);
   const [route, setRoute] = useState<RoutePlanResponse | null>(null);
@@ -72,44 +74,46 @@ export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
 
   const proximaParada = route?.stops?.find((s) => !s.concluidaEm);
 
-  if (loading) return <p className="p-5 text-xs text-muted-foreground">Carregando...</p>;
+  if (loading) return <p className="p-5 text-xs text-muted-foreground">{t('common.carregando')}</p>;
 
   return (
     <div className="p-5">
       <div className="mb-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">Olá{user?.email ? `, ${user.email}` : ''}</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">O que você precisa saber hoje.</p>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          {t('pages.driverHome.ola', { email: user?.email ? `, ${user.email}` : '' })}
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.driverHome.oQueVoceSaberHoje')}</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Card className="sm:col-span-2">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-1.5">
-              <RouteIcon className="size-3.5" /> Rota de hoje
+              <RouteIcon className="size-3.5" /> {t('pages.driverHome.rotaDeHoje')}
             </CardTitle>
             {route && <StatusBadgeRotaPlan status={route.status} />}
           </CardHeader>
           <div className="px-5 pb-4">
             {!route ? (
-              <p className="text-xs text-muted-foreground">Nenhuma rota atribuída hoje.</p>
+              <p className="text-xs text-muted-foreground">{t('pages.driverHome.nenhumaRotaHoje')}</p>
             ) : route.categoria === 'TRANSFER' ? (
               <CartaoTransfer route={route} onViewRoute={onViewRoute} />
             ) : (
               <div className="space-y-2">
                 {proximaParada ? (
                   <div className="rounded-md border border-border bg-secondary/40 p-3">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Próxima parada</p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('pages.driverHome.proximaParada')}</p>
                     <p className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground">
                       <MapPin className="size-3.5 shrink-0" /> {proximaParada.label}
                     </p>
                   </div>
                 ) : (
                   <p className="flex items-center gap-1.5 text-sm text-status-success">
-                    <Check className="size-3.5" /> Todas as paradas concluídas.
+                    <Check className="size-3.5" /> {t('pages.driverHome.todasParadasConcluidas')}
                   </p>
                 )}
                 <Button size="sm" variant="secondary" onClick={onViewRoute}>
-                  Ver rota completa ({route.stops?.length ?? 0} parada(s)) <ArrowRight className="size-3.5" />
+                  {t('pages.driverHome.verRotaCompleta', { n: route.stops?.length ?? 0 })} <ArrowRight className="size-3.5" />
                 </Button>
               </div>
             )}
@@ -119,7 +123,7 @@ export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5">
-              <Car className="size-3.5" /> Seu veículo
+              <Car className="size-3.5" /> {t('pages.driverHome.seuVeiculo')}
             </CardTitle>
           </CardHeader>
           <div className="px-5 pb-4 text-sm text-foreground">
@@ -131,7 +135,7 @@ export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
                 </p>
               </>
             ) : (
-              <p className="text-xs text-muted-foreground">Nenhum veículo designado no momento.</p>
+              <p className="text-xs text-muted-foreground">{t('pages.driverHome.nenhumVeiculoDesignado')}</p>
             )}
           </div>
         </Card>
@@ -139,23 +143,23 @@ export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-1.5">
-              <AlertTriangle className="size-3.5" /> Alertas
+              <AlertTriangle className="size-3.5" /> {t('pages.driverHome.alertas')}
             </CardTitle>
           </CardHeader>
           <div className="space-y-1.5 px-5 pb-4 text-xs">
             {!temAlerta ? (
-              <p className="text-muted-foreground">Tudo em dia.</p>
+              <p className="text-muted-foreground">{t('pages.driverHome.tudoEmDia')}</p>
             ) : (
               <>
                 {cnhAlerta && (
                   <p className={cn('flex items-center gap-1.5', diasCnh! < 0 ? 'text-status-danger' : 'text-status-warning')}>
                     <AlertTriangle className="size-3.5 shrink-0" />
-                    {diasCnh! < 0 ? 'CNH vencida' : `CNH vence em ${diasCnh} dia(s)`}
+                    {diasCnh! < 0 ? t('pages.driverHome.cnhVencida') : t('pages.driverHome.cnhVenceEmDias', { n: diasCnh })}
                   </p>
                 )}
                 {osPendentes > 0 && (
                   <p className="flex items-center gap-1.5 text-status-warning">
-                    <AlertTriangle className="size-3.5 shrink-0" /> {osPendentes} OS pendente(s) no veículo
+                    <AlertTriangle className="size-3.5 shrink-0" /> {t('pages.driverHome.osPendentes', { n: osPendentes })}
                   </p>
                 )}
               </>
@@ -167,7 +171,7 @@ export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
           <Card className="transition-colors hover:bg-muted/50">
             <div className="flex items-center justify-between px-5 py-4">
               <p className="flex items-center gap-1.5 text-sm text-foreground">
-                <MessageCircle className="size-3.5" /> Mensagens
+                <MessageCircle className="size-3.5" /> {t('pages.driverHome.mensagens')}
               </p>
               {naoLida && <span className="size-2 rounded-full bg-status-danger" />}
             </div>
@@ -179,6 +183,7 @@ export function DriverHomePage({ onViewRoute, onOpenChat }: Props) {
 }
 
 function CartaoTransfer({ route, onViewRoute }: { route: RoutePlanResponse; onViewRoute: () => void }) {
+  const { t } = useTranslation();
   const origem = route.stops?.[0];
   const destino = route.stops?.[1];
   return (
@@ -191,9 +196,11 @@ function CartaoTransfer({ route, onViewRoute }: { route: RoutePlanResponse; onVi
         <MapPin className="size-3.5 shrink-0 text-status-danger" />
         <span className="truncate">{destino?.label}</span>
       </div>
-      {route.valor != null && <p className="text-xs text-muted-foreground">Valor combinado: R$ {route.valor.toFixed(2)}</p>}
+      {route.valor != null && (
+        <p className="text-xs text-muted-foreground">{t('pages.driverHome.valorCombinado', { valor: route.valor.toFixed(2) })}</p>
+      )}
       <Button size="sm" variant="secondary" onClick={onViewRoute}>
-        {!origem?.concluidaEm ? 'Iniciar' : 'Concluir'} <ArrowRight className="size-3.5" />
+        {!origem?.concluidaEm ? t('pages.driverHome.iniciar') : t('pages.driverHome.concluir')} <ArrowRight className="size-3.5" />
       </Button>
     </div>
   );

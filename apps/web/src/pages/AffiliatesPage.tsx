@@ -1,14 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, Handshake } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { coreApi, type AffiliatePartnerResponse } from '../api/client';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
-
-const CATEGORIA_LABEL: Record<string, string> = {
-  dashcam: 'Dashcam',
-  rastreador: 'Rastreador',
-  seguro: 'Seguro',
-};
+import { toast } from '../lib/toast';
 
 /**
  * Catálogo de parceiros (spec 06, item 4) — negociado pela AutonomousAPI, não pelo
@@ -16,6 +12,7 @@ const CATEGORIA_LABEL: Record<string, string> = {
  * parceiro numa aba nova e registra a métrica no backend antes de navegar.
  */
 export function AffiliatesPage() {
+  const { t } = useTranslation();
   const [partners, setPartners] = useState<AffiliatePartnerResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [clickingId, setClickingId] = useState<string | null>(null);
@@ -25,18 +22,19 @@ export function AffiliatesPage() {
     coreApi.affiliates
       .listPartners()
       .then(setPartners)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar parceiros'))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.affiliates.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
+    // Só busca uma vez; `t` mudar de idioma não deve re-disparar o fetch (achado da
+    // auditoria de cleanup — antes [t] causava refetch a cada troca de idioma).
   }, []);
 
   async function handleClick(partnerId: string) {
     setClickingId(partnerId);
-    setError('');
     try {
       const { redirectUrl } = await coreApi.affiliates.click(partnerId);
       if (redirectUrl) window.open(redirectUrl, '_blank', 'noopener,noreferrer');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao abrir parceiro');
+      toast.error(err instanceof Error ? err.message : t('pages.affiliates.toasts.falhaAbrir'));
     } finally {
       setClickingId(null);
     }
@@ -45,10 +43,8 @@ export function AffiliatesPage() {
   return (
     <div className="p-5">
       <div className="mb-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">Parceiros</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Equipamento e serviço pra frota, recomendados por nós — sem custo pra você usar.
-        </p>
+        <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.affiliates.titulo')}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.affiliates.subtitulo')}</p>
       </div>
 
       {error && (
@@ -58,12 +54,12 @@ export function AffiliatesPage() {
       )}
 
       {loading ? (
-        <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+        <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>
       ) : partners.length === 0 ? (
         <Card>
           <div className="flex flex-col items-center gap-2 py-12 text-center text-xs text-muted-foreground">
             <Handshake className="size-6" />
-            Nenhum parceiro disponível ainda.
+            {t('pages.affiliates.nenhumParceiro')}
           </div>
         </Card>
       ) : (
@@ -73,7 +69,7 @@ export function AffiliatesPage() {
               <CardHeader>
                 <CardTitle className="text-sm">{p.name}</CardTitle>
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  {CATEGORIA_LABEL[p.category ?? ''] ?? p.category}
+                  {p.category ? t(`pages.affiliates.categoria.${p.category}`, { defaultValue: p.category }) : p.category}
                 </p>
               </CardHeader>
               <div className="px-5 pb-5">
@@ -84,7 +80,7 @@ export function AffiliatesPage() {
                   onClick={() => handleClick(p.id!)}
                   disabled={clickingId === p.id}
                 >
-                  <ExternalLink /> {clickingId === p.id ? 'Abrindo...' : 'Ver oferta'}
+                  <ExternalLink /> {clickingId === p.id ? t('pages.affiliates.abrindo') : t('pages.affiliates.verOferta')}
                 </Button>
               </div>
             </Card>

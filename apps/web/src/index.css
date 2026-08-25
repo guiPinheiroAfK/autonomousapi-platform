@@ -182,8 +182,14 @@
   --font-mono: var(--font-mono);
 }
 
-* {
-  border-color: var(--color-border);
+/* Precisa estar em @layer base: sem isso a regra fica "sem camada" e no CSS Cascade
+   Layers, unlayered sempre ganha de @layer, não importa a ordem — por isso qualquer
+   border-[var(--x)] explícito (ex.: --linha da landing) estava sendo ignorado e caindo
+   sempre no --color-border do painel, mesmo fora do painel. */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 }
 
 /* Só o elemento raiz pinta o fundo da página. Com html E body pintando, ao alternar
@@ -235,7 +241,7 @@ body {
   --breu-elevado: #17191c;
   --tinta: #eef0f2;
   --tinta-suave: #949aa2;
-  --linha: #282b30;
+  --linha: #1e2024;
 
   /* Âmbar da marca — o MESMO --sidebar-accent do painel. É o fio que liga a página
      pública à interface: quem entra depois de assinar reencontra a cor. */
