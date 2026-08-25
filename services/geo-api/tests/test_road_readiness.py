@@ -13,23 +13,34 @@ client = TestClient(app)
 HEADERS = {"X-Service-Token": settings.service_token}
 
 
-def _criar_segmento_de_teste() -> RoadSegment:
+def _criar_segmento_de_teste() -> tuple[RoadSegment, float, float]:
     """
-    Um trecho reto e curto perto da origem (0,0) — não precisa ser via real, só precisa
-    existir no banco pro matching por proximidade ter o que encontrar.
+    Um trecho reto e curto perto da origem — não precisa ser via real, só precisa
+    existir no banco pro matching por proximidade ter o que encontrar. Devolve
+    (segmento, lat, lon) de um ponto sobre ele, pronto pra usar num ping.
+
+    Geometria com offset ÚNICO por chamada (derivado de um uuid4), não fixa em
+    (0,0)-(0,0.001): achado real ao investigar um teste instável — um segmento
+    zumbi de uma execução anterior que não limpou direito, com geometria IDÊNTICA
+    à deste helper, fez o "vizinho mais próximo" empatar; o empate não favorece o
+    registro novo, e a observação foi pro segmento errado (o zumbi), fazendo o
+    teste falhar de um jeito que parecia bug de matching, não sujeira de dado.
+    Offset único elimina a possibilidade de empate mesmo que uma limpeza falhe nesta
+    execução.
     """
+    offset = (uuid4().int % 100_000) / 1_000_000  # ~0 a 0.1 grau, único por chamada
     db = SessionLocal()
     try:
         segmento = RoadSegment(
             osm_way_id=uuid4().int % 2_000_000_000,  # único por rodada de teste
             name="Via de teste",
             highway_type="residential",
-            geom=WKTElement("LINESTRING(0 0, 0 0.001)", srid=4326),
+            geom=WKTElement(f"LINESTRING(0 {offset}, 0 {offset + 0.001})", srid=4326),
         )
         db.add(segmento)
         db.commit()
         db.refresh(segmento)
-        return segmento
+        return segmento, offset + 0.0002, 0.0
     finally:
         db.close()
 
@@ -50,7 +61,7 @@ def _limpar(segmento_id):
 
 
 def test_ping_perto_de_segmento_conhecido_vira_observacao():
-    segmento = _criar_segmento_de_teste()
+    segmento, lat, lon = _criar_segmento_de_teste()
     try:
         resp = client.post(
             "/internal/v1/gps/pings",
@@ -58,8 +69,8 @@ def test_ping_perto_de_segmento_conhecido_vira_observacao():
             json={
                 "vehicle_id": str(uuid4()),
                 "recorded_at": datetime.now(UTC).isoformat(),
-                "lat": 0.0002,
-                "lon": 0.0,
+                "lat": lat,
+                "lon": lon,
             },
         )
         assert resp.status_code == 202
@@ -98,7 +109,7 @@ def test_ping_longe_de_qualquer_segmento_nao_vira_observacao():
 
 
 def test_recalculate_gera_score_a_partir_das_observacoes():
-    segmento = _criar_segmento_de_teste()
+    segmento, lat, lon = _criar_segmento_de_teste()
     try:
         for _ in range(3):
             client.post(
@@ -107,8 +118,8 @@ def test_recalculate_gera_score_a_partir_das_observacoes():
                 json={
                     "vehicle_id": str(uuid4()),
                     "recorded_at": datetime.now(UTC).isoformat(),
-                    "lat": 0.0002,
-                    "lon": 0.0,
+                    "lat": lat,
+                    "lon": lon,
                 },
             )
 

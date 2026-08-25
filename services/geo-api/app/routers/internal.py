@@ -6,6 +6,7 @@ from geoalchemy2 import Geography
 from geoalchemy2.elements import WKTElement
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from ..aggregation import recalcular_road_readiness
@@ -15,8 +16,11 @@ from ..driving_events import calcular_driving_events
 from ..geocoding import NominatimGeocoder
 from ..matching import encontrar_segmento_mais_proximo
 from ..models import ChargingStation, ChargingStationStatus, RoadSegmentObservation, VehicleGpsPing
+from ..quality_metrics import calcular_metricas_qualidade
+from ..road_readiness_v2 import recalcular_road_readiness_v2
 from ..routing import OsrmRoutingClient
 from ..security import require_service_token
+from ..sessionization import reconstruir_passagens
 
 # Todas as rotas exigem token de serviço. Prefixo /internal deixa explícito que não é público.
 router = APIRouter(
@@ -55,6 +59,7 @@ def ingest_ping(ping: GpsPingIn, db: Session = Depends(get_db)) -> GpsPingAccept
     isso é síncrono e barato (uma consulta indexada), diferente da agregação do score,
     que o spec proíbe explicitamente de rodar em tempo real (fica para o job periódico).
     """
+    segmento_id = encontrar_segmento_mais_proximo(db, ping.lat, ping.lon)
     row = VehicleGpsPing(
         vehicle_id=ping.vehicle_id,
         recorded_at=ping.recorded_at,
@@ -63,11 +68,13 @@ def ingest_ping(ping: GpsPingIn, db: Session = Depends(get_db)) -> GpsPingAccept
         speed=ping.speed,
         heading=ping.heading,
         accuracy=ping.accuracy,
+        # Gravado no próprio ping pra sessionização (D1.1) reaproveitar o match sem
+        # refazer a consulta espacial (ADR 0019, Decisão 1).
+        road_segment_id=segmento_id,
         geom=WKTElement(f"POINT({ping.lon} {ping.lat})", srid=4326),
     )
     db.add(row)
 
-    segmento_id = encontrar_segmento_mais_proximo(db, ping.lat, ping.lon)
     if segmento_id is not None:
         db.add(
             RoadSegmentObservation(
@@ -83,6 +90,86 @@ def ingest_ping(ping: GpsPingIn, db: Session = Depends(get_db)) -> GpsPingAccept
     return GpsPingAccepted(id=row.id)
 
 
+class GpsPingBatchIn(BaseModel):
+    pings: list[GpsPingIn]
+
+
+class GpsPingBatchAccepted(BaseModel):
+    accepted: int
+    received: int
+
+
+@router.post("/gps/pings/batch", status_code=status.HTTP_202_ACCEPTED)
+def ingest_ping_batch(batch: GpsPingBatchIn, db: Session = Depends(get_db)) -> GpsPingBatchAccepted:
+    """
+    Versão em lote de `ingest_ping` (ADR 0019, pré-requisito A) — uma transação para o
+    lote inteiro em vez de uma chamada HTTP por ping (era o caminho antes: o app manda
+    o lote pro core-api, mas `TripService#submitPings` chamava `POST /gps/pings` uma
+    vez por ping).
+
+    Contrato com a fila offline do app (ver ADR 0019, "Anexo — contrato da ingestão em
+    lote", A1/A2), não mudar sem reler aquilo:
+
+    - `INSERT ... ON CONFLICT DO NOTHING` na chave natural (vehicle_id, recorded_at,
+      migration 0004) — ping duplicado (reenvio de lote parcial) não vira erro nem
+      linha nova, só é ignorado.
+    - `accepted` sempre conta o lote inteiro quando a transação teve sucesso, nunca só
+      as linhas de fato inseridas — duplicata é sucesso do ponto de vista do cliente
+      (A1). Só uma falha real de transação (exceção) resulta em resposta de erro, e aí
+      o app reenvia o lote inteiro (idempotente por construção, graças ao ON CONFLICT).
+    - Observação só é gerada para o ping que a query `RETURNING` de fato devolveu — ou
+      seja, só para quem foi inserido agora. Ping deduplicado não gera observação de
+      novo (A2): a linha já existia, então a observação dela (se algum dia existiu)
+      também já foi gravada na primeira vez.
+
+    Matching roda ANTES do insert, pra todo ping do lote (inclusive os que acabam sendo
+    conflito e descartados pelo `ON CONFLICT` — barato, é só uma consulta indexada a
+    mais por duplicata). É o que permite gravar `road_segment_id` na mesma linha do
+    ping (ADR 0019, Decisão 1) sem uma segunda ida ao banco pós-insert.
+    """
+    if not batch.pings:
+        return GpsPingBatchAccepted(accepted=0, received=0)
+
+    valores = [
+        {
+            "id": uuid4(),
+            "vehicle_id": p.vehicle_id,
+            "recorded_at": p.recorded_at,
+            "lat": p.lat,
+            "lon": p.lon,
+            "speed": p.speed,
+            "heading": p.heading,
+            "accuracy": p.accuracy,
+            "road_segment_id": encontrar_segmento_mais_proximo(db, p.lat, p.lon),
+            "geom": WKTElement(f"POINT({p.lon} {p.lat})", srid=4326),
+        }
+        for p in batch.pings
+    ]
+    stmt = (
+        pg_insert(VehicleGpsPing.__table__)
+        .values(valores)
+        .on_conflict_do_nothing(
+            index_elements=[VehicleGpsPing.vehicle_id, VehicleGpsPing.recorded_at]
+        )
+        .returning(VehicleGpsPing.recorded_at, VehicleGpsPing.speed, VehicleGpsPing.road_segment_id)
+    )
+    inseridos = db.execute(stmt).all()
+
+    for observed_at, speed, segmento_id in inseridos:
+        if segmento_id is not None:
+            db.add(
+                RoadSegmentObservation(
+                    id=uuid4(),
+                    road_segment_id=segmento_id,
+                    observed_at=observed_at,
+                    avg_speed_kmh=speed,
+                )
+            )
+
+    db.commit()
+    return GpsPingBatchAccepted(accepted=len(batch.pings), received=len(batch.pings))
+
+
 class RoadReadinessRecalculated(BaseModel):
     segments_updated: int
 
@@ -95,6 +182,69 @@ def recalculate_road_readiness(db: Session = Depends(get_db)) -> RoadReadinessRe
     sem depender do timing do agendador em background.
     """
     return RoadReadinessRecalculated(segments_updated=recalcular_road_readiness(db))
+
+
+class PassagesReconstructed(BaseModel):
+    passages_created: int
+
+
+@router.post("/road-segment-passages/reconstruct")
+def reconstruct_road_segment_passages(db: Session = Depends(get_db)) -> PassagesReconstructed:
+    """
+    Dispara a sessionização sob demanda (ADR 0019, Decisão 1) — o scheduler já roda
+    isso periodicamente (ver app/scheduler.py); útil para operação manual e para
+    testes determinísticos, mesmo padrão de `/road-readiness/recalculate`.
+    """
+    passagens = reconstruir_passagens(
+        db,
+        gap_max_minutes=settings.passage_gap_max_minutes,
+        rebuild_window_hours=settings.passage_rebuild_window_hours,
+    )
+    return PassagesReconstructed(passages_created=passagens)
+
+
+class RoadReadinessV2Recalculated(BaseModel):
+    cells_updated: int
+
+
+@router.post("/road-readiness/recalculate-v2")
+def recalculate_road_readiness_v2(db: Session = Depends(get_db)) -> RoadReadinessV2Recalculated:
+    """
+    Dispara o score v2 sob demanda (ADR 0019, Decisões 2/3) — mesmo padrão de
+    `/road-readiness/recalculate` (v1). Lê de `road_segment_passage`, não de
+    `road_segment_observation`; rodar a sessionização antes (endpoint acima) se a
+    janela de passagens ainda não tiver sido reconstruída.
+    """
+    celulas = recalcular_road_readiness_v2(db, pilot_timezone=settings.pilot_timezone)
+    return RoadReadinessV2Recalculated(cells_updated=celulas)
+
+
+class QualityMetrics(BaseModel):
+    total_segments: int
+    segments_with_score: int
+    coverage_ratio: float | None
+    total_cells: int
+    average_confidence: float | None
+    low_confidence_cell_ratio: float | None
+    average_observations_per_cell: float | None
+    total_pings: int
+    late_ping_ratio: float | None
+
+
+@router.get("/road-readiness/quality-metrics")
+def road_readiness_quality_metrics(db: Session = Depends(get_db)) -> QualityMetrics:
+    """
+    Métricas de qualidade do score (ADR 0019, passo 6 — DoD da Fase 3): cobertura,
+    distribuição de confiança, densidade de observação e taxa de ping atrasado. Ver
+    app/quality_metrics.py para o porquê de cada uma. Read-only, computado sob
+    demanda — não é um job agendado (não há necessidade: barato de calcular, e não
+    existe consumidor automatizado ainda que precise de valor sempre fresco em
+    background).
+    """
+    metricas = calcular_metricas_qualidade(
+        db, rebuild_window_hours=settings.passage_rebuild_window_hours
+    )
+    return QualityMetrics(**metricas)
 
 
 class ChargingStationItem(BaseModel):

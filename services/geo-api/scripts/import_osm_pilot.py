@@ -24,6 +24,7 @@ from geoalchemy2.elements import WKTElement
 
 from app.db import SessionLocal
 from app.models import RoadSegment
+from app.osm_tags import parse_maxspeed_kmh
 from app.pilot_area import HIGHWAY_TYPES_VEICULARES, PILOTO_BBOX, bbox_overpass
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -65,8 +66,13 @@ def importar() -> None:
 
             linha_wkt = "LINESTRING(" + ", ".join(f"{p['lon']} {p['lat']}" for p in geometria) + ")"
             osm_way_id = via["id"]
-            nome = via.get("tags", {}).get("name")
-            tipo_via = via.get("tags", {}).get("highway", "unknown")
+            tags = via.get("tags", {})
+            nome = tags.get("name")
+            tipo_via = tags.get("highway", "unknown")
+            # Referência de fluxo livre pro score de prontidão viária v2 (ADR 0019,
+            # D3.1) — a tag já vinha no payload do Overpass (`out geom` inclui tags) e
+            # não era lida antes desta mudança.
+            maxspeed_kmh = parse_maxspeed_kmh(tags.get("maxspeed"))
 
             existente = (
                 db.query(RoadSegment).filter(RoadSegment.osm_way_id == osm_way_id).one_or_none()
@@ -74,6 +80,7 @@ def importar() -> None:
             if existente:
                 existente.name = nome
                 existente.highway_type = tipo_via
+                existente.maxspeed_kmh = maxspeed_kmh
                 existente.geom = WKTElement(linha_wkt, srid=4326)
                 atualizados += 1
             else:
@@ -82,6 +89,7 @@ def importar() -> None:
                         osm_way_id=osm_way_id,
                         name=nome,
                         highway_type=tipo_via,
+                        maxspeed_kmh=maxspeed_kmh,
                         geom=WKTElement(linha_wkt, srid=4326),
                     )
                 )
