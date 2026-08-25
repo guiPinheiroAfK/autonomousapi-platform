@@ -1,7 +1,7 @@
 package com.autonomousapi.core.driver;
 
 import com.autonomousapi.core.error.DriverWithoutLoginException;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.push.PushNotificationService;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.util.UUID;
@@ -23,8 +23,7 @@ public class DriverNotificationService {
 
     @Transactional(readOnly = true)
     public void notify(JwtPrincipal principal, UUID driverId, String title, String body) {
-        Driver driver = drivers.findByIdAndTenantId(driverId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        Driver driver = Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, principal.tenantId()), "Motorista não encontrado.");
         if (!driver.hasLogin()) {
             throw new DriverWithoutLoginException();
         }

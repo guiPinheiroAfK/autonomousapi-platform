@@ -1,6 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Logo, Marca } from '../components/shared/Logo';
 import { PlacaBR } from '../components/shared/PlacaBR';
+import { DonutChart } from '../components/shared/DonutChart';
+import { Reveal, RevealGroup, RevealItem } from '../components/shared/Reveal';
 
 interface Props {
   onEntrar: () => void;
@@ -41,6 +44,7 @@ export function LandingPage({ onEntrar, onCriarConta }: Props) {
 /* ------------------------------------------------------------------ Cabeçalho */
 
 function Cabecalho({ onEntrar, onCriarConta }: Props) {
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--linha)] bg-[var(--breu)]/85 backdrop-blur">
       {/* Grid de 3 colunas (não flex justify-between): a coluna do meio é a única forma de
@@ -52,13 +56,13 @@ function Cabecalho({ onEntrar, onCriarConta }: Props) {
 
         <nav className="hidden items-center gap-8 text-[14px] text-[var(--tinta-suave)] md:flex">
           <a href="#como-operar" className="whitespace-nowrap transition-colors hover:text-[var(--tinta)]">
-            Como operar
+            {t('landing.nav.comoOperar')}
           </a>
           <a href="#planos" className="whitespace-nowrap transition-colors hover:text-[var(--tinta)]">
-            Planos
+            {t('landing.nav.planos')}
           </a>
           <a href="#perguntas" className="whitespace-nowrap transition-colors hover:text-[var(--tinta)]">
-            Perguntas
+            {t('landing.nav.perguntas')}
           </a>
         </nav>
 
@@ -68,14 +72,14 @@ function Cabecalho({ onEntrar, onCriarConta }: Props) {
             onClick={onEntrar}
             className="botao-tatil whitespace-nowrap text-[14px] text-[var(--tinta-suave)] transition-colors hover:text-[var(--tinta)]"
           >
-            Entrar
+            {t('landing.header.entrar')}
           </button>
           <button
             type="button"
             onClick={onCriarConta}
             className="botao-tatil whitespace-nowrap rounded-full bg-[var(--tinta)] px-4 py-2 text-[14px] font-medium text-[var(--breu)] transition-opacity hover:opacity-90"
           >
-            Começar
+            {t('landing.header.comecar')}
           </button>
         </div>
       </div>
@@ -86,18 +90,24 @@ function Cabecalho({ onEntrar, onCriarConta }: Props) {
 /* ------------------------------------------------------------------------ Hero */
 
 function Hero({ onCriarConta, onEntrar }: Props) {
+  const { t } = useTranslation();
   return (
-    <section className="mx-auto max-w-6xl px-6 pb-24 pt-20 lg:pt-28">
-      <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_1fr]">
+    <section className="relative overflow-hidden px-6 pb-24 pt-20 lg:pt-28">
+      {/* Marca-d'água: a mesma via em fuga da logo, gigante e quase invisível, ancorada
+          fora da grade de conteúdo — decoração de fundo, não compete com o texto nem
+          precisa de aria-label (a Logo real do cabeçalho já identifica a marca). */}
+      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 opacity-[0.03]">
+        <Marca tamanho={620} className="text-[var(--tinta)]" />
+      </div>
+      <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.05fr_1fr]">
         <div>
           <h1 className="fonte-editorial text-[46px] leading-[1.03] sm:text-[68px] lg:text-[78px]">
-            Sua frota já
+            {t('landing.hero.titleLine1')}
             <br />
-            conhece as ruas
+            {t('landing.hero.titleLine2')}
           </h1>
           <p className="mt-7 max-w-lg text-[18px] leading-[1.6] text-[var(--tinta-suave)]">
-            Controle veículos, motoristas, manutenção e custo por km. Faça você mesmo ou
-            deixe um gestor nosso tocar a operação por você.
+            {t('landing.hero.subtitle')}
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -106,14 +116,14 @@ function Hero({ onCriarConta, onEntrar }: Props) {
               onClick={onCriarConta}
               className="botao-tatil rounded-full bg-[var(--acento)] px-7 py-3.5 text-[15px] font-medium text-[var(--acento-tinta)]"
             >
-              Cadastrar minha frota
+              {t('landing.hero.ctaPrimary')}
             </button>
             <button
               type="button"
               onClick={onEntrar}
               className="botao-tatil rounded-full border border-[var(--linha)] px-7 py-3.5 text-[15px] transition-colors hover:border-[var(--tinta-suave)]"
             >
-              Já tenho conta
+              {t('landing.hero.ctaSecondary')}
             </button>
           </div>
         </div>
@@ -147,11 +157,12 @@ function LinhaDado({ rotulo, valor, alerta }: { rotulo: string; valor: string; a
  * precisaria ser refeita a cada mudança de paleta.
  */
 function Vitrine() {
+  const { t } = useTranslation();
   const quadros = [
-    { titulo: 'Ficha do veículo', corpo: <QuadroVeiculo /> },
-    { titulo: 'Extrato de custo', corpo: <QuadroExtrato /> },
-    { titulo: 'Frota', corpo: <QuadroFrota /> },
-    { titulo: 'Painel', corpo: <QuadroPainel /> },
+    { titulo: t('landing.vitrine.veiculo.titulo'), corpo: <QuadroVeiculo /> },
+    { titulo: t('landing.vitrine.extrato.titulo'), corpo: <QuadroExtrato /> },
+    { titulo: t('landing.vitrine.frota.titulo'), corpo: <QuadroFrota /> },
+    { titulo: t('landing.vitrine.painel.titulo'), corpo: <QuadroPainel /> },
   ];
   const [indice, setIndice] = useState(0);
 
@@ -172,7 +183,7 @@ function Vitrine() {
               key={q.titulo}
               type="button"
               onClick={() => setIndice(i)}
-              aria-label={`Ver exemplo: ${q.titulo}`}
+              aria-label={t('landing.vitrine.verExemplo', { titulo: q.titulo })}
               className={`h-1.5 rounded-full transition-all ${
                 i === indice ? 'w-5 bg-[var(--papel-tinta)]/70' : 'w-1.5 bg-[var(--papel-tinta)]/20'
               }`}
@@ -186,13 +197,14 @@ function Vitrine() {
       </div>
 
       <p className="mt-7 border-t border-black/10 pt-4 text-[12px] leading-relaxed opacity-55">
-        Exemplos ilustrativos. Cada tela vem de um dado que já existe na sua operação.
+        {t('landing.vitrine.ilustrativo')}
       </p>
     </div>
   );
 }
 
 function QuadroVeiculo() {
+  const { t } = useTranslation();
   return (
     <>
       <div className="flex items-center gap-3">
@@ -203,16 +215,24 @@ function QuadroVeiculo() {
         </div>
       </div>
       <dl className="mt-6 space-y-3.5 text-[13px]">
-        <LinhaDado rotulo="Custo por km" valor="R$ 0,41" />
-        <LinhaDado rotulo="Próxima preventiva" valor="em 10 dias" alerta />
-        <LinhaDado rotulo="CNH do motorista" valor="válida" />
-        <LinhaDado rotulo="Trajeto registrado" valor="1.284 km no mês" />
+        <LinhaDado rotulo={t('landing.vitrine.veiculo.custoPorKm')} valor="R$ 0,41" />
+        <LinhaDado
+          rotulo={t('landing.vitrine.veiculo.proximaPreventiva')}
+          valor={t('landing.vitrine.veiculo.emDias', { n: 10 })}
+          alerta
+        />
+        <LinhaDado rotulo={t('landing.vitrine.veiculo.cnhMotorista')} valor={t('landing.vitrine.veiculo.valida')} />
+        <LinhaDado
+          rotulo={t('landing.vitrine.veiculo.trajetoRegistrado')}
+          valor={t('landing.vitrine.veiculo.kmNoMes', { km: '1.284' })}
+        />
       </dl>
     </>
   );
 }
 
 function QuadroExtrato() {
+  const { t } = useTranslation();
   const linhas = [
     { item: 'Combustível · 04/08', valor: 'R$ 312,40' },
     { item: 'Troca de óleo · 07/08', valor: 'R$ 189,00' },
@@ -230,7 +250,7 @@ function QuadroExtrato() {
         ))}
       </ul>
       <div className="mt-4 flex items-baseline justify-between text-[14px]">
-        <span className="font-medium">Total do mês</span>
+        <span className="font-medium">{t('landing.vitrine.extrato.totalDoMes')}</span>
         <span className="font-data font-medium">R$ 1.089,00</span>
       </div>
     </>
@@ -238,11 +258,12 @@ function QuadroExtrato() {
 }
 
 function QuadroFrota() {
+  const { t } = useTranslation();
   const veiculos = [
-    { placa: 'RTC1D89', status: 'Em rota', cor: 'text-[#15803d]' },
-    { placa: 'QXV4A21', status: 'Preventiva em 3 dias', cor: 'text-[#b45309]' },
-    { placa: 'PLM9K02', status: 'Disponível', cor: 'text-[var(--papel-tinta)]/60' },
-    { placa: 'OTB2E77', status: 'Em manutenção', cor: 'text-[#b91c1c]' },
+    { placa: 'RTC1D89', status: t('landing.vitrine.frota.emRota'), cor: 'text-[#15803d]' },
+    { placa: 'QXV4A21', status: t('landing.vitrine.frota.preventivaEmDias', { n: 3 }), cor: 'text-[#b45309]' },
+    { placa: 'PLM9K02', status: t('landing.vitrine.frota.disponivel'), cor: 'text-[var(--papel-tinta)]/60' },
+    { placa: 'OTB2E77', status: t('landing.vitrine.frota.emManutencao'), cor: 'text-[#b91c1c]' },
   ];
   return (
     <ul className="space-y-3.5 text-[13px]">
@@ -256,12 +277,15 @@ function QuadroFrota() {
   );
 }
 
+/** Mesmo componente DonutChart do Dashboard de verdade (ver Fase 2) — a landing mostra o
+ *  produto real, não uma versão simplificada só pra demonstração. */
 function QuadroPainel() {
+  const { t } = useTranslation();
   const kpis = [
-    { rotulo: 'Veículos', valor: '12' },
-    { rotulo: 'Em operação', valor: '9' },
-    { rotulo: 'Em manutenção', valor: '2' },
-    { rotulo: 'Motoristas', valor: '7' },
+    { rotulo: t('landing.vitrine.painel.veiculos'), valor: '12' },
+    { rotulo: t('landing.vitrine.painel.emOperacao'), valor: '9' },
+    { rotulo: t('landing.vitrine.painel.manutencao'), valor: '2' },
+    { rotulo: t('landing.vitrine.painel.motoristas'), valor: '7' },
   ];
   return (
     <div>
@@ -273,12 +297,20 @@ function QuadroPainel() {
           </div>
         ))}
       </div>
-      <div className="mt-4 flex items-center gap-1.5 overflow-hidden rounded-full border border-black/10">
-        <div className="h-2 bg-[#15803d]" style={{ width: '75%' }} />
-        <div className="h-2 bg-[#b45309]" style={{ width: '17%' }} />
-        <div className="h-2 bg-black/15" style={{ width: '8%' }} />
+      <div className="mt-5 flex items-center gap-4">
+        <DonutChart
+          size={72}
+          thickness={13}
+          segments={[
+            { value: 9, color: '#15803d' },
+            { value: 2, color: '#b45309' },
+            { value: 1, color: 'rgba(0,0,0,0.15)' },
+          ]}
+        />
+        <p className="text-[11px] leading-relaxed opacity-55">
+          {t('landing.vitrine.painel.legenda', { ativo: 9, manutencao: 2, inativo: 1 })}
+        </p>
       </div>
-      <p className="mt-2 text-[11px] opacity-55">Ativo (9) · Em manutenção (2) · Inativo (1)</p>
     </div>
   );
 }
@@ -286,41 +318,49 @@ function QuadroPainel() {
 /* -------------------------------------------------------------------- Espectro */
 
 function Espectro() {
+  const { t } = useTranslation();
   return (
     <section id="como-operar" className="border-t border-[var(--linha)]">
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <p className="mb-4 text-[13px] uppercase tracking-[0.2em] text-[var(--tinta-suave)]">
-          Como você quer operar
-        </p>
-        <h2 className="fonte-editorial max-w-2xl text-[34px] leading-[1.15] sm:text-[46px]">
-          Nem toda frota quer o mesmo grau de trabalho.
-        </h2>
-        <p className="mt-6 max-w-xl text-[16px] leading-[1.7] text-[var(--tinta-suave)]">
-          Tem quem queira abrir o painel todo dia e mexer em tudo. E tem quem só queira
-          receber o relatório pronto com o que precisa decidir. Os dois são clientes.
-        </p>
+        <Reveal>
+          <p className="mb-4 text-[13px] uppercase tracking-[0.2em] text-[var(--tinta-suave)]">
+            {t('landing.espectro.eyebrow')}
+          </p>
+          <h2 className="fonte-editorial max-w-2xl text-[34px] leading-[1.15] sm:text-[46px]">
+            {t('landing.espectro.titulo')}
+          </h2>
+          <p className="mt-6 max-w-xl text-[16px] leading-[1.7] text-[var(--tinta-suave)]">
+            {t('landing.espectro.texto')}
+          </p>
+        </Reveal>
 
-        <div className="mt-14 grid gap-4 md:grid-cols-3">
-          <CartaoModo
-            etapa="Você no controle"
-            titulo="Autoatendimento"
-            texto="Você cadastra, lança e acompanha. O sistema calcula custo por km, avisa de manutenção e vencimento de CNH, e exporta o que você precisar."
-            paraQuem="Frota pequena com alguém dedicado a ela."
-          />
-          <CartaoModo
-            etapa="Dividido"
-            titulo="Acompanhado"
-            texto="Você opera o dia a dia e um gestor nosso revisa a frota periodicamente, aponta o que está fora da curva e ajuda a corrigir o rumo."
-            paraQuem="Quem tem a operação rodando mas não tem tempo de olhar o dado."
-            destaque
-          />
-          <CartaoModo
-            etapa="Por sua conta"
-            titulo="Gestor dedicado"
-            texto="Um gestor nosso assume a rotina: lança os custos, agenda as preventivas, acompanha a documentação e entrega o fechamento pronto."
-            paraQuem="Quem quer resultado sem construir estrutura interna."
-          />
-        </div>
+        <RevealGroup className="mt-14 grid gap-4 md:grid-cols-3">
+          <RevealItem>
+            <CartaoModo
+              etapa={t('landing.espectro.cartoes.auto.etapa')}
+              titulo={t('landing.espectro.cartoes.auto.titulo')}
+              texto={t('landing.espectro.cartoes.auto.texto')}
+              paraQuem={t('landing.espectro.cartoes.auto.paraQuem')}
+            />
+          </RevealItem>
+          <RevealItem>
+            <CartaoModo
+              etapa={t('landing.espectro.cartoes.acompanhado.etapa')}
+              titulo={t('landing.espectro.cartoes.acompanhado.titulo')}
+              texto={t('landing.espectro.cartoes.acompanhado.texto')}
+              paraQuem={t('landing.espectro.cartoes.acompanhado.paraQuem')}
+              destaque
+            />
+          </RevealItem>
+          <RevealItem>
+            <CartaoModo
+              etapa={t('landing.espectro.cartoes.dedicado.etapa')}
+              titulo={t('landing.espectro.cartoes.dedicado.titulo')}
+              texto={t('landing.espectro.cartoes.dedicado.texto')}
+              paraQuem={t('landing.espectro.cartoes.dedicado.paraQuem')}
+            />
+          </RevealItem>
+        </RevealGroup>
       </div>
     </section>
   );
@@ -339,6 +379,7 @@ function CartaoModo({
   paraQuem: string;
   destaque?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={`cartao-pop rounded-xl border p-7 ${
@@ -351,7 +392,7 @@ function CartaoModo({
       <h3 className="fonte-editorial mt-3 text-[26px] leading-tight">{titulo}</h3>
       <p className="mt-3 text-[15px] leading-[1.65] text-[var(--tinta-suave)]">{texto}</p>
       <p className="mt-5 border-t border-[var(--linha)] pt-4 text-[13px] text-[var(--tinta-suave)]">
-        <span className="text-[var(--tinta)]">Para quem:</span> {paraQuem}
+        <span className="text-[var(--tinta)]">{t('landing.espectro.paraQuemLabel')}</span> {paraQuem}
       </p>
     </div>
   );
@@ -360,38 +401,27 @@ function CartaoModo({
 /* ------------------------------------------------------------------------ Tese */
 
 function Tese() {
+  const { t } = useTranslation();
   return (
     <section className="border-t border-[var(--linha)] bg-[var(--breu-elevado)]">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <div className="grid items-start gap-14 lg:grid-cols-[1.1fr_0.9fr]">
-          <div>
+          <Reveal>
             <p className="mb-5 text-[13px] uppercase tracking-[0.2em] text-[var(--tinta-suave)]">
-              Por que construímos isso
+              {t('landing.tese.eyebrow')}
             </p>
-            <h2 className="fonte-editorial text-[32px] leading-[1.15] sm:text-[44px]">
-              Nenhum mapa genérico sabe o que é uma moto surgindo entre dois carros parados no
-              farol.
-            </h2>
+            <h2 className="fonte-editorial text-[32px] leading-[1.15] sm:text-[44px]">{t('landing.tese.titulo')}</h2>
 
             <div className="mt-8 space-y-5 text-[16px] leading-[1.75] text-[var(--tinta-suave)]">
-              <p>
-                As empresas de veículo autônomo que olham para o Brasil não têm dado real do
-                nosso trânsito. Sinalização inconsistente, faixa que some, comportamento que
-                nenhum modelo treinado lá fora previu.
-              </p>
-              <p>
-                Esse dado não se coleta com carro de teste circulando vazio. Ele já está sendo
-                produzido, todo dia, por quem entrega, transporta e aluga — só que ninguém
-                guarda.
-              </p>
-              <p className="text-[var(--tinta)]">
-                A gestão de frota é um produto completo por si só. O mapa do trânsito real é o
-                que ela deixa para trás enquanto funciona.
-              </p>
+              <p>{t('landing.tese.p1')}</p>
+              <p>{t('landing.tese.p2')}</p>
+              <p className="text-[var(--tinta)]">{t('landing.tese.p3')}</p>
             </div>
-          </div>
+          </Reveal>
 
-          <MapaRota />
+          <Reveal>
+            <MapaRota />
+          </Reveal>
         </div>
       </div>
     </section>
@@ -406,6 +436,7 @@ function Tese() {
  * um <video loop muted autoPlay>; a moldura e a legenda continuam as mesmas.
  */
 function MapaRota() {
+  const { t } = useTranslation();
   return (
     <figure className="overflow-hidden rounded-2xl border border-[var(--linha)] bg-[var(--breu)]">
       <div className="relative aspect-[4/3]">
@@ -432,8 +463,8 @@ function MapaRota() {
         </svg>
       </div>
       <figcaption className="flex items-center justify-between border-t border-[var(--linha)] px-5 py-3.5 text-[12px] text-[var(--tinta-suave)]">
-        <span>Trajeto registrado pelo app do motorista</span>
-        <span className="font-data text-[var(--acento)]">em breve: vídeo real</span>
+        <span>{t('landing.tese.mapaLegenda')}</span>
+        <span className="font-data text-[var(--acento)]">{t('landing.tese.mapaEmBreve')}</span>
       </figcaption>
     </figure>
   );
@@ -491,66 +522,41 @@ function IconeGestor() {
   );
 }
 
-const RECURSOS: { icone: () => ReactNode; titulo: string; texto: string }[] = [
-  {
-    icone: IconeCusto,
-    titulo: 'Custo por km automático',
-    texto: 'Cada lançamento vira uma conta rastreável, sem planilha paralela e sem digitar de novo no fim do mês.',
-  },
-  {
-    icone: IconeAlerta,
-    titulo: 'Alerta de manutenção e CNH',
-    texto: 'O sistema avisa antes do vencimento — de preventiva e de documento — não depois que já venceu.',
-  },
-  {
-    icone: IconeExport,
-    titulo: 'Export sem lock-in',
-    texto: 'Tudo sai em CSV quando você quiser. O dado é seu; a ferramenta é só onde ele mora enquanto está com a gente.',
-  },
-  {
-    icone: IconeFrota,
-    titulo: 'Múltiplas unidades',
-    texto: 'Uma frota em três cidades ou três frotas separadas — o painel consolida sem misturar o que não deve se misturar.',
-  },
-  {
-    icone: IconeApi,
-    titulo: 'Acesso à API',
-    texto: 'Quem já tem um sistema interno integra o que precisar, sem reconstruir o que a AutonomousAPI já resolve.',
-  },
-  {
-    icone: IconeGestor,
-    titulo: 'Gestor sob demanda',
-    texto: 'Comece sozinho e peça ajuda só quando fizer sentido — o plano cresce junto, não trava você numa escolha inicial.',
-  },
+const RECURSOS: { icone: () => ReactNode; key: string }[] = [
+  { icone: IconeCusto, key: 'custo' },
+  { icone: IconeAlerta, key: 'alerta' },
+  { icone: IconeExport, key: 'export' },
+  { icone: IconeFrota, key: 'unidades' },
+  { icone: IconeApi, key: 'api' },
+  { icone: IconeGestor, key: 'gestor' },
 ];
 
 function Recursos() {
+  const { t } = useTranslation();
   return (
     <section className="border-t border-[var(--linha)]">
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mb-14 max-w-xl">
+        <Reveal className="mb-14 max-w-xl">
           <p className="mb-4 text-[13px] uppercase tracking-[0.2em] text-[var(--tinta-suave)]">
-            O que o painel já faz
+            {t('landing.recursos.eyebrow')}
           </p>
-          <h2 className="fonte-editorial text-[34px] leading-[1.15] sm:text-[44px]">
-            Seis coisas que hoje provavelmente vivem numa planilha.
-          </h2>
-        </div>
+          <h2 className="fonte-editorial text-[34px] leading-[1.15] sm:text-[44px]">{t('landing.recursos.titulo')}</h2>
+        </Reveal>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {RECURSOS.map(({ icone: Icone, titulo, texto }) => (
-            <div
-              key={titulo}
+        <RevealGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {RECURSOS.map(({ icone: Icone, key }) => (
+            <RevealItem
+              key={key}
               className="cartao-pop rounded-xl border border-[var(--linha)] bg-[var(--breu-elevado)]/55 p-6"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--acento)]/12 text-[var(--acento)]">
                 <Icone />
               </div>
-              <h3 className="mt-4 text-[16px] font-medium text-[var(--tinta)]">{titulo}</h3>
-              <p className="mt-2 text-[14px] leading-[1.6] text-[var(--tinta-suave)]">{texto}</p>
-            </div>
+              <h3 className="mt-4 text-[16px] font-medium text-[var(--tinta)]">{t(`landing.recursos.itens.${key}.titulo`)}</h3>
+              <p className="mt-2 text-[14px] leading-[1.6] text-[var(--tinta-suave)]">{t(`landing.recursos.itens.${key}.texto`)}</p>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
       </div>
     </section>
   );
@@ -567,48 +573,33 @@ function IconeCadeado() {
   );
 }
 
-const GARANTIAS: { titulo: string; texto: string }[] = [
-  {
-    titulo: 'Isolamento por conta',
-    texto: 'Cada assinante enxerga só a própria frota. É regra de banco de dados, não convenção de tela — mesmo um erro de interface não vaza dado de outra empresa.',
-  },
-  {
-    titulo: 'Dado de trânsito, nunca de identidade',
-    texto: 'O que vira índice agregado de condição viária é o comportamento da via, não quem passou por ela. Nada identifica motorista, veículo ou cliente final.',
-  },
-  {
-    titulo: 'Você tira seus dados quando quiser',
-    texto: 'Export em CSV a qualquer momento, sem pedir permissão e sem taxa. Cancelar a assinatura não tranca o que é seu.',
-  },
-  {
-    titulo: 'Sem instalação, sem invasão',
-    texto: 'Não há hardware para instalar no veículo. O app do motorista só registra rota com consentimento explícito, dado a cada abertura.',
-  },
-];
+const GARANTIAS_KEYS = ['isolamento', 'transito', 'export', 'instalacao'] as const;
 
 function Confianca() {
+  const { t } = useTranslation();
   return (
     <section className="border-t border-[var(--linha)] bg-[var(--breu-elevado)]">
       <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--acento)]/35 text-[var(--acento)]">
-          <IconeCadeado />
-        </div>
-        <h2 className="fonte-editorial mt-6 text-[34px] leading-tight sm:text-[46px]">
-          Seus dados continuam seus.
-        </h2>
-        <p className="mx-auto mt-4 max-w-lg text-[16px] leading-[1.7] text-[var(--tinta-suave)]">
-          Gestão de frota lida com localização, custo e documento de gente de verdade. Não
-          tratamos isso como detalhe de rodapé.
-        </p>
+        <Reveal>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--acento)]/35 text-[var(--acento)]">
+            <IconeCadeado />
+          </div>
+          <h2 className="fonte-editorial mt-6 text-[34px] leading-tight sm:text-[46px]">{t('landing.confianca.titulo')}</h2>
+          <p className="mx-auto mt-4 max-w-lg text-[16px] leading-[1.7] text-[var(--tinta-suave)]">
+            {t('landing.confianca.texto')}
+          </p>
+        </Reveal>
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-[var(--linha)] bg-[var(--linha)] text-left sm:grid-cols-2">
-          {GARANTIAS.map((g) => (
-            <div key={g.titulo} className="bg-[var(--breu-elevado)] p-7">
-              <p className="text-[15px] font-medium text-[var(--tinta)]">{g.titulo}</p>
-              <p className="mt-2 text-[14px] leading-[1.65] text-[var(--tinta-suave)]">{g.texto}</p>
-            </div>
+        <RevealGroup className="mt-14 grid gap-px overflow-hidden rounded-xl border border-[var(--linha)] bg-[var(--linha)] text-left sm:grid-cols-2">
+          {GARANTIAS_KEYS.map((key) => (
+            <RevealItem key={key} className="bg-[var(--breu-elevado)] p-7">
+              <p className="text-[15px] font-medium text-[var(--tinta)]">{t(`landing.confianca.garantias.${key}.titulo`)}</p>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[var(--tinta-suave)]">
+                {t(`landing.confianca.garantias.${key}.texto`)}
+              </p>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
       </div>
     </section>
   );
@@ -617,77 +608,72 @@ function Confianca() {
 /* ---------------------------------------------------------------------- Planos */
 
 function Planos({ onCriarConta }: { onCriarConta: () => void }) {
+  const { t } = useTranslation();
   return (
     <section id="planos" className="border-t border-[var(--linha)]">
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mb-14 text-center">
-          <h2 className="fonte-editorial text-[38px] leading-tight sm:text-[52px]">Planos</h2>
+        <Reveal className="mb-14 text-center">
+          <h2 className="fonte-editorial text-[38px] leading-tight sm:text-[52px]">{t('landing.planos.titulo')}</h2>
           <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-[var(--tinta-suave)]">
-            Preço por veículo ativo. Você paga pelo que está rodando, não por assento nem
-            por licença.
+            {t('landing.planos.subtitulo')}
           </p>
-        </div>
+        </Reveal>
 
-        <div className="grid gap-4 lg:grid-cols-4">
-          <Plano
-            nome="Starter"
-            faixa="1 a 10 veículos"
-            preco="R$ 66"
-            unidade="por veículo/mês"
-            nota="R$ 56 no plano anual"
-            recursos={[
-              'Cadastro de veículos e motoristas',
-              'Custo por km e histórico',
-              'Alerta de manutenção e CNH',
-              'Export em CSV',
-              'App do motorista',
-            ]}
-            onAcao={onCriarConta}
-            acao="Começar"
-          />
-          <Plano
-            nome="Growth"
-            faixa="11 a 50 veículos"
-            preco="R$ 58"
-            unidade="por veículo/mês"
-            nota="R$ 49 no plano anual"
-            heranca="Tudo do Starter, mais:"
-            recursos={['Ordens de serviço', 'Relatórios consolidados', 'Múltiplas unidades']}
-            onAcao={onCriarConta}
-            acao="Começar"
-            destaque
-          />
-          <Plano
-            nome="Scale"
-            faixa="51 a 200 veículos"
-            preco="R$ 49"
-            unidade="por veículo/mês"
-            nota="R$ 42 no plano anual"
-            heranca="Tudo do Growth, mais:"
-            recursos={['Revisão periódica por um gestor', 'Acesso à API', 'Suporte prioritário']}
-            onAcao={onCriarConta}
-            acao="Começar"
-          />
-          <Plano
-            nome="Gestor dedicado"
-            faixa="Operação assumida por nós"
-            preco="Sob consulta"
-            unidade="conforme o tamanho da frota"
-            heranca="Tudo do Scale, mais:"
-            recursos={[
-              'Gestor cuidando da rotina',
-              'Lançamento de custo por nossa conta',
-              'Agendamento de preventivas',
-              'Fechamento mensal entregue pronto',
-            ]}
-            acao="Falar com a gente"
-            emailContato="contato@autonomousapi.com.br"
-          />
-        </div>
+        <RevealGroup className="grid gap-4 lg:grid-cols-4">
+          <RevealItem>
+            <Plano
+              nome={t('landing.planos.starter.nome')}
+              faixa={t('landing.planos.starter.faixa')}
+              preco={t('landing.planos.starter.preco')}
+              unidade={t('landing.planos.porVeiculoMes')}
+              nota={t('landing.planos.starter.nota')}
+              recursos={t('landing.planos.starter.recursos', { returnObjects: true }) as string[]}
+              onAcao={onCriarConta}
+              acao={t('landing.planos.starter.acao')}
+            />
+          </RevealItem>
+          <RevealItem>
+            <Plano
+              nome={t('landing.planos.growth.nome')}
+              faixa={t('landing.planos.growth.faixa')}
+              preco={t('landing.planos.growth.preco')}
+              unidade={t('landing.planos.porVeiculoMes')}
+              nota={t('landing.planos.growth.nota')}
+              heranca={t('landing.planos.growth.heranca')}
+              recursos={t('landing.planos.growth.recursos', { returnObjects: true }) as string[]}
+              onAcao={onCriarConta}
+              acao={t('landing.planos.growth.acao')}
+              destaque
+            />
+          </RevealItem>
+          <RevealItem>
+            <Plano
+              nome={t('landing.planos.scale.nome')}
+              faixa={t('landing.planos.scale.faixa')}
+              preco={t('landing.planos.scale.preco')}
+              unidade={t('landing.planos.porVeiculoMes')}
+              nota={t('landing.planos.scale.nota')}
+              heranca={t('landing.planos.scale.heranca')}
+              recursos={t('landing.planos.scale.recursos', { returnObjects: true }) as string[]}
+              onAcao={onCriarConta}
+              acao={t('landing.planos.scale.acao')}
+            />
+          </RevealItem>
+          <RevealItem>
+            <Plano
+              nome={t('landing.planos.dedicado.nome')}
+              faixa={t('landing.planos.dedicado.faixa')}
+              preco={t('landing.planos.dedicado.preco')}
+              unidade={t('landing.planos.dedicado.unidade')}
+              heranca={t('landing.planos.dedicado.heranca')}
+              recursos={t('landing.planos.dedicado.recursos', { returnObjects: true }) as string[]}
+              acao={t('landing.planos.dedicado.acao')}
+              emailContato="contato@autonomousapi.com.br"
+            />
+          </RevealItem>
+        </RevealGroup>
 
-        <p className="mt-8 text-center text-[13px] text-[var(--tinta-suave)]">
-          Valores de lançamento. Sem fidelidade e sem equipamento para instalar no veículo.
-        </p>
+        <p className="mt-8 text-center text-[13px] text-[var(--tinta-suave)]">{t('landing.planos.rodape')}</p>
       </div>
     </section>
   );
@@ -771,67 +757,22 @@ function Plano({
 
 /* ------------------------------------------------------------------- Perguntas */
 
-const PERGUNTAS: { q: string; a: ReactNode }[] = [
-  {
-    q: 'Preciso instalar rastreador nos veículos?',
-    a: (
-      <>
-        Não. A operação é registrada pelo app do motorista, que já roda no celular dele. Se
-        você quiser precisão de rota o app coleta o trajeto durante a viagem, sempre com
-        consentimento explícito na primeira abertura.
-      </>
-    ),
-  },
-  {
-    q: 'O que exatamente é "custo por km"?',
-    a: (
-      <>
-        Todo lançamento que você registra — combustível, manutenção, pedágio — é somado e
-        dividido pela quilometragem rodada daquele veículo. Dá para exportar tudo em CSV e
-        conferir na planilha; nenhum número aparece sem que você possa reconstruir a conta.
-      </>
-    ),
-  },
-  {
-    q: 'Como funciona o gestor dedicado?',
-    a: (
-      <>
-        Um gestor nosso assume a rotina que hoje consome seu tempo: lança os custos, agenda
-        as preventivas, acompanha vencimento de documentação e entrega o fechamento do mês.
-        O preço varia com o tamanho da frota e a profundidade do acompanhamento — por isso é
-        sob consulta.
-      </>
-    ),
-  },
-  {
-    q: 'O que vocês fazem com os dados da minha operação?',
-    a: (
-      <>
-        Os dados da sua frota são seus e ficam isolados por conta. Dados de trânsito derivados
-        (como se comporta uma via em determinado horário) podem alimentar, de forma agregada e
-        anonimizada, um índice de condições viárias — nunca de um jeito que identifique sua
-        empresa, seus motoristas ou seus clientes.
-      </>
-    ),
-  },
-  {
-    q: 'Tem fidelidade ou multa para cancelar?',
-    a: <>Não. O plano é mensal e você cancela quando quiser. O anual dá desconto, não amarra.</>,
-  },
-];
-
 function Perguntas() {
+  const { t } = useTranslation();
   const [aberta, setAberta] = useState<number | null>(0);
+  const perguntas = t('landing.perguntas.itens', { returnObjects: true }) as { q: string; a: string }[];
 
   return (
     <section id="perguntas" className="border-t border-[var(--linha)] bg-[var(--breu-elevado)]">
       <div className="mx-auto max-w-3xl px-6 py-24">
-        <h2 className="fonte-editorial mb-14 text-center text-[38px] leading-tight sm:text-[52px]">
-          Perguntas
-        </h2>
+        <Reveal>
+          <h2 className="fonte-editorial mb-14 text-center text-[38px] leading-tight sm:text-[52px]">
+            {t('landing.perguntas.titulo')}
+          </h2>
+        </Reveal>
 
-        <div className="border-t border-[var(--linha)]">
-          {PERGUNTAS.map((p, i) => {
+        <Reveal className="border-t border-[var(--linha)]">
+          {perguntas.map((p, i) => {
             const estaAberta = aberta === i;
             return (
               <div key={p.q} className="border-b border-[var(--linha)]">
@@ -863,7 +804,7 @@ function Perguntas() {
               </div>
             );
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -872,6 +813,7 @@ function Perguntas() {
 /* --------------------------------------------------------------------- Rodapé */
 
 function Rodape() {
+  const { t } = useTranslation();
   return (
     <footer className="border-t border-[var(--linha)]">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-[13px] text-[var(--tinta-suave)] sm:flex-row sm:items-center sm:justify-between">
@@ -879,7 +821,7 @@ function Rodape() {
           <Marca tamanho={20} />
           <span className="fonte-editorial text-[16px] text-[var(--tinta)]">AutonomousAPI</span>
         </span>
-        <span>Produto em desenvolvimento · Fase 1</span>
+        <span>{t('landing.rodape.status')}</span>
       </div>
     </footer>
   );

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { coreApi } from '../api/client';
 import { AuthLayout, BotaoPublico, CampoPublico } from '../components/layout/AuthLayout';
 
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function ForgotPasswordPage({ onVoltarParaLogin, onVoltarParaHome }: Props) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [enviado, setEnviado] = useState(false);
@@ -27,14 +29,15 @@ export function ForgotPasswordPage({ onVoltarParaLogin, onVoltarParaHome }: Prop
 
   if (enviado) {
     return (
-      <AuthLayout titulo="Verifique seu e-mail" chamada={<>Quase lá.</>} onVoltar={onVoltarParaHome}>
+      <AuthLayout titulo={t('auth.forgotPassword.verifiqueEmail')} chamada={<>{t('auth.forgotPassword.quaseLa')}</>} onVoltar={onVoltarParaHome}>
         <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
-          Se <span className="text-[var(--tinta)]">{email}</span> tiver uma conta, mandamos um link para redefinir a
-          senha. Ele vale por 1 hora.
+          {t('auth.forgotPassword.seEmailTiverContaPre')}
+          <span className="text-[var(--tinta)]">{email}</span>
+          {t('auth.forgotPassword.seEmailTiverContaPos')}
         </p>
         <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
           <button type="button" onClick={onVoltarParaLogin} className="link-sublinhado text-[var(--tinta)]">
-            Voltar para o login
+            {t('auth.forgotPassword.voltarParaLogin')}
           </button>
         </p>
       </AuthLayout>
@@ -43,18 +46,22 @@ export function ForgotPasswordPage({ onVoltarParaLogin, onVoltarParaHome }: Prop
 
   return (
     <AuthLayout
-      titulo="Esqueceu a senha?"
-      chamada={<>Sem problema, <em className="italic">manda de novo</em>.</>}
+      titulo={t('auth.forgotPassword.esqueceuSenha')}
+      chamada={
+        <>
+          {t('auth.forgotPassword.semProblemaPre')}
+          <em className="italic">{t('auth.forgotPassword.semProblemaEm')}</em>
+          {t('auth.forgotPassword.semProblemaPos')}
+        </>
+      }
       onVoltar={onVoltarParaHome}
     >
-      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
-        Informe o e-mail da sua conta e mandamos um link para escolher uma senha nova.
-      </p>
+      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">{t('auth.forgotPassword.informeEmail')}</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <CampoPublico
           id="email"
-          rotulo="E-mail"
+          rotulo={t('auth.forgotPassword.email')}
           type="email"
           autoComplete="email"
           placeholder="voce@suafrota.com.br"
@@ -64,14 +71,14 @@ export function ForgotPasswordPage({ onVoltarParaLogin, onVoltarParaHome }: Prop
         />
         <div className="pt-2">
           <BotaoPublico type="submit" disabled={submitting}>
-            {submitting ? 'Enviando...' : 'Enviar link'}
+            {submitting ? t('auth.forgotPassword.enviando') : t('auth.forgotPassword.enviarLink')}
           </BotaoPublico>
         </div>
       </form>
 
       <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
         <button type="button" onClick={onVoltarParaLogin} className="link-sublinhado text-[var(--tinta)]">
-          Voltar para o login
+          {t('auth.forgotPassword.voltarParaLogin')}
         </button>
       </p>
     </AuthLayout>

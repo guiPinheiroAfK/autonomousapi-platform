@@ -1,5 +1,6 @@
 package com.autonomousapi.core.routeplan;
 
+import com.autonomousapi.core.common.PageResponse;
 import com.autonomousapi.core.routeplan.dto.AssignDriverRequest;
 import com.autonomousapi.core.routeplan.dto.CreateRoutePlanRequest;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
@@ -10,6 +11,7 @@ import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/v1/routes/plans")
 public class RoutePlanController {
+
+    // 500 (não 100) porque RentabilidadeTab (web, CostsPage.tsx) agrega TRANSFER
+    // concluído de todo o histórico pra relatório de receita — paginação baixa aqui
+    // truncaria silenciosamente o número mostrado, não só "carregaria menos rápido".
+    private static final int MAX_PAGE_SIZE = 500;
 
     private final RoutePlanService routePlanService;
 
@@ -51,8 +59,13 @@ public class RoutePlanController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
-    public List<RoutePlanResponse> list(Authentication auth) {
-        return routePlanService.listForGestor(principal(auth));
+    public PageResponse<RoutePlanResponse> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+        int cappedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        return PageResponse.from(
+                routePlanService.listForGestor(principal(auth), PageRequest.of(Math.max(page, 0), cappedSize)));
     }
 
     @PostMapping("/{id}/assign")

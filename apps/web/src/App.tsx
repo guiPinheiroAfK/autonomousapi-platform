@@ -1,6 +1,17 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth/AuthContext';
-import { AppShell, type View } from './components/layout/AppShell';
+import { AppShell } from './components/layout/AppShell';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LandingPage } from './pages/LandingPage';
@@ -8,6 +19,11 @@ import { LoginPage } from './pages/LoginPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignupPage } from './pages/SignupPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
+import { ROUTES } from './routes';
+import { useTheme } from './lib/theme';
+import { ConfirmDialogHost } from './lib/confirm';
+import { MarcaAnimada } from './components/shared/Logo';
+import type { UserResponse } from './api/client';
 
 /*
  * Telas autenticadas entram por import dinâmico. O motivo concreto: recharts responde por
@@ -44,203 +60,346 @@ const DriverRoutePage = lazy(() => import('./pages/DriverRoutePage').then((m) =>
 const DriverMorePage = lazy(() => import('./pages/DriverMorePage').then((m) => ({ default: m.DriverMorePage })));
 
 function CarregandoTela() {
-  return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center gap-3 p-16 text-muted-foreground">
+      <MarcaAnimada tamanho={36} />
+      <p className="text-xs">{t('common.carregando')}</p>
+    </div>
+  );
 }
 
-/** Lido uma única vez: token de um link de e-mail (ADR 0011/0012) chega em ?token=... */
-function tokenNaUrl(pathname: string): string | null {
-  if (window.location.pathname !== pathname) return null;
-  return new URLSearchParams(window.location.search).get('token');
+/** Wrapper pra rota com token vindo de link de e-mail (ADR 0011/0012): sem ?token=, não tem
+ *  o que fazer aqui — manda pra home em vez de deixar a tela quebrada. */
+function RequireToken({ children }: { children: (token: string) => ReactNode }) {
+  const [params] = useSearchParams();
+  const token = params.get('token');
+  if (!token) return <Navigate to={ROUTES.home} replace />;
+  return <>{children(token)}</>;
 }
 
-/**
- * Rota própria do veículo (spec 08 item 1): /frota/:id substitui o antigo dialog. Sem
- * lib de roteamento — mesmo padrão manual de leitura de pathname do tokenNaUrl acima,
- * só que com pushState/popstate para navegar sem recarregar a página.
- */
-function vehicleIdNaUrl(): string | null {
-  const match = window.location.pathname.match(/^\/frota\/([^/]+)$/);
-  return match ? match[1] : null;
+/** Defesa em profundidade (spec 07): o Dashboard analítico de frota nunca deve renderizar
+ *  pra um token MOTORISTA, mesmo que a sidebar já esconda a opção — alguém digitando a URL
+ *  na mão não pode contornar isso. */
+function RequireGestor({ user, children }: { user: UserResponse; children: ReactNode }) {
+  if (user.role === 'MOTORISTA') return <Navigate to={ROUTES.home} replace />;
+  return <>{children}</>;
+}
+
+function RequireMotorista({ user, children }: { user: UserResponse; children: ReactNode }) {
+  if (user.role !== 'MOTORISTA') return <Navigate to={ROUTES.home} replace />;
+  return <>{children}</>;
+}
+
+function VehicleDetailRoute() {
+  const { vehicleId } = useParams<{ vehicleId: string }>();
+  const navigate = useNavigate();
+  if (!vehicleId) return <Navigate to={ROUTES.vehicles} replace />;
+  return <VehicleDetailPage vehicleId={vehicleId} onBack={() => navigate(ROUTES.vehicles)} />;
+}
+
+function VehicleCostsRoute() {
+  const { vehicleId } = useParams<{ vehicleId: string }>();
+  const navigate = useNavigate();
+  if (!vehicleId) return <Navigate to={ROUTES.vehicles} replace />;
+  return <VehicleCostsPage vehicleId={vehicleId} onBack={() => navigate(ROUTES.vehicles)} />;
+}
+
+function VehiclesRoute() {
+  const navigate = useNavigate();
+  return (
+    <VehiclesPage
+      onViewCosts={(id) => navigate(ROUTES.vehicleCosts(id))}
+      onViewDetail={(id) => navigate(ROUTES.vehicleDetail(id))}
+    />
+  );
+}
+
+function DashboardRoute() {
+  const navigate = useNavigate();
+  return <DashboardPage onViewVehicles={() => navigate(ROUTES.vehicles)} />;
+}
+
+function ReportsRoute() {
+  const navigate = useNavigate();
+  return <ReportsPage onGoToExpenses={() => navigate(ROUTES.expenses)} />;
+}
+
+function ChatRoute({ user }: { user: UserResponse }) {
+  const navigate = useNavigate();
+  return (
+    <ChatPage
+      onOpenActiveRoute={user.role === 'MOTORISTA' ? () => navigate(ROUTES.driverRoute) : undefined}
+    />
+  );
+}
+
+function DriverHomeRoute() {
+  const navigate = useNavigate();
+  return (
+    <DriverHomePage onViewRoute={() => navigate(ROUTES.driverRoute)} onOpenChat={() => navigate(ROUTES.chat)} />
+  );
+}
+
+function HomeRoute({ user }: { user: UserResponse }) {
+  return user.role === 'MOTORISTA' ? <DriverHomeRoute /> : <DashboardRoute />;
+}
+
+/** Rotas públicas — quem não está logado cai aqui pra qualquer caminho (a landing é a
+ *  porta de entrada de quem ainda não é cliente; login/cadastro têm rota própria). */
+function PublicRoutes() {
+  const navigate = useNavigate();
+  return (
+    <Routes>
+      <Route
+        path={ROUTES.login}
+        element={
+          <LoginPage
+            onGoToSignup={() => navigate(ROUTES.signup)}
+            onVoltarParaHome={() => navigate(ROUTES.home)}
+            onGoToForgotPassword={() => navigate(ROUTES.forgotPassword)}
+          />
+        }
+      />
+      <Route
+        path={ROUTES.signup}
+        element={<SignupPage onGoToLogin={() => navigate(ROUTES.login)} onVoltarParaHome={() => navigate(ROUTES.home)} />}
+      />
+      <Route
+        path={ROUTES.forgotPassword}
+        element={
+          <ForgotPasswordPage
+            onVoltarParaLogin={() => navigate(ROUTES.login)}
+            onVoltarParaHome={() => navigate(ROUTES.home)}
+          />
+        }
+      />
+      <Route
+        path={ROUTES.resetPassword}
+        element={
+          <RequireToken>
+            {(token) => (
+              <ResetPasswordPage
+                token={token}
+                onGoToLogin={() => navigate(ROUTES.login)}
+                onVoltarParaHome={() => navigate(ROUTES.home)}
+              />
+            )}
+          </RequireToken>
+        }
+      />
+      <Route
+        path={ROUTES.verifyEmail}
+        element={
+          <RequireToken>
+            {(token) => (
+              <VerifyEmailPage
+                token={token}
+                onVoltarParaHome={() => navigate(ROUTES.home)}
+                onGoToSignup={() => navigate(ROUTES.signup)}
+              />
+            )}
+          </RequireToken>
+        }
+      />
+      <Route
+        path={ROUTES.acceptInvite}
+        element={
+          <RequireToken>
+            {(token) => (
+              <AcceptInvitePage
+                token={token}
+                onGoToLogin={() => navigate(ROUTES.login)}
+                onVoltarParaHome={() => navigate(ROUTES.home)}
+              />
+            )}
+          </RequireToken>
+        }
+      />
+      <Route
+        path="*"
+        element={<LandingPage onEntrar={() => navigate(ROUTES.login)} onCriarConta={() => navigate(ROUTES.signup)} />}
+      />
+    </Routes>
+  );
+}
+
+/** Rotas autenticadas, dentro do layout com sidebar/topbar (AppShell via <Outlet/>). */
+function AuthenticatedRoutes({ user }: { user: UserResponse }) {
+  const { logout } = useAuth();
+  return (
+    <Routes>
+      <Route element={<AppShell user={user} onLogout={logout} />}>
+        <Route path={ROUTES.home} element={<HomeRoute user={user} />} />
+        <Route path={ROUTES.chat} element={<ChatRoute user={user} />} />
+
+        {/* Gestor */}
+        <Route
+          path={ROUTES.vehicles}
+          element={
+            <RequireGestor user={user}>
+              <VehiclesRoute />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path="/frota/:vehicleId"
+          element={
+            <RequireGestor user={user}>
+              <VehicleDetailRoute />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path="/frota/:vehicleId/custos"
+          element={
+            <RequireGestor user={user}>
+              <VehicleCostsRoute />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.drivers}
+          element={
+            <RequireGestor user={user}>
+              <DriversPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.workOrders}
+          element={
+            <RequireGestor user={user}>
+              <WorkOrdersPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.maintenance}
+          element={
+            <RequireGestor user={user}>
+              <MaintenancePage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.reports}
+          element={
+            <RequireGestor user={user}>
+              <ReportsRoute />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.expenses}
+          element={
+            <RequireGestor user={user}>
+              <CostsPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.billing}
+          element={
+            <RequireGestor user={user}>
+              <BillingPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.affiliates}
+          element={
+            <RequireGestor user={user}>
+              <AffiliatesPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.chargingStations}
+          element={
+            <RequireGestor user={user}>
+              <ChargingStationsPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.routes}
+          element={
+            <RequireGestor user={user}>
+              <RoutesPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.routePlans}
+          element={
+            <RequireGestor user={user}>
+              <RoutePlansPage />
+            </RequireGestor>
+          }
+        />
+        <Route
+          path={ROUTES.collectionPoints}
+          element={
+            <RequireGestor user={user}>
+              <CollectionPointsPage />
+            </RequireGestor>
+          }
+        />
+
+        {/* Motorista */}
+        <Route
+          path={ROUTES.driverRoute}
+          element={
+            <RequireMotorista user={user}>
+              <DriverRoutePage />
+            </RequireMotorista>
+          }
+        />
+        <Route
+          path={ROUTES.driverMore}
+          element={
+            <RequireMotorista user={user}>
+              <DriverMorePage />
+            </RequireMotorista>
+          }
+        />
+
+        <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
+function AppRoutes() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? <AuthenticatedRoutes user={user} /> : <PublicRoutes />;
 }
 
 export function App() {
-  const { user, loading, logout } = useAuth();
-  const tokenVerificacao = useState(() => tokenNaUrl('/verificar-email'))[0];
-  const tokenReset = useState(() => tokenNaUrl('/redefinir-senha'))[0];
-  const tokenConvite = useState(() => tokenNaUrl('/aceitar-convite'))[0];
-  // Quem não está logado cai na landing, não direto no formulário: a página pública é
-  // a porta de entrada de quem ainda não é cliente. Chega direto em 'verify-email',
-  // 'reset-password' ou 'accept-invite' se a URL trouxer o token de um link de e-mail.
-  const [authScreen, setAuthScreen] = useState<
-    'landing' | 'login' | 'signup' | 'verify-email' | 'forgot-password' | 'reset-password' | 'accept-invite'
-  >(
-    tokenVerificacao
-      ? 'verify-email'
-      : tokenReset
-        ? 'reset-password'
-        : tokenConvite
-          ? 'accept-invite'
-          : 'landing',
-  );
-  const [vehicleDetailId, setVehicleDetailId] = useState<string | null>(() => vehicleIdNaUrl());
-  const [view, setView] = useState<View>(() => (vehicleIdNaUrl() ? 'vehicle-detail' : 'dashboard'));
-  const [costsTarget, setCostsTarget] = useState<{ vehicleId: string; plate: string } | null>(null);
-
-  // `user` só chega depois do fetch de /v1/auth/me (loading), então o useState acima não
-  // sabe ainda o papel na primeira renderização — este efeito corrige pro motorista assim
-  // que o papel é conhecido. Também serve de defesa em profundidade (spec 07): a view
-  // 'dashboard' (analítico de frota) nunca deve ficar de pé pra um token MOTORISTA, mesmo
-  // que o nav já esconda a opção — ver também o guard no render mais abaixo.
-  useEffect(() => {
-    if (user?.role === 'MOTORISTA' && view === 'dashboard') {
-      setView('driver-home');
-    }
-  }, [user, view]);
-
-  // Botão voltar/avançar do navegador: sincroniza view/vehicleDetailId com a URL atual.
-  useEffect(() => {
-    function onPopState() {
-      const id = vehicleIdNaUrl();
-      if (id) {
-        setVehicleDetailId(id);
-        setView('vehicle-detail');
-      } else {
-        setVehicleDetailId(null);
-        setView('vehicles');
-      }
-    }
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
-  if (loading) return null;
-
-  if (!user) {
-    if (authScreen === 'verify-email' && tokenVerificacao) {
-      return (
-        <VerifyEmailPage
-          token={tokenVerificacao}
-          onVoltarParaHome={() => setAuthScreen('landing')}
-          onGoToSignup={() => setAuthScreen('signup')}
-        />
-      );
-    }
-    if (authScreen === 'reset-password' && tokenReset) {
-      return (
-        <ResetPasswordPage
-          token={tokenReset}
-          onGoToLogin={() => setAuthScreen('login')}
-          onVoltarParaHome={() => setAuthScreen('landing')}
-        />
-      );
-    }
-    if (authScreen === 'accept-invite' && tokenConvite) {
-      return (
-        <AcceptInvitePage
-          token={tokenConvite}
-          onGoToLogin={() => setAuthScreen('login')}
-          onVoltarParaHome={() => setAuthScreen('landing')}
-        />
-      );
-    }
-    if (authScreen === 'forgot-password') {
-      return (
-        <ForgotPasswordPage
-          onVoltarParaLogin={() => setAuthScreen('login')}
-          onVoltarParaHome={() => setAuthScreen('landing')}
-        />
-      );
-    }
-    if (authScreen === 'login') {
-      return (
-        <LoginPage
-          onGoToSignup={() => setAuthScreen('signup')}
-          onVoltarParaHome={() => setAuthScreen('landing')}
-          onGoToForgotPassword={() => setAuthScreen('forgot-password')}
-        />
-      );
-    }
-    if (authScreen === 'signup') {
-      return (
-        <SignupPage
-          onGoToLogin={() => setAuthScreen('login')}
-          onVoltarParaHome={() => setAuthScreen('landing')}
-        />
-      );
-    }
-    return (
-      <LandingPage
-        onEntrar={() => setAuthScreen('login')}
-        onCriarConta={() => setAuthScreen('signup')}
-      />
-    );
-  }
-
-  function goToCosts(vehicleId: string, plate: string) {
-    setCostsTarget({ vehicleId, plate });
-    setView('costs');
-  }
-
-  function goToVehicleDetail(vehicleId: string) {
-    setVehicleDetailId(vehicleId);
-    window.history.pushState({}, '', `/frota/${vehicleId}`);
-    setView('vehicle-detail');
-  }
-
-  function backFromVehicleDetail() {
-    setVehicleDetailId(null);
-    window.history.pushState({}, '', '/');
-    setView('vehicles');
-  }
-
-  // Navegar para qualquer outra view a partir da sidebar limpa a rota /frota/:id da URL.
-  function navigate(next: View) {
-    if (next !== 'vehicle-detail' && window.location.pathname.startsWith('/frota/')) {
-      window.history.pushState({}, '', '/');
-    }
-    setView(next);
-  }
-
+  const { theme } = useTheme();
   return (
-    <AppShell user={user} activeView={view} onNavigate={navigate} onLogout={logout}>
+    <Router>
+      {/* Toast fica no nível raiz, fora do <Suspense/> das rotas: uma ação numa página não
+       *  pode ter a confirmação sumindo se a navegação trocar de tela logo em seguida. */}
+      <Toaster
+        theme={theme}
+        position="bottom-right"
+        toastOptions={{
+          classNames: {
+            toast: 'rounded-lg border border-border bg-card text-card-foreground shadow-lg',
+            title: 'text-foreground',
+            description: 'text-muted-foreground',
+            success: '!border-status-success-bg [&_[data-icon]]:text-status-success',
+            error: '!border-status-danger-bg [&_[data-icon]]:text-status-danger',
+          },
+        }}
+      />
+      <ConfirmDialogHost />
       <Suspense fallback={<CarregandoTela />}>
-        {view === 'dashboard' &&
-          (user.role === 'MOTORISTA' ? (
-            <DriverHomePage onViewRoute={() => setView('driver-route')} onOpenChat={() => setView('chat')} />
-          ) : (
-            <DashboardPage onViewVehicles={() => setView('vehicles')} />
-          ))}
-        {view === 'driver-home' && (
-          <DriverHomePage onViewRoute={() => setView('driver-route')} onOpenChat={() => setView('chat')} />
-        )}
-        {view === 'driver-route' && <DriverRoutePage />}
-        {view === 'driver-more' && <DriverMorePage />}
-        {view === 'vehicles' && <VehiclesPage onViewCosts={goToCosts} onViewDetail={goToVehicleDetail} />}
-        {view === 'vehicle-detail' && vehicleDetailId && (
-          <VehicleDetailPage vehicleId={vehicleDetailId} onBack={backFromVehicleDetail} />
-        )}
-        {view === 'drivers' && <DriversPage />}
-        {view === 'work-orders' && <WorkOrdersPage />}
-        {view === 'maintenance' && <MaintenancePage />}
-        {view === 'reports' && <ReportsPage onGoToExpenses={() => setView('expenses')} />}
-        {view === 'expenses' && <CostsPage />}
-        {view === 'billing' && <BillingPage />}
-        {view === 'affiliates' && <AffiliatesPage />}
-        {view === 'chat' && (
-          <ChatPage onOpenActiveRoute={user.role === 'MOTORISTA' ? () => setView('driver-route') : undefined} />
-        )}
-        {view === 'charging-stations' && <ChargingStationsPage />}
-        {view === 'routes' && <RoutesPage />}
-        {view === 'route-plans' && <RoutePlansPage />}
-        {view === 'collection-points' && <CollectionPointsPage />}
-        {view === 'costs' && costsTarget && (
-          <VehicleCostsPage
-            vehicleId={costsTarget.vehicleId}
-            plate={costsTarget.plate}
-            onBack={() => setView('vehicles')}
-          />
-        )}
+        <AppRoutes />
       </Suspense>
-    </AppShell>
+    </Router>
   );
 }

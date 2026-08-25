@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { coreApi, type PlaceResponse } from '../../api/client';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -21,6 +22,7 @@ interface BuscaEnderecoProps {
  * (cadastro de ponto de coleta). Extraída pra cá quando ganhou o 3º uso.
  */
 export function BuscaEndereco({ id, label, placeholder, selecionado, onSelecionar }: BuscaEnderecoProps) {
+  const { t } = useTranslation();
   const [termo, setTermo] = useState('');
   const [resultados, setResultados] = useState<PlaceResponse[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -58,7 +60,7 @@ export function BuscaEndereco({ id, label, placeholder, selecionado, onSeleciona
         <Input
           id={id}
           className="pl-8"
-          placeholder={placeholder ?? 'Buscar endereço na área do piloto...'}
+          placeholder={placeholder ?? t('buscaEndereco.placeholder')}
           value={selecionado ? selecionado.displayName : termo}
           onChange={(e) => {
             onSelecionar(null);
@@ -87,7 +89,7 @@ export function BuscaEndereco({ id, label, placeholder, selecionado, onSeleciona
           ))}
           {resultados.length === 0 && (
             <li className="px-3 py-2 text-xs text-muted-foreground">
-              Nenhum endereço encontrado dentro da área do piloto.
+              {t('buscaEndereco.nenhumEndereco')}
             </li>
           )}
         </ul>

@@ -57,11 +57,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # jsdom 30 (vitest) usa uma API do undici que o webidl do Node 20 não tem
+          # ("webidl.util.markAsUncloneable is not a function") — Node 22 corrige.
+          # mobile/contracts continuam em 20 (não usam jsdom, não são afetados).
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run lint --workspace @autonomousapi/web
       - run: npm run typecheck
+      - run: npm run test --workspace @autonomousapi/web
       - run: npm run build:web
 
   mobile:
@@ -76,6 +80,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck --workspace @autonomousapi/mobile
+      - run: npm run test --workspace @autonomousapi/mobile
 
   core-api:
     needs: changes
@@ -157,11 +162,21 @@ jobs:
       - run: ruff check .
       - run: alembic upgrade head
       - run: pytest -q
-      # Contrato interno code-first (ADR 0002): gera o OpenAPI do código e publica
-      # como artefato. O drift-check estrito contra o snapshot commitado entra quando
-      # o snapshot canônico for gerado no ambiente 3.12 (junto do Checkpoint E).
+      # Contrato interno code-first (ADR 0002): gera o OpenAPI do código e compara
+      # com o snapshot commitado em packages/contracts/internal/geo-api.openapi.json
+      # — falha se divergir (fonte de verdade é o código, snapshot precisa ser
+      # regenerado e commitado junto de qualquer PR que mude uma rota/model do
+      # geo-api). Gerado no mesmo Python 3.12 do job pra não dar falso positivo por
+      # diferença de ambiente entre quem gerou o snapshot e o CI.
       - name: Gerar OpenAPI interno do geo-api
         run: python scripts/export_openapi.py /tmp/geo-api.openapi.json
+      - name: Verificar drift contra o snapshot commitado
+        run: |
+          if ! diff -u ../../packages/contracts/internal/geo-api.openapi.json /tmp/geo-api.openapi.json; then
+            echo "::error::O OpenAPI do geo-api mudou mas o snapshot commitado não foi atualizado."
+            echo "Rode 'python scripts/export_openapi.py ../../packages/contracts/internal/geo-api.openapi.json' em services/geo-api e commite o resultado."
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: geo-api-openapi

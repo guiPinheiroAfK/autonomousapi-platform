@@ -15,6 +15,7 @@ import com.autonomousapi.core.vehicle.condition.dto.VehicleIncidentResponse;
 import com.autonomousapi.core.workorder.WorkOrderService;
 import com.autonomousapi.core.workorder.dto.WorkOrderResponse;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,20 +58,27 @@ public class MeService {
         return assignmentService.activeForDriver(principal, driver.getId());
     }
 
-    /** OS do veículo atual do motorista, read-only. Lista vazia se não houver veículo designado. */
+    /** OS do veículo atual do motorista, read-only. Lista vazia se não houver veículo designado.
+     *  Contrato deste endpoint continua lista simples; por baixo, limitado às 50 mais
+     *  recentes (histórico de OS de um único veículo é naturalmente pequeno). */
     @Transactional(readOnly = true)
     public List<WorkOrderResponse> vehicleWorkOrders(JwtPrincipal principal) {
         DriverAssignmentResponse active = vehicle(principal);
         if (active == null) {
             return List.of();
         }
-        return workOrderService.list(principal, active.vehicleId());
+        return workOrderService.list(principal, active.vehicleId(), PageRequest.of(0, 50)).getContent();
     }
 
-    /** Viagens do próprio motorista — já filtradas por userId dentro do TripService. */
+    /**
+     * Viagens do próprio motorista — já filtradas por userId dentro do TripService.
+     * Contrato deste endpoint continua uma lista simples (a tela só mostra as 10 mais
+     * recentes, {@code DriverMorePage.tsx}); por baixo, a query agora é limitada às 20
+     * mais recentes em vez de trazer o histórico inteiro (cleanup de performance).
+     */
     @Transactional(readOnly = true)
     public List<TripResponse> trips(JwtPrincipal principal) {
-        return tripService.list(principal);
+        return tripService.list(principal, PageRequest.of(0, 20)).getContent();
     }
 
     /**

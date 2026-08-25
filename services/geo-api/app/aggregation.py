@@ -15,6 +15,7 @@ import logging
 from uuid import uuid4
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from .models import RoadReadinessScore, RoadSegmentObservation
@@ -30,9 +31,17 @@ TETO_OBSERVACOES_PARA_SCORE_MAXIMO = 50
 
 def recalcular_road_readiness(db: Session) -> int:
     """
-    Recalcula o score de todo `road_segment` com pelo menos 1 observação nova desde a
-    última passagem. Idempotente: pode rodar quantas vezes quiser, sempre reflete o
-    estado atual das observações. Retorna quantos segmentos foram atualizados.
+    Recalcula o score de TODO `road_segment` com pelo menos 1 observação, a cada
+    chamada — não é incremental (a versão anterior deste docstring dizia "só
+    observação nova desde a última passagem", mas o código nunca filtrou por
+    recência; achado da auditoria de cleanup, ADR 0019). Idempotente: rodar de
+    novo sem nenhuma observação nova produz o mesmo resultado. Retorna quantos
+    segmentos foram atualizados.
+
+    Um único `INSERT ... ON CONFLICT DO UPDATE` (upsert em massa) em vez de um
+    `SELECT` + escrita por segmento em laço Python — o volume de segmentos com
+    observação cresce com a malha do piloto, não faz sentido pagar uma
+    ida-e-volta ao banco por segmento a cada 5 minutos (intervalo do scheduler).
     """
     contagens = db.execute(
         select(
@@ -41,30 +50,36 @@ def recalcular_road_readiness(db: Session) -> int:
         ).group_by(RoadSegmentObservation.road_segment_id)
     ).all()
 
-    atualizados = 0
-    for segmento_id, total in contagens:
-        score = min(total / TETO_OBSERVACOES_PARA_SCORE_MAXIMO, 1.0)
+    if not contagens:
+        return 0
 
-        existente = db.execute(
-            select(RoadReadinessScore).where(RoadReadinessScore.road_segment_id == segmento_id)
-        ).scalar_one_or_none()
+    valores = [
+        {
+            "id": uuid4(),
+            "road_segment_id": segmento_id,
+            # Linha do v1 — sem faixa de tempo. ADR 0019 (D4): mantida como linha de
+            # base histórica mesmo depois do v2 assumir o scheduler.
+            "time_bucket": "GLOBAL",
+            "score": min(total / TETO_OBSERVACOES_PARA_SCORE_MAXIMO, 1.0),
+            "observation_count": total,
+            "algorithm_version": ALGORITHM_VERSION,
+        }
+        for segmento_id, total in contagens
+    ]
 
-        if existente:
-            existente.score = score
-            existente.observation_count = total
-            existente.algorithm_version = ALGORITHM_VERSION
-        else:
-            db.add(
-                RoadReadinessScore(
-                    id=uuid4(),
-                    road_segment_id=segmento_id,
-                    score=score,
-                    observation_count=total,
-                    algorithm_version=ALGORITHM_VERSION,
-                )
-            )
-        atualizados += 1
-
+    stmt = pg_insert(RoadReadinessScore.__table__).values(valores)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[RoadReadinessScore.road_segment_id, RoadReadinessScore.time_bucket],
+        set_={
+            "score": stmt.excluded.score,
+            "observation_count": stmt.excluded.observation_count,
+            "algorithm_version": stmt.excluded.algorithm_version,
+            "updated_at": func.now(),
+        },
+    )
+    db.execute(stmt)
     db.commit()
+
+    atualizados = len(valores)
     logger.info("road_readiness recalculado: %d segmento(s) atualizado(s)", atualizados)
     return atualizados

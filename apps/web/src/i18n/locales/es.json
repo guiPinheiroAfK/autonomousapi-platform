@@ -1,0 +1,750 @@
+{
+  "landing": {
+    "nav": { "comoOperar": "Cómo funciona", "planos": "Planes", "perguntas": "Preguntas" },
+    "header": { "entrar": "Entrar", "comecar": "Empezar" },
+    "hero": {
+      "titleLine1": "Tu flota ya",
+      "titleLine2": "conoce las calles",
+      "subtitle": "Controla vehículos, conductores, mantenimiento y costo por km. Hazlo tú mismo o deja que uno de nuestros gestores lleve la operación por ti.",
+      "ctaPrimary": "Registrar mi flota",
+      "ctaSecondary": "Ya tengo cuenta"
+    },
+    "vitrine": {
+      "ilustrativo": "Ejemplos ilustrativos. Cada pantalla viene de un dato que tu operación ya tiene.",
+      "verExemplo": "Ver ejemplo: {{titulo}}",
+      "veiculo": {
+        "titulo": "Ficha del vehículo",
+        "custoPorKm": "Costo por km",
+        "proximaPreventiva": "Próximo mantenimiento",
+        "emDias": "en {{n}} días",
+        "cnhMotorista": "Licencia del conductor",
+        "valida": "vigente",
+        "trajetoRegistrado": "Trayecto registrado",
+        "kmNoMes": "{{km}} km este mes"
+      },
+      "extrato": { "titulo": "Extracto de costos", "totalDoMes": "Total del mes" },
+      "frota": {
+        "titulo": "Flota",
+        "emRota": "En ruta",
+        "preventivaEmDias": "Mantenimiento en {{n}} días",
+        "disponivel": "Disponible",
+        "emManutencao": "En mantenimiento"
+      },
+      "painel": {
+        "titulo": "Panel",
+        "veiculos": "Vehículos",
+        "emOperacao": "En operación",
+        "manutencao": "En mantenimiento",
+        "motoristas": "Conductores",
+        "legenda": "Activo ({{ativo}}) · En mantenimiento ({{manutencao}}) · Inactivo ({{inativo}})"
+      }
+    },
+    "espectro": {
+      "eyebrow": "Cómo quieres operar",
+      "titulo": "No toda flota quiere el mismo nivel de trabajo.",
+      "texto": "Hay quien quiere abrir el panel todos los días y ajustar todo. Y hay quien solo quiere recibir el informe listo con lo que necesita decidir. Los dos son clientes.",
+      "paraQuemLabel": "Para quién:",
+      "cartoes": {
+        "auto": {
+          "etapa": "Tú tienes el control",
+          "titulo": "Autoservicio",
+          "texto": "Tú registras, cargas y das seguimiento. El sistema calcula el costo por km, avisa de mantenimiento y vencimiento de licencia, y exporta lo que necesites.",
+          "paraQuem": "Flota pequeña con alguien dedicado a ella."
+        },
+        "acompanhado": {
+          "etapa": "Compartido",
+          "titulo": "Acompañado",
+          "texto": "Tú operas el día a día y un gestor nuestro revisa la flota periódicamente, señala lo que está fuera de curva y ayuda a corregir el rumbo.",
+          "paraQuem": "Quien tiene la operación andando pero no tiene tiempo de mirar el dato."
+        },
+        "dedicado": {
+          "etapa": "Por tu cuenta",
+          "titulo": "Gestor dedicado",
+          "texto": "Un gestor nuestro asume la rutina: registra los costos, agenda los mantenimientos, sigue la documentación y entrega el cierre listo.",
+          "paraQuem": "Quien quiere resultado sin construir estructura interna."
+        }
+      }
+    },
+    "tese": {
+      "eyebrow": "Por qué construimos esto",
+      "titulo": "Ningún mapa genérico sabe lo que es una moto apareciendo entre dos autos detenidos en el semáforo.",
+      "p1": "Las empresas de vehículos autónomos que miran hacia Brasil no tienen datos reales de nuestro tránsito. Señalización inconsistente, carril que desaparece, comportamiento que ningún modelo entrenado afuera predijo.",
+      "p2": "Ese dato no se recolecta con un auto de prueba circulando vacío. Ya se está produciendo, todos los días, por quien entrega, transporta y alquila — solo que nadie lo guarda.",
+      "p3": "La gestión de flotas es un producto completo por sí solo. El mapa del tránsito real es lo que deja atrás mientras funciona.",
+      "mapaLegenda": "Trayecto registrado por la app del conductor",
+      "mapaEmBreve": "próximamente: video real"
+    },
+    "recursos": {
+      "eyebrow": "Lo que el panel ya hace",
+      "titulo": "Seis cosas que hoy probablemente viven en una hoja de cálculo.",
+      "itens": {
+        "custo": { "titulo": "Costo por km automático", "texto": "Cada registro se convierte en una cuenta rastreable, sin hoja de cálculo paralela ni tener que volver a escribir a fin de mes." },
+        "alerta": { "titulo": "Alerta de mantenimiento y licencia", "texto": "El sistema avisa antes del vencimiento — de mantenimiento y de documento — no después de que ya venció." },
+        "export": { "titulo": "Exportación sin dependencia", "texto": "Todo sale en CSV cuando quieras. El dato es tuyo; la herramienta es solo donde vive mientras está con nosotros." },
+        "unidades": { "titulo": "Múltiples sedes", "texto": "Una flota en tres ciudades o tres flotas separadas — el panel consolida sin mezclar lo que no debe mezclarse." },
+        "api": { "titulo": "Acceso a la API", "texto": "Quien ya tiene un sistema interno integra lo que necesite, sin reconstruir lo que AutonomousAPI ya resuelve." },
+        "gestor": { "titulo": "Gestor bajo demanda", "texto": "Empieza solo y pide ayuda solo cuando tenga sentido — el plan crece contigo, no te encierra en una elección inicial." }
+      }
+    },
+    "confianca": {
+      "titulo": "Tus datos siguen siendo tuyos.",
+      "texto": "La gestión de flotas maneja ubicación, costo y documentos de personas reales. No lo tratamos como un detalle menor.",
+      "garantias": {
+        "isolamento": { "titulo": "Aislamiento por cuenta", "texto": "Cada suscriptor ve solo su propia flota. Es una regla de base de datos, no una convención de pantalla — ni siquiera un error de interfaz filtra datos de otra empresa." },
+        "transito": { "titulo": "Dato de tránsito, nunca de identidad", "texto": "Lo que se convierte en un índice agregado de condición vial es el comportamiento de la vía, no quién pasó por ella. Nada identifica al conductor, vehículo o cliente final." },
+        "export": { "titulo": "Extrae tus datos cuando quieras", "texto": "Exportación en CSV en cualquier momento, sin pedir permiso y sin costo. Cancelar la suscripción no bloquea lo que es tuyo." },
+        "instalacao": { "titulo": "Sin instalación, sin invasión", "texto": "No hay hardware para instalar en el vehículo. La app del conductor solo registra la ruta con consentimiento explícito, dado en cada apertura." }
+      }
+    },
+    "planos": {
+      "titulo": "Planes",
+      "subtitulo": "Precio por vehículo activo. Pagas por lo que está rodando, no por asiento ni por licencia.",
+      "porVeiculoMes": "por vehículo/mes",
+      "rodape": "Precios de lanzamiento. Sin permanencia y sin equipo para instalar en el vehículo.",
+      "starter": {
+        "nome": "Starter", "faixa": "1 a 10 vehículos", "preco": "R$ 66", "nota": "R$ 56 en el plan anual", "acao": "Empezar",
+        "recursos": ["Registro de vehículos y conductores", "Costo por km e historial", "Alerta de mantenimiento y licencia", "Exportación en CSV", "App del conductor"]
+      },
+      "growth": {
+        "nome": "Growth", "faixa": "11 a 50 vehículos", "preco": "R$ 58", "nota": "R$ 49 en el plan anual", "heranca": "Todo lo de Starter, más:", "acao": "Empezar",
+        "recursos": ["Órdenes de servicio", "Informes consolidados", "Múltiples sedes"]
+      },
+      "scale": {
+        "nome": "Scale", "faixa": "51 a 200 vehículos", "preco": "R$ 49", "nota": "R$ 42 en el plan anual", "heranca": "Todo lo de Growth, más:", "acao": "Empezar",
+        "recursos": ["Revisión periódica por un gestor", "Acceso a la API", "Soporte prioritario"]
+      },
+      "dedicado": {
+        "nome": "Gestor dedicado", "faixa": "Operación a cargo nuestro", "preco": "A consultar", "unidade": "según el tamaño de la flota", "heranca": "Todo lo de Scale, más:", "acao": "Hablar con nosotros",
+        "recursos": ["Un gestor a cargo de la rutina", "Registro de costos por nuestra cuenta", "Agendamiento de mantenimientos", "Cierre mensual entregado listo"]
+      }
+    },
+    "perguntas": {
+      "titulo": "Preguntas",
+      "itens": [
+        { "q": "¿Necesito instalar un rastreador en los vehículos?", "a": "No. La operación se registra mediante la app del conductor, que ya funciona en su celular. Si quieres precisión de ruta, la app recopila el trayecto durante el viaje, siempre con consentimiento explícito dado en la primera apertura." },
+        { "q": "¿Qué es exactamente el \"costo por km\"?", "a": "Cada registro que cargas — combustible, mantenimiento, peaje — se suma y se divide por el kilometraje recorrido de ese vehículo. Puedes exportar todo en CSV y verificarlo en tu propia hoja de cálculo; ningún número aparece sin que puedas reconstruir la cuenta." },
+        { "q": "¿Cómo funciona el gestor dedicado?", "a": "Un gestor nuestro asume la rutina que hoy consume tu tiempo: registra los costos, agenda los mantenimientos, da seguimiento al vencimiento de documentación y entrega el cierre del mes. El precio varía según el tamaño de la flota y la profundidad del seguimiento — por eso es a consultar." },
+        { "q": "¿Qué hacen con los datos de mi operación?", "a": "Los datos de tu flota son tuyos y quedan aislados por cuenta. Los datos de tránsito derivados (cómo se comporta una vía en determinado horario) pueden alimentar, de forma agregada y anonimizada, un índice de condiciones viales — nunca de una manera que identifique a tu empresa, tus conductores o tus clientes." },
+        { "q": "¿Hay permanencia o multa por cancelar?", "a": "No. El plan es mensual y puedes cancelar cuando quieras. El plan anual da descuento, no te ata." }
+      ]
+    },
+    "rodape": { "status": "Producto en desarrollo · Fase 1" }
+  },
+  "auth": {
+    "login": {
+      "titulo": "Entrar",
+      "chamada1": "La operación de ayer ya es un número. ",
+      "chamada2": "Ven a verlo.",
+      "email": "Correo electrónico",
+      "senha": "Contraseña",
+      "entrando": "Entrando...",
+      "entrar": "Entrar",
+      "esqueceuSenha": "¿Olvidaste tu contraseña?",
+      "semConta": "¿Aún no tienes cuenta?",
+      "cadastrarMinhaFrota": "Registrar mi flota",
+      "falha": "Error al iniciar sesión"
+    },
+    "signup": {
+      "titulo": "Registrar mi flota",
+      "chamadaPre": "Empieza por los vehículos que ",
+      "chamadaEm": "ya están",
+      "chamadaPos": " en la calle.",
+      "descricao": "Sin instalación y sin equipo nuevo en el vehículo. Registras la flota y el panel empieza a llenarse.",
+      "nomeFrota": "Nombre de la flota o empresa",
+      "email": "Correo electrónico",
+      "senha": "Contraseña",
+      "minimoCaracteres": "mínimo 8 caracteres",
+      "criandoConta": "Creando cuenta...",
+      "criarConta": "Crear cuenta",
+      "jaTemConta": "¿Ya tienes cuenta?",
+      "entrar": "Entrar",
+      "falha": "Error en el registro"
+    },
+    "confirmeEmail": {
+      "titulo": "Confirma tu correo",
+      "chamadaPre": "Falta ",
+      "chamadaEm": "un clic",
+      "chamadaPos": " para empezar.",
+      "descricaoPre": "Enviamos un enlace de confirmación a ",
+      "descricaoPos": ". Abre el correo y haz clic en el enlace — tu cuenta solo queda activa después de eso.",
+      "linkReenviado": "Enlace reenviado",
+      "reenviando": "Reenviando...",
+      "reenviarEmail": "Reenviar correo",
+      "jaConfirmou": "¿Ya confirmaste?",
+      "entrar": "Entrar"
+    },
+    "forgotPassword": {
+      "verifiqueEmail": "Revisa tu correo", "quaseLa": "Ya casi.",
+      "seEmailTiverContaPre": "Si ", "seEmailTiverContaPos": " tiene una cuenta, enviamos un enlace para restablecer la contraseña. Vale por 1 hora.",
+      "voltarParaLogin": "Volver a iniciar sesión",
+      "esqueceuSenha": "¿Olvidaste tu contraseña?", "semProblemaPre": "No hay problema, ", "semProblemaEm": "envíalo de nuevo", "semProblemaPos": ".",
+      "informeEmail": "Indica el correo de tu cuenta y te enviamos un enlace para elegir una nueva contraseña.",
+      "email": "Correo electrónico", "enviando": "Enviando...", "enviarLink": "Enviar enlace"
+    },
+    "resetPassword": {
+      "senhaRedefinida": "Contraseña restablecida", "prontoPre": "Listo, ", "prontoEm": "ya puedes entrar", "prontoPos": ".",
+      "senhaTrocada": "Tu contraseña fue cambiada y cualquier sesión anterior fue cerrada, por seguridad.",
+      "irParaLogin": "Ir a iniciar sesión",
+      "escolhaSenhaNova": "Elige una nueva contraseña", "umaSenhaPre": "Una contraseña, ", "umaSenhaEm": "de nuevo", "umaSenhaPos": ".",
+      "novaSenha": "Nueva contraseña", "minimoCaracteres": "mínimo 8 caracteres",
+      "salvando": "Guardando...", "redefinirSenha": "Restablecer contraseña",
+      "falha": "No fue posible restablecer la contraseña."
+    },
+    "verifyEmail": {
+      "confirmandoTitulo": "Confirmando tu correo...", "jaJaVoceEstaLa": "Ya casi estás dentro.", "umSegundo": "Un segundo...",
+      "naoDeuCerto": "No funcionó", "linkPodeTerPre": "El enlace pudo haber ", "linkPodeTerEm": "expirado", "linkPodeTerPos": ".",
+      "linksValemPre": "Los enlaces de confirmación valen por 24 horas. ",
+      "cadastreSeDeNovo": "Regístrate de nuevo",
+      "linksValemPos": " para recibir un nuevo enlace, o pide que te lo reenvíen en la pantalla de registro.",
+      "voltarParaInicio": "Volver al inicio",
+      "falha": "No fue posible confirmar el correo."
+    },
+    "acceptInvite": {
+      "acessoLiberado": "Acceso habilitado", "bemVindoPre": "Bienvenido, ", "bemVindoEm": "ya puedes entrar", "bemVindoPos": ".",
+      "senhaDefinida": "Tu contraseña fue definida. Entra a la app de AutonomousAPI con tu correo y la contraseña que acabas de elegir.",
+      "irParaLogin": "Ir a iniciar sesión",
+      "defineSuaSenha": "Define tu contraseña", "gestorConvidouPre": "Tu gestor te ", "gestorConvidouEm": "invitó", "gestorConvidouPos": ".",
+      "escolhaSenha": "Elige una contraseña para acceder a la app de AutonomousAPI con tu correo.",
+      "senha": "Contraseña", "minimoCaracteres": "mínimo 8 caracteres",
+      "salvando": "Guardando...", "definirSenha": "Definir contraseña",
+      "falha": "No fue posible aceptar la invitación."
+    },
+    "vitrineLogin": {
+      "veiculo": "Renault Kangoo",
+      "km": "71.300 km",
+      "proximaPreventiva": "Próximo mantenimiento",
+      "emDias": "en {{n}} días"
+    },
+    "rodape": "Gestión de flotas · Datos viales · Brasil"
+  },
+  "app": {
+    "sidebar": {
+      "gestaoDeFrota": "Gestión de Flota",
+      "appDoMotorista": "App del Conductor",
+      "operacao": "Operación",
+      "gestao": "Gestión",
+      "meuTrabalho": "Mi trabajo",
+      "fecharMenu": "Cerrar menú",
+      "abrirMenu": "Abrir menú",
+      "nav": {
+        "dashboard": "Panel", "frota": "Flota", "ordensServico": "Órdenes de Servicio",
+        "motoristas": "Conductores", "mensagens": "Mensajes", "rotas": "Rutas",
+        "coletaEntrega": "Recolección y Entrega", "pontosColeta": "Puntos de Recolección",
+        "manutencao": "Mantenimiento", "custos": "Costos", "relatorios": "Informes",
+        "parceiros": "Socios", "pontosRecarga": "Puntos de Carga", "assinatura": "Suscripción",
+        "inicio": "Inicio", "minhaRota": "Mi Ruta", "mais": "Más"
+      }
+    },
+    "topbar": {
+      "buscarPlaceholder": "Buscar orden, placa, conductor...",
+      "todasUnidades": "Todas las sedes",
+      "temaClaroTitulo": "Cambiar a tema claro",
+      "temaEscuroTitulo": "Cambiar a tema oscuro",
+      "notificacoes": "Notificaciones",
+      "notif1Titulo": "2 vehículos con mantenimiento vencido",
+      "notif1Sub": "Revisa las alertas en el Panel",
+      "notif2Titulo": "Licencias venciendo en 30 días",
+      "notif2Sub": "Conductores con licencia próxima a vencer",
+      "sair": "Cerrar sesión",
+      "idioma": "Idioma"
+    }
+  },
+  "buscaEndereco": {
+    "placeholder": "Buscar dirección en el área piloto...",
+    "nenhumEndereco": "No se encontró ninguna dirección dentro del área piloto."
+  },
+  "common": {
+    "carregando": "Cargando...",
+    "verTodos": "Ver todos →",
+    "nenhumAlerta": "Sin alertas.",
+    "kmRestantes": "{{n}} km restantes",
+    "diasVencido": "{{n}}d vencido",
+    "emDiasCurto": "en {{n}}d"
+  },
+  "status": {
+    "veiculo": { "ATIVO": "Activo", "MANUTENCAO": "En mantenimiento", "INATIVO": "Inactivo" },
+    "motorista": { "ATIVO": "Activo", "INATIVO": "Inactivo" },
+    "custo": {
+      "COMBUSTIVEL": "Combustible", "MANUTENCAO": "Mantenimiento", "SEGURO": "Seguro", "IPVA": "Impuesto vehicular",
+      "MULTA": "Multa", "PEDAGIO": "Peaje", "LAVAGEM": "Lavado", "OUTRO": "Otro"
+    },
+    "os": { "ABERTA": "Abierta", "EM_ANDAMENTO": "En curso", "CONCLUIDA": "Completada", "ATRASADA": "Atrasada", "CANCELADA": "Cancelada" },
+    "prioridade": { "BAIXA": "Baja", "MEDIA": "Media", "ALTA": "Alta" },
+    "severidade": { "LEVE": "Leve", "MODERADA": "Moderada", "GRAVE": "Grave" },
+    "rotaPlan": { "PLANEJADA": "Planeada", "EM_ANDAMENTO": "En curso", "CONCLUIDA": "Completada" },
+    "tipoVeiculo": { "CARRO": "Auto", "MOTO": "Moto", "VAN": "Van", "CAMINHAO": "Camión", "ONIBUS": "Autobús" },
+    "tipoOS": { "PREVENTIVA": "Preventivo", "CORRETIVA": "Correctivo", "REVISAO": "Revisión", "SINISTRO": "Siniestro" }
+  },
+  "pages": {
+    "dashboard": {
+      "titulo": "Panel",
+      "subtitulo": "Visión general de la flota",
+      "veiculos": "Vehículos", "totalDaFrota": "Total de la flota",
+      "emOperacao": "En Operación", "veiculosAtivos": "Vehículos activos",
+      "emManutencao": "En Mantenimiento", "foraDeOperacao": "Fuera de operación",
+      "motoristas": "Conductores", "cadastrados": "Registrados",
+      "custoTotal6Meses": "Costo total — últimos 6 meses",
+      "custo": "Costo",
+      "veiculosPorStatus": "Vehículos por estado",
+      "semVeiculosCadastrados": "Sin vehículos registrados.",
+      "alertasManutencaoCnh": "Alertas de mantenimiento y licencia",
+      "manutencaoDeVeiculos": "Mantenimiento de vehículos",
+      "cnhDeMotoristas": "Licencias de conductores",
+      "veiculosRecentes": "Vehículos recientes",
+      "nenhumVeiculoCadastrado": "Aún no hay vehículos registrados.",
+      "tabela": { "placa": "Placa", "marcaModelo": "Marca/Modelo", "odometro": "Odómetro", "status": "Estado" }
+    },
+    "vehicles": {
+      "titulo": "Flota",
+      "subtitulo": "Vehículos registrados",
+      "novoVeiculo": "Nuevo Vehículo",
+      "editarVeiculo": "Editar Vehículo",
+      "totalDeVeiculos": "Total de Vehículos",
+      "nestaBusca": "En esta búsqueda",
+      "todaAFrota": "Toda la flota",
+      "ativos": "Activos",
+      "nestaPagina": "En esta página",
+      "emManutencao": "En Mantenimiento",
+      "inativos": "Inactivos",
+      "buscarPlaceholder": "Buscar por placa, marca o modelo...",
+      "todosOsStatus": "Todos los estados",
+      "veiculosContagem": "{{n}} vehículo(s)",
+      "todosOsVeiculos": "Todos los vehículos",
+      "tabela": { "tipo": "Tipo", "placa": "Placa", "marcaModelo": "Marca/Modelo", "ano": "Año", "odometro": "Odómetro", "status": "Estado" },
+      "tipoNaoInformado": "Tipo no informado",
+      "custos": "Costos",
+      "editar": "Editar",
+      "excluir": "Eliminar",
+      "nenhumVeiculoEncontrado": "No se encontraron vehículos.",
+      "paginaXDeY": "Página {{atual}} de {{total}}",
+      "anterior": "Anterior",
+      "proxima": "Siguiente",
+      "form": {
+        "placa": "Placa", "marca": "Marca", "modelo": "Modelo", "ano": "Año", "odometroKm": "Odómetro (km)",
+        "status": "Estado", "tipo": "Tipo", "naoInformado": "No informado",
+        "proximaManutencaoData": "Próximo mantenimiento (fecha)", "proximaManutencaoKm": "Próximo mantenimiento (km)",
+        "cancelar": "Cancelar", "salvar": "Guardar", "adicionar": "Agregar"
+      },
+      "toasts": {
+        "atualizado": "Vehículo actualizado.", "cadastrado": "Vehículo registrado.",
+        "falhaCarregar": "Error al cargar vehículos", "falhaSalvar": "Error al guardar el vehículo",
+        "confirmarExcluir": "¿Eliminar este vehículo?", "excluido": "Vehículo eliminado.", "falhaExcluir": "Error al eliminar el vehículo"
+      }
+    },
+    "drivers": {
+      "titulo": "Conductores",
+      "subtitulo": "{{n}} conductores registrados",
+      "novoMotorista": "Nuevo Conductor",
+      "editarMotorista": "Editar Conductor",
+      "buscarPlaceholder": "Buscar por nombre o licencia...",
+      "todosOsStatus": "Todos los estados",
+      "motoristasContagem": "{{n}} conductor(es)",
+      "todosOsMotoristas": "Todos los conductores",
+      "tabela": { "motorista": "Conductor", "cnh": "Licencia", "validade": "Vencimiento", "telefone": "Teléfono", "status": "Estado" },
+      "categoriaAbrev": "Cat. {{cat}}",
+      "vencida": "vencida",
+      "venceEmDias": "vence en {{n}}d",
+      "editar": "Editar",
+      "excluir": "Eliminar",
+      "nenhumMotoristaEncontrado": "No se encontraron conductores.",
+      "form": {
+        "nome": "Nombre", "cnh": "Licencia (11 dígitos)", "cnh11Digitos": "11 dígitos numéricos",
+        "telefone": "Teléfono", "email": "Correo (para acceso a la app)", "status": "Estado",
+        "validadeCnh": "Vencimiento de la licencia", "cancelar": "Cancelar", "salvar": "Guardar", "adicionar": "Agregar"
+      },
+      "toasts": {
+        "falhaCarregar": "Error al cargar conductores", "atualizado": "Conductor actualizado.",
+        "cadastrado": "Conductor registrado.", "falhaSalvar": "Error al guardar el conductor",
+        "confirmarExcluir": "¿Eliminar este conductor?", "excluido": "Conductor eliminado.", "falhaExcluir": "Error al eliminar el conductor",
+        "falhaAvaliacao": "Error al registrar la calificación", "conviteEnviado": "Invitación enviada a {{email}}.",
+        "falhaConvite": "Error al enviar la invitación", "falhaDesignar": "Error al asignar el vehículo",
+        "falhaEncerrar": "Error al finalizar la asignación", "avisoDoGestor": "Aviso del gestor", "falhaAviso": "Error al enviar el aviso"
+      },
+      "detalhe": {
+        "avaliacaoSoGestor": "Calificación (visible solo para el gestor)",
+        "acessoAppAtivo": "Acceso a la app activo",
+        "convitePendente": "Invitación pendiente",
+        "semEmailCadastrado": "Sin correo registrado",
+        "cadastreEmailConvidar": "Registra un correo para invitar",
+        "enviando": "Enviando...",
+        "convidar": "Invitar",
+        "avisoRapidoPlaceholder": "Enviar un aviso rápido por la app...",
+        "enviar": "Enviar",
+        "avisoEnviado": "Aviso enviado.",
+        "veiculoDesignado": "Vehículo asignado",
+        "encerrar": "Finalizar",
+        "selecioneVeiculo": "Selecciona un vehículo...",
+        "designando": "Asignando...",
+        "designar": "Asignar",
+        "avaliacoesContagem": "{{n}} calificación(es)",
+        "novaAvaliacao": "Nueva calificación",
+        "comentarioOpcional": "Comentario (opcional)",
+        "salvando": "Guardando...",
+        "registrarAvaliacao": "Registrar calificación"
+      }
+    },
+    "workOrders": {
+      "titulo": "Órdenes de Servicio",
+      "subtitulo": "Seguimiento de las órdenes del taller",
+      "novaOS": "Nueva Orden",
+      "editarOS": "Editar Orden",
+      "buscarPlaceholder": "Buscar por número, placa o modelo...",
+      "todosOsStatus": "Todos los estados",
+      "todosOsTipos": "Todos los tipos",
+      "osContagem": "{{n}} orden(es)",
+      "todasAsOS": "Todas las órdenes de servicio",
+      "tabela": {
+        "os": "Orden", "veiculo": "Vehículo", "motorista": "Conductor", "tipo": "Tipo", "prioridade": "Prioridad",
+        "abertura": "Apertura", "previsao": "Previsión", "status": "Estado", "custo": "Costo"
+      },
+      "editar": "Editar",
+      "excluir": "Eliminar",
+      "nenhumaOSEncontrada": "No se encontraron órdenes de servicio.",
+      "form": {
+        "veiculo": "Vehículo", "selecione": "Selecciona...", "motoristaOpcional": "Conductor (opcional)", "semMotorista": "Sin conductor",
+        "tipo": "Tipo", "status": "Estado", "prioridade": "Prioridad",
+        "descricaoProblema": "Descripción del problema", "observacoesOpcional": "Observaciones (opcional)",
+        "oficina": "Taller", "abertura": "Apertura", "previsao": "Previsión", "odometroAbertura": "Odómetro en la apertura (km)",
+        "itens": "Ítems", "item": "Ítem", "descricao": "Descripción",
+        "cancelar": "Cancelar", "salvando": "Guardando...", "salvar": "Guardar", "criarOS": "Crear Orden"
+      },
+      "toasts": {
+        "falhaCarregar": "Error al cargar las órdenes de servicio", "atualizada": "Orden de servicio actualizada.",
+        "criada": "Orden de servicio creada.", "falhaSalvar": "Error al guardar la orden de servicio",
+        "confirmarExcluir": "¿Eliminar esta orden de servicio?", "excluida": "Orden de servicio eliminada.",
+        "falhaExcluir": "Error al eliminar la orden de servicio"
+      },
+      "detalhe": {
+        "abertaEm": "Abierta el {{data}}", "semMotorista": "Sin conductor",
+        "descricaoProblema": "Descripción del problema", "itensDaOS": "Ítems de la orden",
+        "qtd": "Cant.", "unitario": "Unitario", "subtotal": "Subtotal"
+      }
+    },
+    "maintenance": {
+      "titulo": "Mantenimiento",
+      "subtitulo": "Historial de mantenimiento de toda la flota",
+      "manutencoesRegistradas": "Mantenimientos registrados",
+      "custoEmPecas": "Costo en repuestos",
+      "custoEmMaoDeObra": "Costo en mano de obra",
+      "todosOsVeiculos": "Todos los vehículos",
+      "totalDoPeriodo": "Total del período:",
+      "registrosDeManutencao": "Registros de mantenimiento",
+      "tabela": { "data": "Fecha", "veiculo": "Vehículo", "descricao": "Descripción", "pecasTrocadas": "Repuestos cambiados", "oficina": "Taller", "custoTotal": "Costo total" },
+      "nenhumaManutencao": "No hay mantenimientos registrados."
+    },
+    "costs": {
+      "titulo": "Costos",
+      "subtitulo": "Gastos categorizados, presupuesto y rentabilidad de transfers",
+      "tabs": { "visaoGeral": "Resumen", "despesas": "Gastos", "orcamento": "Presupuesto", "rentabilidade": "Rentabilidad de transfers" },
+      "visaoGeral": {
+        "de": "Desde", "ate": "Hasta", "exportando": "Exportando...", "exportarCsv": "Exportar CSV",
+        "totalNoPeriodo": "Total del período", "maiorCategoria": "Mayor categoría",
+        "despesasPorCategoria": "Gastos por categoría", "nenhumaDespesaPeriodo": "Sin gastos en el período.",
+        "csvExportado": "CSV exportado.", "falhaExportar": "Error al exportar CSV"
+      },
+      "despesas": {
+        "todasAsCategorias": "Todas las categorías", "novaDespesa": "Nuevo gasto",
+        "despesasContagem": "Gastos ({{n}})",
+        "tabela": { "data": "Fecha", "veiculo": "Vehículo", "categoria": "Categoría", "valor": "Monto", "descricao": "Descripción" },
+        "frota": "Flota", "excluir": "Eliminar", "nenhumaDespesa": "Aún no hay gastos registrados.",
+        "paginaXDeY": "Página {{atual}} de {{total}}", "anterior": "Anterior", "proxima": "Siguiente",
+        "form": {
+          "veiculoOpcional": "Vehículo (opcional — en blanco = gasto de flota)", "despesaDeFrota": "Gasto de flota (sin vehículo)",
+          "categoria": "Categoría", "valorReais": "Monto (R$)", "data": "Fecha",
+          "litrosOuKwh": "Litros (o kWh)", "odometroKm": "Odómetro (km)", "descricaoOpcional": "Descripción (opcional)",
+          "cancelar": "Cancelar", "lancar": "Registrar"
+        },
+        "toasts": { "lancada": "Gasto registrado.", "falhaLancar": "Error al registrar el gasto", "confirmarExcluir": "¿Eliminar este gasto?", "excluida": "Gasto eliminado.", "falhaExcluir": "Error al eliminar el gasto" }
+      },
+      "orcamento": {
+        "novoOrcamento": "Nuevo presupuesto", "nenhumOrcamento": "Aún no hay presupuestos configurados.",
+        "frotaInteira": "Toda la flota", "todasAsCategorias": "Todas las categorías", "mensal": "mensual",
+        "deValor": "{{consumido}} de {{limite}}", "excluir": "Eliminar", "percentualConsumido": "{{p}}% consumido",
+        "form": {
+          "escopo": "Alcance", "categoriaOpcional": "Categoría (opcional)", "valorLimiteMensal": "Límite mensual (R$)",
+          "cancelar": "Cancelar", "criar": "Crear"
+        },
+        "toasts": { "criado": "Presupuesto creado.", "falhaCriar": "Error al crear el presupuesto", "confirmarExcluir": "¿Eliminar este presupuesto?", "excluido": "Presupuesto eliminado.", "falhaExcluir": "Error al eliminar el presupuesto" }
+      },
+      "rentabilidade": {
+        "valorCombinadoTotal": "Valor acordado (total)", "custoEstimadoTotal": "Costo estimado (total)", "margemRealizadaTotal": "Margen realizado (total)",
+        "transfersConcluidos": "Transfers completados", "nenhumTransfer": "Aún no hay transfers completados — el margen realizado solo aparece cuando la ruta finaliza.",
+        "tabela": { "motorista": "Conductor", "data": "Fecha", "valor": "Valor", "custoEstimado": "Costo estimado", "margem": "Margen" }
+      }
+    },
+    "reports": {
+      "titulo": "Informes y Finanzas",
+      "subtitulo": "Vista consolidada de costos de mantenimiento · año {{ano}}",
+      "verLancamentosCustos": "Ver registros detallados en Costos",
+      "custoAcumulado": "Costo acumulado {{ano}}",
+      "custoMedioPorOS": "Costo promedio por orden",
+      "osNoAno": "Órdenes en el año",
+      "custoPorTipo12Meses": "Costo por tipo de mantenimiento — 12 meses",
+      "distribuicaoAno": "Distribución {{ano}}",
+      "semCustoNoAno": "Sin costo de mantenimiento en el año.",
+      "veiculosMaiorCusto": "Vehículos con mayor costo de mantenimiento"
+    },
+    "billing": {
+      "titulo": "Suscripción",
+      "subtitulo": "Plan y facturación de tu flota",
+      "planoAtual": "Plan actual",
+      "assinaturaStatus": "Suscripción {{status}}",
+      "canal": "Canal",
+      "renovaEm": "Se renueva el",
+      "trialAte": "Prueba hasta",
+      "avisoTrial": "Después de la prueba, registrar un nuevo vehículo/conductor requiere una suscripción activa — lo que ya está registrado sigue accesible.",
+      "abrindoCheckout": "Abriendo el pago...",
+      "assinarAgora": "Suscribirme ahora",
+      "gerenciamentoStripe": "La gestión del método de pago y la cancelación se hace en el portal de Stripe (enlace directo próximamente).",
+      "semAssinaturaAtiva": "Aún no tienes una suscripción activa. El plan se cobra por vehículo activo en la flota.",
+      "status": { "ACTIVE": "Activa", "TRIALING": "En prueba", "PAST_DUE": "Pago pendiente", "CANCELED": "Cancelada", "INCOMPLETE": "Incompleta" },
+      "toasts": { "falhaCarregar": "Error al cargar la suscripción", "falhaCheckout": "La facturación aún no está configurada en este entorno (falta la clave de Stripe)." }
+    },
+    "affiliates": {
+      "titulo": "Socios",
+      "subtitulo": "Equipos y servicios para tu flota, recomendados por nosotros — sin costo para ti.",
+      "nenhumParceiro": "Aún no hay socios disponibles.",
+      "abrindo": "Abriendo...",
+      "verOferta": "Ver oferta",
+      "categoria": { "dashcam": "Dashcam", "rastreador": "Rastreador", "seguro": "Seguro" },
+      "toasts": { "falhaCarregar": "Error al cargar los socios", "falhaAbrir": "Error al abrir el socio" }
+    },
+    "chat": {
+      "conversas": "Conversaciones",
+      "iniciarConversa": "Iniciar conversación",
+      "nenhumaConversa": "Aún no hay conversaciones.",
+      "semMensagensAinda": "Sin mensajes aún",
+      "selecioneOuInicie": "Selecciona una conversación o inicia una nueva.",
+      "nenhumaMensagem": "Aún no hay mensajes.",
+      "verDetalhes": "Ver detalles",
+      "digitando": "escribiendo...",
+      "anexarRota": "Adjuntar ruta",
+      "escrevaMensagem": "Escribe un mensaje...",
+      "nenhumMotoristaDisponivel": "No hay conductores disponibles — solo quien ya aceptó la invitación de acceso a la app puede conversar.",
+      "selecioneMotorista": "Selecciona un conductor...",
+      "cancelar": "Cancelar",
+      "iniciar": "Iniciar",
+      "nenhumaRotaDisponivel": "No hay rutas disponibles para este conductor — crea una en \"Rutas\".",
+      "selecioneRota": "Selecciona una ruta...",
+      "paradaContagem": "{{n}} parada(s)",
+      "jaDesignadaMotorista": "· ya asignada a este conductor",
+      "anexar": "Adjuntar",
+      "paradasDaRota": "Paradas de la ruta",
+      "toasts": {
+        "falhaCarregarConversas": "Error al cargar las conversaciones", "falhaEnviar": "Error al enviar el mensaje",
+        "conversaIniciada": "Conversación iniciada.", "falhaIniciar": "Error al iniciar la conversación",
+        "rotaAnexada": "Ruta adjuntada.", "falhaAnexar": "Error al adjuntar la ruta"
+      }
+    },
+    "routes": {
+      "titulo": "Rutas",
+      "subtitulo": "Ruta sugerida entre dos puntos, calculada sobre el mapa del área piloto.",
+      "origem": "Origen",
+      "destino": "Destino",
+      "calculando": "Calculando...",
+      "calcularRota": "Calcular ruta",
+      "escolhaParaCalcular": "Elige origen y destino para calcular.",
+      "naoFoiPossivelCalcular": "No fue posible calcular la ruta.",
+      "resumo": "Resumen",
+      "distancia": "Distancia",
+      "tempoEstimado": "Tiempo estimado",
+      "tracadoSemMapa": "Trazado del recorrido (sin mapa de fondo)",
+      "itinerario": "Itinerario",
+      "viaSemNome": "vía sin nombre",
+      "escolhaParaVerRota": "Elige un origen y un destino para ver la ruta sugerida.",
+      "falhaCalcular": "Error al calcular la ruta",
+      "manobra": {
+        "chegada": "Llegada", "facaRetorno": "Da la vuelta", "sigaEmFrente": "Sigue recto",
+        "depart": "Sigue", "turn": "Gira", "newName": "Continúa", "continue": "Continúa", "merge": "Incorpórate",
+        "onRamp": "Toma el acceso", "offRamp": "Toma la salida", "fork": "Mantente",
+        "endOfRoad": "Al final de la vía, gira", "roundabout": "En la rotonda, sigue", "exitRoundabout": "Sal de la rotonda",
+        "notification": "Atención"
+      },
+      "modificador": {
+        "left": "a la izquierda", "right": "a la derecha", "slightLeft": "levemente a la izquierda", "slightRight": "levemente a la derecha",
+        "sharpLeft": "cerrado a la izquierda", "sharpRight": "cerrado a la derecha"
+      }
+    },
+    "collectionPoints": {
+      "titulo": "Puntos de Recolección",
+      "subtitulo": "Direcciones recurrentes (depósito, sucursal, cliente) — reutilízalas al armar una ruta.",
+      "novoPonto": "Nuevo punto",
+      "nenhumPonto": "Aún no hay puntos de recolección registrados.",
+      "janelaPadrao": "Ventana predeterminada: {{inicio}} a {{fim}}",
+      "ativo": "Activo",
+      "inativo": "Inactivo",
+      "desativar": "Desactivar",
+      "ativar": "Activar",
+      "editarPonto": "Editar punto",
+      "novoPontoTitulo": "Nuevo punto",
+      "form": {
+        "nome": "Nombre", "nomePlaceholder": "Depósito central", "endereco": "Dirección",
+        "janelaInicio": "Ventana predeterminada — inicio", "janelaFim": "Ventana predeterminada — fin",
+        "cancelar": "Cancelar", "salvando": "Guardando...", "salvar": "Guardar"
+      },
+      "toasts": {
+        "falhaCarregar": "Error al cargar los puntos de recolección", "atualizado": "Punto de recolección actualizado.",
+        "cadastrado": "Punto de recolección registrado.", "falhaSalvar": "Error al guardar el punto de recolección",
+        "desativado": "Punto de recolección desactivado.", "ativado": "Punto de recolección activado.",
+        "falhaAtualizar": "Error al actualizar el punto de recolección"
+      }
+    },
+    "chargingStations": {
+      "titulo": "Puntos de Carga",
+      "subtitulo": "Estaciones de carga eléctrica agregadas de proveedores externos — útil para planear la ruta de la flota eléctrica.",
+      "provedorNaoConfigurado": "El proveedor de datos de carga aún no está configurado — ninguna estación sincronizada por el momento. Esto no es un error, es una función que aún no está activada.",
+      "estacoesConhecidas": "Estaciones conocidas",
+      "nenhumaEstacao": "Aún no hay estaciones de carga sincronizadas.",
+      "estacaoSemNome": "Estación sin nombre",
+      "status": { "DISPONIVEL": "Disponible", "OCUPADO": "Ocupado", "FORA_DE_SERVICO": "Fuera de servicio", "DESCONHECIDO": "Estado desconocido" },
+      "toasts": { "falhaCarregar": "Error al cargar los puntos de carga" }
+    },
+    "routePlans": {
+      "titulo": "Rutas",
+      "subtitulo": "Puntos de recolección y entrega — arma la ruta, revisa el orden sugerido y asigna un conductor.",
+      "novaRota": "Nueva ruta",
+      "nenhumaRota": "Aún no hay rutas registradas.",
+      "transfer": "Transfer",
+      "paradaContagem": "{{n}} parada(s)",
+      "semMotoristaDesignado": "Sin conductor asignado",
+      "categoria": "Categoría",
+      "categoriaRota": "Ruta (multi-parada)",
+      "categoriaTransfer": "Transfer (A → B)",
+      "dataExecucao": "Fecha de ejecución",
+      "valorCombinadoOpcional": "Valor acordado (opcional)",
+      "coleta": "Recolección",
+      "entrega": "Entrega",
+      "enderecoAvulso": "Dirección puntual",
+      "pontoCadastrado": "Punto registrado",
+      "selecionePontoCadastrado": "Selecciona un punto registrado...",
+      "adicionar": "Agregar",
+      "sugerindo": "Sugiriendo...",
+      "sugerirOrdem": "Sugerir orden",
+      "motoristaOpcional": "Conductor (opcional)",
+      "designarDepois": "Asignar después",
+      "veiculoOpcional": "Vehículo (opcional)",
+      "semVeiculo": "Sin vehículo",
+      "custoEstimadoReferencia": "Costo estimado (referencia, spec 09)",
+      "custoEstimado": "Costo estimado:",
+      "valorSugerido": "Valor sugerido:",
+      "cancelar": "Cancelar",
+      "salvando": "Guardando...",
+      "criarRota": "Crear ruta",
+      "toasts": {
+        "falhaCarregar": "Error al cargar las rutas", "falhaSugerir": "Error al sugerir el orden",
+        "dataNoPassado": "La fecha de ejecución no puede ser en el pasado.",
+        "transferExige2Paradas": "El transfer requiere exactamente 2 paradas: origen y destino.",
+        "criada": "Ruta creada.", "falhaCriar": "Error al crear la ruta"
+      }
+    },
+    "vehicleDetail": {
+      "veiculoNaoEncontrado": "Vehículo no encontrado.",
+      "frota": "Flota",
+      "kmAtual": "KM actual",
+      "proximaPreventiva": "Próx. preventivo",
+      "preventivaPorKm": "Preventivo por km",
+      "gastoHistorico": "Gasto histórico",
+      "tabs": { "manutencao": "Mantenimiento", "os": "Órdenes de Servicio", "fipe": "Valor de mercado", "sinistros": "Siniestros" },
+      "nenhumLancamentoManutencao": "Ningún registro de mantenimiento.",
+      "nenhumaOS": "Aún no hay órdenes de servicio.",
+      "osTabela": { "os": "Orden", "tipo": "Tipo", "abertura": "Apertura", "status": "Estado" },
+      "referencia": "Referencia {{data}}",
+      "codigoAbrev": " · cód. {{codigo}}",
+      "nenhumFipe": "Aún no hay valor de mercado registrado.",
+      "valorReais": "Valor (R$)",
+      "codigoFipeOpcional": "Código de referencia (opcional)",
+      "salvando": "Guardando...",
+      "lancarValor": "Registrar valor",
+      "condicao": "Condición: {{score}}/100",
+      "semSinistroRegistrado": "sin siniestros registrados",
+      "nenhumSinistro": "Ningún siniestro registrado.",
+      "reparo": "Reparación: {{valor}}",
+      "descricaoOpcional": "Descripción (opcional)",
+      "custoReparoOpcional": "Costo de reparación (opcional)",
+      "registrando": "Registrando...",
+      "registrarSinistro": "Registrar siniestro",
+      "toasts": {
+        "fipeLancado": "Valor de mercado registrado.", "falhaFipe": "Error al registrar el valor de mercado",
+        "sinistroRegistrado": "Siniestro registrado.", "falhaSinistro": "Error al registrar el siniestro"
+      }
+    },
+    "vehicleCosts": {
+      "voltarParaVeiculos": "Volver a Vehículos",
+      "custosDe": "Costos — {{placa}}",
+      "subtitulo": "Registros de combustible, mantenimiento y otros",
+      "lancarCusto": "Registrar Costo",
+      "totalGasto": "Total Gastado",
+      "kmRodadoDesdeCadastro": "Km recorridos (desde el registro)",
+      "odometroTotal": "Odómetro total: {{km}} km",
+      "custoPorKm": "Costo por Km",
+      "lancamentos": "Registros",
+      "tabela": { "data": "Fecha", "categoria": "Categoría", "valor": "Monto", "descricao": "Descripción" },
+      "excluir": "Eliminar",
+      "nenhumCusto": "Aún no hay costos registrados.",
+      "form": {
+        "categoria": "Categoría", "valorReais": "Monto (R$)", "data": "Fecha",
+        "litrosOuKwh": "Litros (o kWh)", "odometroKm": "Odómetro (km)", "descricaoOpcional": "Descripción (opcional)",
+        "cancelar": "Cancelar", "lancar": "Registrar"
+      },
+      "toasts": {
+        "falhaCarregar": "Error al cargar los costos", "lancado": "Costo registrado.", "falhaLancar": "Error al registrar el costo",
+        "confirmarExcluir": "¿Eliminar este registro?", "excluido": "Registro eliminado.", "falhaExcluir": "Error al eliminar el registro"
+      }
+    },
+    "driverHome": {
+      "ola": "Hola{{email}}",
+      "oQueVoceSaberHoje": "Lo que necesitas saber hoy.",
+      "rotaDeHoje": "Ruta de hoy",
+      "nenhumaRotaHoje": "Ninguna ruta asignada hoy.",
+      "proximaParada": "Próxima parada",
+      "todasParadasConcluidas": "Todas las paradas completadas.",
+      "verRotaCompleta": "Ver ruta completa ({{n}} parada(s))",
+      "seuVeiculo": "Tu vehículo",
+      "nenhumVeiculoDesignado": "Ningún vehículo asignado por el momento.",
+      "alertas": "Alertas",
+      "tudoEmDia": "Todo al día.",
+      "cnhVencida": "Licencia vencida",
+      "cnhVenceEmDias": "La licencia vence en {{n}} día(s)",
+      "osPendentes": "{{n}} orden(es) pendiente(s) en el vehículo",
+      "mensagens": "Mensajes",
+      "valorCombinado": "Valor acordado: R$ {{valor}}",
+      "iniciar": "Iniciar",
+      "concluir": "Completar",
+      "origem": "Origen",
+      "destino": "Destino"
+    },
+    "driverRoute": {
+      "nenhumaRotaAtribuida": "Ninguna ruta asignada por el momento.",
+      "transfer": "Transfer",
+      "origem": "Origen",
+      "destino": "Destino",
+      "valorCombinado": "Valor acordado: R$ {{valor}}",
+      "marcando": "Marcando...",
+      "iniciar": "Iniciar",
+      "concluir": "Completar",
+      "minhaRota": "Mi ruta",
+      "paradaContagem": "{{n}} parada(s)",
+      "toasts": {
+        "falhaCarregar": "Error al cargar la ruta", "paradaConcluida": "Parada completada.", "falhaConcluir": "Error al completar la parada"
+      }
+    },
+    "driverMore": {
+      "mais": "Más",
+      "seuVeiculo": "Tu vehículo",
+      "reportarOcorrencia": "Reportar incidente",
+      "nenhumVeiculoDesignado": "Ningún vehículo asignado por el momento.",
+      "cnh": "Licencia",
+      "validaAte": "Válida hasta {{data}}",
+      "semValidadeCadastrada": "Sin fecha de vencimiento registrada.",
+      "ordensDeServicoDoVeiculo": "Órdenes de servicio del vehículo",
+      "nenhumaOS": "Ninguna orden de servicio registrada.",
+      "historicoDeViagens": "Historial de viajes",
+      "nenhumaViagem": "Aún no hay viajes registrados.",
+      "oQueAconteceu": "¿Qué pasó?",
+      "cancelar": "Cancelar",
+      "enviando": "Enviando...",
+      "enviar": "Enviar",
+      "toasts": { "ocorrenciaReportada": "Incidente reportado — el gestor lo revisará.", "falhaReportar": "Error al reportar el incidente" }
+    }
+  }
+}

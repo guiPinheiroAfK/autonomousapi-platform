@@ -2,7 +2,7 @@ package com.autonomousapi.core.collectionpoint;
 
 import com.autonomousapi.core.collectionpoint.dto.CollectionPointRequest;
 import com.autonomousapi.core.collectionpoint.dto.CollectionPointResponse;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.util.List;
 import java.util.UUID;
@@ -64,7 +64,7 @@ public class CollectionPointService {
     }
 
     private CollectionPoint find(JwtPrincipal gestorPrincipal, UUID id) {
-        return collectionPoints.findByIdAndTenantId(id, gestorPrincipal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Ponto de coleta não encontrado."));
+        return Lookups.orNotFound(
+                collectionPoints.findByIdAndTenantId(id, gestorPrincipal.tenantId()), "Ponto de coleta não encontrado.");
     }
 }

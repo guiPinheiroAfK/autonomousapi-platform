@@ -1,6 +1,6 @@
 package com.autonomousapi.core.driver;
 
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +19,8 @@ public class CurrentDriverResolver {
     }
 
     public Driver resolve(JwtPrincipal principal) {
-        return drivers.findByAppUserId(principal.userId())
-                .filter(d -> d.getTenantId().equals(principal.tenantId()))
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado para este login."));
+        return Lookups.orNotFound(
+                drivers.findByAppUserId(principal.userId()).filter(d -> d.getTenantId().equals(principal.tenantId())),
+                "Motorista não encontrado para este login.");
     }
 }

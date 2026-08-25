@@ -5,12 +5,14 @@ import com.autonomousapi.core.driver.DriverRepository;
 import com.autonomousapi.core.driver.rating.dto.DriverRatingRequest;
 import com.autonomousapi.core.driver.rating.dto.DriverRatingResponse;
 import com.autonomousapi.core.driver.rating.dto.DriverRatingSummaryResponse;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,11 +64,10 @@ public class DriverRatingService {
     }
 
     @Transactional(readOnly = true)
-    public List<DriverRatingResponse> list(JwtPrincipal principal, UUID driverId) {
+    public Page<DriverRatingResponse> list(JwtPrincipal principal, UUID driverId, Pageable pageable) {
         Driver driver = findOwnedDriver(principal, driverId);
-        return manualRatings.findAllByDriverIdOrderByCreatedAtDesc(driver.getId()).stream()
-                .map(DriverRatingResponse::from)
-                .toList();
+        return manualRatings.findAllByDriverIdOrderByCreatedAtDesc(driver.getId(), pageable)
+                .map(DriverRatingResponse::from);
     }
 
     @Transactional(readOnly = true)
@@ -132,7 +133,6 @@ public class DriverRatingService {
     }
 
     private Driver findOwnedDriver(JwtPrincipal principal, UUID driverId) {
-        return drivers.findByIdAndTenantId(driverId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        return Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, principal.tenantId()), "Motorista não encontrado.");
     }
 }

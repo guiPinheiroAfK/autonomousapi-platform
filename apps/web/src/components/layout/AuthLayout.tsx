@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Logo } from '../shared/Logo';
+import { useTranslation } from 'react-i18next';
+import { Logo, Marca } from '../shared/Logo';
 import { PlacaBR } from '../shared/PlacaBR';
 
 interface Props {
@@ -17,12 +18,16 @@ interface Props {
  * não o discurso.
  */
 export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="superficie-publica min-h-screen lg:grid lg:grid-cols-2">
       {/* overflow-hidden prende o brilho ambiente dentro desta metade só — ele não deve
           vazar pro lado do formulário nem empurrar o layout. */}
       <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-[var(--linha)] bg-[var(--breu-elevado)] p-12 lg:flex">
         <div className="ambiente-publico" aria-hidden />
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 opacity-[0.05]">
+          <Marca tamanho={380} className="text-[var(--tinta)]" />
+        </div>
 
         <button type="button" onClick={onVoltar} className="botao-tatil relative self-start text-[var(--tinta)]">
           <Logo tamanho={26} />
@@ -35,9 +40,7 @@ export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
           <CartaoVitrine />
         </div>
 
-        <p className="relative text-[13px] text-[var(--tinta-suave)]">
-          Gestão de frota · Dado viário · Brasil
-        </p>
+        <p className="relative text-[13px] text-[var(--tinta-suave)]">{t('auth.rodape')}</p>
       </aside>
 
       {/* entra-da-direita: o formulário "chega" ao montar — dá sensação de troca de
@@ -69,18 +72,19 @@ export function AuthLayout({ titulo, chamada, onVoltar, children }: Props) {
  * em vez de uma tela de formulário solta no vazio.
  */
 function CartaoVitrine() {
+  const { t } = useTranslation();
   return (
     <div className="mt-8 rounded-xl bg-[var(--papel)] p-5 text-[var(--papel-tinta)] shadow-[0_20px_50px_-25px_rgba(0,0,0,0.6)]">
       <div className="flex items-center gap-2.5">
         <PlacaBR placa="RTC1D89" />
         <div className="text-[12px] leading-tight">
-          <p className="font-medium">Renault Kangoo</p>
-          <p className="opacity-60">71.300 km</p>
+          <p className="font-medium">{t('auth.vitrineLogin.veiculo')}</p>
+          <p className="opacity-60">{t('auth.vitrineLogin.km')}</p>
         </div>
       </div>
       <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-black/10 pt-3 text-[12px]">
-        <span className="opacity-60">Próxima preventiva</span>
-        <span className="font-data text-[#b45309]">em 10 dias</span>
+        <span className="opacity-60">{t('auth.vitrineLogin.proximaPreventiva')}</span>
+        <span className="font-data text-[#b45309]">{t('auth.vitrineLogin.emDias', { n: 10 })}</span>
       </div>
     </div>
   );
@@ -99,7 +103,9 @@ export function CampoPublico({
       </label>
       <input
         id={id}
-        className="w-full rounded-xl border border-[var(--linha)] bg-[var(--breu-elevado)] px-4 py-3 text-[15px] text-[var(--tinta)] outline-none transition-colors placeholder:text-[var(--tinta-suave)]/60 focus:border-[var(--acento)]"
+        // text-base (16px) no mobile: abaixo disso o Safari iOS dá zoom automático ao focar o
+        // campo. sm: volta pro tamanho original de 15px porque desktop não tem esse comportamento.
+        className="w-full rounded-xl border border-[var(--linha)] bg-[var(--breu-elevado)] px-4 py-3 text-base text-[var(--tinta)] outline-none transition-colors placeholder:text-[var(--tinta-suave)]/60 focus:border-[var(--acento)] sm:text-[15px]"
         {...props}
       />
     </div>

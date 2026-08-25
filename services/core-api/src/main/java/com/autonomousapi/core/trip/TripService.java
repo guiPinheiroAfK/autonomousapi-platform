@@ -1,6 +1,6 @@
 package com.autonomousapi.core.trip;
 
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.TripStateConflictException;
 import com.autonomousapi.core.geo.GeoApiClient;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
@@ -12,6 +12,8 @@ import com.autonomousapi.core.trip.dto.TripResponse;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +38,7 @@ public class TripService {
     @Transactional
     public TripResponse start(JwtPrincipal principal, StartTripRequest req) {
         UUID tenantId = principal.tenantId();
-        vehicles.findByIdAndTenantId(req.vehicleId(), tenantId)
-                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+        Lookups.orNotFound(vehicles.findByIdAndTenantId(req.vehicleId(), tenantId), "Veículo não encontrado.");
 
         if (trips.existsByTenantIdAndUserIdAndStatus(tenantId, principal.userId(), TripStatus.EM_ANDAMENTO)) {
             throw new TripStateConflictException("Já existe uma viagem em andamento — finalize-a antes de iniciar outra.");
@@ -56,11 +57,9 @@ public class TripService {
     }
 
     @Transactional(readOnly = true)
-    public List<TripResponse> list(JwtPrincipal principal) {
-        return trips.findAllByTenantIdAndUserIdOrderByStartedAtDesc(principal.tenantId(), principal.userId())
-                .stream()
-                .map(TripResponse::from)
-                .toList();
+    public Page<TripResponse> list(JwtPrincipal principal, Pageable pageable) {
+        return trips.findAllByTenantIdAndUserIdOrderByStartedAtDesc(principal.tenantId(), principal.userId(), pageable)
+                .map(TripResponse::from);
     }
 
     /** Encaminha o ping pro geo-api. Trip precisa estar em andamento e pertencer ao motorista. */
@@ -71,28 +70,25 @@ public class TripService {
     }
 
     /**
-     * Esvazia um lote da fila offline do app em uma requisição só (antes era uma por ping:
-     * um motorista voltando de área sem sinal disparava centenas de chamadas sequenciais).
+     * Esvazia um lote da fila offline do app em uma requisição só, tanto entre app e
+     * core-api (contrato já existia) quanto entre core-api e geo-api (ADR 0019,
+     * pré-requisito A — antes esta chamada iterava e mandava um POST por ping pro geo-api;
+     * um motorista voltando de área sem sinal com centenas de pings enfileirados virava
+     * centenas de chamadas HTTP sequenciais).
      *
-     * Processa em ordem e para no primeiro erro, devolvendo quantos entraram — o app
-     * descarta esses da fila e tenta o resto depois, sem perder dado nem reenviar o que
-     * já foi aceito. É também o ponto onde entra o produtor Kafka na Fase 2 (ADR 0006):
-     * a assinatura do método não muda, só o destino do ping.
+     * A ingestão em lote do geo-api é idempotente por construção (dedup por chave natural,
+     * ADR 0019) — não precisa mais processar em ordem parando no primeiro erro pra evitar
+     * duplicata: falha vira {@code accepted=0} de uma vez, e o app reenvia o lote inteiro
+     * sem risco (ver ADR 0019, "Anexo — contrato da ingestão em lote"). É também o ponto
+     * onde entra o produtor Kafka na Fase 2 (ADR 0006): a assinatura do método não muda, só
+     * o destino do lote.
      */
     @Transactional(readOnly = true)
     public SubmitPingBatchResponse submitPings(
             JwtPrincipal principal, UUID tripId, List<SubmitPingRequest> pings) {
         Trip trip = requireOngoingTrip(principal, tripId);
-
-        int accepted = 0;
-        for (SubmitPingRequest req : pings) {
-            try {
-                geoApiClient.ingestGpsPing(toGeoPing(trip, req));
-                accepted++;
-            } catch (RuntimeException ex) {
-                break;
-            }
-        }
+        List<GpsPingRequest> geoPings = pings.stream().map(req -> toGeoPing(trip, req)).toList();
+        int accepted = geoApiClient.ingestGpsPingBatch(geoPings);
         return new SubmitPingBatchResponse(accepted, pings.size());
     }
 
@@ -111,7 +107,7 @@ public class TripService {
     }
 
     private Trip findOwned(JwtPrincipal principal, UUID tripId) {
-        return trips.findByIdAndTenantIdAndUserId(tripId, principal.tenantId(), principal.userId())
-                .orElseThrow(() -> new NotFoundException("Viagem não encontrada."));
+        return Lookups.orNotFound(
+                trips.findByIdAndTenantIdAndUserId(tripId, principal.tenantId(), principal.userId()), "Viagem não encontrada.");
     }
 }

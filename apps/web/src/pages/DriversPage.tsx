@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Car, Eye, Mail, Plus, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type DriverAssignmentResponse,
@@ -21,6 +22,9 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { cn } from '../lib/utils';
 import { diasAteVencer, formatDateBR, iniciais } from '../lib/format';
+import { toast } from '../lib/toast';
+import { deleteWithConfirm } from '../lib/confirm';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
 
 const STATUS_OPTIONS = ['ATIVO', 'INATIVO'] as const;
 
@@ -43,6 +47,7 @@ function categoriaCnh(cnh: string): string {
 }
 
 export function DriversPage() {
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [form, setForm] = useState<DriverRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -77,8 +82,8 @@ export function DriversPage() {
   function refresh() {
     coreApi.drivers
       .list()
-      .then(setDrivers)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar motoristas'))
+      .then((res) => setDrivers(res.content))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.drivers.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
 
@@ -116,24 +121,26 @@ export function DriversPage() {
     try {
       if (editingId) {
         await coreApi.drivers.update(editingId, form);
+        toast.success(t('pages.drivers.toasts.atualizado'));
       } else {
         await coreApi.drivers.create(form);
+        toast.success(t('pages.drivers.toasts.cadastrado'));
       }
       setModalOpen(false);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar motorista');
+      setError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaSalvar'));
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir este motorista?')) return;
-    try {
-      await coreApi.drivers.remove(id);
-      refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir motorista');
-    }
+    await deleteWithConfirm({
+      confirmMessage: t('pages.drivers.toasts.confirmarExcluir'),
+      remove: () => coreApi.drivers.remove(id),
+      successMessage: t('pages.drivers.toasts.excluido'),
+      fallbackErrorMessage: t('pages.drivers.toasts.falhaExcluir'),
+      onSuccess: refresh,
+    });
   }
 
   function openDetail(d: DriverResponse) {
@@ -156,7 +163,7 @@ export function DriversPage() {
   }
 
   function refreshRatings(driverId: string) {
-    coreApi.driverRatings.list(driverId).then(setDetailRatings);
+    coreApi.driverRatings.list(driverId).then((res) => setDetailRatings(res.content));
     coreApi.driverRatings.summary(driverId).then(setDetailSummary);
   }
 
@@ -174,7 +181,7 @@ export function DriversPage() {
       setNovoComentario('');
       refreshRatings(detail.id!);
     } catch (err) {
-      setRatingError(err instanceof Error ? err.message : 'Falha ao registrar avaliação');
+      setRatingError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaAvaliacao'));
     } finally {
       setRatingSaving(false);
     }
@@ -187,10 +194,10 @@ export function DriversPage() {
     setInviteSent('');
     try {
       const resp = await coreApi.drivers.invite(detail.id!);
-      setInviteSent(`Convite enviado para ${resp.email}.`);
+      setInviteSent(t('pages.drivers.toasts.conviteEnviado', { email: resp.email }));
       refresh();
     } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Falha ao enviar convite');
+      setInviteError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaConvite'));
     } finally {
       setInviteSending(false);
     }
@@ -206,7 +213,7 @@ export function DriversPage() {
       setDetailAssignment(assignment);
       setAssignVehicleId('');
     } catch (err) {
-      setAssignError(err instanceof Error ? err.message : 'Falha ao designar veículo');
+      setAssignError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaDesignar'));
     } finally {
       setAssignSaving(false);
     }
@@ -218,7 +225,7 @@ export function DriversPage() {
       await coreApi.drivers.endAssignment(detail.id!);
       setDetailAssignment(null);
     } catch (err) {
-      setAssignError(err instanceof Error ? err.message : 'Falha ao encerrar designação');
+      setAssignError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaEncerrar'));
     }
   }
 
@@ -229,11 +236,11 @@ export function DriversPage() {
     setNotifyError('');
     setNotifySent(false);
     try {
-      await coreApi.drivers.notify(detail.id!, { title: 'Aviso do gestor', body: notifyBody });
+      await coreApi.drivers.notify(detail.id!, { title: t('pages.drivers.toasts.avisoDoGestor'), body: notifyBody });
       setNotifyBody('');
       setNotifySent(true);
     } catch (err) {
-      setNotifyError(err instanceof Error ? err.message : 'Falha ao enviar aviso');
+      setNotifyError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaAviso'));
     } finally {
       setNotifySending(false);
     }
@@ -255,11 +262,11 @@ export function DriversPage() {
     <div className="p-5">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Motoristas</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">{drivers.length} motoristas cadastrados</p>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.drivers.titulo')}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.drivers.subtitulo', { n: drivers.length })}</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus /> Novo Motorista
+          <Plus /> {t('pages.drivers.novoMotorista')}
         </Button>
       </div>
 
@@ -272,7 +279,7 @@ export function DriversPage() {
       <Card className="mb-5">
         <div className="flex flex-wrap items-center gap-3 p-4">
           <Input
-            placeholder="Buscar por nome ou CNH..."
+            placeholder={t('pages.drivers.buscarPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs"
@@ -282,42 +289,42 @@ export function DriversPage() {
             onChange={(e) => setStatusFiltro(e.target.value as (typeof STATUS_OPTIONS)[number] | 'todos')}
             className="w-44"
           >
-            <option value="todos">Todos os status</option>
+            <option value="todos">{t('pages.drivers.todosOsStatus')}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {t(`status.motorista.${s}`)}
               </option>
             ))}
           </Select>
-          <span className="ml-auto text-xs text-muted-foreground">{filtered.length} motorista(s)</span>
+          <span className="ml-auto text-xs text-muted-foreground">{t('pages.drivers.motoristasContagem', { n: filtered.length })}</span>
         </div>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Todos os motoristas</CardTitle>
+          <CardTitle>{t('pages.drivers.todosOsMotoristas')}</CardTitle>
         </CardHeader>
         <div className="overflow-x-auto">
           {loading ? (
-            <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+            <TableSkeleton rows={6} columns={6} />
           ) : (
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Motorista
+                    {t('pages.drivers.tabela.motorista')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    CNH
+                    {t('pages.drivers.tabela.cnh')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Validade
+                    {t('pages.drivers.tabela.validade')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Telefone
+                    {t('pages.drivers.tabela.telefone')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Status
+                    {t('pages.drivers.tabela.status')}
                   </th>
                   <th className="px-5 py-2.5" />
                 </tr>
@@ -337,7 +344,7 @@ export function DriversPage() {
                       </td>
                       <td className="px-5 py-2.5">
                         <Badge variant="outline" className="font-data">
-                          Cat. {categoriaCnh(d.cnh!)}
+                          {t('pages.drivers.categoriaAbrev', { cat: categoriaCnh(d.cnh!) })}
                         </Badge>
                       </td>
                       <td className="px-5 py-2.5">
@@ -348,7 +355,7 @@ export function DriversPage() {
                             </span>
                             {dias != null && dias <= 45 && (
                               <span className={cn('ml-2 text-[11px]', dias < 0 ? 'text-status-danger' : 'text-status-warning')}>
-                                {dias < 0 ? 'vencida' : `vence em ${dias}d`}
+                                {dias < 0 ? t('pages.drivers.vencida') : t('pages.drivers.venceEmDias', { n: dias })}
                               </span>
                             )}
                           </div>
@@ -365,12 +372,12 @@ export function DriversPage() {
                           <button
                             type="button"
                             onClick={() => openDetail(d)}
-                            className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                            className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
                           >
                             <Eye className="size-4" />
                           </button>
                           <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(d)}>
-                            Editar
+                            {t('pages.drivers.editar')}
                           </Button>
                           <Button
                             variant="link"
@@ -378,7 +385,7 @@ export function DriversPage() {
                             className="h-auto p-0 text-destructive"
                             onClick={() => handleDelete(d.id!)}
                           >
-                            Excluir
+                            {t('pages.drivers.excluir')}
                           </Button>
                         </div>
                       </td>
@@ -388,7 +395,7 @@ export function DriversPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhum motorista encontrado.
+                      {t('pages.drivers.nenhumMotoristaEncontrado')}
                     </td>
                   </tr>
                 )}
@@ -401,30 +408,30 @@ export function DriversPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingId ? 'Editar Motorista' : 'Novo Motorista'}
+        title={editingId ? t('pages.drivers.editarMotorista') : t('pages.drivers.novoMotorista')}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Nome</Label>
+            <Label htmlFor="name">{t('pages.drivers.form.nome')}</Label>
             <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </div>
           <div>
-            <Label htmlFor="cnh">CNH (11 dígitos)</Label>
+            <Label htmlFor="cnh">{t('pages.drivers.form.cnh')}</Label>
             <Input
               id="cnh"
               value={form.cnh}
               onChange={(e) => setForm({ ...form, cnh: e.target.value })}
               pattern="\d{11}"
-              title="11 dígitos numéricos"
+              title={t('pages.drivers.form.cnh11Digitos')}
               required
             />
           </div>
           <div>
-            <Label htmlFor="phone">Telefone</Label>
+            <Label htmlFor="phone">{t('pages.drivers.form.telefone')}</Label>
             <Input id="phone" value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div>
-            <Label htmlFor="email">E-mail (para acesso ao app)</Label>
+            <Label htmlFor="email">{t('pages.drivers.form.email')}</Label>
             <Input
               id="email"
               type="email"
@@ -433,7 +440,7 @@ export function DriversPage() {
             />
           </div>
           <div>
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t('pages.drivers.form.status')}</Label>
             <Select
               id="status"
               value={form.status}
@@ -441,13 +448,13 @@ export function DriversPage() {
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(`status.motorista.${s}`)}
                 </option>
               ))}
             </Select>
           </div>
           <div className="border-t border-border pt-4">
-            <Label htmlFor="cnhValidade">Validade da CNH</Label>
+            <Label htmlFor="cnhValidade">{t('pages.drivers.form.validadeCnh')}</Label>
             <Input
               id="cnhValidade"
               type="date"
@@ -460,9 +467,9 @@ export function DriversPage() {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.drivers.form.cancelar')}
             </Button>
-            <Button type="submit">{editingId ? 'Salvar' : 'Adicionar'}</Button>
+            <Button type="submit">{editingId ? t('pages.drivers.form.salvar') : t('pages.drivers.form.adicionar')}</Button>
           </div>
         </form>
       </Modal>
@@ -477,7 +484,7 @@ export function DriversPage() {
                 </Avatar>
                 <div>
                   <DialogTitle>{detail.name}</DialogTitle>
-                  <DialogDescription>Avaliação (visível só para o gestor)</DialogDescription>
+                  <DialogDescription>{t('pages.drivers.detalhe.avaliacaoSoGestor')}</DialogDescription>
                 </div>
               </div>
             </DialogHeader>
@@ -489,14 +496,20 @@ export function DriversPage() {
                     <Mail className="size-4 text-muted-foreground" />
                     <div>
                       <p className="text-xs font-medium text-foreground">
-                        {detail.hasLogin ? 'Acesso ao app ativo' : detail.email ? 'Convite pendente' : 'Sem e-mail cadastrado'}
+                        {detail.hasLogin
+                          ? t('pages.drivers.detalhe.acessoAppAtivo')
+                          : detail.email
+                            ? t('pages.drivers.detalhe.convitePendente')
+                            : t('pages.drivers.detalhe.semEmailCadastrado')}
                       </p>
-                      <p className="text-[11px] text-muted-foreground">{detail.email ?? 'Cadastre um e-mail para convidar'}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {detail.email ?? t('pages.drivers.detalhe.cadastreEmailConvidar')}
+                      </p>
                     </div>
                   </div>
                   {!detail.hasLogin && detail.email && (
                     <Button type="button" size="sm" variant="outline" onClick={handleInvite} disabled={inviteSending}>
-                      {inviteSending ? 'Enviando...' : 'Convidar'}
+                      {inviteSending ? t('pages.drivers.detalhe.enviando') : t('pages.drivers.detalhe.convidar')}
                     </Button>
                   )}
                 </div>
@@ -506,24 +519,24 @@ export function DriversPage() {
                 {detail.hasLogin && (
                   <form onSubmit={handleNotify} className="mt-3 flex items-center gap-2 border-t border-border pt-3">
                     <Input
-                      placeholder="Mandar um aviso rápido pelo app..."
+                      placeholder={t('pages.drivers.detalhe.avisoRapidoPlaceholder')}
                       value={notifyBody}
                       onChange={(e) => setNotifyBody(e.target.value)}
                       className="flex-1"
                     />
                     <Button type="submit" size="sm" variant="outline" disabled={!notifyBody.trim() || notifySending}>
-                      {notifySending ? 'Enviando...' : 'Enviar'}
+                      {notifySending ? t('pages.drivers.detalhe.enviando') : t('pages.drivers.detalhe.enviar')}
                     </Button>
                   </form>
                 )}
-                {notifySent && <p className="mt-2 text-[11px] text-status-success">Aviso enviado.</p>}
+                {notifySent && <p className="mt-2 text-[11px] text-status-success">{t('pages.drivers.detalhe.avisoEnviado')}</p>}
                 {notifyError && <p className="mt-2 text-[11px] text-status-danger">{notifyError}</p>}
               </div>
 
               <div className="rounded-md border border-border p-3">
                 <div className="mb-2 flex items-center gap-2.5">
                   <Car className="size-4 text-muted-foreground" />
-                  <p className="text-xs font-medium text-foreground">Veículo designado</p>
+                  <p className="text-xs font-medium text-foreground">{t('pages.drivers.detalhe.veiculoDesignado')}</p>
                 </div>
                 {detailAssignment ? (
                   <div className="flex items-center justify-between gap-3">
@@ -531,7 +544,7 @@ export function DriversPage() {
                       {detailAssignment.plate} — {detailAssignment.brand} {detailAssignment.model}
                     </span>
                     <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={handleEndAssignment}>
-                      Encerrar
+                      {t('pages.drivers.detalhe.encerrar')}
                     </Button>
                   </div>
                 ) : (
@@ -541,7 +554,7 @@ export function DriversPage() {
                       onChange={(e) => setAssignVehicleId(e.target.value)}
                       className="flex-1"
                     >
-                      <option value="">Selecione um veículo...</option>
+                      <option value="">{t('pages.drivers.detalhe.selecioneVeiculo')}</option>
                       {vehicles.map((v) => (
                         <option key={v.id} value={v.id}>
                           {v.plate} — {v.brand} {v.model}
@@ -549,7 +562,7 @@ export function DriversPage() {
                       ))}
                     </Select>
                     <Button type="submit" size="sm" disabled={!assignVehicleId || assignSaving}>
-                      {assignSaving ? 'Designando...' : 'Designar'}
+                      {assignSaving ? t('pages.drivers.detalhe.designando') : t('pages.drivers.detalhe.designar')}
                     </Button>
                   </form>
                 )}
@@ -563,7 +576,7 @@ export function DriversPage() {
                     {detailSummary?.notaMedia != null ? Number(detailSummary.notaMedia).toFixed(1) : '—'} / 5
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {detailSummary?.totalAvaliacoes ?? 0} avaliação(ões)
+                    {t('pages.drivers.detalhe.avaliacoesContagem', { n: detailSummary?.totalAvaliacoes ?? 0 })}
                   </p>
                 </div>
               </div>
@@ -587,7 +600,7 @@ export function DriversPage() {
               )}
 
               <form onSubmit={handleAddRating} className="space-y-2 border-t border-border pt-4">
-                <Label htmlFor="novaNota">Nova avaliação</Label>
+                <Label htmlFor="novaNota">{t('pages.drivers.detalhe.novaAvaliacao')}</Label>
                 <Select id="novaNota" value={novaNota} onChange={(e) => setNovaNota(Number(e.target.value))}>
                   {[5, 4, 3, 2, 1].map((n) => (
                     <option key={n} value={n}>
@@ -597,13 +610,13 @@ export function DriversPage() {
                   ))}
                 </Select>
                 <Input
-                  placeholder="Comentário (opcional)"
+                  placeholder={t('pages.drivers.detalhe.comentarioOpcional')}
                   value={novoComentario}
                   onChange={(e) => setNovoComentario(e.target.value)}
                 />
                 {ratingError && <p className="text-xs text-status-danger">{ratingError}</p>}
                 <Button type="submit" size="sm" className="w-full" disabled={ratingSaving}>
-                  {ratingSaving ? 'Salvando...' : 'Registrar avaliação'}
+                  {ratingSaving ? t('pages.drivers.detalhe.salvando') : t('pages.drivers.detalhe.registrarAvaliacao')}
                 </Button>
               </form>
             </div>

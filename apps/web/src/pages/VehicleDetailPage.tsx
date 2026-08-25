@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ChevronLeft, Gauge, ShieldAlert } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type VehicleConditionScoreResponse,
@@ -13,13 +14,13 @@ import {
 } from '../api/client';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgeSeveridade, StatusBadgeVeiculo } from '../components/shared/StatusBadge';
-import { VEHICLE_TYPE_LABEL, VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
+import { VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { formatBRL, formatDateBR } from '../lib/format';
-import { TIPO_OS_LABEL } from '../lib/workOrderLabels';
+import { toast } from '../lib/toast';
 
 interface Props {
   vehicleId: string;
@@ -31,10 +32,10 @@ interface Props {
  * (4 abas), agora com espaço pra crescer e deep-link direto pro veículo funcionando.
  */
 export function VehicleDetailPage({ vehicleId, onBack }: Props) {
+  const { t } = useTranslation();
   const [vehicle, setVehicle] = useState<VehicleResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [error, setError] = useState('');
 
   const [costs, setCosts] = useState<ExpenseEntryResponse[]>([]);
   const [os, setOs] = useState<WorkOrderResponse[]>([]);
@@ -71,7 +72,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
       .finally(() => setLoading(false));
 
     coreApi.expenses.list(vehicleId).then(setCosts);
-    coreApi.workOrders.list(vehicleId).then(setOs);
+    coreApi.workOrders.list(vehicleId).then((res) => setOs(res.content));
     coreApi.vehicleMarketValue.latest(vehicleId).then(setFipe);
     coreApi.vehicleCondition.score(vehicleId).then(setScore);
     coreApi.vehicleCondition.incidents(vehicleId).then(setIncidents);
@@ -93,8 +94,9 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
       };
       const saved = await coreApi.vehicleMarketValue.record(vehicleId, body);
       setFipe(saved);
+      toast.success(t('pages.vehicleDetail.toasts.fipeLancado'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao lançar valor FIPE');
+      toast.error(err instanceof Error ? err.message : t('pages.vehicleDetail.toasts.falhaFipe'));
     } finally {
       setFipeSaving(false);
     }
@@ -107,22 +109,23 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
       await coreApi.vehicleCondition.registerIncident(vehicleId, incidentForm);
       setIncidentForm({ data: new Date().toISOString().slice(0, 10), severidade: 'LEVE', descricao: '', custoReparo: undefined });
       refreshCondition();
+      toast.success(t('pages.vehicleDetail.toasts.sinistroRegistrado'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao registrar sinistro');
+      toast.error(err instanceof Error ? err.message : t('pages.vehicleDetail.toasts.falhaSinistro'));
     } finally {
       setIncidentSaving(false);
     }
   }
 
   if (loading) {
-    return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
+    return <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>;
   }
 
   if (notFound || !vehicle) {
     return (
       <div className="p-5">
         <Breadcrumb onBack={onBack} />
-        <p className="mt-8 text-center text-sm text-muted-foreground">Veículo não encontrado.</p>
+        <p className="mt-8 text-center text-sm text-muted-foreground">{t('pages.vehicleDetail.veiculoNaoEncontrado')}</p>
       </div>
     );
   }
@@ -137,7 +140,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
         <div className="flex items-center gap-3">
           <div
             className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-secondary"
-            title={VEHICLE_TYPE_LABEL[vehicle.tipo ?? ''] ?? 'Tipo não informado'}
+            title={vehicle.tipo ? t(`status.tipoVeiculo.${vehicle.tipo}`) : t('pages.vehicles.tipoNaoInformado')}
           >
             <VehicleTypeIcon tipo={vehicle.tipo} className="size-[18px] text-foreground" />
           </div>
@@ -146,46 +149,40 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
             <h2 className="font-display text-lg font-semibold text-foreground">{vehicle.model}</h2>
             <p className="text-xs text-muted-foreground">
               {vehicle.brand} · {vehicle.modelYear ?? '—'}
-              {vehicle.tipo ? ` · ${VEHICLE_TYPE_LABEL[vehicle.tipo] ?? vehicle.tipo}` : ''}
+              {vehicle.tipo ? ` · ${t(`status.tipoVeiculo.${vehicle.tipo}`)}` : ''}
             </p>
           </div>
         </div>
         <StatusBadgeVeiculo status={vehicle.status} />
       </div>
 
-      {error && (
-        <div className="mb-4 rounded-md border border-status-danger-bg bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
-          {error}
-        </div>
-      )}
-
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <InfoStat label="KM atual" value={`${vehicle.odometerKm?.toLocaleString('pt-BR')} km`} />
+        <InfoStat label={t('pages.vehicleDetail.kmAtual')} value={`${vehicle.odometerKm?.toLocaleString('pt-BR')} km`} />
         <InfoStat
-          label="Próx. preventiva"
+          label={t('pages.vehicleDetail.proximaPreventiva')}
           value={vehicle.proximaManutencaoData ? formatDateBR(vehicle.proximaManutencaoData) : '—'}
         />
         <InfoStat
-          label="Preventiva por km"
+          label={t('pages.vehicleDetail.preventivaPorKm')}
           value={vehicle.proximaManutencaoKm ? `${vehicle.proximaManutencaoKm.toLocaleString('pt-BR')} km` : '—'}
         />
         <InfoStat
-          label="Gasto histórico"
+          label={t('pages.vehicleDetail.gastoHistorico')}
           value={formatBRL(costs.reduce((sum, c) => sum + Number(c.valor ?? 0), 0))}
         />
       </div>
 
       <Tabs defaultValue="manutencao">
         <TabsList>
-          <TabsTrigger value="manutencao">Manutenção</TabsTrigger>
-          <TabsTrigger value="os">Ordens de Serviço</TabsTrigger>
-          <TabsTrigger value="fipe">FIPE</TabsTrigger>
-          <TabsTrigger value="sinistros">Sinistros</TabsTrigger>
+          <TabsTrigger value="manutencao">{t('pages.vehicleDetail.tabs.manutencao')}</TabsTrigger>
+          <TabsTrigger value="os">{t('pages.vehicleDetail.tabs.os')}</TabsTrigger>
+          <TabsTrigger value="fipe">{t('pages.vehicleDetail.tabs.fipe')}</TabsTrigger>
+          <TabsTrigger value="sinistros">{t('pages.vehicleDetail.tabs.sinistros')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="manutencao">
           {manutencao.length === 0 ? (
-            <p className="py-6 text-center text-xs text-muted-foreground">Nenhum lançamento de manutenção.</p>
+            <p className="py-6 text-center text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumLancamentoManutencao')}</p>
           ) : (
             <ul className="space-y-2">
               {manutencao.map((c) => (
@@ -203,22 +200,22 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
 
         <TabsContent value="os">
           {os.length === 0 ? (
-            <p className="py-6 text-center text-xs text-muted-foreground">Nenhuma OS registrada ainda.</p>
+            <p className="py-6 text-center text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumaOS')}</p>
           ) : (
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
-                  <th className="py-1.5 text-left font-medium">OS</th>
-                  <th className="py-1.5 text-left font-medium">Tipo</th>
-                  <th className="py-1.5 text-left font-medium">Abertura</th>
-                  <th className="py-1.5 text-left font-medium">Status</th>
+                  <th className="py-1.5 text-left font-medium">{t('pages.vehicleDetail.osTabela.os')}</th>
+                  <th className="py-1.5 text-left font-medium">{t('pages.vehicleDetail.osTabela.tipo')}</th>
+                  <th className="py-1.5 text-left font-medium">{t('pages.vehicleDetail.osTabela.abertura')}</th>
+                  <th className="py-1.5 text-left font-medium">{t('pages.vehicleDetail.osTabela.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {os.map((o) => (
                   <tr key={o.id}>
                     <td className="py-1.5 font-data text-foreground">{o.numero}</td>
-                    <td className="py-1.5 text-muted-foreground">{TIPO_OS_LABEL[o.tipo ?? ''] ?? o.tipo}</td>
+                    <td className="py-1.5 text-muted-foreground">{o.tipo ? t(`status.tipoOS.${o.tipo}`) : '—'}</td>
                     <td className="py-1.5 font-data text-muted-foreground">
                       {o.dataAbertura ? formatDateBR(o.dataAbertura) : '—'}
                     </td>
@@ -243,14 +240,16 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                       {formatBRL(Number(fipe.valorFipe ?? 0))}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      Referência {fipe.dataReferencia ? formatDateBR(fipe.dataReferencia) : '—'}
-                      {fipe.codigoFipe ? ` · cód. ${fipe.codigoFipe}` : ''}
+                      {t('pages.vehicleDetail.referencia', {
+                        data: fipe.dataReferencia ? formatDateBR(fipe.dataReferencia) : '—',
+                      })}
+                      {fipe.codigoFipe ? t('pages.vehicleDetail.codigoAbrev', { codigo: fipe.codigoFipe }) : ''}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">Nenhum valor FIPE lançado ainda.</p>
+              <p className="text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumFipe')}</p>
             )}
 
             <form onSubmit={handleAddFipe} className="grid grid-cols-3 gap-2 border-t border-border pt-4">
@@ -258,7 +257,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                 type="number"
                 min={0}
                 step="0.01"
-                placeholder="Valor (R$)"
+                placeholder={t('pages.vehicleDetail.valorReais')}
                 value={fipeForm.valorFipe}
                 onChange={(e) => setFipeForm({ ...fipeForm, valorFipe: e.target.value })}
                 required
@@ -270,12 +269,12 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                 required
               />
               <Input
-                placeholder="Código FIPE (opcional)"
+                placeholder={t('pages.vehicleDetail.codigoFipeOpcional')}
                 value={fipeForm.codigoFipe}
                 onChange={(e) => setFipeForm({ ...fipeForm, codigoFipe: e.target.value })}
               />
               <Button type="submit" size="sm" className="col-span-3" disabled={fipeSaving}>
-                {fipeSaving ? 'Salvando...' : 'Lançar valor'}
+                {fipeSaving ? t('pages.vehicleDetail.salvando') : t('pages.vehicleDetail.lancarValor')}
               </Button>
             </form>
           </div>
@@ -287,14 +286,16 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
               <ShieldAlert className="size-4 text-primary" />
               <div>
                 <p className="font-data text-sm font-semibold text-foreground">
-                  Condição: {score ? Number(score.score ?? 0).toFixed(0) : '100'}/100
+                  {t('pages.vehicleDetail.condicao', { score: score ? Number(score.score ?? 0).toFixed(0) : '100' })}
                 </p>
-                <p className="text-[11px] text-muted-foreground">{score?.algorithmVersion ?? 'sem sinistro registrado'}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {score?.algorithmVersion ?? t('pages.vehicleDetail.semSinistroRegistrado')}
+                </p>
               </div>
             </div>
 
             {incidents.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nenhum sinistro registrado.</p>
+              <p className="text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumSinistro')}</p>
             ) : (
               <ul className="space-y-2">
                 {incidents.map((i) => (
@@ -305,7 +306,9 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                     </div>
                     {i.descricao && <p className="mt-1 text-foreground">{i.descricao}</p>}
                     {i.custoReparo != null && (
-                      <p className="mt-1 font-data text-muted-foreground">Reparo: {formatBRL(Number(i.custoReparo))}</p>
+                      <p className="mt-1 font-data text-muted-foreground">
+                        {t('pages.vehicleDetail.reparo', { valor: formatBRL(Number(i.custoReparo)) })}
+                      </p>
                     )}
                   </li>
                 ))}
@@ -326,13 +329,13 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                     setIncidentForm({ ...incidentForm, severidade: e.target.value as VehicleIncidentRequest['severidade'] })
                   }
                 >
-                  <option value="LEVE">Leve</option>
-                  <option value="MODERADA">Moderada</option>
-                  <option value="GRAVE">Grave</option>
+                  <option value="LEVE">{t('status.severidade.LEVE')}</option>
+                  <option value="MODERADA">{t('status.severidade.MODERADA')}</option>
+                  <option value="GRAVE">{t('status.severidade.GRAVE')}</option>
                 </Select>
               </div>
               <Input
-                placeholder="Descrição (opcional)"
+                placeholder={t('pages.vehicleDetail.descricaoOpcional')}
                 value={incidentForm.descricao ?? ''}
                 onChange={(e) => setIncidentForm({ ...incidentForm, descricao: e.target.value || undefined })}
               />
@@ -340,14 +343,14 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                 type="number"
                 min={0}
                 step="0.01"
-                placeholder="Custo de reparo (opcional)"
+                placeholder={t('pages.vehicleDetail.custoReparoOpcional')}
                 value={incidentForm.custoReparo ?? ''}
                 onChange={(e) =>
                   setIncidentForm({ ...incidentForm, custoReparo: e.target.value ? Number(e.target.value) : undefined })
                 }
               />
               <Button type="submit" size="sm" className="w-full" disabled={incidentSaving}>
-                {incidentSaving ? 'Registrando...' : 'Registrar sinistro'}
+                {incidentSaving ? t('pages.vehicleDetail.registrando') : t('pages.vehicleDetail.registrarSinistro')}
               </Button>
             </form>
           </div>
@@ -358,11 +361,12 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
 }
 
 function Breadcrumb({ onBack, placa, modelo }: { onBack: () => void; placa?: string; modelo?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
       <button type="button" onClick={onBack} className="flex items-center gap-1 hover:text-foreground">
         <ChevronLeft className="size-3.5" />
-        Frota
+        {t('pages.vehicleDetail.frota')}
       </button>
       {placa && (
         <>

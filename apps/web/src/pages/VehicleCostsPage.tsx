@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { coreApi, type ExpenseEntryRequest, type ExpenseEntryResponse, type ExpenseSummaryResponse } from '../api/client';
 import { StatusBadgeCusto } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
@@ -10,6 +11,9 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
 import { formatDateBR } from '../lib/format';
+import { toast } from '../lib/toast';
+import { deleteWithConfirm } from '../lib/confirm';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
 
 const CATEGORY_OPTIONS = [
   'COMBUSTIVEL',
@@ -31,11 +35,15 @@ const EMPTY_FORM: ExpenseEntryRequest = {
 
 interface Props {
   vehicleId: string;
-  plate: string;
   onBack: () => void;
 }
 
-export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
+export function VehicleCostsPage({ vehicleId, onBack }: Props) {
+  const { t } = useTranslation();
+  // Busca a placa em vez de receber por prop: essa tela agora tem URL própria
+  // (/frota/:id/custos), então precisa se sustentar sozinha num F5 ou link direto —
+  // o vehicleId da URL é o único dado garantido, o resto (placa) o front tem que buscar.
+  const [plate, setPlate] = useState('');
   const [entries, setEntries] = useState<ExpenseEntryResponse[]>([]);
   const [summary, setSummary] = useState<ExpenseSummaryResponse | null>(null);
   const [form, setForm] = useState<ExpenseEntryRequest>(EMPTY_FORM);
@@ -44,12 +52,13 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
   const [loading, setLoading] = useState(true);
 
   function refresh() {
-    Promise.all([coreApi.expenses.list(vehicleId), coreApi.expenses.summary(vehicleId)])
-      .then(([e, s]) => {
+    Promise.all([coreApi.vehicles.get(vehicleId), coreApi.expenses.list(vehicleId), coreApi.expenses.summary(vehicleId)])
+      .then(([v, e, s]) => {
+        setPlate(v.plate ?? '');
         setEntries(e);
         setSummary(s);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Erro ao carregar custos'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : t('pages.vehicleCosts.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
 
@@ -66,21 +75,22 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
     setError('');
     try {
       await coreApi.expenses.add(vehicleId, form);
+      toast.success(t('pages.vehicleCosts.toasts.lancado'));
       setModalOpen(false);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao lançar custo');
+      setError(err instanceof Error ? err.message : t('pages.vehicleCosts.toasts.falhaLancar'));
     }
   }
 
   async function handleDelete(costId: string) {
-    if (!confirm('Excluir este lançamento?')) return;
-    try {
-      await coreApi.expenses.remove(vehicleId, costId);
-      refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir lançamento');
-    }
+    await deleteWithConfirm({
+      confirmMessage: t('pages.vehicleCosts.toasts.confirmarExcluir'),
+      remove: () => coreApi.expenses.remove(vehicleId, costId),
+      successMessage: t('pages.vehicleCosts.toasts.excluido'),
+      fallbackErrorMessage: t('pages.vehicleCosts.toasts.falhaExcluir'),
+      onSuccess: refresh,
+    });
   }
 
   const categoriaCombustivel = form.categoria === 'COMBUSTIVEL';
@@ -88,32 +98,32 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
   return (
     <div className="p-5">
       <Button variant="ghost" size="sm" onClick={onBack} className="mb-4">
-        <ArrowLeft /> Voltar para Veículos
+        <ArrowLeft /> {t('pages.vehicleCosts.voltarParaVeiculos')}
       </Button>
 
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Custos — {plate}</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">Lançamentos de combustível, manutenção e outros</p>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.vehicleCosts.custosDe', { placa: plate })}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.vehicleCosts.subtitulo')}</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus /> Lançar Custo
+          <Plus /> {t('pages.vehicleCosts.lancarCusto')}
         </Button>
       </div>
 
       {summary && (
         <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard label="Total Gasto" value={`R$ ${summary.totalValor?.toFixed(2)}`} />
+          <StatCard label={t('pages.vehicleCosts.totalGasto')} value={`R$ ${summary.totalValor?.toFixed(2)}`} />
           {/* Km rodado desde o cadastro é o número grande — é sobre ele que o custo por km
               é calculado. Odômetro total vai só como hint pequeno: contexto de canto, sem
               disputar espaço com o que de fato importa pra essa conta. */}
           <StatCard
-            label="Km Rodado (desde o cadastro)"
+            label={t('pages.vehicleCosts.kmRodadoDesdeCadastro')}
             value={`${summary.kmRodado} km`}
-            hint={`Odômetro total: ${summary.odometerKm} km`}
+            hint={t('pages.vehicleCosts.odometroTotal', { km: summary.odometerKm })}
           />
           <StatCard
-            label="Custo por Km"
+            label={t('pages.vehicleCosts.custoPorKm')}
             value={summary.custoPorKm != null ? `R$ ${summary.custoPorKm.toFixed(2)}` : '—'}
             tone="success"
           />
@@ -128,26 +138,26 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lançamentos</CardTitle>
+          <CardTitle>{t('pages.vehicleCosts.lancamentos')}</CardTitle>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <TableSkeleton rows={5} columns={5} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Data
+                    {t('pages.vehicleCosts.tabela.data')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Categoria
+                    {t('pages.vehicleCosts.tabela.categoria')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Valor
+                    {t('pages.vehicleCosts.tabela.valor')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Descrição
+                    {t('pages.vehicleCosts.tabela.descricao')}
                   </th>
                   <th className="px-5 py-2.5" />
                 </tr>
@@ -168,7 +178,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
                         className="h-auto p-0 text-destructive"
                         onClick={() => handleDelete(c.id!)}
                       >
-                        Excluir
+                        {t('pages.vehicleCosts.excluir')}
                       </Button>
                     </td>
                   </tr>
@@ -176,7 +186,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
                 {entries.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhum custo lançado ainda.
+                      {t('pages.vehicleCosts.nenhumCusto')}
                     </td>
                   </tr>
                 )}
@@ -186,10 +196,10 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Lançar Custo">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('pages.vehicleCosts.lancarCusto')}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="categoria">Categoria</Label>
+            <Label htmlFor="categoria">{t('pages.vehicleCosts.form.categoria')}</Label>
             <Select
               id="categoria"
               value={form.categoria}
@@ -204,14 +214,14 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
             >
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {t(`status.custo.${c}`)}
                 </option>
               ))}
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="valor">Valor (R$)</Label>
+              <Label htmlFor="valor">{t('pages.vehicleCosts.form.valorReais')}</Label>
               <Input
                 id="valor"
                 type="number"
@@ -223,7 +233,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
               />
             </div>
             <div>
-              <Label htmlFor="data">Data</Label>
+              <Label htmlFor="data">{t('pages.vehicleCosts.form.data')}</Label>
               <Input
                 id="data"
                 type="date"
@@ -236,7 +246,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
           {categoriaCombustivel && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="litrosOuKwh">Litros (ou kWh)</Label>
+                <Label htmlFor="litrosOuKwh">{t('pages.vehicleCosts.form.litrosOuKwh')}</Label>
                 <Input
                   id="litrosOuKwh"
                   type="number"
@@ -249,7 +259,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
                 />
               </div>
               <div>
-                <Label htmlFor="odometro">Odômetro (km)</Label>
+                <Label htmlFor="odometro">{t('pages.vehicleCosts.form.odometroKm')}</Label>
                 <Input
                   id="odometro"
                   type="number"
@@ -263,7 +273,7 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
             </div>
           )}
           <div>
-            <Label htmlFor="descricao">Descrição (opcional)</Label>
+            <Label htmlFor="descricao">{t('pages.vehicleCosts.form.descricaoOpcional')}</Label>
             <Input
               id="descricao"
               value={form.descricao ?? ''}
@@ -275,9 +285,9 @@ export function VehicleCostsPage({ vehicleId, plate, onBack }: Props) {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.vehicleCosts.form.cancelar')}
             </Button>
-            <Button type="submit">Lançar</Button>
+            <Button type="submit">{t('pages.vehicleCosts.form.lancar')}</Button>
           </div>
         </form>
       </Modal>

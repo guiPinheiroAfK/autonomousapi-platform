@@ -20,6 +20,25 @@ class Settings(BaseSettings):
     # Intervalo do job de agregação de road_readiness (spec 02: "job periódico").
     road_readiness_recalc_interval_minutes: int = 5
 
+    # Sessionização de pings em passagens (ADR 0019, Decisão 1). Corta a passagem
+    # quando o intervalo entre pings consecutivos do mesmo veículo/segmento excede
+    # isso — separa "atravessou a via" de "voltou à mesma via horas depois" (D1.1).
+    passage_gap_max_minutes: int = 5
+
+    # Janela reconstruída a cada rodada do job (D1.2: apagar-e-reconstruir, não dá pra
+    # marcar ping como "processado" sem ferir a anonimização estrutural da ADR 0009).
+    # Ping mais atrasado que isso (fila offline do app) nunca vira passagem — vira
+    # métrica de qualidade da Fase 3, não falha silenciosa.
+    passage_rebuild_window_hours: int = 72
+
+    # Intervalo do job de sessionização — passagem não é dado de tempo real como o
+    # score (D1.2: "de hora em hora basta").
+    passage_recalc_interval_minutes: int = 60
+
+    # Fuso da área do piloto (app/pilot_area.py) — "pico da manhã" só significa algo
+    # depois de converter de UTC pro fuso local (ADR 0019, D2.1).
+    pilot_timezone: str = "America/Sao_Paulo"
+
     # Recarga elétrica (spec 06, item 1). Sem chave (padrão dev/demo) = provider
     # desabilitado, mecanismo pronto e testável sem credencial — mesmo padrão do
     # EmailSender/PushSender/Stripe no core-api (ver app/charging.py).

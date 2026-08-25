@@ -11,7 +11,10 @@ Recomendado via `infra/docker-compose.yml` (Checkpoint E), que sobe Postgres+Pos
 Avulso, contra um Postgres com PostGIS:
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+# Precisa ser Python 3.12 mesmo (igual ao CI): psycopg[binary]==3.2.1 (requirements.txt)
+# não publica wheel pra 3.13+, então "python -m venv" com um Python mais novo no PATH
+# quebra o "pip install" abaixo com "No matching distribution found".
+python3.12 -m venv .venv && source .venv/bin/activate   # Windows: py -3.12 -m venv .venv && .venv\Scripts\activate
 pip install -r requirements-dev.txt
 export GEO_DB_URL=postgresql+psycopg://autonomousapi:autonomousapi@localhost:5432/autonomousapi
 export GEO_SERVICE_TOKEN=dev-service-token-change-me

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { HandCoins, PackageSearch, Wrench } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { coreApi, type VehicleResponse } from '../api/client';
 import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
 import { PlacaBR } from '../components/shared/PlacaBR';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
 import { formatBRL, formatDateBR } from '../lib/format';
 
 /** Peças/oficina são campos só-visuais (não existem no backend ainda) — atribuídos
@@ -39,6 +41,7 @@ interface Row {
 }
 
 export function MaintenancePage() {
+  const { t } = useTranslation();
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [veiculoFiltro, setVeiculoFiltro] = useState('todos');
@@ -80,20 +83,20 @@ export function MaintenancePage() {
   return (
     <div className="p-5">
       <div className="mb-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">Manutenção</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">Histórico de manutenções de toda a frota</p>
+        <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.maintenance.titulo')}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.maintenance.subtitulo')}</p>
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="Manutenções registradas" value={filtered.length} icon={Wrench} />
-        <StatCard label="Custo em peças" value={formatBRL(custoPecas)} tone="warning" icon={PackageSearch} />
-        <StatCard label="Custo em mão de obra" value={formatBRL(custoMaoDeObra)} tone="success" icon={HandCoins} />
+        <StatCard label={t('pages.maintenance.manutencoesRegistradas')} value={filtered.length} icon={Wrench} />
+        <StatCard label={t('pages.maintenance.custoEmPecas')} value={formatBRL(custoPecas)} tone="warning" icon={PackageSearch} />
+        <StatCard label={t('pages.maintenance.custoEmMaoDeObra')} value={formatBRL(custoMaoDeObra)} tone="success" icon={HandCoins} />
       </div>
 
       <Card className="mb-5">
         <div className="flex flex-wrap items-center gap-3 p-4">
           <Select value={veiculoFiltro} onChange={(e) => setVeiculoFiltro(e.target.value)} className="w-56">
-            <option value="todos">Todos os veículos</option>
+            <option value="todos">{t('pages.maintenance.todosOsVeiculos')}</option>
             {vehicles.map((v) => (
               <option key={v.id} value={v.plate}>
                 {v.plate} · {v.brand} {v.model}
@@ -101,39 +104,40 @@ export function MaintenancePage() {
             ))}
           </Select>
           <div className="ml-auto text-xs text-muted-foreground">
-            Total do período: <span className="font-data font-semibold text-foreground">{formatBRL(totalPeriodo)}</span>
+            {t('pages.maintenance.totalDoPeriodo')}{' '}
+            <span className="font-data font-semibold text-foreground">{formatBRL(totalPeriodo)}</span>
           </div>
         </div>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Registros de manutenção</CardTitle>
+          <CardTitle>{t('pages.maintenance.registrosDeManutencao')}</CardTitle>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <TableSkeleton rows={6} columns={5} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Data
+                    {t('pages.maintenance.tabela.data')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Veículo
+                    {t('pages.maintenance.tabela.veiculo')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Descrição
+                    {t('pages.maintenance.tabela.descricao')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Peças trocadas
+                    {t('pages.maintenance.tabela.pecasTrocadas')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Oficina
+                    {t('pages.maintenance.tabela.oficina')}
                   </th>
                   <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Custo total
+                    {t('pages.maintenance.tabela.custoTotal')}
                   </th>
                 </tr>
               </thead>
@@ -170,7 +174,7 @@ export function MaintenancePage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhuma manutenção registrada.
+                      {t('pages.maintenance.nenhumaManutencao')}
                     </td>
                   </tr>
                 )}

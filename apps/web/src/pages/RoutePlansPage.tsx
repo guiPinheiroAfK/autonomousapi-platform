@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, MapPin, Plus, Sparkles, Trash2, Truck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type CollectionPointResponse,
@@ -18,16 +19,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
+import { toast } from '../lib/toast';
+import { hojeISO } from '../lib/format';
 
-const TIPO_LABEL: Record<string, string> = { COLETA: 'Coleta', ENTREGA: 'Entrega' };
-const CATEGORIA_LABEL: Record<RouteCategoria, string> = { ROTA: 'Rota (multi-parada)', TRANSFER: 'Transfer (A → B)' };
+const CATEGORIA_OPTIONS: RouteCategoria[] = ['ROTA', 'TRANSFER'];
 
 interface RascunhoParada extends StopInput {
   key: string;
-}
-
-function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 /**
@@ -36,6 +34,7 @@ function hojeISO(): string {
  * de confirmar — nunca aplicada direto, por pedido explícito do usuário (estilo Google Maps).
  */
 export function RoutePlansPage() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<RoutePlanResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -97,8 +96,8 @@ export function RoutePlansPage() {
   function refresh() {
     coreApi.routePlans
       .list()
-      .then(setPlans)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar rotas'))
+      .then((res) => setPlans(res.content))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
 
@@ -118,7 +117,7 @@ export function RoutePlansPage() {
     setCustoEstimado(null);
     setValorSugerido(null);
     setFormError('');
-    coreApi.drivers.list().then((all) => setDrivers(all.filter((d) => d.hasLogin)));
+    coreApi.drivers.list().then((res) => setDrivers(res.content.filter((d) => d.hasLogin)));
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o seletor de veículo da rota.
     coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
@@ -186,7 +185,7 @@ export function RoutePlansPage() {
         sugestao.map((s) => prev.find((p) => p.lat === s.lat && p.lon === s.lon && p.label === s.label)!),
       );
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : 'Falha ao sugerir ordem');
+      setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaSugerir'));
     } finally {
       setSuggesting(false);
     }
@@ -195,11 +194,11 @@ export function RoutePlansPage() {
   async function confirmar() {
     if (paradas.length === 0) return;
     if (dataExecucao < hojeISO()) {
-      setFormError('Data de execução não pode ser no passado.');
+      setFormError(t('pages.routePlans.toasts.dataNoPassado'));
       return;
     }
     if (isTransfer && paradas.length !== 2) {
-      setFormError('Transfer exige exatamente 2 paradas: origem e destino.');
+      setFormError(t('pages.routePlans.toasts.transferExige2Paradas'));
       return;
     }
     setSaving(true);
@@ -221,10 +220,11 @@ export function RoutePlansPage() {
           janelaFim,
         })),
       });
+      toast.success(t('pages.routePlans.toasts.criada'));
       setModalOpen(false);
       refresh();
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : 'Falha ao criar rota');
+      setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaCriar'));
     } finally {
       setSaving(false);
     }
@@ -234,13 +234,11 @@ export function RoutePlansPage() {
     <div className="p-5">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Rotas</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Pontos de coleta e entrega — monte a rota, revise a ordem sugerida e designe um motorista.
-          </p>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.routePlans.titulo')}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.routePlans.subtitulo')}</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus /> Nova rota
+          <Plus /> {t('pages.routePlans.novaRota')}
         </Button>
       </div>
 
@@ -251,12 +249,12 @@ export function RoutePlansPage() {
       )}
 
       {loading ? (
-        <p className="text-xs text-muted-foreground">Carregando...</p>
+        <p className="text-xs text-muted-foreground">{t('common.carregando')}</p>
       ) : plans.length === 0 ? (
         <Card>
           <div className="flex flex-col items-center gap-2 p-10 text-center text-xs text-muted-foreground">
             <MapPin className="size-6 text-muted-foreground/60" />
-            <p>Nenhuma rota cadastrada ainda.</p>
+            <p>{t('pages.routePlans.nenhumaRota')}</p>
           </div>
         </Card>
       ) : (
@@ -265,13 +263,13 @@ export function RoutePlansPage() {
             <Card key={p.id}>
               <CardHeader className="flex-row items-center justify-between">
                 <CardTitle>
-                  {p.categoria === 'TRANSFER' ? 'Transfer' : `${p.stops?.length ?? 0} parada(s)`}
+                  {p.categoria === 'TRANSFER' ? t('pages.routePlans.transfer') : t('pages.routePlans.paradaContagem', { n: p.stops?.length ?? 0 })}
                 </CardTitle>
                 <StatusBadgeRotaPlan status={p.status} />
               </CardHeader>
               <div className="space-y-1.5 px-5 pb-4 text-xs text-muted-foreground">
                 <p className="flex items-center gap-1.5">
-                  <Truck className="size-3.5" /> {p.driverName ?? 'Sem motorista designado'}
+                  <Truck className="size-3.5" /> {p.driverName ?? t('pages.routePlans.semMotoristaDesignado')}
                 </p>
                 {p.vehiclePlate && <p>{p.vehiclePlate}</p>}
                 <p>{p.dataExecucao}</p>
@@ -282,21 +280,21 @@ export function RoutePlansPage() {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nova rota" className="max-w-2xl">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('pages.routePlans.novaRota')} className="max-w-2xl">
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <Label>Categoria</Label>
+              <Label>{t('pages.routePlans.categoria')}</Label>
               <Select value={categoria} onChange={(e) => setCategoria(e.target.value as RouteCategoria)}>
-                {(Object.keys(CATEGORIA_LABEL) as RouteCategoria[]).map((c) => (
+                {CATEGORIA_OPTIONS.map((c) => (
                   <option key={c} value={c}>
-                    {CATEGORIA_LABEL[c]}
+                    {c === 'ROTA' ? t('pages.routePlans.categoriaRota') : t('pages.routePlans.categoriaTransfer')}
                   </option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label htmlFor="dataExecucao">Data de execução</Label>
+              <Label htmlFor="dataExecucao">{t('pages.routePlans.dataExecucao')}</Label>
               <Input
                 id="dataExecucao"
                 type="date"
@@ -309,7 +307,7 @@ export function RoutePlansPage() {
 
           {isTransfer && (
             <div>
-              <Label htmlFor="valor">Valor combinado (opcional)</Label>
+              <Label htmlFor="valor">{t('pages.routePlans.valorCombinadoOpcional')}</Label>
               <Input id="valor" type="number" min="0" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
             </div>
           )}
@@ -318,12 +316,12 @@ export function RoutePlansPage() {
             <div className="space-y-2 rounded-md border border-border p-3">
               <div className="flex items-center gap-2">
                 <Select value={novoTipo} onChange={(e) => setNovoTipo(e.target.value as 'COLETA' | 'ENTREGA')} className="w-32" disabled={isTransfer}>
-                  <option value="COLETA">Coleta</option>
-                  <option value="ENTREGA">Entrega</option>
+                  <option value="COLETA">{t('pages.routePlans.coleta')}</option>
+                  <option value="ENTREGA">{t('pages.routePlans.entrega')}</option>
                 </Select>
                 <Select value={fonteParada} onChange={(e) => setFonteParada(e.target.value as 'avulso' | 'cadastrado')} className="w-40">
-                  <option value="avulso">Endereço avulso</option>
-                  <option value="cadastrado">Ponto cadastrado</option>
+                  <option value="avulso">{t('pages.routePlans.enderecoAvulso')}</option>
+                  <option value="cadastrado">{t('pages.routePlans.pontoCadastrado')}</option>
                 </Select>
               </div>
               {fonteParada === 'avulso' ? (
@@ -331,7 +329,7 @@ export function RoutePlansPage() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Select value={pontoEscolhidoId} onChange={(e) => setPontoEscolhidoId(e.target.value)} className="flex-1">
-                    <option value="">Selecione um ponto cadastrado...</option>
+                    <option value="">{t('pages.routePlans.selecionePontoCadastrado')}</option>
                     {collectionPoints.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.nome} — {p.endereco}
@@ -339,7 +337,7 @@ export function RoutePlansPage() {
                     ))}
                   </Select>
                   <Button type="button" size="sm" variant="secondary" onClick={adicionarParadaCadastrada} disabled={!pontoEscolhidoId}>
-                    Adicionar
+                    {t('pages.routePlans.adicionar')}
                   </Button>
                 </div>
               )}
@@ -353,7 +351,9 @@ export function RoutePlansPage() {
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-muted-foreground">
                     {i + 1}
                   </span>
-                  <span className="w-14 shrink-0 text-muted-foreground">{TIPO_LABEL[p.tipo]}</span>
+                  <span className="w-14 shrink-0 text-muted-foreground">
+                    {p.tipo === 'COLETA' ? t('pages.routePlans.coleta') : t('pages.routePlans.entrega')}
+                  </span>
                   <span className="min-w-0 flex-1 truncate text-foreground">{p.label}</span>
                   {!isTransfer && (
                     <>
@@ -385,15 +385,15 @@ export function RoutePlansPage() {
 
           {!isTransfer && paradas.length >= 2 && (
             <Button type="button" variant="secondary" size="sm" onClick={sugerirOrdem} disabled={suggesting}>
-              <Sparkles className="size-3.5" /> {suggesting ? 'Sugerindo...' : 'Sugerir ordem'}
+              <Sparkles className="size-3.5" /> {suggesting ? t('pages.routePlans.sugerindo') : t('pages.routePlans.sugerirOrdem')}
             </Button>
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <Label>Motorista (opcional)</Label>
+              <Label>{t('pages.routePlans.motoristaOpcional')}</Label>
               <Select value={driverId} onChange={(e) => setDriverId(e.target.value)}>
-                <option value="">Designar depois</option>
+                <option value="">{t('pages.routePlans.designarDepois')}</option>
                 {drivers.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -402,9 +402,9 @@ export function RoutePlansPage() {
               </Select>
             </div>
             <div>
-              <Label>Veículo (opcional)</Label>
+              <Label>{t('pages.routePlans.veiculoOpcional')}</Label>
               <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-                <option value="">Sem veículo</option>
+                <option value="">{t('pages.routePlans.semVeiculo')}</option>
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.plate}
@@ -416,13 +416,15 @@ export function RoutePlansPage() {
 
           {isTransfer && vehicleId && paradas.length === 2 && (custoEstimado != null || valorSugerido != null) && (
             <div className="rounded-md border border-border bg-secondary/40 p-3 text-xs">
-              <p className="font-medium text-foreground">Custo estimado (referência, spec 09)</p>
+              <p className="font-medium text-foreground">{t('pages.routePlans.custoEstimadoReferencia')}</p>
               <div className="mt-1 grid grid-cols-2 gap-2 text-muted-foreground">
                 <p>
-                  Custo estimado: <span className="font-data text-foreground">{custoEstimado != null ? `R$ ${custoEstimado.toFixed(2)}` : '—'}</span>
+                  {t('pages.routePlans.custoEstimado')}{' '}
+                  <span className="font-data text-foreground">{custoEstimado != null ? `R$ ${custoEstimado.toFixed(2)}` : '—'}</span>
                 </p>
                 <p>
-                  Valor sugerido: <span className="font-data text-foreground">{valorSugerido != null ? `R$ ${valorSugerido.toFixed(2)}` : '—'}</span>
+                  {t('pages.routePlans.valorSugerido')}{' '}
+                  <span className="font-data text-foreground">{valorSugerido != null ? `R$ ${valorSugerido.toFixed(2)}` : '—'}</span>
                 </p>
               </div>
             </div>
@@ -432,7 +434,7 @@ export function RoutePlansPage() {
 
           <div className="flex justify-end gap-2 border-t border-border pt-3">
             <Button type="button" variant="ghost" size="sm" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.routePlans.cancelar')}
             </Button>
             <Button
               type="button"
@@ -440,7 +442,7 @@ export function RoutePlansPage() {
               onClick={confirmar}
               disabled={paradas.length === 0 || (isTransfer && paradas.length !== 2) || saving}
             >
-              {saving ? 'Salvando...' : 'Criar rota'}
+              {saving ? t('pages.routePlans.salvando') : t('pages.routePlans.criarRota')}
             </Button>
           </div>
         </div>

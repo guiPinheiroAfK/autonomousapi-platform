@@ -2,7 +2,7 @@ package com.autonomousapi.core.workorder;
 
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
@@ -20,9 +20,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,28 +64,30 @@ public class WorkOrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<WorkOrderResponse> list(JwtPrincipal principal, UUID vehicleId) {
+    public Page<WorkOrderResponse> list(JwtPrincipal principal, UUID vehicleId, Pageable pageable) {
         UUID tenantId = principal.tenantId();
-        List<WorkOrder> orders = vehicleId != null
-                ? workOrders.findAllByTenantIdAndVehicleIdOrderByDataAberturaDesc(tenantId, vehicleId)
-                : workOrders.findAllByTenantIdOrderByDataAberturaDesc(tenantId);
+        Page<WorkOrder> orders = vehicleId != null
+                ? workOrders.findAllByTenantIdAndVehicleIdOrderByDataAberturaDesc(tenantId, vehicleId, pageable)
+                : workOrders.findAllByTenantIdOrderByDataAberturaDesc(tenantId, pageable);
 
-        Map<UUID, Vehicle> vehicleById = vehicles.findAllByTenantIdOrderByCreatedAtDesc(tenantId).stream()
+        // Só os veículos/motoristas realmente referenciados pelas OS retornadas — antes
+        // carregava a frota/equipe inteira do tenant (achado da auditoria de cleanup).
+        List<UUID> vehicleIds = orders.stream().map(WorkOrder::getVehicleId).distinct().toList();
+        List<UUID> driverIds = orders.stream().map(WorkOrder::getDriverId).filter(Objects::nonNull).distinct().toList();
+        Map<UUID, Vehicle> vehicleById = vehicles.findAllById(vehicleIds).stream()
                 .collect(Collectors.toMap(Vehicle::getId, Function.identity()));
-        Map<UUID, Driver> driverById = drivers.findAllByTenantIdOrderByCreatedAtDesc(tenantId).stream()
+        Map<UUID, Driver> driverById = drivers.findAllById(driverIds).stream()
                 .collect(Collectors.toMap(Driver::getId, Function.identity()));
 
         List<UUID> orderIds = orders.stream().map(WorkOrder::getId).toList();
         Map<UUID, List<WorkOrderItem>> itemsByOrder = items.findAllByWorkOrderIdIn(orderIds).stream()
                 .collect(Collectors.groupingBy(WorkOrderItem::getWorkOrderId));
 
-        return orders.stream()
-                .map(wo -> WorkOrderResponse.from(
-                        wo,
-                        itemsByOrder.getOrDefault(wo.getId(), List.of()),
-                        vehicleById.get(wo.getVehicleId()),
-                        wo.getDriverId() != null ? driverById.get(wo.getDriverId()) : null))
-                .toList();
+        return orders.map(wo -> WorkOrderResponse.from(
+                wo,
+                itemsByOrder.getOrDefault(wo.getId(), List.of()),
+                vehicleById.get(wo.getVehicleId()),
+                wo.getDriverId() != null ? driverById.get(wo.getDriverId()) : null));
     }
 
     @Transactional
@@ -130,18 +135,15 @@ public class WorkOrderService {
     }
 
     private WorkOrder findOwned(UUID tenantId, UUID id) {
-        return workOrders.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new NotFoundException("Ordem de serviço não encontrada."));
+        return Lookups.orNotFound(workOrders.findByIdAndTenantId(id, tenantId), "Ordem de serviço não encontrada.");
     }
 
     private Vehicle findOwnedVehicle(UUID tenantId, UUID vehicleId) {
-        return vehicles.findByIdAndTenantId(vehicleId, tenantId)
-                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+        return Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, tenantId), "Veículo não encontrado.");
     }
 
     private Driver findOwnedDriver(UUID tenantId, UUID driverId) {
-        return drivers.findByIdAndTenantId(driverId, tenantId)
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        return Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, tenantId), "Motorista não encontrado.");
     }
 
     /** Últimos 12 meses fechados (spec 05, tela de Relatórios): custo por tipo + ranking de veículo. */
@@ -155,7 +157,9 @@ public class WorkOrderService {
         Map<UUID, List<WorkOrderItem>> itemsByOrder = items.findAllByWorkOrderIdIn(orderIds).stream()
                 .collect(Collectors.groupingBy(WorkOrderItem::getWorkOrderId));
 
-        Map<UUID, Vehicle> vehicleById = vehicles.findAllByTenantIdOrderByCreatedAtDesc(tenantId).stream()
+        // Só os veículos com OS no período, não a frota inteira do tenant.
+        Map<UUID, Vehicle> vehicleById = vehicles.findAllById(orders.stream().map(WorkOrder::getVehicleId).distinct().toList())
+                .stream()
                 .collect(Collectors.toMap(Vehicle::getId, Function.identity()));
 
         return new WorkOrderReportResponse(

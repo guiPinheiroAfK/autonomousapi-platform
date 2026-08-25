@@ -2,36 +2,16 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from geoalchemy2.elements import WKTElement
 
 from app.config import settings
 from app.db import SessionLocal
 from app.main import app
 from app.models import RoadReadinessScore, RoadSegment, RoadSegmentObservation
 
+from .conftest import criar_segmento_de_teste
+
 client = TestClient(app)
 HEADERS = {"X-Service-Token": settings.service_token}
-
-
-def _criar_segmento_de_teste() -> RoadSegment:
-    """
-    Um trecho reto e curto perto da origem (0,0) — não precisa ser via real, só precisa
-    existir no banco pro matching por proximidade ter o que encontrar.
-    """
-    db = SessionLocal()
-    try:
-        segmento = RoadSegment(
-            osm_way_id=uuid4().int % 2_000_000_000,  # único por rodada de teste
-            name="Via de teste",
-            highway_type="residential",
-            geom=WKTElement("LINESTRING(0 0, 0 0.001)", srid=4326),
-        )
-        db.add(segmento)
-        db.commit()
-        db.refresh(segmento)
-        return segmento
-    finally:
-        db.close()
 
 
 def _limpar(segmento_id):
@@ -50,7 +30,7 @@ def _limpar(segmento_id):
 
 
 def test_ping_perto_de_segmento_conhecido_vira_observacao():
-    segmento = _criar_segmento_de_teste()
+    segmento, lat, lon = criar_segmento_de_teste()
     try:
         resp = client.post(
             "/internal/v1/gps/pings",
@@ -58,8 +38,8 @@ def test_ping_perto_de_segmento_conhecido_vira_observacao():
             json={
                 "vehicle_id": str(uuid4()),
                 "recorded_at": datetime.now(UTC).isoformat(),
-                "lat": 0.0002,
-                "lon": 0.0,
+                "lat": lat,
+                "lon": lon,
             },
         )
         assert resp.status_code == 202
@@ -98,7 +78,7 @@ def test_ping_longe_de_qualquer_segmento_nao_vira_observacao():
 
 
 def test_recalculate_gera_score_a_partir_das_observacoes():
-    segmento = _criar_segmento_de_teste()
+    segmento, lat, lon = criar_segmento_de_teste()
     try:
         for _ in range(3):
             client.post(
@@ -107,8 +87,8 @@ def test_recalculate_gera_score_a_partir_das_observacoes():
                 json={
                     "vehicle_id": str(uuid4()),
                     "recorded_at": datetime.now(UTC).isoformat(),
-                    "lat": 0.0002,
-                    "lon": 0.0,
+                    "lat": lat,
+                    "lon": lon,
                 },
             )
 

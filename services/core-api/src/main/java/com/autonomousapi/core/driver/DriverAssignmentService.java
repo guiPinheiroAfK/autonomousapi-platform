@@ -1,7 +1,7 @@
 package com.autonomousapi.core.driver;
 
 import com.autonomousapi.core.driver.dto.DriverAssignmentResponse;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.VehicleAlreadyAssignedException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.Vehicle;
@@ -35,10 +35,8 @@ public class DriverAssignmentService {
     @Transactional
     public DriverAssignmentResponse assign(JwtPrincipal principal, UUID driverId, UUID vehicleId) {
         UUID tenantId = principal.tenantId();
-        Driver driver = drivers.findByIdAndTenantId(driverId, tenantId)
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
-        Vehicle vehicle = vehicles.findByIdAndTenantId(vehicleId, tenantId)
-                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+        Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, tenantId), "Motorista não encontrado.");
+        Vehicle vehicle = Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, tenantId), "Veículo não encontrado.");
 
         Optional<DriverVehicleAssignment> vehicleActive =
                 assignments.findByVehicleIdAndEndedAtIsNull(vehicleId);
@@ -62,23 +60,21 @@ public class DriverAssignmentService {
 
     @Transactional
     public void end(JwtPrincipal principal, UUID driverId) {
-        Driver driver = drivers.findByIdAndTenantId(driverId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
-        DriverVehicleAssignment active = assignments.findByDriverIdAndEndedAtIsNull(driver.getId())
-                .orElseThrow(() -> new NotFoundException("Motorista não tem designação ativa."));
+        Driver driver = Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, principal.tenantId()), "Motorista não encontrado.");
+        DriverVehicleAssignment active = Lookups.orNotFound(
+                assignments.findByDriverIdAndEndedAtIsNull(driver.getId()), "Motorista não tem designação ativa.");
         active.end();
     }
 
     /** Designação ativa do motorista para exibição ao gestor (null se não houver). */
     @Transactional(readOnly = true)
     public DriverAssignmentResponse activeForDriver(JwtPrincipal principal, UUID driverId) {
-        Driver driver = drivers.findByIdAndTenantId(driverId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Motorista não encontrado."));
+        Driver driver = Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, principal.tenantId()), "Motorista não encontrado.");
         return assignments.findByDriverIdAndEndedAtIsNull(driver.getId())
                 .map(a -> DriverAssignmentResponse.from(
                         a,
-                        vehicles.findByIdAndTenantId(a.getVehicleId(), principal.tenantId())
-                                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."))))
+                        Lookups.orNotFound(
+                                vehicles.findByIdAndTenantId(a.getVehicleId(), principal.tenantId()), "Veículo não encontrado.")))
                 .orElse(null);
     }
 }

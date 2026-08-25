@@ -1,9 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { coreApi, type VehicleRequest, type VehicleResponse } from '../api/client';
+import { toast } from '../lib/toast';
+import { deleteWithConfirm } from '../lib/confirm';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeVeiculo } from '../components/shared/StatusBadge';
-import { VEHICLE_TYPE_LABEL, VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
+import { VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -11,6 +14,8 @@ import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 const STATUS_OPTIONS = ['ATIVO', 'MANUTENCAO', 'INATIVO'] as const;
 const TIPO_OPTIONS = ['CARRO', 'MOTO', 'VAN', 'CAMINHAO', 'ONIBUS'] as const;
@@ -35,6 +40,7 @@ interface Props {
 const VEHICLES_PAGE_SIZE = 20;
 
 export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
+  const { t } = useTranslation();
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [form, setForm] = useState<VehicleRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,7 +75,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
         setTotalElements(res.totalElements);
         setTotalPages(res.totalPages);
       })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar veículos'))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.vehicles.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
 
@@ -105,24 +111,29 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
     try {
       if (editingId) {
         await coreApi.vehicles.update(editingId, form);
+        toast.success(t('pages.vehicles.toasts.atualizado'));
       } else {
         await coreApi.vehicles.create(form);
+        toast.success(t('pages.vehicles.toasts.cadastrado'));
       }
       setModalOpen(false);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar veículo');
+      // Erro de salvar fica dentro do modal (não vira toast): o formulário continua aberto
+      // com os dados preenchidos, e o motivo da falha precisa ficar visível bem ali, perto
+      // do botão que a pessoa vai clicar de novo — sumir com um toast faria ela reler tudo.
+      setError(err instanceof Error ? err.message : t('pages.vehicles.toasts.falhaSalvar'));
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir este veículo?')) return;
-    try {
-      await coreApi.vehicles.remove(id);
-      refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir veículo');
-    }
+    await deleteWithConfirm({
+      confirmMessage: t('pages.vehicles.toasts.confirmarExcluir'),
+      remove: () => coreApi.vehicles.remove(id),
+      successMessage: t('pages.vehicles.toasts.excluido'),
+      fallbackErrorMessage: t('pages.vehicles.toasts.falhaExcluir'),
+      onSuccess: refresh,
+    });
   }
 
   // Frota paginada (spec de escala) — busca/status agora filtram no servidor (ver
@@ -139,24 +150,30 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
     <div className="p-5">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Frota</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">Veículos cadastrados</p>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.vehicles.titulo')}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.vehicles.subtitulo')}</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus /> Novo Veículo
+          <Plus /> {t('pages.vehicles.novoVeiculo')}
         </Button>
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total de Veículos"
+          label={t('pages.vehicles.totalDeVeiculos')}
           value={total}
-          hint={filtroAtivo ? 'Nesta busca' : 'Toda a frota'}
+          hint={filtroAtivo ? t('pages.vehicles.nestaBusca') : t('pages.vehicles.todaAFrota')}
           icon={Truck}
         />
-        <StatCard label="Ativos" value={ativos} tone="success" hint="Nesta página" icon={Truck} />
-        <StatCard label="Em Manutenção" value={manutencao} tone="warning" hint="Nesta página" icon={Wrench} />
-        <StatCard label="Inativos" value={inativos} tone="danger" hint="Nesta página" icon={CircleOff} />
+        <StatCard label={t('pages.vehicles.ativos')} value={ativos} tone="success" hint={t('pages.vehicles.nestaPagina')} icon={Truck} />
+        <StatCard
+          label={t('pages.vehicles.emManutencao')}
+          value={manutencao}
+          tone="warning"
+          hint={t('pages.vehicles.nestaPagina')}
+          icon={Wrench}
+        />
+        <StatCard label={t('pages.vehicles.inativos')} value={inativos} tone="danger" hint={t('pages.vehicles.nestaPagina')} icon={CircleOff} />
       </div>
 
       {error && !modalOpen && (
@@ -168,7 +185,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
       <Card className="mb-5">
         <div className="flex flex-wrap items-center gap-3 p-4">
           <Input
-            placeholder="Buscar por placa, marca ou modelo..."
+            placeholder={t('pages.vehicles.buscarPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs"
@@ -181,54 +198,54 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
             }}
             className="w-44"
           >
-            <option value="todos">Todos os status</option>
+            <option value="todos">{t('pages.vehicles.todosOsStatus')}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {t(`status.veiculo.${s}`)}
               </option>
             ))}
           </Select>
-          <span className="ml-auto text-xs text-muted-foreground">{total} veículo(s)</span>
+          <span className="ml-auto text-xs text-muted-foreground">{t('pages.vehicles.veiculosContagem', { n: total })}</span>
         </div>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Todos os veículos</CardTitle>
+          <CardTitle>{t('pages.vehicles.todosOsVeiculos')}</CardTitle>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <TableSkeleton rows={8} columns={7} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Tipo
+                    {t('pages.vehicles.tabela.tipo')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Placa
+                    {t('pages.vehicles.tabela.placa')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Marca/Modelo
+                    {t('pages.vehicles.tabela.marcaModelo')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Ano
+                    {t('pages.vehicles.tabela.ano')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Odômetro
+                    {t('pages.vehicles.tabela.odometro')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Status
+                    {t('pages.vehicles.tabela.status')}
                   </th>
                   <th className="px-5 py-2.5" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <StaggerGroup as="tbody" className="divide-y divide-border">
                 {vehicles.map((v) => (
-                  <tr key={v.id} className="hover:bg-muted/50">
+                  <StaggerItem as="tr" key={v.id} className="hover:bg-muted/50">
                     <td className="px-5 py-2.5">
-                      <div title={VEHICLE_TYPE_LABEL[v.tipo ?? ''] ?? 'Tipo não informado'}>
+                      <div title={v.tipo ? t(`status.tipoVeiculo.${v.tipo}`) : t('pages.vehicles.tipoNaoInformado')}>
                         <VehicleTypeIcon tipo={v.tipo} />
                       </div>
                     </td>
@@ -248,15 +265,15 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                         <button
                           type="button"
                           onClick={() => onViewDetail(v.id!)}
-                          className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
                         >
                           <Eye className="size-4" />
                         </button>
                         <Button variant="link" size="sm" className="h-auto p-0" onClick={() => onViewCosts(v.id!, v.plate!)}>
-                          Custos
+                          {t('pages.vehicles.custos')}
                         </Button>
                         <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(v)}>
-                          Editar
+                          {t('pages.vehicles.editar')}
                         </Button>
                         <Button
                           variant="link"
@@ -264,27 +281,27 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                           className="h-auto p-0 text-destructive"
                           onClick={() => handleDelete(v.id!)}
                         >
-                          Excluir
+                          {t('pages.vehicles.excluir')}
                         </Button>
                       </div>
                     </td>
-                  </tr>
+                  </StaggerItem>
                 ))}
                 {vehicles.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhum veículo encontrado.
+                      {t('pages.vehicles.nenhumVeiculoEncontrado')}
                     </td>
                   </tr>
                 )}
-              </tbody>
+              </StaggerGroup>
             </table>
           </div>
         )}
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-border px-5 py-3">
             <span className="text-xs text-muted-foreground">
-              Página {page + 1} de {totalPages}
+              {t('pages.vehicles.paginaXDeY', { atual: page + 1, total: totalPages })}
             </span>
             <div className="flex gap-2">
               <Button
@@ -293,7 +310,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Anterior
+                {t('pages.vehicles.anterior')}
               </Button>
               <Button
                 variant="outline"
@@ -301,32 +318,36 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Próxima
+                {t('pages.vehicles.proxima')}
               </Button>
             </div>
           </div>
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? 'Editar Veículo' : 'Novo Veículo'}>
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingId ? t('pages.vehicles.editarVeiculo') : t('pages.vehicles.novoVeiculo')}
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="plate">Placa</Label>
+            <Label htmlFor="plate">{t('pages.vehicles.form.placa')}</Label>
             <Input id="plate" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="brand">Marca</Label>
+              <Label htmlFor="brand">{t('pages.vehicles.form.marca')}</Label>
               <Input id="brand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} required />
             </div>
             <div>
-              <Label htmlFor="model">Modelo</Label>
+              <Label htmlFor="model">{t('pages.vehicles.form.modelo')}</Label>
               <Input id="model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} required />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="modelYear">Ano</Label>
+              <Label htmlFor="modelYear">{t('pages.vehicles.form.ano')}</Label>
               <Input
                 id="modelYear"
                 type="number"
@@ -335,7 +356,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
               />
             </div>
             <div>
-              <Label htmlFor="odometerKm">Odômetro (km)</Label>
+              <Label htmlFor="odometerKm">{t('pages.vehicles.form.odometroKm')}</Label>
               <Input
                 id="odometerKm"
                 type="number"
@@ -348,7 +369,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t('pages.vehicles.form.status')}</Label>
               <Select
                 id="status"
                 value={form.status}
@@ -356,13 +377,13 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {t(`status.veiculo.${s}`)}
                   </option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label htmlFor="tipo">Tipo</Label>
+              <Label htmlFor="tipo">{t('pages.vehicles.form.tipo')}</Label>
               <Select
                 id="tipo"
                 value={form.tipo ?? ''}
@@ -370,10 +391,10 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                   setForm({ ...form, tipo: (e.target.value || undefined) as VehicleRequest['tipo'] })
                 }
               >
-                <option value="">Não informado</option>
-                {TIPO_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {VEHICLE_TYPE_LABEL[t]}
+                <option value="">{t('pages.vehicles.form.naoInformado')}</option>
+                {TIPO_OPTIONS.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {t(`status.tipoVeiculo.${tipo}`)}
                   </option>
                 ))}
               </Select>
@@ -381,7 +402,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
             <div>
-              <Label htmlFor="proximaManutencaoData">Próxima manutenção (data)</Label>
+              <Label htmlFor="proximaManutencaoData">{t('pages.vehicles.form.proximaManutencaoData')}</Label>
               <Input
                 id="proximaManutencaoData"
                 type="date"
@@ -390,7 +411,7 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
               />
             </div>
             <div>
-              <Label htmlFor="proximaManutencaoKm">Próxima manutenção (km)</Label>
+              <Label htmlFor="proximaManutencaoKm">{t('pages.vehicles.form.proximaManutencaoKm')}</Label>
               <Input
                 id="proximaManutencaoKm"
                 type="number"
@@ -407,9 +428,9 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.vehicles.form.cancelar')}
             </Button>
-            <Button type="submit">{editingId ? 'Salvar' : 'Adicionar'}</Button>
+            <Button type="submit">{editingId ? t('pages.vehicles.form.salvar') : t('pages.vehicles.form.adicionar')}</Button>
           </div>
         </form>
       </Modal>

@@ -1,9 +1,10 @@
-export function formatBRL(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+/** Data de hoje como "YYYY-MM-DD" (LocalDate), pra usar de default em formulários. */
+export function hojeISO(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
-export function formatKm(value: number): string {
-  return `${value.toLocaleString('pt-BR')} km`;
+export function formatBRL(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
 /** Formata "YYYY-MM-DD" (LocalDate, sem timezone) como "DD/MM/YYYY" via string,

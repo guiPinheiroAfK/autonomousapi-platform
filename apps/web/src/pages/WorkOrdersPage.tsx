@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Eye, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type DriverResponse,
@@ -8,7 +9,7 @@ import {
   type WorkOrderRequest,
   type WorkOrderResponse,
 } from '../api/client';
-import { PRIORIDADE_OS_OPTIONS, STATUS_OS_OPTIONS, TIPO_OS_LABEL, TIPO_OS_OPTIONS } from '../lib/workOrderLabels';
+import { PRIORIDADE_OS_OPTIONS, STATUS_OS_OPTIONS, TIPO_OS_OPTIONS } from '../lib/workOrderLabels';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgePrioridade } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
@@ -20,15 +21,9 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { Separator } from '../components/ui/separator';
 import { formatBRL, formatDateBR } from '../lib/format';
-
-const STATUS_LABEL: Record<string, string> = {
-  ABERTA: 'Aberta',
-  EM_ANDAMENTO: 'Em andamento',
-  CONCLUIDA: 'Concluída',
-  ATRASADA: 'Atrasada',
-  CANCELADA: 'Cancelada',
-};
-const PRIORIDADE_LABEL: Record<string, string> = { BAIXA: 'Baixa', MEDIA: 'Média', ALTA: 'Alta' };
+import { toast } from '../lib/toast';
+import { deleteWithConfirm } from '../lib/confirm';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
 
 type ItemForm = WorkOrderItemRequest;
 
@@ -48,6 +43,7 @@ const EMPTY_FORM: WorkOrderRequest = {
 };
 
 export function WorkOrdersPage() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<WorkOrderResponse[]>([]);
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
@@ -69,8 +65,8 @@ export function WorkOrdersPage() {
     setLoading(true);
     coreApi.workOrders
       .list()
-      .then(setOrders)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Erro ao carregar ordens de serviço'))
+      .then((res) => setOrders(res.content))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.workOrders.toasts.falhaCarregar')))
       .finally(() => setLoading(false));
   }
 
@@ -79,7 +75,7 @@ export function WorkOrdersPage() {
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o filtro e o seletor de veículo da OS.
     coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
-    coreApi.drivers.list().then(setDrivers);
+    coreApi.drivers.list().then((res) => setDrivers(res.content));
   }, []);
 
   const filtered = useMemo(() => {
@@ -150,37 +146,39 @@ export function WorkOrdersPage() {
     try {
       if (editingId) {
         await coreApi.workOrders.update(editingId, form);
+        toast.success(t('pages.workOrders.toasts.atualizada'));
       } else {
         await coreApi.workOrders.create(form);
+        toast.success(t('pages.workOrders.toasts.criada'));
       }
       setModalOpen(false);
       refresh();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Falha ao salvar ordem de serviço');
+      setFormError(err instanceof Error ? err.message : t('pages.workOrders.toasts.falhaSalvar'));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir esta ordem de serviço?')) return;
-    try {
-      await coreApi.workOrders.remove(id);
-      refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir ordem de serviço');
-    }
+    await deleteWithConfirm({
+      confirmMessage: t('pages.workOrders.toasts.confirmarExcluir'),
+      remove: () => coreApi.workOrders.remove(id),
+      successMessage: t('pages.workOrders.toasts.excluida'),
+      fallbackErrorMessage: t('pages.workOrders.toasts.falhaExcluir'),
+      onSuccess: refresh,
+    });
   }
 
   return (
     <div className="p-5">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Ordens de Serviço</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">Acompanhamento das OSs da oficina</p>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.workOrders.titulo')}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.workOrders.subtitulo')}</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus /> Nova OS
+          <Plus /> {t('pages.workOrders.novaOS')}
         </Button>
       </div>
 
@@ -193,29 +191,29 @@ export function WorkOrdersPage() {
       <Card className="mb-5">
         <div className="flex flex-wrap items-center gap-3 p-4">
           <Input
-            placeholder="Buscar por número, placa ou modelo..."
+            placeholder={t('pages.workOrders.buscarPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs"
           />
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-44">
-            <option value="todos">Todos os status</option>
+            <option value="todos">{t('pages.workOrders.todosOsStatus')}</option>
             {STATUS_OS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {STATUS_LABEL[s]}
+                {t(`status.os.${s}`)}
               </option>
             ))}
           </Select>
           <Select value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-40">
-            <option value="todos">Todos os tipos</option>
-            {TIPO_OS_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {TIPO_OS_LABEL[t]}
+            <option value="todos">{t('pages.workOrders.todosOsTipos')}</option>
+            {TIPO_OS_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {t(`status.tipoOS.${opt}`)}
               </option>
             ))}
           </Select>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{filtered.length} OS</span>
+            <span>{t('pages.workOrders.osContagem', { n: filtered.length })}</span>
             <Separator orientation="vertical" className="h-4" />
             <span className="font-data font-semibold text-foreground">{formatBRL(totalCusto)}</span>
           </div>
@@ -224,24 +222,24 @@ export function WorkOrdersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Todas as ordens de serviço</CardTitle>
+          <CardTitle>{t('pages.workOrders.todasAsOS')}</CardTitle>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <TableSkeleton rows={6} columns={10} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
-                  <Th>OS</Th>
-                  <Th>Veículo</Th>
-                  <Th>Motorista</Th>
-                  <Th>Tipo</Th>
-                  <Th>Prioridade</Th>
-                  <Th>Abertura</Th>
-                  <Th>Previsão</Th>
-                  <Th>Status</Th>
-                  <Th className="text-right">Custo</Th>
+                  <Th>{t('pages.workOrders.tabela.os')}</Th>
+                  <Th>{t('pages.workOrders.tabela.veiculo')}</Th>
+                  <Th>{t('pages.workOrders.tabela.motorista')}</Th>
+                  <Th>{t('pages.workOrders.tabela.tipo')}</Th>
+                  <Th>{t('pages.workOrders.tabela.prioridade')}</Th>
+                  <Th>{t('pages.workOrders.tabela.abertura')}</Th>
+                  <Th>{t('pages.workOrders.tabela.previsao')}</Th>
+                  <Th>{t('pages.workOrders.tabela.status')}</Th>
+                  <Th className="text-right">{t('pages.workOrders.tabela.custo')}</Th>
                   <Th />
                 </tr>
               </thead>
@@ -256,7 +254,7 @@ export function WorkOrdersPage() {
                       </div>
                     </td>
                     <td className="px-5 py-2.5 text-muted-foreground">{os.driverName ?? '—'}</td>
-                    <td className="px-5 py-2.5 text-muted-foreground">{TIPO_OS_LABEL[os.tipo ?? ''] ?? os.tipo}</td>
+                    <td className="px-5 py-2.5 text-muted-foreground">{os.tipo ? t(`status.tipoOS.${os.tipo}`) : '—'}</td>
                     <td className="px-5 py-2.5">
                       <StatusBadgePrioridade prioridade={os.prioridade} />
                     </td>
@@ -277,12 +275,12 @@ export function WorkOrdersPage() {
                         <button
                           type="button"
                           onClick={() => setSelected(os)}
-                          className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
                         >
                           <Eye className="size-4" />
                         </button>
                         <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(os)}>
-                          Editar
+                          {t('pages.workOrders.editar')}
                         </Button>
                         <Button
                           variant="link"
@@ -290,7 +288,7 @@ export function WorkOrdersPage() {
                           className="h-auto p-0 text-destructive"
                           onClick={() => handleDelete(os.id!)}
                         >
-                          Excluir
+                          {t('pages.workOrders.excluir')}
                         </Button>
                       </div>
                     </td>
@@ -299,7 +297,7 @@ export function WorkOrdersPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={10} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhuma OS encontrada.
+                      {t('pages.workOrders.nenhumaOSEncontrada')}
                     </td>
                   </tr>
                 )}
@@ -309,11 +307,15 @@ export function WorkOrdersPage() {
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? 'Editar OS' : 'Nova OS'}>
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingId ? t('pages.workOrders.editarOS') : t('pages.workOrders.novaOS')}
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="vehicleId">Veículo</Label>
+              <Label htmlFor="vehicleId">{t('pages.workOrders.form.veiculo')}</Label>
               <Select
                 id="vehicleId"
                 value={form.vehicleId}
@@ -321,7 +323,7 @@ export function WorkOrdersPage() {
                 required
               >
                 <option value="" disabled>
-                  Selecione...
+                  {t('pages.workOrders.form.selecione')}
                 </option>
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -331,13 +333,13 @@ export function WorkOrdersPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="driverId">Motorista (opcional)</Label>
+              <Label htmlFor="driverId">{t('pages.workOrders.form.motoristaOpcional')}</Label>
               <Select
                 id="driverId"
                 value={form.driverId ?? ''}
                 onChange={(e) => setForm({ ...form, driverId: e.target.value || undefined })}
               >
-                <option value="">Sem motorista</option>
+                <option value="">{t('pages.workOrders.form.semMotorista')}</option>
                 {drivers.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -349,17 +351,17 @@ export function WorkOrdersPage() {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="tipo">Tipo</Label>
+              <Label htmlFor="tipo">{t('pages.workOrders.form.tipo')}</Label>
               <Select id="tipo" value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as WorkOrderRequest['tipo'] })}>
-                {TIPO_OS_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {TIPO_OS_LABEL[t]}
+                {TIPO_OS_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {t(`status.tipoOS.${opt}`)}
                   </option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t('pages.workOrders.form.status')}</Label>
               <Select
                 id="status"
                 value={form.status}
@@ -367,13 +369,13 @@ export function WorkOrdersPage() {
               >
                 {STATUS_OS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {STATUS_LABEL[s]}
+                    {t(`status.os.${s}`)}
                   </option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label htmlFor="prioridade">Prioridade</Label>
+              <Label htmlFor="prioridade">{t('pages.workOrders.form.prioridade')}</Label>
               <Select
                 id="prioridade"
                 value={form.prioridade}
@@ -381,7 +383,7 @@ export function WorkOrdersPage() {
               >
                 {PRIORIDADE_OS_OPTIONS.map((p) => (
                   <option key={p} value={p}>
-                    {PRIORIDADE_LABEL[p]}
+                    {t(`status.prioridade.${p}`)}
                   </option>
                 ))}
               </Select>
@@ -389,31 +391,31 @@ export function WorkOrdersPage() {
           </div>
 
           <div>
-            <Label htmlFor="descricaoProblema">Descrição do problema</Label>
+            <Label htmlFor="descricaoProblema">{t('pages.workOrders.form.descricaoProblema')}</Label>
             <textarea
               id="descricaoProblema"
               value={form.descricaoProblema}
               onChange={(e) => setForm({ ...form, descricaoProblema: e.target.value })}
               required
               rows={2}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring sm:text-sm"
             />
           </div>
 
           <div>
-            <Label htmlFor="observacoes">Observações (opcional)</Label>
+            <Label htmlFor="observacoes">{t('pages.workOrders.form.observacoesOpcional')}</Label>
             <textarea
               id="observacoes"
               value={form.observacoes ?? ''}
               onChange={(e) => setForm({ ...form, observacoes: e.target.value || undefined })}
               rows={2}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring sm:text-sm"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="responsavelOficina">Oficina</Label>
+              <Label htmlFor="responsavelOficina">{t('pages.workOrders.form.oficina')}</Label>
               <Input
                 id="responsavelOficina"
                 value={form.responsavelOficina}
@@ -422,7 +424,7 @@ export function WorkOrdersPage() {
               />
             </div>
             <div>
-              <Label htmlFor="dataAbertura">Abertura</Label>
+              <Label htmlFor="dataAbertura">{t('pages.workOrders.form.abertura')}</Label>
               <Input
                 id="dataAbertura"
                 type="date"
@@ -432,7 +434,7 @@ export function WorkOrdersPage() {
               />
             </div>
             <div>
-              <Label htmlFor="previsaoConclusao">Previsão</Label>
+              <Label htmlFor="previsaoConclusao">{t('pages.workOrders.form.previsao')}</Label>
               <Input
                 id="previsaoConclusao"
                 type="date"
@@ -444,7 +446,7 @@ export function WorkOrdersPage() {
           </div>
 
           <div>
-            <Label htmlFor="kmAbertura">Odômetro na abertura (km)</Label>
+            <Label htmlFor="kmAbertura">{t('pages.workOrders.form.odometroAbertura')}</Label>
             <Input
               id="kmAbertura"
               type="number"
@@ -457,16 +459,16 @@ export function WorkOrdersPage() {
 
           <div className="border-t border-border pt-4">
             <div className="mb-2 flex items-center justify-between">
-              <Label>Itens</Label>
+              <Label>{t('pages.workOrders.form.itens')}</Label>
               <Button type="button" variant="outline" size="sm" onClick={addItem}>
-                <Plus /> Item
+                <Plus /> {t('pages.workOrders.form.item')}
               </Button>
             </div>
             <div className="space-y-2">
               {form.itens.map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <Input
-                    placeholder="Descrição"
+                    placeholder={t('pages.workOrders.form.descricao')}
                     value={item.descricao}
                     onChange={(e) => updateItem(i, { descricao: e.target.value })}
                     required
@@ -506,10 +508,14 @@ export function WorkOrdersPage() {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.workOrders.form.cancelar')}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? 'Salvando...' : editingId ? 'Salvar' : 'Criar OS'}
+              {saving
+                ? t('pages.workOrders.form.salvando')
+                : editingId
+                  ? t('pages.workOrders.form.salvar')
+                  : t('pages.workOrders.form.criarOS')}
             </Button>
           </div>
         </form>
@@ -523,8 +529,10 @@ export function WorkOrdersPage() {
                 <div>
                   <DialogTitle className="font-data text-base">{selected.numero}</DialogTitle>
                   <DialogDescription>
-                    {TIPO_OS_LABEL[selected.tipo ?? ''] ?? selected.tipo} · Aberta em{' '}
-                    {selected.dataAbertura ? formatDateBR(selected.dataAbertura) : '—'}
+                    {selected.tipo ? t(`status.tipoOS.${selected.tipo}`) : '—'} ·{' '}
+                    {t('pages.workOrders.detalhe.abertaEm', {
+                      data: selected.dataAbertura ? formatDateBR(selected.dataAbertura) : '—',
+                    })}
                   </DialogDescription>
                 </div>
                 <StatusBadgeOS status={selected.status} />
@@ -538,7 +546,8 @@ export function WorkOrdersPage() {
                   <div>
                     <p className="text-xs font-medium text-foreground">{selected.vehicleName}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {selected.driverName ?? 'Sem motorista'} · {selected.kmAbertura?.toLocaleString('pt-BR')} km
+                      {selected.driverName ?? t('pages.workOrders.detalhe.semMotorista')} ·{' '}
+                      {selected.kmAbertura?.toLocaleString('pt-BR')} km
                     </p>
                   </div>
                 </div>
@@ -547,7 +556,7 @@ export function WorkOrdersPage() {
 
               <div>
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Descrição do problema
+                  {t('pages.workOrders.detalhe.descricaoProblema')}
                 </p>
                 <p className="text-xs text-foreground">{selected.descricaoProblema}</p>
                 {selected.observacoes && (
@@ -557,15 +566,15 @@ export function WorkOrdersPage() {
 
               <div>
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Itens da OS
+                  {t('pages.workOrders.detalhe.itensDaOS')}
                 </p>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
-                      <th className="py-1.5 text-left font-medium">Descrição</th>
-                      <th className="py-1.5 text-right font-medium">Qtd</th>
-                      <th className="py-1.5 text-right font-medium">Unitário</th>
-                      <th className="py-1.5 text-right font-medium">Subtotal</th>
+                      <th className="py-1.5 text-left font-medium">{t('pages.workOrders.form.descricao')}</th>
+                      <th className="py-1.5 text-right font-medium">{t('pages.workOrders.detalhe.qtd')}</th>
+                      <th className="py-1.5 text-right font-medium">{t('pages.workOrders.detalhe.unitario')}</th>
+                      <th className="py-1.5 text-right font-medium">{t('pages.workOrders.detalhe.subtotal')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">

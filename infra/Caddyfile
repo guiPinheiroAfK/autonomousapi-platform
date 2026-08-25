@@ -1,0 +1,7 @@
+# HTTPS automático (Let's Encrypt) sem precisar de domínio próprio ainda: sslip.io
+# resolve "163-176-224-227.sslip.io" pro IP 163.176.224.227 embutido no nome — troca
+# esse host pelo domínio de verdade assim que ele existir (só editar a linha abaixo,
+# sem mexer em mais nada, Caddy tira o cert novo sozinho).
+163-176-224-227.sslip.io {
+	reverse_proxy core-api:8080
+}

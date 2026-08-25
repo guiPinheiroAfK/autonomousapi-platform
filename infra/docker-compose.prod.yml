@@ -1,0 +1,68 @@
+name: autonomousapi
+
+# Deploy do piloto (VM Oracle Cloud Always Free). Diferente do docker-compose.yml de
+# dev: sem serviço `db` local — core-api e geo-api apontam para o Neon (Postgres
+# gerenciado, ver services/*/.env.prod). Caddy na frente do core-api dá HTTPS
+# automático via Let's Encrypt, usando um hostname sslip.io (resolve pro IP da VM sem
+# precisar de domínio próprio ainda — troca pelo domínio de verdade quando existir).
+#
+# Sobe com: docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  geo-api:
+    build:
+      context: ../services/geo-api
+    restart: unless-stopped
+    env_file:
+      - ../services/geo-api/.env.prod
+    # Interno (spec 01) — só o core-api fala com ele, pela rede do compose.
+    expose:
+      - "8000"
+
+  core-api:
+    build:
+      context: ../services/core-api
+    restart: unless-stopped
+    env_file:
+      - ../services/core-api/.env.prod
+    environment:
+      GEO_API_URL: http://geo-api:8000
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      geo-api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    # Sem publish direto no host: só o Caddy fala com ele (via rede do compose),
+    # o core-api nunca fica exposto em HTTP puro pra internet.
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - core-api
+
+volumes:
+  caddy_data:
+  caddy_config:

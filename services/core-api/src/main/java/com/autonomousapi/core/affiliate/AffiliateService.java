@@ -3,7 +3,7 @@ package com.autonomousapi.core.affiliate;
 import com.autonomousapi.core.affiliate.dto.AffiliateClickRequest;
 import com.autonomousapi.core.affiliate.dto.AffiliateClickResponse;
 import com.autonomousapi.core.affiliate.dto.AffiliatePartnerResponse;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +30,7 @@ public class AffiliateService {
     /** Registra o clique (métrica) e devolve o link para o front redirecionar. */
     @Transactional
     public AffiliateClickResponse click(JwtPrincipal principal, UUID partnerId, AffiliateClickRequest req) {
-        AffiliatePartner partner = partners.findById(partnerId)
-                .orElseThrow(() -> new NotFoundException("Parceiro não encontrado."));
+        AffiliatePartner partner = Lookups.orNotFound(partners.findById(partnerId), "Parceiro não encontrado.");
         clicks.save(new AffiliateClick(principal.tenantId(), partner.getId(), req.vehicleId(), principal.userId()));
         return new AffiliateClickResponse(partner.getLinkBase());
     }

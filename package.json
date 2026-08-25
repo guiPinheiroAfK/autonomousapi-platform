@@ -10,11 +10,12 @@
     "packages/contracts"
   ],
   "scripts": {
-    "postinstall": "node scripts/fix-mobile-duplicate-react-native.js",
+    "postinstall": "node scripts/fix-mobile-duplicate-react-native.js && node scripts/fix-mobile-jest-expo-react-native.js",
     "dev:web": "npm run dev --workspace @autonomousapi/web",
     "build:web": "npm run build --workspace @autonomousapi/web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "gen:types": "npm run generate --workspace @autonomousapi/shared-types",
     "contracts:validate": "npm run validate --workspace @autonomousapi/contracts"
   },

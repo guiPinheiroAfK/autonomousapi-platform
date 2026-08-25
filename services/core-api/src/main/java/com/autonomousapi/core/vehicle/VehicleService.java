@@ -1,6 +1,6 @@
 package com.autonomousapi.core.vehicle;
 
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.PlateAlreadyUsedException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
@@ -133,7 +133,6 @@ public class VehicleService {
     }
 
     private Vehicle findOwned(JwtPrincipal principal, UUID id) {
-        return vehicles.findByIdAndTenantId(id, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+        return Lookups.orNotFound(vehicles.findByIdAndTenantId(id, principal.tenantId()), "Veículo não encontrado.");
     }
 }

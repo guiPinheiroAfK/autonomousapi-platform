@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Download, Plus, Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   coreApi,
@@ -23,7 +24,10 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { cn } from '../lib/utils';
-import { formatBRL, formatDateBR } from '../lib/format';
+import { formatBRL, formatDateBR, hojeISO } from '../lib/format';
+import { toast } from '../lib/toast';
+import { deleteWithConfirm } from '../lib/confirm';
+import { TableSkeleton } from '../components/shared/TableSkeleton';
 
 const CATEGORY_OPTIONS: ExpenseCategory[] = [
   'COMBUSTIVEL',
@@ -35,16 +39,6 @@ const CATEGORY_OPTIONS: ExpenseCategory[] = [
   'LAVAGEM',
   'OUTRO',
 ];
-const CATEGORY_LABEL: Record<ExpenseCategory, string> = {
-  COMBUSTIVEL: 'Combustível',
-  MANUTENCAO: 'Manutenção',
-  SEGURO: 'Seguro',
-  IPVA: 'IPVA',
-  MULTA: 'Multa',
-  PEDAGIO: 'Pedágio',
-  LAVAGEM: 'Lavagem',
-  OUTRO: 'Outro',
-};
 const CATEGORY_COLOR: Record<ExpenseCategory, string> = {
   COMBUSTIVEL: 'var(--color-status-info)',
   MANUTENCAO: 'var(--color-status-warning)',
@@ -60,10 +54,6 @@ function primeiroDiaDoMes(): string {
   const hoje = new Date();
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`;
 }
-function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 const EMPTY_EXPENSE_FORM: ExpenseEntryRequest = {
   vehicleId: undefined,
   categoria: 'COMBUSTIVEL',
@@ -85,6 +75,7 @@ const EMPTY_BUDGET_FORM: BudgetRequest = {
  * OS — ver nota em ReportsPage.
  */
 export function CostsPage() {
+  const { t } = useTranslation();
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
 
   useEffect(() => {
@@ -96,18 +87,16 @@ export function CostsPage() {
   return (
     <div className="p-5">
       <div className="mb-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">Custos</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Despesas categorizadas, orçamento e rentabilidade de transfers
-        </p>
+        <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.costs.titulo')}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.costs.subtitulo')}</p>
       </div>
 
       <Tabs defaultValue="visao-geral">
         <TabsList>
-          <TabsTrigger value="visao-geral">Visão geral</TabsTrigger>
-          <TabsTrigger value="despesas">Despesas</TabsTrigger>
-          <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-          <TabsTrigger value="rentabilidade">Rentabilidade de transfers</TabsTrigger>
+          <TabsTrigger value="visao-geral">{t('pages.costs.tabs.visaoGeral')}</TabsTrigger>
+          <TabsTrigger value="despesas">{t('pages.costs.tabs.despesas')}</TabsTrigger>
+          <TabsTrigger value="orcamento">{t('pages.costs.tabs.orcamento')}</TabsTrigger>
+          <TabsTrigger value="rentabilidade">{t('pages.costs.tabs.rentabilidade')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -128,6 +117,7 @@ export function CostsPage() {
 }
 
 function VisaoGeralTab() {
+  const { t } = useTranslation();
   const [from, setFrom] = useState(primeiroDiaDoMes());
   const [to, setTo] = useState(hojeISO());
   const [totals, setTotals] = useState<CategoryTotal[]>([]);
@@ -142,18 +132,21 @@ function VisaoGeralTab() {
       .finally(() => setLoading(false));
   }, [from, to]);
 
-  const total = totals.reduce((sum, t) => sum + Number(t.total ?? 0), 0);
+  const total = totals.reduce((sum, item) => sum + Number(item.total ?? 0), 0);
   const maior = [...totals].sort((a, b) => Number(b.total ?? 0) - Number(a.total ?? 0))[0];
-  const chartData = totals.map((t) => ({
-    categoria: CATEGORY_LABEL[t.categoria as ExpenseCategory] ?? t.categoria,
-    total: Number(t.total ?? 0),
-    fill: CATEGORY_COLOR[t.categoria as ExpenseCategory] ?? 'var(--color-primary)',
+  const chartData = totals.map((item) => ({
+    categoria: t(`status.custo.${item.categoria}`, { defaultValue: item.categoria }),
+    total: Number(item.total ?? 0),
+    fill: CATEGORY_COLOR[item.categoria as ExpenseCategory] ?? 'var(--color-primary)',
   }));
 
   async function handleExport() {
     setExporting(true);
     try {
       await coreApi.reports.exportCostsCsv();
+      toast.success(t('pages.costs.visaoGeral.csvExportado'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.costs.visaoGeral.falhaExportar'));
     } finally {
       setExporting(false);
     }
@@ -163,23 +156,23 @@ function VisaoGeralTab() {
     <div>
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <div>
-          <Label htmlFor="from">De</Label>
+          <Label htmlFor="from">{t('pages.costs.visaoGeral.de')}</Label>
           <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
         <div>
-          <Label htmlFor="to">Até</Label>
+          <Label htmlFor="to">{t('pages.costs.visaoGeral.ate')}</Label>
           <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
         <Button variant="outline" onClick={handleExport} disabled={exporting} className="ml-auto">
-          <Download /> {exporting ? 'Exportando...' : 'Exportar CSV'}
+          <Download /> {exporting ? t('pages.costs.visaoGeral.exportando') : t('pages.costs.visaoGeral.exportarCsv')}
         </Button>
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <StatCard label="Total no período" value={formatBRL(total)} icon={Wallet} />
+        <StatCard label={t('pages.costs.visaoGeral.totalNoPeriodo')} value={formatBRL(total)} icon={Wallet} />
         <StatCard
-          label="Maior categoria"
-          value={maior ? CATEGORY_LABEL[maior.categoria as ExpenseCategory] : '—'}
+          label={t('pages.costs.visaoGeral.maiorCategoria')}
+          value={maior ? t(`status.custo.${maior.categoria}`) : '—'}
           hint={maior ? formatBRL(Number(maior.total ?? 0)) : undefined}
           tone="warning"
         />
@@ -187,12 +180,12 @@ function VisaoGeralTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Despesas por categoria</CardTitle>
+          <CardTitle>{t('pages.costs.visaoGeral.despesasPorCategoria')}</CardTitle>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>
         ) : chartData.length === 0 ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Nenhuma despesa no período.</p>
+          <p className="p-8 text-center text-xs text-muted-foreground">{t('pages.costs.visaoGeral.nenhumaDespesaPeriodo')}</p>
         ) : (
           <div className="h-72 px-2 pb-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -238,6 +231,7 @@ function VisaoGeralTab() {
 const EXPENSES_PAGE_SIZE = 20;
 
 function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<FleetExpenseEntryResponse[]>([]);
   const [categoriaFiltro, setCategoriaFiltro] = useState<ExpenseCategory | 'todas'>('todas');
   const [page, setPage] = useState(0);
@@ -273,17 +267,22 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
     setError('');
     try {
       await coreApi.expenses.createFleet(form);
+      toast.success(t('pages.costs.despesas.toasts.lancada'));
       setModalOpen(false);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao lançar despesa');
+      setError(err instanceof Error ? err.message : t('pages.costs.despesas.toasts.falhaLancar'));
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir esta despesa?')) return;
-    await coreApi.expenses.removeFleet(id);
-    refresh();
+    await deleteWithConfirm({
+      confirmMessage: t('pages.costs.despesas.toasts.confirmarExcluir'),
+      remove: () => coreApi.expenses.removeFleet(id),
+      successMessage: t('pages.costs.despesas.toasts.excluida'),
+      fallbackErrorMessage: t('pages.costs.despesas.toasts.falhaExcluir'),
+      onSuccess: refresh,
+    });
   }
 
   const categoriaCombustivel = form.categoria === 'COMBUSTIVEL';
@@ -299,43 +298,43 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
           }}
           className="w-52"
         >
-          <option value="todas">Todas as categorias</option>
+          <option value="todas">{t('pages.costs.despesas.todasAsCategorias')}</option>
           {CATEGORY_OPTIONS.map((c) => (
             <option key={c} value={c}>
-              {CATEGORY_LABEL[c]}
+              {t(`status.custo.${c}`)}
             </option>
           ))}
         </Select>
         <Button onClick={openCreate} className="ml-auto">
-          <Plus /> Nova despesa
+          <Plus /> {t('pages.costs.despesas.novaDespesa')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Despesas ({totalElements})</CardTitle>
+          <CardTitle>{t('pages.costs.despesas.despesasContagem', { n: totalElements })}</CardTitle>
         </CardHeader>
         {loading ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+          <TableSkeleton rows={6} columns={6} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Data
+                    {t('pages.costs.despesas.tabela.data')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Veículo
+                    {t('pages.costs.despesas.tabela.veiculo')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Categoria
+                    {t('pages.costs.despesas.tabela.categoria')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Valor
+                    {t('pages.costs.despesas.tabela.valor')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Descrição
+                    {t('pages.costs.despesas.tabela.descricao')}
                   </th>
                   <th className="px-5 py-2.5" />
                 </tr>
@@ -345,7 +344,11 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                   <tr key={e.id} className="hover:bg-muted/50">
                     <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(e.data!)}</td>
                     <td className="px-5 py-2.5">
-                      {e.plate ? <PlacaBR placa={e.plate} size="sm" /> : <span className="text-muted-foreground">Frota</span>}
+                      {e.plate ? (
+                        <PlacaBR placa={e.plate} size="sm" />
+                      ) : (
+                        <span className="text-muted-foreground">{t('pages.costs.despesas.frota')}</span>
+                      )}
                     </td>
                     <td className="px-5 py-2.5">
                       <StatusBadgeCusto categoria={e.categoria} />
@@ -359,7 +362,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                         className="h-auto p-0 text-destructive"
                         onClick={() => handleDelete(e.id!)}
                       >
-                        Excluir
+                        {t('pages.costs.despesas.excluir')}
                       </Button>
                     </td>
                   </tr>
@@ -367,7 +370,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                 {entries.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-5 py-8 text-center text-xs text-muted-foreground">
-                      Nenhuma despesa lançada ainda.
+                      {t('pages.costs.despesas.nenhumaDespesa')}
                     </td>
                   </tr>
                 )}
@@ -378,7 +381,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-border px-5 py-3">
             <span className="text-xs text-muted-foreground">
-              Página {page + 1} de {totalPages}
+              {t('pages.costs.despesas.paginaXDeY', { atual: page + 1, total: totalPages })}
             </span>
             <div className="flex gap-2">
               <Button
@@ -387,7 +390,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Anterior
+                {t('pages.costs.despesas.anterior')}
               </Button>
               <Button
                 variant="outline"
@@ -395,23 +398,23 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Próxima
+                {t('pages.costs.despesas.proxima')}
               </Button>
             </div>
           </div>
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nova despesa">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('pages.costs.despesas.novaDespesa')}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="veiculo">Veículo (opcional — em branco = despesa de frota)</Label>
+            <Label htmlFor="veiculo">{t('pages.costs.despesas.form.veiculoOpcional')}</Label>
             <Select
               id="veiculo"
               value={form.vehicleId ?? ''}
               onChange={(e) => setForm({ ...form, vehicleId: e.target.value || undefined })}
             >
-              <option value="">Despesa de frota (sem veículo)</option>
+              <option value="">{t('pages.costs.despesas.form.despesaDeFrota')}</option>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.plate} · {v.brand} {v.model}
@@ -420,7 +423,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="categoria">Categoria</Label>
+            <Label htmlFor="categoria">{t('pages.costs.despesas.form.categoria')}</Label>
             <Select
               id="categoria"
               value={form.categoria}
@@ -435,14 +438,14 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             >
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
+                  {t(`status.custo.${c}`)}
                 </option>
               ))}
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="valor">Valor (R$)</Label>
+              <Label htmlFor="valor">{t('pages.costs.despesas.form.valorReais')}</Label>
               <Input
                 id="valor"
                 type="number"
@@ -454,7 +457,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
               />
             </div>
             <div>
-              <Label htmlFor="data">Data</Label>
+              <Label htmlFor="data">{t('pages.costs.despesas.form.data')}</Label>
               <Input
                 id="data"
                 type="date"
@@ -467,7 +470,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
           {categoriaCombustivel && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="litrosOuKwh">Litros (ou kWh)</Label>
+                <Label htmlFor="litrosOuKwh">{t('pages.costs.despesas.form.litrosOuKwh')}</Label>
                 <Input
                   id="litrosOuKwh"
                   type="number"
@@ -480,7 +483,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                 />
               </div>
               <div>
-                <Label htmlFor="odometro">Odômetro (km)</Label>
+                <Label htmlFor="odometro">{t('pages.costs.despesas.form.odometroKm')}</Label>
                 <Input
                   id="odometro"
                   type="number"
@@ -494,7 +497,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             </div>
           )}
           <div>
-            <Label htmlFor="descricao">Descrição (opcional)</Label>
+            <Label htmlFor="descricao">{t('pages.costs.despesas.form.descricaoOpcional')}</Label>
             <Input
               id="descricao"
               value={form.descricao ?? ''}
@@ -506,9 +509,9 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.costs.despesas.form.cancelar')}
             </Button>
-            <Button type="submit">Lançar</Button>
+            <Button type="submit">{t('pages.costs.despesas.form.lancar')}</Button>
           </div>
         </form>
       </Modal>
@@ -517,6 +520,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 }
 
 function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
+  const { t } = useTranslation();
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -544,22 +548,29 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
     setError('');
     try {
       await coreApi.budgets.create(form);
+      toast.success(t('pages.costs.orcamento.toasts.criado'));
       setModalOpen(false);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao criar orçamento');
+      setError(err instanceof Error ? err.message : t('pages.costs.orcamento.toasts.falhaCriar'));
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Excluir este orçamento?')) return;
-    await coreApi.budgets.remove(id);
-    refresh();
+    await deleteWithConfirm({
+      confirmMessage: t('pages.costs.orcamento.toasts.confirmarExcluir'),
+      remove: () => coreApi.budgets.remove(id),
+      successMessage: t('pages.costs.orcamento.toasts.excluido'),
+      fallbackErrorMessage: t('pages.costs.orcamento.toasts.falhaExcluir'),
+      onSuccess: refresh,
+    });
   }
 
   function escopoLabel(b: BudgetResponse): string {
-    const veiculo = b.vehicleId ? vehicles.find((v) => v.id === b.vehicleId)?.plate ?? 'Veículo' : 'Frota inteira';
-    const categoria = b.categoria ? CATEGORY_LABEL[b.categoria as ExpenseCategory] : 'Todas as categorias';
+    const veiculo = b.vehicleId
+      ? (vehicles.find((v) => v.id === b.vehicleId)?.plate ?? t('pages.costs.despesas.tabela.veiculo'))
+      : t('pages.costs.orcamento.frotaInteira');
+    const categoria = b.categoria ? t(`status.custo.${b.categoria}`) : t('pages.costs.orcamento.todasAsCategorias');
     return `${veiculo} · ${categoria}`;
   }
 
@@ -567,15 +578,15 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
     <div>
       <div className="mb-4 flex justify-end">
         <Button onClick={openCreate}>
-          <Plus /> Novo orçamento
+          <Plus /> {t('pages.costs.orcamento.novoOrcamento')}
         </Button>
       </div>
 
       {loading ? (
-        <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>
+        <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>
       ) : budgets.length === 0 ? (
         <Card>
-          <p className="p-8 text-center text-xs text-muted-foreground">Nenhum orçamento configurado ainda.</p>
+          <p className="p-8 text-center text-xs text-muted-foreground">{t('pages.costs.orcamento.nenhumOrcamento')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -589,8 +600,11 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">{escopoLabel(b)}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {formatBRL(Number(b.valorConsumido ?? 0))} de {formatBRL(Number(b.valorLimite ?? 0))} ·{' '}
-                      {b.periodo === 'MENSAL' ? 'mensal' : b.periodo}
+                      {t('pages.costs.orcamento.deValor', {
+                        consumido: formatBRL(Number(b.valorConsumido ?? 0)),
+                        limite: formatBRL(Number(b.valorLimite ?? 0)),
+                      })}{' '}
+                      · {b.periodo === 'MENSAL' ? t('pages.costs.orcamento.mensal') : b.periodo}
                     </p>
                   </div>
                   <Button
@@ -599,7 +613,7 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                     className="h-auto shrink-0 p-0 text-destructive"
                     onClick={() => handleDelete(b.id!)}
                   >
-                    Excluir
+                    {t('pages.costs.orcamento.excluir')}
                   </Button>
                 </div>
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -617,7 +631,7 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                     estourado ? 'text-status-danger' : emAviso ? 'text-status-warning' : 'text-muted-foreground',
                   )}
                 >
-                  {percentual.toFixed(1)}% consumido
+                  {t('pages.costs.orcamento.percentualConsumido', { p: percentual.toFixed(1) })}
                 </p>
               </Card>
             );
@@ -625,16 +639,16 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo orçamento">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('pages.costs.orcamento.novoOrcamento')}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="b-veiculo">Escopo</Label>
+            <Label htmlFor="b-veiculo">{t('pages.costs.orcamento.form.escopo')}</Label>
             <Select
               id="b-veiculo"
               value={form.vehicleId ?? ''}
               onChange={(e) => setForm({ ...form, vehicleId: e.target.value || undefined })}
             >
-              <option value="">Frota inteira</option>
+              <option value="">{t('pages.costs.orcamento.frotaInteira')}</option>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.plate} · {v.brand} {v.model}
@@ -643,22 +657,22 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="b-categoria">Categoria (opcional)</Label>
+            <Label htmlFor="b-categoria">{t('pages.costs.orcamento.form.categoriaOpcional')}</Label>
             <Select
               id="b-categoria"
               value={form.categoria ?? ''}
               onChange={(e) => setForm({ ...form, categoria: (e.target.value || undefined) as ExpenseCategory })}
             >
-              <option value="">Todas as categorias</option>
+              <option value="">{t('pages.costs.orcamento.todasAsCategorias')}</option>
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
+                  {t(`status.custo.${c}`)}
                 </option>
               ))}
             </Select>
           </div>
           <div>
-            <Label htmlFor="valorLimite">Valor limite mensal (R$)</Label>
+            <Label htmlFor="valorLimite">{t('pages.costs.orcamento.form.valorLimiteMensal')}</Label>
             <Input
               id="valorLimite"
               type="number"
@@ -674,9 +688,9 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('pages.costs.orcamento.form.cancelar')}
             </Button>
-            <Button type="submit">Criar</Button>
+            <Button type="submit">{t('pages.costs.orcamento.form.criar')}</Button>
           </div>
         </form>
       </Modal>
@@ -685,13 +699,18 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 }
 
 function RentabilidadeTab() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<RoutePlanResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // size grande: esta aba agrega TRANSFER concluído de todo o histórico pra
+    // relatório de receita — paginação padrão (100) truncaria o número mostrado,
+    // não só "carregaria menos rápido" (mesmo motivo do teto no backend ter subido
+    // pra 500, ver RoutePlanController.MAX_PAGE_SIZE).
     coreApi.routePlans
-      .list()
-      .then(setPlans)
+      .list(0, 500)
+      .then((res) => setPlans(res.content))
       .finally(() => setLoading(false));
   }, []);
 
@@ -705,16 +724,16 @@ function RentabilidadeTab() {
   const totalMargem = transfers.reduce((sum, p) => sum + Number(p.margemRealizada ?? 0), 0);
 
   if (loading) {
-    return <p className="p-8 text-center text-xs text-muted-foreground">Carregando...</p>;
+    return <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>;
   }
 
   return (
     <div>
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="Valor combinado (total)" value={formatBRL(totalValor)} />
-        <StatCard label="Custo estimado (total)" value={formatBRL(totalCusto)} tone="warning" />
+        <StatCard label={t('pages.costs.rentabilidade.valorCombinadoTotal')} value={formatBRL(totalValor)} />
+        <StatCard label={t('pages.costs.rentabilidade.custoEstimadoTotal')} value={formatBRL(totalCusto)} tone="warning" />
         <StatCard
-          label="Margem realizada (total)"
+          label={t('pages.costs.rentabilidade.margemRealizadaTotal')}
           value={formatBRL(totalMargem)}
           tone={totalMargem >= 0 ? 'success' : 'danger'}
         />
@@ -722,31 +741,29 @@ function RentabilidadeTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Transfers concluídos</CardTitle>
+          <CardTitle>{t('pages.costs.rentabilidade.transfersConcluidos')}</CardTitle>
         </CardHeader>
         {transfers.length === 0 ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">
-            Nenhum transfer concluído ainda — a margem realizada só aparece depois que a rota é finalizada.
-          </p>
+          <p className="p-8 text-center text-xs text-muted-foreground">{t('pages.costs.rentabilidade.nenhumTransfer')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Motorista
+                    {t('pages.costs.rentabilidade.tabela.motorista')}
                   </th>
                   <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Data
+                    {t('pages.costs.rentabilidade.tabela.data')}
                   </th>
                   <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Valor
+                    {t('pages.costs.rentabilidade.tabela.valor')}
                   </th>
                   <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Custo estimado
+                    {t('pages.costs.rentabilidade.tabela.custoEstimado')}
                   </th>
                   <th className="px-5 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Margem
+                    {t('pages.costs.rentabilidade.tabela.margem')}
                   </th>
                 </tr>
               </thead>

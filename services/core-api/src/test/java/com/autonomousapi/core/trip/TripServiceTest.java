@@ -3,7 +3,6 @@ package com.autonomousapi.core.trip;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -87,10 +86,11 @@ class TripServiceTest {
     }
 
     @Test
-    void loteDePingsEncaminhaTodosQuandoGeoApiResponde() {
+    void loteDePingsVaiNumaSoChamadaEmLotePraGeoApi() {
         Trip trip = new Trip(tenantId, principal.userId(), UUID.randomUUID());
         when(tripRepo.findByIdAndTenantIdAndUserId(trip.getId(), tenantId, principal.userId()))
                 .thenReturn(Optional.of(trip));
+        when(geoApiClient.ingestGpsPingBatch(any())).thenReturn(3);
 
         var lote = List.of(
                 new SubmitPingRequest(Instant.now(), -25.1, -54.1, null, null, null),
@@ -101,17 +101,20 @@ class TripServiceTest {
 
         assertEquals(3, resposta.accepted());
         assertEquals(3, resposta.received());
-        verify(geoApiClient, times(3)).ingestGpsPing(any());
+        ArgumentCaptor<List<com.autonomousapi.core.geo.dto.GpsPingRequest>> captor = ArgumentCaptor.forClass(List.class);
+        verify(geoApiClient, times(1)).ingestGpsPingBatch(captor.capture());
+        assertEquals(3, captor.getValue().size());
     }
 
     @Test
-    void loteParaNoPrimeiroErroEDevolveQuantosEntraram() {
+    void loteDevolveZeroAceitosQuandoGeoApiFalha() {
         Trip trip = new Trip(tenantId, principal.userId(), UUID.randomUUID());
         when(tripRepo.findByIdAndTenantIdAndUserId(trip.getId(), tenantId, principal.userId()))
                 .thenReturn(Optional.of(trip));
-        // Primeiro ping passa, segundo falha (geo-api fora do ar no meio do lote).
-        doNothing().doThrow(new RuntimeException("geo-api indisponível"))
-                .when(geoApiClient).ingestGpsPing(any());
+        // ADR 0019: ingestão em lote é idempotente por construção (dedup por chave natural
+        // no geo-api) — falha vira 0 de uma vez, não faz mais sentido "parar no meio";
+        // o app reenvia o lote inteiro sem risco de duplicar.
+        when(geoApiClient.ingestGpsPingBatch(any())).thenReturn(0);
 
         var lote = List.of(
                 new SubmitPingRequest(Instant.now(), -25.1, -54.1, null, null, null),
@@ -120,10 +123,8 @@ class TripServiceTest {
 
         var resposta = service.submitPings(principal, trip.getId(), lote);
 
-        // O app descarta 1 da fila e mantém os outros 2 para nova tentativa.
-        assertEquals(1, resposta.accepted());
+        assertEquals(0, resposta.accepted());
         assertEquals(3, resposta.received());
-        verify(geoApiClient, times(2)).ingestGpsPing(any());
     }
 
     @Test

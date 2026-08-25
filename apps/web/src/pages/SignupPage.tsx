@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { coreApi } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
+  const { t } = useTranslation();
   const { signup } = useAuth();
   const [tenantName, setTenantName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,7 +33,7 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
       const resp = await signup({ email, password, tenantName });
       setEmailPendente(resp.email ?? email);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha no cadastro');
+      setError(err instanceof Error ? err.message : t('auth.signup.falha'));
     } finally {
       setSubmitting(false);
     }
@@ -49,23 +51,22 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
 
   return (
     <AuthLayout
-      titulo="Cadastrar minha frota"
+      titulo={t('auth.signup.titulo')}
       chamada={
         <>
-          Comece pelos veículos que <em className="italic">já estão</em> na rua.
+          {t('auth.signup.chamadaPre')}
+          <em className="italic">{t('auth.signup.chamadaEm')}</em>
+          {t('auth.signup.chamadaPos')}
         </>
       }
       onVoltar={onVoltarParaHome}
     >
-      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
-        Sem instalação e sem equipamento novo no carro. Você cadastra a frota e o painel
-        começa a se preencher.
-      </p>
+      <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">{t('auth.signup.descricao')}</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <CampoPublico
           id="tenantName"
-          rotulo="Nome da frota ou empresa"
+          rotulo={t('auth.signup.nomeFrota')}
           autoComplete="organization"
           placeholder="RotaCerta Entregas"
           value={tenantName}
@@ -74,7 +75,7 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
         />
         <CampoPublico
           id="email"
-          rotulo="E-mail"
+          rotulo={t('auth.signup.email')}
           type="email"
           autoComplete="email"
           placeholder="voce@suafrota.com.br"
@@ -84,10 +85,10 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
         />
         <CampoPublico
           id="password"
-          rotulo="Senha"
+          rotulo={t('auth.signup.senha')}
           type="password"
           autoComplete="new-password"
-          placeholder="mínimo de 8 caracteres"
+          placeholder={t('auth.signup.minimoCaracteres')}
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -98,15 +99,15 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
 
         <div className="pt-2">
           <BotaoPublico type="submit" disabled={submitting}>
-            {submitting ? 'Criando conta...' : 'Criar conta'}
+            {submitting ? t('auth.signup.criandoConta') : t('auth.signup.criarConta')}
           </BotaoPublico>
         </div>
       </form>
 
       <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
-        Já tem conta?{' '}
+        {t('auth.signup.jaTemConta')}{' '}
         <button type="button" onClick={onGoToLogin} className="link-sublinhado text-[var(--tinta)]">
-          Entrar
+          {t('auth.signup.entrar')}
         </button>
       </p>
     </AuthLayout>
@@ -122,6 +123,7 @@ function ConfirmeSeuEmail({
   onVoltarParaHome: () => void;
   onGoToLogin: () => void;
 }) {
+  const { t } = useTranslation();
   const [reenviando, setReenviando] = useState(false);
   const [reenviado, setReenviado] = useState(false);
 
@@ -137,29 +139,36 @@ function ConfirmeSeuEmail({
 
   return (
     <AuthLayout
-      titulo="Confirme seu e-mail"
+      titulo={t('auth.confirmeEmail.titulo')}
       chamada={
         <>
-          Falta <em className="italic">um clique</em> para começar.
+          {t('auth.confirmeEmail.chamadaPre')}
+          <em className="italic">{t('auth.confirmeEmail.chamadaEm')}</em>
+          {t('auth.confirmeEmail.chamadaPos')}
         </>
       }
       onVoltar={onVoltarParaHome}
     >
       <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">
-        Mandamos um link de confirmação para <span className="text-[var(--tinta)]">{email}</span>.
-        Abra o e-mail e clique no link — sua conta só fica ativa depois disso.
+        {t('auth.confirmeEmail.descricaoPre')}
+        <span className="text-[var(--tinta)]">{email}</span>
+        {t('auth.confirmeEmail.descricaoPos')}
       </p>
 
       <div className="mt-8 space-y-3">
         <BotaoPublico type="button" onClick={reenviar} disabled={reenviando || reenviado}>
-          {reenviado ? 'Link reenviado' : reenviando ? 'Reenviando...' : 'Reenviar e-mail'}
+          {reenviado
+            ? t('auth.confirmeEmail.linkReenviado')
+            : reenviando
+              ? t('auth.confirmeEmail.reenviando')
+              : t('auth.confirmeEmail.reenviarEmail')}
         </BotaoPublico>
       </div>
 
       <p className="mt-8 text-[14px] text-[var(--tinta-suave)]">
-        Já confirmou?{' '}
+        {t('auth.confirmeEmail.jaConfirmou')}{' '}
         <button type="button" onClick={onGoToLogin} className="link-sublinhado text-[var(--tinta)]">
-          Entrar
+          {t('auth.confirmeEmail.entrar')}
         </button>
       </p>
     </AuthLayout>

@@ -12,24 +12,43 @@ import logging
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from .aggregation import recalcular_road_readiness
 from .charging import obter_provider
 from .charging_sync import sincronizar_estacoes
 from .config import settings
 from .db import SessionLocal
 from .retention import purgar_pings_antigos
+from .road_readiness_v2 import recalcular_road_readiness_v2
+from .sessionization import reconstruir_passagens
 
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler(timezone="UTC")
 
 
-def _job_recalcular_road_readiness() -> None:
+def _job_recalcular_road_readiness_v2() -> None:
+    # v2 substitui v1 no scheduler (ADR 0019, D4) — v1 conta observação por ping, o
+    # que inverte o sinal em via cronicamente congestionada. O v1 continua acessível
+    # via POST /internal/v1/road-readiness/recalculate pra quem quiser recalcular a
+    # linha de base histórica ('GLOBAL') manualmente, só não roda mais sozinho.
     db = SessionLocal()
     try:
-        recalcular_road_readiness(db)
+        recalcular_road_readiness_v2(db, pilot_timezone=settings.pilot_timezone)
     except Exception:
-        logger.exception("falha ao recalcular road_readiness")
+        logger.exception("falha ao recalcular road_readiness v2")
+    finally:
+        db.close()
+
+
+def _job_reconstruir_passagens() -> None:
+    db = SessionLocal()
+    try:
+        reconstruir_passagens(
+            db,
+            gap_max_minutes=settings.passage_gap_max_minutes,
+            rebuild_window_hours=settings.passage_rebuild_window_hours,
+        )
+    except Exception:
+        logger.exception("falha ao reconstruir passagens")
     finally:
         db.close()
 
@@ -57,10 +76,17 @@ def _job_sincronizar_estacoes_recarga() -> None:
 
 def iniciar_scheduler() -> None:
     scheduler.add_job(
-        _job_recalcular_road_readiness,
+        _job_recalcular_road_readiness_v2,
         "interval",
         minutes=settings.road_readiness_recalc_interval_minutes,
-        id="recalcular_road_readiness",
+        id="recalcular_road_readiness_v2",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _job_reconstruir_passagens,
+        "interval",
+        minutes=settings.passage_recalc_interval_minutes,
+        id="reconstruir_passagens",
         replace_existing=True,
     )
     scheduler.add_job(

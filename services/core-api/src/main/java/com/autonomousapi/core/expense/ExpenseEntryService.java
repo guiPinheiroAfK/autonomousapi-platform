@@ -1,7 +1,7 @@
 package com.autonomousapi.core.expense;
 
 import com.autonomousapi.core.config.CacheConfig;
-import com.autonomousapi.core.error.NotFoundException;
+import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.RoutePlanInvalidException;
 import com.autonomousapi.core.expense.dto.CategoryTotal;
 import com.autonomousapi.core.expense.dto.ExpenseEntryRequest;
@@ -19,6 +19,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheEvict;
@@ -141,14 +142,16 @@ public class ExpenseEntryService {
     /** Relatório de despesas de toda a frota do tenant, desde o início, em CSV (spec 05, Fase 1: web). */
     @Transactional(readOnly = true)
     public String exportCsv(JwtPrincipal principal) {
-        Map<UUID, Vehicle> vehicleById = vehicles.findAllByTenantIdOrderByCreatedAtDesc(principal.tenantId())
-                .stream()
-                .collect(Collectors.toMap(Vehicle::getId, v -> v));
-
         // LocalDate.MIN estoura o range de "date" do Postgres (4713 BC..5874897 AD) — usa
         // uma data bem anterior a qualquer lançamento real em vez do mínimo teórico do Java.
         List<ExpenseEntry> entries = expenses
                 .findAllByTenantIdAndDataGreaterThanEqualOrderByData(principal.tenantId(), LocalDate.of(2000, 1, 1));
+
+        // Só os veículos com despesa lançada, não a frota inteira do tenant (achado da
+        // auditoria de cleanup).
+        List<UUID> vehicleIds = entries.stream().map(ExpenseEntry::getVehicleId).filter(Objects::nonNull).distinct().toList();
+        Map<UUID, Vehicle> vehicleById = vehicles.findAllById(vehicleIds).stream()
+                .collect(Collectors.toMap(Vehicle::getId, v -> v));
 
         StringBuilder csv = new StringBuilder("Placa;Marca;Modelo;Categoria;Descricao;Data;Valor\n");
         for (ExpenseEntry e : entries) {
@@ -178,14 +181,13 @@ public class ExpenseEntryService {
     @CacheEvict(cacheNames = CacheConfig.CACHE_COST_TREND, key = "#principal.tenantId()")
     @Transactional
     public void delete(JwtPrincipal principal, UUID expenseId) {
-        ExpenseEntry entry = expenses.findById(expenseId)
-                .filter(e -> e.getTenantId().equals(principal.tenantId()))
-                .orElseThrow(() -> new NotFoundException("Despesa não encontrada."));
+        ExpenseEntry entry = Lookups.orNotFound(
+                expenses.findById(expenseId).filter(e -> e.getTenantId().equals(principal.tenantId())),
+                "Despesa não encontrada.");
         expenses.delete(entry);
     }
 
     private Vehicle findOwnedVehicle(JwtPrincipal principal, UUID vehicleId) {
-        return vehicles.findByIdAndTenantId(vehicleId, principal.tenantId())
-                .orElseThrow(() -> new NotFoundException("Veículo não encontrado."));
+        return Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, principal.tenantId()), "Veículo não encontrado.");
     }
 }
