@@ -24,7 +24,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { cn } from '../lib/utils';
-import { formatBRL, formatDateBR } from '../lib/format';
+import { formatBRL, formatDateBR, hojeISO } from '../lib/format';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
@@ -54,10 +54,6 @@ function primeiroDiaDoMes(): string {
   const hoje = new Date();
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`;
 }
-function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 const EMPTY_EXPENSE_FORM: ExpenseEntryRequest = {
   vehicleId: undefined,
   categoria: 'COMBUSTIVEL',

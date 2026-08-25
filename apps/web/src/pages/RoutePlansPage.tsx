@@ -20,15 +20,12 @@ import { Label } from '../components/ui/label';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { toast } from '../lib/toast';
+import { hojeISO } from '../lib/format';
 
 const CATEGORIA_OPTIONS: RouteCategoria[] = ['ROTA', 'TRANSFER'];
 
 interface RascunhoParada extends StopInput {
   key: string;
-}
-
-function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 /**

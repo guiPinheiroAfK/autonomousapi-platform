@@ -2,35 +2,16 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from geoalchemy2.elements import WKTElement
 
 from app.config import settings
 from app.db import SessionLocal
 from app.main import app
 from app.models import RoadSegment, RoadSegmentObservation, VehicleGpsPing
 
+from .conftest import criar_segmento_de_teste
+
 client = TestClient(app)
 HEADERS = {"X-Service-Token": settings.service_token}
-
-
-def _criar_segmento_de_teste() -> tuple[RoadSegment, float, float]:
-    """Devolve (segmento, lat, lon) — geometria com offset único por chamada, ver
-    a mesma nota em tests/test_road_readiness.py (evita colisão com zumbi)."""
-    offset = (uuid4().int % 100_000) / 1_000_000
-    db = SessionLocal()
-    try:
-        segmento = RoadSegment(
-            osm_way_id=uuid4().int % 2_000_000_000,
-            name="Via de teste (batch)",
-            highway_type="residential",
-            geom=WKTElement(f"LINESTRING(0 {offset}, 0 {offset + 0.001})", srid=4326),
-        )
-        db.add(segmento)
-        db.commit()
-        db.refresh(segmento)
-        return segmento, offset + 0.0002, 0.0
-    finally:
-        db.close()
 
 
 def _limpar_segmento(segmento_id):
@@ -74,7 +55,7 @@ def test_lote_vazio_devolve_zero():
 
 
 def test_lote_novo_e_aceito_por_inteiro_e_gera_uma_observacao_por_ping():
-    segmento, lat, lon = _criar_segmento_de_teste()
+    segmento, lat, lon = criar_segmento_de_teste(nome="Via de teste (batch)")
     vehicle_id = uuid4()
     inicio = datetime.now(UTC)
     try:
@@ -119,7 +100,7 @@ def test_reenvio_do_mesmo_lote_e_aceito_sem_duplicar_ping_nem_observacao():
     tem que contar ele de novo, senão a fila trava — A1) nem gerar observação nova
     (A2, senão a dedup não impede o score de inflar).
     """
-    segmento, lat, lon = _criar_segmento_de_teste()
+    segmento, lat, lon = criar_segmento_de_teste(nome="Via de teste (batch)")
     vehicle_id = uuid4()
     ping = {
         "vehicle_id": str(vehicle_id),
@@ -159,7 +140,7 @@ def test_reenvio_do_mesmo_lote_e_aceito_sem_duplicar_ping_nem_observacao():
 
 
 def test_lote_misto_com_pings_novos_e_ja_existentes():
-    segmento, lat, lon = _criar_segmento_de_teste()
+    segmento, lat, lon = criar_segmento_de_teste(nome="Via de teste (batch)")
     vehicle_id = uuid4()
     inicio = datetime.now(UTC)
     ping_repetido = {
