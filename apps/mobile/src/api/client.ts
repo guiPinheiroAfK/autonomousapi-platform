@@ -137,27 +137,41 @@ export interface ChargingStationsResponse {
   stations: ChargingStationItem[];
 }
 
-export interface PlaceResponse {
-  displayName: string;
+// Rota multi-parada designada ao motorista (spec 02/07, item 8) — mesma forma do
+// RoutePlanResponse/RouteStopResponse do core-api, ver RoutePlansPage.tsx (web) pro
+// mesmo consumo. categoria TRANSFER renderiza como cartão único; ROTA como lista.
+export type RouteStopType = 'COLETA' | 'ENTREGA';
+export type RoutePlanStatusValue = 'PLANEJADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
+export type RouteCategoriaValue = 'ROTA' | 'TRANSFER';
+
+export interface RouteStopResponse {
+  id: string;
+  tipo: RouteStopType;
+  label: string;
   lat: number;
   lon: number;
+  collectionPointId: string | null;
+  janelaInicio: string | null;
+  janelaFim: string | null;
+  ordemSugerida: number;
+  ordemRealExecutada: number | null;
+  concluidaEm: string | null;
 }
 
-export interface RouteStep {
-  instructionType: string;
-  modifier: string | null;
-  name: string | null;
-  distanceM: number;
-  durationS: number;
-}
-
-export interface RouteResponse {
-  available: boolean;
-  distanceM: number | null;
-  durationS: number | null;
-  geometry: number[][];
-  steps: RouteStep[];
-  unavailableReason: string | null;
+export interface RoutePlanResponse {
+  id: string;
+  driverId: string | null;
+  driverName: string | null;
+  vehicleId: string | null;
+  vehiclePlate: string | null;
+  status: RoutePlanStatusValue;
+  categoria: RouteCategoriaValue;
+  dataExecucao: string;
+  valor: number | null;
+  custoEstimado: number | null;
+  margemRealizada: number | null;
+  createdAt: string;
+  stops: RouteStopResponse[];
 }
 
 let authToken: string | null = null;
@@ -255,14 +269,10 @@ export const coreApi = {
     list: () => request<ChargingStationsResponse>('/v1/charging-stations'),
   },
 
-  routes: {
-    preview: (fromLat: number, fromLon: number, toLat: number, toLon: number) =>
-      request<RouteResponse>(
-        `/v1/routes/preview?fromLat=${fromLat}&fromLon=${fromLon}&toLat=${toLat}&toLon=${toLon}`,
-      ),
-  },
-
-  places: {
-    search: (q: string) => request<PlaceResponse[]>(`/v1/places/search?q=${encodeURIComponent(q)}`),
+  routePlans: {
+    /** Rota ativa (PLANEJADA ou EM_ANDAMENTO) do motorista do token — null se não houver. */
+    active: () => request<RoutePlanResponse | null>('/v1/routes/plans/active'),
+    completeStop: (stopId: string) =>
+      request<RouteStopResponse>(`/v1/routes/plans/stops/${stopId}/complete`, { method: 'POST' }),
   },
 };
