@@ -89,10 +89,36 @@ Campos: `route_plan_id`, `tipo`, `timestamp`, `ator` (gestor ou motorista, refer
 2. **Alguma das lacunas já é conhecida de cabeça?** Nenhuma apontada de antemão — o levantamento cobre tudo do zero, incluindo um diagrama (Mermaid) e o texto/copy real de cada tela-chave ("conversas de texto") antes de qualquer código.
 3. **Quem vê a telemetria de uso do fluxo?** ✅ Só log cru/consulta direta por enquanto (seguiu a recomendação) — mas o schema já é desenhado pensando na agregação futura (índice em `route_plan_id`+`tipo`+`timestamp`, `metadado` com formato consistente por tipo), pra não precisar migrar dado quando o painel virar prioridade de verdade.
 
+## Decisões fechadas (Fase C, 2026-08-25)
+
+Respostas do Guilherme às perguntas que o levantamento abriu — ver ADRs para o detalhe de
+cada uma:
+
+- **Ordem de prioridade confirmada**: (1) app mobile mostrar a rota atribuída — gap mais
+  grave, motorista não vê a rota no app feito pra ele; (2) cancelamento; (3)
+  reatribuição/desatribuição; (4) resto (push consistente, gestor ver progresso, edição).
+- **Métrica "tempo até iniciar"**: renomeada pro que ela mede de verdade ("atribuída até 1ª
+  parada concluída") — sem criar ação explícita de "iniciar rota" por enquanto.
+  `route_plan_event.tipo = iniciada` fica de fora da taxonomia até essa decisão mudar.
+- **Cancelamento e reatribuição**: modelo assimétrico por status, com o motorista
+  **solicitando** (nunca decidindo sozinho) — ver [ADR 0021](../docs/adr/0021-cancelamento-e-solicitacao-de-troca.md).
+- **`route_plan_event` fica no schema `core`, não `geo`** — corrige a proposta original
+  deste documento; motivo completo em [ADR 0020](../docs/adr/0020-telemetria-tramite-rota.md).
+- **Fuso horário**: fixa `America/Sao_Paulo` (operação só Brasil por enquanto), não
+  fuso por tenant.
+- **As duas race conditions achadas na revisão de código** (`completeStop` podia travar a
+  rota em `EM_ANDAMENTO` para sempre; `assignDriver` podia sobrescrever silenciosamente sob
+  concorrência) entram corrigidas junto, já que a implementação mexe exatamente nesses
+  métodos — ver ADR 0021.
+
 ## Definition of Done (primeira fatia)
 
 - [x] Levantamento completo do trâmite documentado — caminho feliz + cancelamento (todas as etapas) + reatribuição + edição pós-atribuição + parada fora de ordem + rota sem reação do motorista, para `ROTA` e `TRANSFER`, com diagrama Mermaid e "conversas de texto" por tela-chave. → [`docs/levantamento-tramite-rota-2026-08-25.md`](../docs/levantamento-tramite-rota-2026-08-25.md)
-- [x] Taxonomia final de `route_plan_event.tipo` definida a partir do levantamento acima (não antes dele) — ver seção "Taxonomia de eventos proposta" no levantamento. Sete tipos implementáveis já (`criada`, `ordem_sugerida`, `ordem_ajustada_manualmente`, `atribuida`, `parada_concluida`, `concluida`), três bloqueados por caminho inexistente (`cancelada`, `reatribuida`, `editada`), um condicional (`iniciada`) e um descartado (`parada_reaberta`).
-- [ ] `route_plan_event` modelado e sendo gravado nas transições já existentes no backend — mesmo sem nenhuma tela nova consumindo ainda.
+- [x] Taxonomia final de `route_plan_event.tipo` definida a partir do levantamento acima (não antes dele) — ver [ADR 0020](../docs/adr/0020-telemetria-tramite-rota.md).
+- [ ] `route_plan_event` modelado (schema `core`) e sendo gravado nas transições já existentes no backend — mesmo sem nenhuma tela nova consumindo ainda.
 - [ ] Pelo menos as 3 métricas listadas acima calculáveis por query direta (não precisa de dashboard ainda).
-- [ ] Gaps identificados no levantamento priorizados e viram itens novos em `08-decisoes-tecnicas-pendentes.md` ou specs próprias, conforme o tamanho de cada um.
+- [ ] Cancelamento (`PLANEJADA` direto, `EM_ANDAMENTO` via chat) e solicitação do motorista (cancelamento/troca) implementados — [ADR 0021](../docs/adr/0021-cancelamento-e-solicitacao-de-troca.md).
+- [ ] App mobile mostra a rota atribuída e permite concluir parada (gap prioridade 1) — hoje só funciona no web.
+- [ ] As duas race conditions (`completeStop`, `assignDriver`) corrigidas com lock pessimista.
+- [ ] Fuso `America/Sao_Paulo` fixado na validação de `dataExecucao`.
+- [ ] Gaps restantes do levantamento (push consistente, gestor ver progresso, fallback OSRM visível) priorizados e viram itens novos em `08-decisoes-tecnicas-pendentes.md`, conforme o tamanho de cada um.
