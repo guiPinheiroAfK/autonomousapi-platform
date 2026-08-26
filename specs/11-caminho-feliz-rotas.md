@@ -70,7 +70,7 @@ Essa auditoria é o próximo passo concreto antes de qualquer linha de código n
 
 Pedido explícito: começar a tratar coleta de dado *sobre o uso do fluxo em si* desde já — não confundir com o pipeline de GPS/`road_readiness_score` (spec 02), que é sobre a via. Isso aqui é sobre o processo: o gestor confia na sugestão? Onde as rotas emperram? Quanto tempo cada etapa leva na prática?
 
-**Decisão de modelo:** uma tabela de eventos, `route_plan_event` (schema `geo`, ao lado de `route_plan`) — um registro por transição relevante no ciclo de vida da rota, não um campo calculado. Escolha deliberada: eventos discretos permitem reconstruir qualquer métrica depois (tempo entre etapas, taxa de reordenação, taxa de abandono) sem precisar prever de antemão toda métrica que um dia vai interessar — o mesmo raciocínio já aplicado a `road_segment_observation` (spec 02): guardar a observação bruta, agregar depois, nunca calcular só o agregado final direto.
+**Decisão de modelo:** uma tabela de eventos, `route_plan_event` — um registro por transição relevante no ciclo de vida da rota, não um campo calculado. **Correção (ver [ADR 0020](../docs/adr/0020-telemetria-tramite-rota.md)):** fica no schema `core`, não `geo` como escrito abaixo originalmente — `core-api` é dono exclusivo do schema `core` e nunca escreve em `geo`; gravar na mesma transação do `route_plan` garante que o evento nunca diverge do estado real. Escolha deliberada: eventos discretos permitem reconstruir qualquer métrica depois (tempo entre etapas, taxa de reordenação, taxa de abandono) sem precisar prever de antemão toda métrica que um dia vai interessar — o mesmo raciocínio já aplicado a `road_segment_observation` (spec 02): guardar a observação bruta, agregar depois, nunca calcular só o agregado final direto.
 
 Campos: `route_plan_id`, `tipo`, `timestamp`, `ator` (gestor ou motorista, referência ao usuário), `metadado` (jsonb — ex. em `ordem_ajustada_manualmente`, quantas posições mudaram em relação à sugestão; em `parada_concluida`, se a ordem real bateu com a sugerida ou não).
 
@@ -115,10 +115,10 @@ cada uma:
 
 - [x] Levantamento completo do trâmite documentado — caminho feliz + cancelamento (todas as etapas) + reatribuição + edição pós-atribuição + parada fora de ordem + rota sem reação do motorista, para `ROTA` e `TRANSFER`, com diagrama Mermaid e "conversas de texto" por tela-chave. → [`docs/levantamento-tramite-rota-2026-08-25.md`](../docs/levantamento-tramite-rota-2026-08-25.md)
 - [x] Taxonomia final de `route_plan_event.tipo` definida a partir do levantamento acima (não antes dele) — ver [ADR 0020](../docs/adr/0020-telemetria-tramite-rota.md).
-- [ ] `route_plan_event` modelado (schema `core`) e sendo gravado nas transições já existentes no backend — mesmo sem nenhuma tela nova consumindo ainda.
-- [ ] Pelo menos as 3 métricas listadas acima calculáveis por query direta (não precisa de dashboard ainda).
-- [ ] Cancelamento (`PLANEJADA` direto, `EM_ANDAMENTO` via chat) e solicitação do motorista (cancelamento/troca) implementados — [ADR 0021](../docs/adr/0021-cancelamento-e-solicitacao-de-troca.md).
-- [ ] App mobile mostra a rota atribuída e permite concluir parada (gap prioridade 1) — hoje só funciona no web.
-- [ ] As duas race conditions (`completeStop`, `assignDriver`) corrigidas com lock pessimista.
-- [ ] Fuso `America/Sao_Paulo` fixado na validação de `dataExecucao`.
-- [ ] Gaps restantes do levantamento (push consistente, gestor ver progresso, fallback OSRM visível) priorizados e viram itens novos em `08-decisoes-tecnicas-pendentes.md`, conforme o tamanho de cada um.
+- [x] `route_plan_event` modelado (schema `core`) e sendo gravado nas transições já existentes no backend (`criada`, `atribuida`/`reatribuida`, `parada_concluida`, `concluida`, `cancelada`) — sem tela nova consumindo ainda, como previsto (V26).
+- [x] Pelo menos as 3 métricas listadas acima calculáveis por query direta — a de "tempo até iniciar" calculável pelo que ela mede de verdade (atribuída → 1ª parada), não o "iniciar" original (decisão registrada acima).
+- [x] Cancelamento (`PLANEJADA` direto, `EM_ANDAMENTO` via chat) e solicitação do motorista (cancelamento/troca) implementados — [ADR 0021](../docs/adr/0021-cancelamento-e-solicitacao-de-troca.md).
+- [x] App mobile mostra a rota atribuída e permite concluir parada (gap prioridade 1) — `MinhaRotaScreen.tsx`, substituindo o buscador de endereço genérico que existia antes.
+- [x] As duas race conditions (`completeStop`, `assignDriver`) corrigidas com lock pessimista (`findForUpdateById`).
+- [x] Fuso `America/Sao_Paulo` fixado na validação de `dataExecucao`.
+- [ ] Gaps restantes do levantamento (push consistente entre os dois caminhos de atribuição, gestor ver progresso em tempo real, fallback OSRM visível pro gestor, edição de rota pós-criação) priorizados e viram itens novos em `08-decisoes-tecnicas-pendentes.md`, conforme o tamanho de cada um — próxima fatia.
