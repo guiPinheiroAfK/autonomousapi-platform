@@ -1,4 +1,4 @@
-# 08 — Decisões Técnicas Pendentes (Front Web + Dados de Veículo)
+# 08 — Decisões Técnicas Pendentes (Front Web, Dados de Veículo e Operacional)
 
 Registro de decisões pontuais discutidas fora do fluxo normal de fase, no formato curto (mini-ADR). Servem pra não virar pergunta recorrente da equipe.
 
@@ -55,6 +55,48 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Status:** implementado — `Card`/`Avatar`/ícones do design system já em uso no resto do painel, prévia de última mensagem + horário relativo na lista de conversas, empty states com ícone, indicador de lido (`Check`/`CheckCheck`) e "digitando..." (poll de 2s, estado em memória no servidor via `TypingIndicatorService`).
 
+## 7. `npm audit` no `apps/web` — 1 crítica + 22 altas + 12 moderadas
+
+**Situação atual:** o audit não travou nenhum build/deploy ainda (nenhuma delas foi explorada em produção, até onde se sabe), mas o volume é grande o suficiente para não ser "mais uma linha de warning ignorada".
+
+**Decisão:** não é uma correção de emergência (nada travou), mas também não é opcional — entra como item de manutenção a rodar num momento calmo (fora de janela de release de feature), não espremido no meio de outra entrega. `npm audit fix` resolve a maior parte automaticamente; o que sobrar (normalmente breaking changes de major version de dependência) precisa de revisão manual, não `--force` cego — `npm audit fix --force` pode subir major version de uma lib usada em produção sem aviso, o que troca "vulnerabilidade não explorada" por "build quebrado" — não é troca boa.
+
+**Prioridade:** antes de qualquer novo cliente maior/enterprise entrar (due diligence de segurança costuma pedir isso), e de qualquer forma antes de virar produto licenciado pra parceiro de AV (Fase 4). Não bloqueia o trabalho atual.
+
+## 8. Bundle do `web` grande (`index.js` ~698KB) — code-splitting pendente
+
+**Situação atual:** o bundle de produção do `apps/web` está em ~698KB para o `index.js` principal, sem divisão por rota — tudo carrega de uma vez no primeiro acesso, mesmo telas que o usuário talvez nunca abra na sessão (ex. gestor que só olha o Dashboard nunca carrega o código da aba Custos, mas hoje carrega de qualquer forma).
+
+**Decisão:** code-splitting via `import()` dinâmico por rota (`React.lazy` + `Suspense`, já é o padrão nativo do Vite/React Router, sem lib nova) — cada página principal (Dashboard, Frota, Motoristas, Custos, Pontos de Coleta, etc.) vira um chunk separado, carregado só quando o usuário navega até ela. Não é reescrever nada de lógica, é só trocar `import` estático por `import()` nos pontos de rota.
+
+**Prioridade:** não bloqueia nada hoje (o produto funciona, é questão de tempo de carregamento inicial) — fica para a próxima vez que alguém for mexer em performance do web, não como projeto isolado. Vale medir o "antes/depois" com Lighthouse ou equivalente pra ter número real do ganho, não só "parece mais rápido".
+
+## 9. Branch protection em `develop` — só `main` está protegida hoje
+
+**Situação atual:** a proteção de branch (PR obrigatória, sem push direto) foi ligada em `main`, mas `develop` — que é de onde toda branch de feature sai, por `04-repositorio-e-git-workflow.md` — ainda aceita push direto.
+
+**Decisão:** replicar a mesma regra (exigir PR antes de merge, sem push direto) em `develop`, sem exigir número de aprovações (mesmo raciocínio já aplicado em `main`: time é o próprio Guilherme hoje, exigir aprovação de terceiro bloquearia o próprio fluxo de trabalho) — só a disciplina de "sempre via PR" é o que importa aqui, não um segundo revisor.
+
+**Prioridade:** questão de tempo/orçamento — não é urgente (não houve incidente), mas fecha a mesma lacuna que já foi fechada em `main`. Baixo esforço (configuração, não código) — pode ser feito a qualquer momento que sobrar uma janela curta.
+
+## 10. Animações — espalhar o padrão de transição de página
+
+**Situação atual:** Dashboard e Frota já têm transição de página bem resolvida (parte do redesign "FrotaOS"). As demais telas (Motoristas, Custos, Pontos de Coleta, detalhe de veículo, etc.) ainda não seguem o mesmo padrão — inconsistência de acabamento entre uma tela e outra.
+
+**Decisão:** reaproveitar o mesmo padrão/componente de transição já validado em Dashboard e Frota nas telas restantes, em vez de criar uma segunda abordagem — mesmo raciocínio já registrado no item 6 (chat) e no princípio geral do redesign: não plugar um componente com cara diferente do resto do produto.
+
+**Fora de escopo aqui:** landing page — levantamento à parte, feito separadamente, não faz parte deste item.
+
+**Prioridade:** polish, não bloqueia nada — mas como é reaproveitamento de um padrão já pronto (não é design novo), é um item de esforço baixo/médio quando sobrar janela de front-end.
+
+## 11. E-mail transacional — Resend configurado, falta domínio verificado
+
+**Situação atual (2026-08-25):** o piloto (Oracle + Neon + Netlify) já está no ar. E-mail transacional (confirmação de conta, convite de motorista) já está configurado via Resend (`MAIL_SMTP_*` no `.env.prod` do `core-api`, documentado em `docs/setup-email-resend.md`) — mas sem domínio verificado no Resend, `MAIL_FROM` fica em `onboarding@resend.dev`, que só entrega no e-mail da própria conta Resend. Contas de piloto reais (qualquer e-mail que não seja o do dono da conta) ainda dependem de confirmação manual direto no Neon (flip do campo de confirmação na tabela).
+
+**Decisão de resolução (já conhecida, só falta executar):** verificar um domínio próprio no Resend via DNS. Existe mais de um domínio próprio disponível — falta decidir qual usar e configurar os registros DNS (Resend + também Netlify, já que o mesmo domínio provavelmente serve o front hospedado lá).
+
+**Prioridade:** não bloqueia teste com o próprio Guilherme, mas bloqueia qualquer usuário piloto real se cadastrando sem intervenção manual — resolver antes de convidar mais gente pra testar.
+
 ## Definition of Done
 
 - [x] Rota `/frota/:id` no ar substituindo o dialog, com breadcrumb, botão voltar e acesso direto por link funcionando (PR #44).
@@ -62,3 +104,8 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [x] Ícone por tipo de veículo implementado (PR #49).
 - [x] Aba "Pontos de Coleta" no ar, com CRUD básico e geocodificação de endereço.
 - [x] Chat revisado visualmente para o mesmo padrão do dashboard.
+- [ ] `npm audit fix` rodado no `apps/web`, resto revisado manualmente (item 7).
+- [ ] Code-splitting por rota no `apps/web`, com medição de antes/depois (item 8).
+- [ ] `develop` com a mesma proteção de branch já ativa em `main` (item 9).
+- [ ] Padrão de transição de página (Dashboard/Frota) replicado nas demais telas (item 10).
+- [ ] Domínio verificado no Resend + Netlify, confirmação de e-mail deixa de depender do workaround manual (item 11).

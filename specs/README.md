@@ -13,7 +13,11 @@ Antes de escrever código, leia os arquivos nesta ordem:
 | 05 | `05-roadmap-fases.md` | Fases de entrega (a "escada de crescimento"), critério de saída de cada fase |
 | 06 | `06-parcerias-e-dados-futuros.md` | Recarga elétrica, condição do veículo (FIPE + sinistro), avaliação privada de motorista, receita por afiliados |
 | 07 | `07-app-motorista.md` | Front + back do app do motorista: veículo atual, CNH, OS read-only, ocorrência, notificações, histórico de viagens, mini-chat gestor↔motorista |
-| 08 | `08-decisoes-tecnicas-pendentes.md` | Mini-ADRs: tela de veículo (dialog→rota), fonte de dado de manutenção por modelo, status do catálogo de afiliados, ícone por tipo de veículo, pontos de coleta via Nominatim, acabamento visual do chat |
+| 08 | `08-decisoes-tecnicas-pendentes.md` | Mini-ADRs: tela de veículo (dialog→rota), fonte de dado de manutenção por modelo, status do catálogo de afiliados, ícone por tipo de veículo, pontos de coleta via Nominatim, acabamento visual do chat, npm audit, bundle/code-splitting, branch protection, animações, e-mail/domínio |
+| 09 | `09-custo-estimado-e-precificacao.md` | Custo estimado por rota (distância × consumo × preço), evolução do consumo via log de abastecimento, valor sugerido com margem, ganchos futuros |
+| 10 | `10-gestao-de-custos.md` | Despesas categorizadas (`expense_entry`), orçamento com alerta de estouro, rentabilidade por transfer, recalibração estimado x realizado |
+| 11 | `11-caminho-feliz-rotas.md` | Foco principal atual: levantamento completo do trâmite de rota (caminho feliz + exceções — cancelamento, reatribuição, edição pós-atribuição), telemetria de uso do fluxo (`route_plan_event`) |
+| 12 | `12-notificacoes-operacionais.md` | Notificação interna (Discord/Telegram) de signup/confirmação de conta via webhook do `core-api` |
 
 ## Como usar isso com o Claude Code
 

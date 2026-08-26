@@ -27,6 +27,14 @@ Dois itens identificados depois do MVP inicial, priorizados para entrar juntos n
 
 Justificativa de priorizar isso antes de seguir a Fase 2 "pura": ambos fecham gaps de uso diário do produto já em operação, enquanto a Fase 2 (prontidão viária) é sobre construir a próxima camada de dado — vale fechar a experiência de quem já usa o produto todo dia antes de empilhar mais escopo novo.
 
+## Novo foco principal — caminho feliz de rotas (em cima do "próximo pacote" acima)
+
+Com o pacote anterior implementado, o item priorizado agora é o fluxo operacional completo de pontos de coleta/entrega/rotas funcionando sem atrito ponta a ponta (gestor monta rota → motorista executa → conclusão), incluindo telemetria de uso do próprio fluxo (não confundir com a telemetria de prontidão viária da Fase 2) — ver `11-caminho-feliz-rotas.md`. Justificativa: é o processo onde a maioria das empresas de frota erra na prática, e "ter o dado" (spec 02) só vale a pena se o fluxo em cima dele for confiável o bastante pro gestor preferir usar em vez de voltar pro WhatsApp/planilha.
+
+Junto, dois itens menores, sem relação direta com rotas mas que entraram na mesma rodada de priorização:
+- **Notificação operacional interna** (Discord/Telegram) avisando signup/confirmação de conta — `12-notificacoes-operacionais.md`. Uso interno, não é feature de produto pro cliente final.
+- **Itens de manutenção/infra** registrados em `08-decisoes-tecnicas-pendentes.md` (itens 7-11): `npm audit`, code-splitting do bundle web, branch protection em `develop`, padrão de animação nas telas restantes, e-mail transacional/domínio. Nenhum bloqueia o foco principal — encaixar quando sobrar janela.
+
 ## Fase 2 — Dados de prontidão viária (score por trecho)
 
 **Objetivo:** o subproduto de dado começa a existir de verdade.
