@@ -429,6 +429,20 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    /** Gestor-only: cancela rota pelo chat (ADR 0021) — único caminho que cancela rota já
+     *  EM_ANDAMENTO; a tela de Rotas só cancela PLANEJADA. */
+    cancelRoutePlan: (conversationId: string, body: SendRoutePlanRequest) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/route-plan/cancel`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    /** Gestor-only: reatribui a rota ao motorista desta conversa (ADR 0021) — chamado na
+     *  conversa do NOVO motorista, geralmente em resposta a uma solicitação de troca. */
+    trocaMotorista: (conversationId: string, body: SendRoutePlanRequest) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/route-plan/troca`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
   },
 
   /** Rota multi-parada (spec 02, spec 07 item 8). suggestOrder é stateless — a ordem
@@ -444,6 +458,9 @@ export const coreApi = {
       request<PageResponse<RoutePlanResponse>>(`/v1/routes/plans?page=${page}&size=${size}`),
     assign: (id: string, body: AssignDriverRequest) =>
       request<RoutePlanResponse>(`/v1/routes/plans/${id}/assign`, { method: 'POST', body: JSON.stringify(body) }),
+    /** Cancelamento direto — só funciona pra PLANEJADA (ADR 0021). Rota já EM_ANDAMENTO
+     *  cancela só pelo chat, ver coreApi.chat.cancelRoutePlan. */
+    cancel: (id: string) => request<RoutePlanResponse>(`/v1/routes/plans/${id}/cancel`, { method: 'POST' }),
     /** Motorista-only: rota ativa do próprio token (null se não houver). */
     active: () => request<RoutePlanResponse | null>('/v1/routes/plans/active'),
     /** Motorista-only: marca uma parada da própria rota ativa como concluída. */

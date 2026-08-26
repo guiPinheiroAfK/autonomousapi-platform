@@ -71,6 +71,44 @@ public class ChatController {
         return chatService.sendRoutePlanMessage(principal(auth), id, req.routePlanId());
     }
 
+    /** Gestor-only: cancela a rota pelo chat (ADR 0021) — único caminho que cancela rota já
+     *  EM_ANDAMENTO; a tela de Rotas só cancela PLANEJADA. */
+    @PostMapping("/conversations/{id}/route-plan/cancel")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    public ChatMessageResponse cancelRoutePlan(
+            @PathVariable UUID id, @Valid @RequestBody SendRoutePlanRequest req, Authentication auth) {
+        return chatService.sendCancelamentoMessage(principal(auth), id, req.routePlanId());
+    }
+
+    /** Gestor-only: reatribui a rota ao motorista desta conversa (ADR 0021) — chamado na
+     *  conversa do NOVO motorista, geralmente em resposta a uma SOLICITACAO_TROCA_MOTORISTA
+     *  recebida na conversa do motorista atual. */
+    @PostMapping("/conversations/{id}/route-plan/troca")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    public ChatMessageResponse trocaMotorista(
+            @PathVariable UUID id, @Valid @RequestBody SendRoutePlanRequest req, Authentication auth) {
+        return chatService.sendTrocaMotoristaMessage(principal(auth), id, req.routePlanId());
+    }
+
+    /** Motorista-only: solicita cancelamento da rota ativa (ADR 0021) — nunca cancela
+     *  sozinho, só avisa o gestor. */
+    @PostMapping("/conversations/{id}/route-plan/solicitar-cancelamento")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('MOTORISTA')")
+    public ChatMessageResponse solicitarCancelamento(@PathVariable UUID id, Authentication auth) {
+        return chatService.solicitarCancelamento(principal(auth), id);
+    }
+
+    /** Motorista-only: solicita passar a rota ativa pra outra pessoa (ADR 0021). */
+    @PostMapping("/conversations/{id}/route-plan/solicitar-troca")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('MOTORISTA')")
+    public ChatMessageResponse solicitarTroca(@PathVariable UUID id, Authentication auth) {
+        return chatService.solicitarTrocaMotorista(principal(auth), id);
+    }
+
     /** Marca como lidas as mensagens do outro participante ainda não lidas — chamado ao
      *  abrir/revisitar a conversa, por qualquer um dos dois lados. */
     @PostMapping("/conversations/{id}/read")

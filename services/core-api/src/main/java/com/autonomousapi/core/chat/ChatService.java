@@ -133,7 +133,8 @@ public class ChatService {
     @Transactional
     public ChatMessageResponse sendRoutePlanMessage(JwtPrincipal gestorPrincipal, UUID conversationId, UUID routePlanId) {
         ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationId);
-        RoutePlanResponse plan = routePlanService.assignDriver(gestorPrincipal, routePlanId, conversation.getDriverId());
+        RoutePlanResponse plan = routePlanService.assignDriver(
+                gestorPrincipal, routePlanId, conversation.getDriverId(), false, "chat");
 
         String body = "Nova rota atribuída — " + plan.stops().size() + " parada(s).";
         ChatMessage message = messages.save(
@@ -144,6 +145,91 @@ public class ChatService {
             pushNotificationService.notifyUser(recipientUserId, "Nova rota atribuída", body);
         }
 
+        return ChatMessageResponse.from(message);
+    }
+
+    /**
+     * Gestor-only: cancela uma rota já EM_ANDAMENTO pelo chat (ADR 0021) — a tela de Rotas
+     * só cancela PLANEJADA; cancelar no meio do trâmite passa por aqui de propósito, fica
+     * registrado na conversa com o motorista. Delega em {@link RoutePlanService#cancel}, que
+     * também aceita PLANEJADA (idêntico ao cancelamento direto, só que registrado no chat).
+     */
+    @Transactional
+    public ChatMessageResponse sendCancelamentoMessage(JwtPrincipal gestorPrincipal, UUID conversationId, UUID routePlanId) {
+        ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationId);
+        routePlanService.cancel(gestorPrincipal, routePlanId, true);
+
+        String body = "Rota cancelada.";
+        ChatMessage message = messages.save(
+                new ChatMessage(conversation.getId(), gestorPrincipal.userId(), body, ChatMessageType.CANCELAMENTO_ROTA, routePlanId));
+
+        UUID recipientUserId = drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null);
+        if (recipientUserId != null) {
+            pushNotificationService.notifyUser(recipientUserId, "Rota cancelada", body);
+        }
+        return ChatMessageResponse.from(message);
+    }
+
+    /**
+     * Gestor-only: reatribui a rota a outro motorista, pelo chat da conversa em que a
+     * solicitação de troca chegou (ADR 0021) — {@code forcar=true} é só chamado aqui, nunca
+     * solto em outro caminho. A conversa usada pro registro é a do motorista NOVO — a
+     * mensagem "você recebeu uma rota" precisa aparecer na conversa dele, não na de quem
+     * está saindo.
+     */
+    @Transactional
+    public ChatMessageResponse sendTrocaMotoristaMessage(
+            JwtPrincipal gestorPrincipal, UUID conversationIdNovoMotorista, UUID routePlanId) {
+        ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationIdNovoMotorista);
+        routePlanService.assignDriver(gestorPrincipal, routePlanId, conversation.getDriverId(), true, "chat");
+
+        String body = "Rota transferida pra você.";
+        ChatMessage message = messages.save(
+                new ChatMessage(conversation.getId(), gestorPrincipal.userId(), body, ChatMessageType.TROCA_MOTORISTA, routePlanId));
+
+        UUID recipientUserId = drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null);
+        if (recipientUserId != null) {
+            pushNotificationService.notifyUser(recipientUserId, "Nova rota atribuída", body);
+        }
+        return ChatMessageResponse.from(message);
+    }
+
+    /**
+     * Motorista-only: solicita cancelamento da rota atribuída — nunca cancela sozinho, só
+     * avisa o gestor (ADR 0021: "motorista não decide sozinho, só solicita"). Enquanto
+     * pendente, a rota continua ativa normalmente — a solicitação não trava o fluxo
+     * principal, só é informativa pro gestor decidir. {@code routePlanId} vem de
+     * {@link RoutePlanService#activeForDriver}, nunca do que o cliente manda — evita
+     * referenciar uma rota que não é a ativa do próprio motorista.
+     */
+    @Transactional
+    public ChatMessageResponse solicitarCancelamento(JwtPrincipal motoristaPrincipal, UUID conversationId) {
+        return solicitar(
+                motoristaPrincipal, conversationId,
+                ChatMessageType.SOLICITACAO_CANCELAMENTO, "Motorista solicitou cancelamento da rota.", "Solicitação de cancelamento");
+    }
+
+    /** Motorista-only: solicita passar a rota atribuída pra outra pessoa — mesmo espírito
+     *  de {@link #solicitarCancelamento}, o gestor decide (via {@link #sendTrocaMotoristaMessage}
+     *  na conversa do novo motorista, ou recusando com uma mensagem comum). */
+    @Transactional
+    public ChatMessageResponse solicitarTrocaMotorista(JwtPrincipal motoristaPrincipal, UUID conversationId) {
+        return solicitar(
+                motoristaPrincipal, conversationId,
+                ChatMessageType.SOLICITACAO_TROCA_MOTORISTA, "Motorista solicitou passar a rota pra outra pessoa.",
+                "Solicitação de troca de motorista");
+    }
+
+    private ChatMessageResponse solicitar(
+            JwtPrincipal motoristaPrincipal, UUID conversationId, ChatMessageType tipo, String body, String tituloPush) {
+        ChatConversation conversation = findAsParticipant(motoristaPrincipal, conversationId);
+        RoutePlanResponse rotaAtiva = routePlanService.activeForDriver(motoristaPrincipal);
+        UUID routePlanId = rotaAtiva != null ? rotaAtiva.id() : null;
+
+        ChatMessage message = messages.save(
+                new ChatMessage(conversation.getId(), motoristaPrincipal.userId(), body, tipo, routePlanId));
+
+        pushNotificationService.notifyUser(conversation.getGestorUserId(), tituloPush, body);
         return ChatMessageResponse.from(message);
     }
 

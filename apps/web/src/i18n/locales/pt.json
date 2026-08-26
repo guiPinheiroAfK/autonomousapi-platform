@@ -530,10 +530,16 @@
       "jaDesignadaMotorista": "· já designada a este motorista",
       "anexar": "Anexar",
       "paradasDaRota": "Paradas da rota",
+      "cancelarRota": "Cancelar rota",
+      "trocaDe": "trocar de {{motorista}} pra este motorista",
+      "solicitacaoCancelamento": "Solicitou cancelamento da rota",
+      "solicitacaoTroca": "Solicitou passar a rota pra outra pessoa",
+      "verRota": "Ver rota",
       "toasts": {
         "falhaCarregarConversas": "Erro ao carregar conversas", "falhaEnviar": "Falha ao enviar mensagem",
         "conversaIniciada": "Conversa iniciada.", "falhaIniciar": "Falha ao iniciar conversa",
-        "rotaAnexada": "Rota anexada.", "falhaAnexar": "Falha ao anexar rota"
+        "rotaAnexada": "Rota anexada.", "falhaAnexar": "Falha ao anexar rota",
+        "rotaCancelada": "Rota cancelada.", "falhaCancelar": "Falha ao cancelar rota"
       }
     },
     "routes": {
@@ -630,11 +636,14 @@
       "cancelar": "Cancelar",
       "salvando": "Salvando...",
       "criarRota": "Criar rota",
+      "cancelarRota": "Cancelar rota",
+      "confirmarCancelamento": "Cancelar esta rota? Essa ação não pode ser desfeita.",
       "toasts": {
         "falhaCarregar": "Erro ao carregar rotas", "falhaSugerir": "Falha ao sugerir ordem",
         "dataNoPassado": "Data de execução não pode ser no passado.",
         "transferExige2Paradas": "Transfer exige exatamente 2 paradas: origem e destino.",
-        "criada": "Rota criada.", "falhaCriar": "Falha ao criar rota"
+        "criada": "Rota criada.", "falhaCriar": "Falha ao criar rota",
+        "rotaCancelada": "Rota cancelada.", "falhaCancelar": "Falha ao cancelar rota"
       }
     },
     "vehicleDetail": {

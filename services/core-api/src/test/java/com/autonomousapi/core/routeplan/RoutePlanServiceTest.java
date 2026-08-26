@@ -26,6 +26,7 @@ import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,8 +34,13 @@ import org.junit.jupiter.api.Test;
 
 class RoutePlanServiceTest {
 
+    /** Mesmo fuso fixo do RoutePlanService (ADR 0021) — usar aqui em vez de LocalDate.now()
+     *  puro evita flakiness perto da meia-noite se o JVM de teste rodar noutro fuso. */
+    private static final LocalDate HOJE = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+
     private final RoutePlanRepository routePlans = mock(RoutePlanRepository.class);
     private final RouteStopRepository routeStops = mock(RouteStopRepository.class);
+    private final RoutePlanEventRepository routePlanEvents = mock(RoutePlanEventRepository.class);
     private final DriverRepository drivers = mock(DriverRepository.class);
     private final VehicleRepository vehicles = mock(VehicleRepository.class);
     private final CollectionPointRepository collectionPoints = mock(CollectionPointRepository.class);
@@ -56,8 +62,8 @@ class RoutePlanServiceTest {
 
     private final RouteCostEstimator costEstimator = mock(RouteCostEstimator.class);
 
-    private final RoutePlanService service = new RoutePlanService(routePlans, routeStops, drivers, vehicles,
-            collectionPoints, driverResolver, routeMatrix, optimizer, costEstimator);
+    private final RoutePlanService service = new RoutePlanService(routePlans, routeStops, routePlanEvents, drivers,
+            vehicles, collectionPoints, driverResolver, routeMatrix, optimizer, costEstimator);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -68,7 +74,7 @@ class RoutePlanServiceTest {
     }
 
     private RoutePlan routePlan(UUID driverId) {
-        return new RoutePlan(tenantId, gestorUserId, driverId, null, RouteCategoria.ROTA, LocalDate.now(), null);
+        return new RoutePlan(tenantId, gestorUserId, driverId, null, RouteCategoria.ROTA, HOJE, null);
     }
 
     @Test
@@ -115,7 +121,7 @@ class RoutePlanServiceTest {
     @Test
     void createRejeitaDataDeExecucaoNoPassado() {
         StopInput s = new StopInput(StopType.COLETA, "Parada", -23.5, -46.6, null, null, null);
-        LocalDate ontem = LocalDate.now().minusDays(1);
+        LocalDate ontem = HOJE.minusDays(1);
 
         assertThrows(RoutePlanInvalidException.class,
                 () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, ontem, null, List.of(s)));
@@ -127,7 +133,7 @@ class RoutePlanServiceTest {
 
         assertThrows(RoutePlanInvalidException.class,
                 () -> service.create(
-                        gestorPrincipal, null, null, RouteCategoria.TRANSFER, LocalDate.now(), null, List.of(s)));
+                        gestorPrincipal, null, null, RouteCategoria.TRANSFER, HOJE, null, List.of(s)));
     }
 
     @Test
@@ -144,7 +150,7 @@ class RoutePlanServiceTest {
         StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.6, -46.7, null, null, null);
 
         RoutePlanResponse resp = service.create(gestorPrincipal, null, vehicleId, RouteCategoria.TRANSFER,
-                LocalDate.now(), new BigDecimal("100.00"), List.of(origem, destino));
+                HOJE, new BigDecimal("100.00"), List.of(origem, destino));
 
         assertEquals(new BigDecimal("42.50"), resp.custoEstimado());
     }
@@ -162,7 +168,7 @@ class RoutePlanServiceTest {
         StopInput s = new StopInput(StopType.COLETA, "Parada", -23.5, -46.6, null, null, null);
 
         RoutePlanResponse resp = service.create(gestorPrincipal, null, vehicleId, RouteCategoria.ROTA,
-                LocalDate.now(), null, List.of(s));
+                HOJE, null, List.of(s));
 
         assertEquals(null, resp.custoEstimado());
         org.mockito.Mockito.verifyNoInteractions(costEstimator);
@@ -171,7 +177,7 @@ class RoutePlanServiceTest {
     @Test
     void margemRealizadaSoApareceQuandoRotaConcluida() {
         RoutePlan plan = new RoutePlan(tenantId, gestorUserId, null, null,
-                RouteCategoria.TRANSFER, LocalDate.now(), new BigDecimal("100.00"));
+                RouteCategoria.TRANSFER, HOJE, new BigDecimal("100.00"));
         plan.registrarCustoEstimado(new BigDecimal("40.00"), "v1");
 
         RoutePlanResponse planejada = RoutePlanResponse.from(plan, null, null, List.of());
@@ -189,7 +195,7 @@ class RoutePlanServiceTest {
                 StopType.COLETA, "Parada", -23.5, -46.6, null, LocalTime.of(12, 0), LocalTime.of(10, 0));
 
         assertThrows(RoutePlanInvalidException.class,
-                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, LocalDate.now(), null, List.of(s)));
+                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, HOJE, null, List.of(s)));
     }
 
     @Test
@@ -206,7 +212,7 @@ class RoutePlanServiceTest {
         StopInput spoofado = new StopInput(StopType.COLETA, "Endereço forjado", 0.0, 0.0, pontoId, null, null);
         StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.3, -46.4, null, null, null);
 
-        service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, LocalDate.now(), null,
+        service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, HOJE, null,
                 List.of(spoofado, destino));
 
         org.mockito.ArgumentCaptor<RouteStop> captor = org.mockito.ArgumentCaptor.forClass(RouteStop.class);
@@ -225,7 +231,7 @@ class RoutePlanServiceTest {
         UUID routePlanId = UUID.randomUUID();
         Driver d = driver("Eduardo");
         RoutePlan plan = routePlan(d.getId());
-        when(routePlans.findByIdAndTenantId(routePlanId, tenantId)).thenReturn(Optional.of(plan));
+        when(routePlans.findForUpdateById(routePlanId)).thenReturn(Optional.of(plan));
         when(drivers.findByIdAndTenantId(d.getId(), tenantId)).thenReturn(Optional.of(d));
         when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
         when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId())).thenReturn(List.of());
@@ -241,7 +247,7 @@ class RoutePlanServiceTest {
         Driver jaDesignado = driver("Eduardo");
         Driver outro = driver("Carlos");
         RoutePlan plan = routePlan(jaDesignado.getId());
-        when(routePlans.findByIdAndTenantId(routePlanId, tenantId)).thenReturn(Optional.of(plan));
+        when(routePlans.findForUpdateById(routePlanId)).thenReturn(Optional.of(plan));
         when(drivers.findByIdAndTenantId(outro.getId(), tenantId)).thenReturn(Optional.of(outro));
 
         assertThrows(RoutePlanAlreadyAssignedException.class,
@@ -259,7 +265,7 @@ class RoutePlanServiceTest {
 
         when(driverResolver.resolve(outroMotoristaPrincipal)).thenReturn(outro);
         when(routeStops.findById(stopId)).thenReturn(Optional.of(stop));
-        when(routePlans.findById(plan.getId())).thenReturn(Optional.of(plan));
+        when(routePlans.findForUpdateById(plan.getId())).thenReturn(Optional.of(plan));
 
         assertThrows(NotFoundException.class, () -> service.completeStop(outroMotoristaPrincipal, stopId));
     }
@@ -274,7 +280,7 @@ class RoutePlanServiceTest {
 
         when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
         when(routeStops.findById(stop1.getId())).thenReturn(Optional.of(stop1));
-        when(routePlans.findById(plan.getId())).thenReturn(Optional.of(plan));
+        when(routePlans.findForUpdateById(plan.getId())).thenReturn(Optional.of(plan));
         when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId()))
                 .thenReturn(List.of(stop1, stop2));
 
@@ -295,7 +301,7 @@ class RoutePlanServiceTest {
 
         when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
         when(routeStops.findById(stop2.getId())).thenReturn(Optional.of(stop2));
-        when(routePlans.findById(plan.getId())).thenReturn(Optional.of(plan));
+        when(routePlans.findForUpdateById(plan.getId())).thenReturn(Optional.of(plan));
         when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId()))
                 .thenReturn(List.of(stop1, stop2));
 

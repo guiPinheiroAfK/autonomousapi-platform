@@ -238,6 +238,17 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify({ body }),
       }),
+    /** Motorista-only: solicita cancelamento da rota ativa (ADR 0021) — nunca cancela
+     *  sozinho, só avisa o gestor, que decide. */
+    solicitarCancelamento: (conversationId: string) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/route-plan/solicitar-cancelamento`, {
+        method: 'POST',
+      }),
+    /** Motorista-only: solicita passar a rota ativa pra outra pessoa (ADR 0021). */
+    solicitarTroca: (conversationId: string) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/route-plan/solicitar-troca`, {
+        method: 'POST',
+      }),
   },
 
   push: {

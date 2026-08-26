@@ -39,6 +39,40 @@ export function MinhaRotaScreen() {
     }
   }
 
+  /**
+   * Motorista nunca cancela/troca sozinho — só solicita, pelo chat (ADR 0021); o gestor
+   * decide. A conversa é resolvida como a primeira do motorista (mesmo padrão de
+   * ChatScreen.tsx — hoje só existe uma conversa por motorista, com o próprio gestor).
+   */
+  async function solicitar(tipo: 'cancelamento' | 'troca') {
+    const titulo = tipo === 'cancelamento' ? 'Solicitar cancelamento' : 'Solicitar troca de motorista';
+    const mensagem =
+      tipo === 'cancelamento'
+        ? 'Isso avisa o gestor que você quer cancelar a rota. Ele decide — a rota continua ativa até lá.'
+        : 'Isso avisa o gestor que você quer passar a rota pra outra pessoa. Ele decide — a rota continua ativa até lá.';
+    Alert.alert(titulo, mensagem, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Solicitar',
+        onPress: async () => {
+          try {
+            const conversas = await coreApi.chat.listConversations();
+            const conversationId = conversas[0]?.id;
+            if (!conversationId) {
+              Alert.alert('Sem conversa com o gestor', 'Abra a aba Mensagens pra iniciar uma conversa primeiro.');
+              return;
+            }
+            if (tipo === 'cancelamento') await coreApi.chat.solicitarCancelamento(conversationId);
+            else await coreApi.chat.solicitarTroca(conversationId);
+            Alert.alert('Solicitação enviada', 'O gestor foi avisado.');
+          } catch (e) {
+            Alert.alert('Falha ao enviar solicitação', e instanceof Error ? e.message : 'Erro desconhecido');
+          }
+        },
+      },
+    ]);
+  }
+
   if (route === undefined) {
     return (
       <View style={styles.center}>
@@ -74,8 +108,7 @@ export function MinhaRotaScreen() {
             disabled={completingId === proxima.id}
           />
         )}
-        <View style={styles.spacer} />
-        <Button title="Atualizar" onPress={refresh} />
+        <SolicitacoesFooter onSolicitar={solicitar} onAtualizar={refresh} />
       </ScrollView>
     );
   }
@@ -109,9 +142,32 @@ export function MinhaRotaScreen() {
           </View>
         );
       })}
-      <View style={styles.spacer} />
-      <Button title="Atualizar" onPress={refresh} />
+      <SolicitacoesFooter onSolicitar={solicitar} onAtualizar={refresh} />
     </ScrollView>
+  );
+}
+
+function SolicitacoesFooter({
+  onSolicitar,
+  onAtualizar,
+}: {
+  onSolicitar: (tipo: 'cancelamento' | 'troca') => void;
+  onAtualizar: () => void;
+}) {
+  return (
+    <>
+      <View style={styles.spacer} />
+      <View style={styles.solicitacoesLinha}>
+        <TouchableOpacity style={styles.botaoSolicitar} onPress={() => onSolicitar('cancelamento')}>
+          <Text style={styles.botaoSolicitarTexto}>Solicitar cancelamento</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.botaoSolicitar} onPress={() => onSolicitar('troca')}>
+          <Text style={styles.botaoSolicitarTexto}>Solicitar troca</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.spacer} />
+      <Button title="Atualizar" onPress={onAtualizar} />
+    </>
   );
 }
 
@@ -139,6 +195,16 @@ const styles = StyleSheet.create({
   vazio: { fontSize: 15, color: '#666', marginVertical: 12 },
   info: { fontSize: 15, color: '#333' },
   spacer: { height: 12 },
+  solicitacoesLinha: { flexDirection: 'row', gap: 8 },
+  botaoSolicitar: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  botaoSolicitarTexto: { fontSize: 12, color: '#555', fontWeight: '600' },
   paradaCard: {
     flexDirection: 'row',
     alignItems: 'center',

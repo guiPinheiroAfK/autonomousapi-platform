@@ -21,6 +21,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { toast } from '../lib/toast';
 import { hojeISO } from '../lib/format';
+import { deleteWithConfirm } from '../lib/confirm';
 
 const CATEGORIA_OPTIONS: RouteCategoria[] = ['ROTA', 'TRANSFER'];
 
@@ -274,6 +275,25 @@ export function RoutePlansPage() {
                 {p.vehiclePlate && <p>{p.vehiclePlate}</p>}
                 <p>{p.dataExecucao}</p>
                 {p.valor != null && <p>R$ {p.valor.toFixed(2)}</p>}
+                {p.status === 'PLANEJADA' && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-1 h-auto p-0 text-status-danger hover:text-status-danger"
+                    onClick={() =>
+                      deleteWithConfirm({
+                        confirmMessage: t('pages.routePlans.confirmarCancelamento'),
+                        remove: () => coreApi.routePlans.cancel(p.id!),
+                        successMessage: t('pages.routePlans.toasts.rotaCancelada'),
+                        fallbackErrorMessage: t('pages.routePlans.toasts.falhaCancelar'),
+                        onSuccess: refresh,
+                      })
+                    }
+                  >
+                    {t('pages.routePlans.cancelarRota')}
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

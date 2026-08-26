@@ -74,6 +74,14 @@ public class RoutePlanController {
         return routePlanService.assignDriver(principal(auth), id, req.driverId());
     }
 
+    /** Cancelamento direto — só funciona pra PLANEJADA (ADR 0021). Rota já EM_ANDAMENTO
+     *  devolve 400 explicando que precisa passar pelo chat. */
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    public RoutePlanResponse cancel(@PathVariable UUID id, Authentication auth) {
+        return routePlanService.cancel(principal(auth), id);
+    }
+
     @GetMapping("/active")
     @PreAuthorize("hasRole('MOTORISTA')")
     public RoutePlanResponse active(Authentication auth) {

@@ -213,10 +213,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     setPickedRouteId('');
     setAttachError('');
     coreApi.routePlans.list().then((res) => {
-      // Rotas ainda sem motorista, ou já designadas a este mesmo motorista (reenvio) —
-      // uma designada a outro motorista fica de fora: RoutePlanService.assignDriver
-      // rejeitaria de qualquer forma (achado da revisão do plano).
-      setAttachableRoutes(res.content.filter((r) => !r.driverId || r.driverId === selected.driverId));
+      // Rotas PLANEJADA/EM_ANDAMENTO — sem motorista (anexa normal), já com este mesmo
+      // motorista (reenvio) ou com outro motorista (vira troca, ADR 0021, ao confirmar).
+      // CONCLUIDA/CANCELADA fica de fora, não faz sentido (re)atribuir.
+      setAttachableRoutes(
+        res.content.filter((r) => r.status === 'PLANEJADA' || r.status === 'EM_ANDAMENTO'),
+      );
     });
     setAttachOpen(true);
   }
@@ -227,7 +229,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     setAttachSending(true);
     setAttachError('');
     try {
-      const sent = await coreApi.chat.sendRoutePlan(selectedId, { routePlanId: pickedRouteId });
+      const rota = attachableRoutes.find((r) => r.id === pickedRouteId);
+      const ehTroca = rota?.driverId != null && rota.driverId !== selected?.driverId;
+      const sent = ehTroca
+        ? await coreApi.chat.trocaMotorista(selectedId, { routePlanId: pickedRouteId })
+        : await coreApi.chat.sendRoutePlan(selectedId, { routePlanId: pickedRouteId });
       await saveMessages([sent]);
       setMessages((prev) => [...prev, sent]);
       setAttachOpen(false);
@@ -248,6 +254,20 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     coreApi.routePlans.list().then((res) => {
       setRouteDetail(res.content.find((r) => r.id === routePlanId) ?? null);
     });
+  }
+
+  /** Gestor-only, chamado do modal de detalhe (ADR 0021) — único caminho que cancela rota
+   *  já EM_ANDAMENTO; PLANEJADA cancela direto pela tela de Rotas. */
+  async function handleCancelarRota() {
+    if (!selectedId || !routeDetail?.id) return;
+    try {
+      await coreApi.chat.cancelRoutePlan(selectedId, { routePlanId: routeDetail.id });
+      setRouteDetail(null);
+      await loadServerWindow(selectedId);
+      toast.success(t('pages.chat.toasts.rotaCancelada'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaCancelar'));
+    }
   }
 
   const selected = conversations.find((c) => c.id === selectedId);
@@ -333,20 +353,33 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               )}
               {messages.map((m) => {
                 const mine = m.senderUserId === user?.id;
-                if (m.messageType === 'ATRIBUICAO_ROTA') {
+                const ehRota =
+                  m.messageType === 'ATRIBUICAO_ROTA' ||
+                  m.messageType === 'CANCELAMENTO_ROTA' ||
+                  m.messageType === 'TROCA_MOTORISTA' ||
+                  m.messageType === 'SOLICITACAO_CANCELAMENTO' ||
+                  m.messageType === 'SOLICITACAO_TROCA_MOTORISTA';
+                if (ehRota) {
+                  // Gestor vê botão de ação nas solicitações do motorista (nunca nas suas
+                  // próprias mensagens de ação, "mine" já É a ação) — ADR 0021: motorista só
+                  // solicita, quem decide é o gestor, abrindo o detalhe da rota pra agir.
+                  const ehSolicitacao =
+                    m.messageType === 'SOLICITACAO_CANCELAMENTO' || m.messageType === 'SOLICITACAO_TROCA_MOTORISTA';
                   return (
                     <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
                       <div className="max-w-[75%] rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-xs">
                         <p className="flex items-center gap-1.5 font-medium text-foreground">
                           <RouteIcon className="size-3.5 text-primary" /> {m.body}
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => openRouteDetail(m.routePlanId!)}
-                          className="mt-1.5 text-[11px] font-medium text-primary hover:underline"
-                        >
-                          {t('pages.chat.verDetalhes')}
-                        </button>
+                        {m.routePlanId && (!ehSolicitacao || user?.role !== 'MOTORISTA') && (
+                          <button
+                            type="button"
+                            onClick={() => openRouteDetail(m.routePlanId!)}
+                            className="mt-1.5 text-[11px] font-medium text-primary hover:underline"
+                          >
+                            {ehSolicitacao ? t('pages.chat.verRota') : t('pages.chat.verDetalhes')}
+                          </button>
+                        )}
                         <p className="mt-1 text-[10px] text-muted-foreground">
                           {m.sentAt ? formatTimeBR(m.sentAt) : ''}
                         </p>
@@ -450,8 +483,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               <option value="">{t('pages.chat.selecioneRota')}</option>
               {attachableRoutes.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {t('pages.chat.paradaContagem', { n: r.stops?.length ?? 0 })}{' '}
-                  {r.driverId ? t('pages.chat.jaDesignadaMotorista') : ''}
+                  {t('pages.chat.paradaContagem', { n: r.stops?.length ?? 0 })}
+                  {r.driverId && r.driverId !== selected?.driverId
+                    ? ` · ${t('pages.chat.trocaDe', { motorista: r.driverName ?? '' })}`
+                    : r.driverId
+                      ? ` ${t('pages.chat.jaDesignadaMotorista')}`
+                      : ''}
                 </option>
               ))}
             </Select>
@@ -470,20 +507,27 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
       <Modal open={!!routeDetail} onClose={() => setRouteDetail(null)} title={t('pages.chat.paradasDaRota')}>
         {routeDetail && (
-          <ol className="space-y-2">
-            {(routeDetail.stops ?? []).map((s, i) => (
-              <li key={s.id} className="flex items-start gap-2.5 text-xs">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-muted-foreground">
-                  {i + 1}
-                </span>
-                <div>
-                  <p className="flex items-center gap-1 font-medium text-foreground">
-                    <MapPin className="size-3" /> {s.label} <span className="text-muted-foreground">· {s.tipo}</span>
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="space-y-3">
+            <ol className="space-y-2">
+              {(routeDetail.stops ?? []).map((s, i) => (
+                <li key={s.id} className="flex items-start gap-2.5 text-xs">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="flex items-center gap-1 font-medium text-foreground">
+                      <MapPin className="size-3" /> {s.label} <span className="text-muted-foreground">· {s.tipo}</span>
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            {user?.role !== 'MOTORISTA' && routeDetail.status === 'EM_ANDAMENTO' && (
+              <Button type="button" variant="secondary" size="sm" onClick={handleCancelarRota}>
+                {t('pages.chat.cancelarRota')}
+              </Button>
+            )}
+          </div>
         )}
       </Modal>
     </div>

@@ -18,9 +18,12 @@ import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,8 +46,15 @@ public class RoutePlanService {
     /** Teto de paradas por route_plan (spec 02, "Evolução pendente": "/table cresce O(n²)"). */
     private static final int TETO_PARADAS_ROTA = 30;
 
+    /** ADR 0021: operação só Brasil por enquanto — fixo em vez de depender do fuso do
+     *  container (achado da revisão de código: sem TZ configurado em lugar nenhum, o JVM
+     *  caía no padrão do container, tipicamente UTC, rejeitando data de execução legítima
+     *  perto da meia-noite em Brasília). */
+    private static final ZoneId FUSO_OPERACAO = ZoneId.of("America/Sao_Paulo");
+
     private final RoutePlanRepository routePlans;
     private final RouteStopRepository routeStops;
+    private final RoutePlanEventRepository routePlanEvents;
     private final DriverRepository drivers;
     private final VehicleRepository vehicles;
     private final CollectionPointRepository collectionPoints;
@@ -56,6 +66,7 @@ public class RoutePlanService {
     public RoutePlanService(
             RoutePlanRepository routePlans,
             RouteStopRepository routeStops,
+            RoutePlanEventRepository routePlanEvents,
             DriverRepository drivers,
             VehicleRepository vehicles,
             CollectionPointRepository collectionPoints,
@@ -65,6 +76,7 @@ public class RoutePlanService {
             RouteCostEstimator costEstimator) {
         this.routePlans = routePlans;
         this.routeStops = routeStops;
+        this.routePlanEvents = routePlanEvents;
         this.drivers = drivers;
         this.vehicles = vehicles;
         this.collectionPoints = collectionPoints;
@@ -72,6 +84,10 @@ public class RoutePlanService {
         this.routeMatrix = routeMatrix;
         this.optimizer = optimizer;
         this.costEstimator = costEstimator;
+    }
+
+    private void registrarEvento(UUID routePlanId, RoutePlanEventType tipo, UUID atorUserId, Map<String, Object> metadado) {
+        routePlanEvents.save(new RoutePlanEvent(routePlanId, tipo, atorUserId, metadado));
     }
 
     /**
@@ -145,7 +161,7 @@ public class RoutePlanService {
     /** Validações de negócio (spec 02) — nunca só no front. */
     private void validar(RouteCategoria categoria, LocalDate dataExecucao, List<StopInput> stops) {
         validarTetoDeParadas(stops);
-        if (dataExecucao.isBefore(LocalDate.now())) {
+        if (dataExecucao.isBefore(LocalDate.now(FUSO_OPERACAO))) {
             throw new RoutePlanInvalidException("Data de execução não pode ser no passado.");
         }
         for (StopInput s : stops) {
@@ -251,6 +267,7 @@ public class RoutePlanService {
                     plan.getId(), s.tipo(), s.label(), s.lat(), s.lon(), s.collectionPointId(),
                     s.janelaInicio(), s.janelaFim(), i));
         }
+        registrarEvento(plan.getId(), RoutePlanEventType.CRIADA, gestorPrincipal.userId(), null);
         return toResponse(plan);
     }
 
@@ -261,23 +278,87 @@ public class RoutePlanService {
                 toResponses(plans.getContent()), pageable, plans.getTotalElements());
     }
 
-    /**
-     * Idempotente quando já designada ao mesmo motorista. Se já designada a um motorista
-     * diferente, lança {@link RoutePlanAlreadyAssignedException} — nunca sobrescreve
-     * silenciosamente (achado da revisão do plano: reatribuição precisa de erro explícito).
-     */
+    /** Atribuição direta pela tela de Rotas (spec 02) — nunca reatribui, nunca chamada com
+     *  {@code forcar=true}. Ver {@link #assignDriver(JwtPrincipal, UUID, UUID, boolean, String)}. */
     @Transactional
     public RoutePlanResponse assignDriver(JwtPrincipal gestorPrincipal, UUID routePlanId, UUID driverId) {
+        return assignDriver(gestorPrincipal, routePlanId, driverId, false, "tela_rotas");
+    }
+
+    /**
+     * Idempotente quando já designada ao mesmo motorista. Se já designada a um motorista
+     * diferente e {@code forcar=false}, lança {@link RoutePlanAlreadyAssignedException} —
+     * nunca sobrescreve silenciosamente (achado da revisão do plano: reatribuição precisa
+     * de erro explícito). {@code forcar=true} é só pra reatribuição de verdade, aprovada
+     * pelo gestor via chat (ADR 0021) — nunca solto em outro caminho.
+     *
+     * <p>Lock pessimista ({@code findForUpdateById}) serializa atribuições concorrentes na
+     * mesma rota: sem ele, duas chamadas quase simultâneas liam {@code driverId == null}
+     * antes de qualquer uma commitar, e as duas passavam pelo guard — reatribuição
+     * silenciosa que o comentário original já dizia ser impossível, mas não era, sob
+     * concorrência (achado da revisão de código, 2026-08-25).
+     */
+    @Transactional
+    public RoutePlanResponse assignDriver(
+            JwtPrincipal gestorPrincipal, UUID routePlanId, UUID driverId, boolean forcar, String origem) {
         RoutePlan plan = Lookups.orNotFound(
-                routePlans.findByIdAndTenantId(routePlanId, gestorPrincipal.tenantId()), "Rota não encontrada.");
+                routePlans.findForUpdateById(routePlanId), "Rota não encontrada.");
+        if (!plan.getTenantId().equals(gestorPrincipal.tenantId())) {
+            throw new NotFoundException("Rota não encontrada.");
+        }
         Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, gestorPrincipal.tenantId()), "Motorista não encontrado.");
 
-        if (plan.getDriverId() != null && !plan.getDriverId().equals(driverId)) {
+        UUID driverAnterior = plan.getDriverId();
+        if (driverAnterior != null && !driverAnterior.equals(driverId) && !forcar) {
             throw new RoutePlanAlreadyAssignedException();
         }
-        if (plan.getDriverId() == null) {
+        if (!driverId.equals(driverAnterior)) {
             plan.designarMotorista(driverId);
+            Map<String, Object> metadado = new LinkedHashMap<>();
+            metadado.put("origem", origem);
+            if (forcar && driverAnterior != null) {
+                metadado.put("driverAnterior", driverAnterior.toString());
+                registrarEvento(plan.getId(), RoutePlanEventType.REATRIBUIDA, gestorPrincipal.userId(), metadado);
+            } else {
+                registrarEvento(plan.getId(), RoutePlanEventType.ATRIBUIDA, gestorPrincipal.userId(), metadado);
+            }
         }
+        return toResponse(plan);
+    }
+
+    /** Cancelamento direto, pela tela de Rotas (ADR 0021) — só funciona pra PLANEJADA. Rota
+     *  já EM_ANDAMENTO (alguma parada concluída) só cancela pelo chat, ver
+     *  {@link #cancel(JwtPrincipal, UUID, boolean)}. */
+    @Transactional
+    public RoutePlanResponse cancel(JwtPrincipal gestorPrincipal, UUID routePlanId) {
+        return cancel(gestorPrincipal, routePlanId, false);
+    }
+
+    /**
+     * {@code viaChat=true} é o único caminho que cancela rota já {@code EM_ANDAMENTO}
+     * (chamado por {@code ChatService}, nunca pelo controller de Rotas diretamente) — ADR
+     * 0021: cancelar no meio do trâmite é uma decisão que fica registrada na conversa com o
+     * motorista, não um botão isolado na lista. Paradas já concluídas não são desfeitas; só
+     * a rota vira {@code CANCELADA}.
+     */
+    @Transactional
+    public RoutePlanResponse cancel(JwtPrincipal gestorPrincipal, UUID routePlanId, boolean viaChat) {
+        RoutePlan plan = Lookups.orNotFound(routePlans.findForUpdateById(routePlanId), "Rota não encontrada.");
+        if (!plan.getTenantId().equals(gestorPrincipal.tenantId())) {
+            throw new NotFoundException("Rota não encontrada.");
+        }
+        if (plan.getStatus() == RoutePlanStatus.CONCLUIDA || plan.getStatus() == RoutePlanStatus.CANCELADA) {
+            throw new RoutePlanInvalidException("Rota " + plan.getStatus() + " não pode ser cancelada.");
+        }
+        if (plan.getStatus() == RoutePlanStatus.EM_ANDAMENTO && !viaChat) {
+            throw new RoutePlanInvalidException(
+                    "Rota já em andamento só pode ser cancelada pelo chat com o motorista.");
+        }
+        Map<String, Object> metadado = new LinkedHashMap<>();
+        metadado.put("etapa", plan.getStatus().name());
+        metadado.put("canal", viaChat ? "chat" : "tela");
+        plan.avancarStatus(RoutePlanStatus.CANCELADA);
+        registrarEvento(plan.getId(), RoutePlanEventType.CANCELADA, gestorPrincipal.userId(), metadado);
         return toResponse(plan);
     }
 
@@ -303,12 +384,19 @@ public class RoutePlanService {
      * entra em EM_ANDAMENTO sozinho): primeira parada concluída leva PLANEJADA→EM_ANDAMENTO;
      * última parada pendente concluída leva →CONCLUIDA. Nenhum outro método escreve em
      * {@code route_plan.status}.
+     *
+     * <p>Busca o {@code RoutePlan} com lock pessimista antes de ler {@code todas} — sem
+     * isso, duas conclusões de parada quase simultâneas (duplo toque, retry de rede) liam o
+     * mesmo snapshot de paradas concluídas antes de qualquer uma commitar: as duas
+     * calculavam a mesma {@code ordemReal} (duplicada) e nenhuma das duas via a rota como
+     * 100% concluída, mesmo depois que as duas commitavam — a rota ficava presa em
+     * EM_ANDAMENTO pra sempre (achado da revisão de código, 2026-08-25).
      */
     @Transactional
     public RouteStopResponse completeStop(JwtPrincipal driverPrincipal, UUID stopId) {
         Driver driver = driverResolver.resolve(driverPrincipal);
         RouteStop stop = Lookups.orNotFound(routeStops.findById(stopId), "Parada não encontrada.");
-        RoutePlan plan = Lookups.orNotFound(routePlans.findById(stop.getRoutePlanId()), "Parada não encontrada.");
+        RoutePlan plan = Lookups.orNotFound(routePlans.findForUpdateById(stop.getRoutePlanId()), "Parada não encontrada.");
 
         if (!driver.getId().equals(plan.getDriverId())) {
             throw new NotFoundException("Parada não encontrada.");
@@ -321,12 +409,19 @@ public class RoutePlanService {
         int ordemReal = (int) todas.stream().filter(RouteStop::isConcluida).count() + 1;
         stop.concluir(ordemReal);
 
+        Map<String, Object> metadadoParada = new LinkedHashMap<>();
+        metadadoParada.put("ordemSugerida", stop.getOrdemSugerida());
+        metadadoParada.put("ordemReal", ordemReal);
+        metadadoParada.put("foraDeOrdem", ordemReal != stop.getOrdemSugerida() + 1);
+        registrarEvento(plan.getId(), RoutePlanEventType.PARADA_CONCLUIDA, driverPrincipal.userId(), metadadoParada);
+
         if (plan.getStatus() == RoutePlanStatus.PLANEJADA) {
             plan.avancarStatus(RoutePlanStatus.EM_ANDAMENTO);
         }
         boolean todasConcluidas = todas.stream().allMatch(s -> s.getId().equals(stop.getId()) || s.isConcluida());
         if (todasConcluidas) {
             plan.avancarStatus(RoutePlanStatus.CONCLUIDA);
+            registrarEvento(plan.getId(), RoutePlanEventType.CONCLUIDA, driverPrincipal.userId(), null);
         }
         return RouteStopResponse.from(stop);
     }

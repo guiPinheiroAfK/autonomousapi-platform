@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/routes/plans/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/routes/plans/{id}/assign": {
         parameters: {
             query?: never;
@@ -526,6 +542,70 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["sendRoutePlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/route-plan/troca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["trocaMotorista"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/route-plan/solicitar-troca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["solicitarTroca"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/route-plan/solicitar-cancelamento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["solicitarCancelamento"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/conversations/{id}/route-plan/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelRoutePlan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1444,7 +1524,7 @@ export interface components {
             vehicleId?: string;
             vehiclePlate?: string;
             /** @enum {string} */
-            status?: "PLANEJADA" | "EM_ANDAMENTO" | "CONCLUIDA";
+            status?: "PLANEJADA" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
             /** @enum {string} */
             categoria?: "ROTA" | "TRANSFER";
             /** Format: date */
@@ -1580,7 +1660,7 @@ export interface components {
             /** Format: date-time */
             lidoEm?: string;
             /** @enum {string} */
-            messageType?: "TEXTO" | "ATRIBUICAO_ROTA" | "SISTEMA";
+            messageType?: "TEXTO" | "ATRIBUICAO_ROTA" | "CANCELAMENTO_ROTA" | "TROCA_MOTORISTA" | "SOLICITACAO_CANCELAMENTO" | "SOLICITACAO_TROCA_MOTORISTA" | "SISTEMA";
             /** Format: uuid */
             routePlanId?: string;
         };
@@ -1656,6 +1736,17 @@ export interface components {
         AffiliateClickResponse: {
             redirectUrl?: string;
         };
+        PageResponseWorkOrderResponse: {
+            content?: components["schemas"]["WorkOrderResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         PageResponseVehicleResponse: {
             content?: components["schemas"]["VehicleResponse"][];
             /** Format: int32 */
@@ -1702,6 +1793,17 @@ export interface components {
             month?: string;
             total?: number;
         };
+        PageResponseTripResponse: {
+            content?: components["schemas"]["TripResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         RouteResponse: {
             available?: boolean;
             /** Format: double */
@@ -1722,6 +1824,17 @@ export interface components {
             distanceM?: number;
             /** Format: double */
             durationS?: number;
+        };
+        PageResponseRoutePlanResponse: {
+            content?: components["schemas"]["RoutePlanResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         MonthlyMaintenanceCostResponse: {
             mes?: string;
@@ -1789,6 +1902,28 @@ export interface components {
             /** @enum {string} */
             categoria?: "COMBUSTIVEL" | "MANUTENCAO" | "SEGURO" | "IPVA" | "MULTA" | "PEDAGIO" | "LAVAGEM" | "OUTRO";
             total?: number;
+        };
+        PageResponseDriverResponse: {
+            content?: components["schemas"]["DriverResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageResponseDriverRatingResponse: {
+            content?: components["schemas"]["DriverRatingResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         DriverRatingSummaryResponse: {
             /** Format: uuid */
@@ -2068,6 +2203,8 @@ export interface operations {
         parameters: {
             query?: {
                 vehicleId?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2081,7 +2218,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["WorkOrderResponse"][];
+                    "*/*": components["schemas"]["PageResponseWorkOrderResponse"];
                 };
             };
         };
@@ -2305,7 +2442,10 @@ export interface operations {
     };
     list_3: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2318,7 +2458,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["TripResponse"][];
+                    "*/*": components["schemas"]["PageResponseTripResponse"];
                 };
             };
         };
@@ -2421,7 +2561,10 @@ export interface operations {
     };
     list_4: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2434,7 +2577,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["RoutePlanResponse"][];
+                    "*/*": components["schemas"]["PageResponseRoutePlanResponse"];
                 };
             };
         };
@@ -2454,6 +2597,28 @@ export interface operations {
         responses: {
             /** @description Created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2631,7 +2796,10 @@ export interface operations {
     };
     list_5: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2644,7 +2812,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DriverResponse"][];
+                    "*/*": components["schemas"]["PageResponseDriverResponse"];
                 };
             };
         };
@@ -2789,7 +2957,10 @@ export interface operations {
     };
     list_6: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path: {
                 driverId: string;
@@ -2804,7 +2975,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DriverRatingResponse"][];
+                    "*/*": components["schemas"]["PageResponseDriverRatingResponse"];
                 };
             };
         };
@@ -3034,6 +3205,102 @@ export interface operations {
         };
     };
     sendRoutePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendRoutePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
+                };
+            };
+        };
+    };
+    trocaMotorista: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendRoutePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
+                };
+            };
+        };
+    };
+    solicitarTroca: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
+                };
+            };
+        };
+    };
+    solicitarCancelamento: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
+                };
+            };
+        };
+    };
+    cancelRoutePlan: {
         parameters: {
             query?: never;
             header?: never;

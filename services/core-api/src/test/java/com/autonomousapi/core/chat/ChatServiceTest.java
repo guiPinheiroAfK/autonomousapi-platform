@@ -199,7 +199,7 @@ class ChatServiceTest {
         Driver d = driverComLogin();
         ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
         when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
-        when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId()))
+        when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId(), false, "chat"))
                 .thenReturn(new RoutePlanResponse(routePlanId, d.getId(), d.getName(), null, null,
                         RoutePlanStatus.PLANEJADA, com.autonomousapi.core.routeplan.RouteCategoria.ROTA,
                         java.time.LocalDate.now(), null, null, null, java.time.Instant.now(), List.of()));
@@ -220,7 +220,7 @@ class ChatServiceTest {
         Driver d = driverComLogin();
         ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
         when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
-        when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId()))
+        when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId(), false, "chat"))
                 .thenThrow(new RoutePlanAlreadyAssignedException());
 
         assertThrows(RoutePlanAlreadyAssignedException.class,

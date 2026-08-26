@@ -7,5 +7,8 @@ package com.autonomousapi.core.routeplan;
 public enum RoutePlanStatus {
     PLANEJADA,
     EM_ANDAMENTO,
-    CONCLUIDA
+    CONCLUIDA,
+    /** ADR 0021: PLANEJADA cancela direto (tela de Rotas); EM_ANDAMENTO só cancela pelo
+     *  chat (RoutePlanService#cancel com viaChat=true). */
+    CANCELADA
 }
