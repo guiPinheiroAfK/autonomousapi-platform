@@ -18,9 +18,23 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /** Rotas públicas: auth, health e a documentação OpenAPI. Todo o resto exige JWT. */
+    /**
+     * Rotas públicas: auth (só as que não dependem de sessão — login/signup/etc. provam
+     * posse por senha ou token de e-mail, refresh prova por refresh token no corpo), health
+     * e a documentação OpenAPI. Todo o resto exige JWT — inclusive {@code /v1/auth/me}, que
+     * antes caía no wildcard "/v1/auth/**" por engano: sem token nenhum, a requisição passava
+     * pelo authorizeHttpRequests sem barrar, e o controller quebrava com NPE tentando ler
+     * `authentication.getName()` de um Authentication nulo, em vez de devolver 401 de verdade.
+     */
     private static final String[] PUBLIC = {
-            "/v1/auth/**",
+            "/v1/auth/signup",
+            "/v1/auth/verify-email",
+            "/v1/auth/resend-verification",
+            "/v1/auth/login",
+            "/v1/auth/forgot-password",
+            "/v1/auth/reset-password",
+            "/v1/auth/accept-invite",
+            "/v1/auth/refresh",
             "/v1/health",
             "/v3/api-docs/**",
             "/swagger-ui/**",
