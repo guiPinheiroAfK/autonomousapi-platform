@@ -12,9 +12,12 @@ import com.autonomousapi.core.geo.dto.GpsPingBatchRequest;
 import com.autonomousapi.core.geo.dto.GpsPingRequest;
 import com.autonomousapi.core.geo.dto.PlaceResponse;
 import com.autonomousapi.core.geo.dto.RouteResponse;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -28,6 +31,22 @@ import org.springframework.web.client.RestClient;
  */
 @Component
 public class GeoApiClient {
+
+    /** Mesmo padrão de cache em memória do {@link com.autonomousapi.core.routeplan.RouteMatrixService}
+     *  (TTL curto, single-instance) — só o resultado de SUCESSO entra no cache: se o provedor
+     *  caiu e a chamada degradou pra lista vazia/indisponível, isso nunca é cacheado, senão o
+     *  "fora do ar" ficaria congelado pro TTL inteiro mesmo depois do provedor voltar. */
+    private static final Duration GEOCODE_CACHE_TTL = Duration.ofHours(1);
+    private static final Duration CHARGING_STATIONS_CACHE_TTL = Duration.ofMinutes(5);
+
+    private final Map<String, CachedValue<List<PlaceResponse>>> geocodeCache = new ConcurrentHashMap<>();
+    private final Map<String, CachedValue<ChargingStationsResponse>> chargingStationsCache = new ConcurrentHashMap<>();
+
+    private record CachedValue<T>(T value, Instant expiraEm) {
+        boolean valido() {
+            return expiraEm.isAfter(Instant.now());
+        }
+    }
 
     private final RestClient client;
     private final String serviceToken;
@@ -100,6 +119,13 @@ public class GeoApiClient {
      * pode quebrar por causa de um provedor terceiro instável.
      */
     public ChargingStationsResponse chargingStations(Double lat, Double lon, Double radiusKm) {
+        String chave = lat + ":" + lon + ":" + radiusKm;
+        CachedValue<ChargingStationsResponse> cached = chargingStationsCache.get(chave);
+        if (cached != null && cached.valido()) {
+            return cached.value();
+        }
+
+        ChargingStationsResponse resultado;
         try {
             GeoChargingStationsResponse response = client
                     .get()
@@ -113,10 +139,16 @@ public class GeoApiClient {
                     .header("X-Service-Token", serviceToken)
                     .retrieve()
                     .body(GeoChargingStationsResponse.class);
-            return response != null ? response.toPublic() : ChargingStationsResponse.indisponivel();
+            resultado = response != null ? response.toPublic() : ChargingStationsResponse.indisponivel();
         } catch (Exception ex) {
-            return ChargingStationsResponse.indisponivel();
+            resultado = ChargingStationsResponse.indisponivel();
         }
+
+        if (resultado.providerAvailable()) {
+            chargingStationsCache.put(
+                    chave, new CachedValue<>(resultado, Instant.now().plus(CHARGING_STATIONS_CACHE_TTL)));
+        }
+        return resultado;
     }
 
     /**
@@ -201,6 +233,13 @@ public class GeoApiClient {
      * (tentar outro termo), e um erro na tela só atrapalharia.
      */
     public List<PlaceResponse> geocode(String query) {
+        String chave = query.trim().toLowerCase();
+        CachedValue<List<PlaceResponse>> cached = geocodeCache.get(chave);
+        if (cached != null && cached.valido()) {
+            return cached.value();
+        }
+
+        List<PlaceResponse> resultado;
         try {
             List<GeoPlace> lugares = client
                     .get()
@@ -208,9 +247,17 @@ public class GeoApiClient {
                     .header("X-Service-Token", serviceToken)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {});
-            return lugares != null ? lugares.stream().map(GeoPlace::toPublic).toList() : List.of();
+            resultado = lugares != null ? lugares.stream().map(GeoPlace::toPublic).toList() : List.of();
         } catch (Exception ex) {
-            return List.of();
+            resultado = List.of();
         }
+
+        // Lista vazia nunca entra em cache: não dá pra distinguir "não achei esse endereço" de
+        // "o Nominatim caiu" só pelo resultado — melhor sempre tentar de novo do que arriscar
+        // congelar uma falha temporária pelo TTL inteiro.
+        if (!resultado.isEmpty()) {
+            geocodeCache.put(chave, new CachedValue<>(resultado, Instant.now().plus(GEOCODE_CACHE_TTL)));
+        }
+        return resultado;
     }
 }

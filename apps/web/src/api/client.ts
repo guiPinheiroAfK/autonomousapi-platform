@@ -110,6 +110,36 @@ let onUnauthorized: (() => void) | null = null;
 /** Chamado pelo AuthContext ao logar/deslogar — mantém o client sem depender de React. */
 export function setAuthToken(token: string | null): void {
   authToken = token;
+  // Troca de token = troca de sessão (login, logout, ou refresh pra outro usuário no mesmo
+  // browser) — nunca é seguro deixar a lista cacheada de um usuário vazar pro próximo.
+  listCache.clear();
+}
+
+/**
+ * Cache curto em memória pra listas que várias telas pedem de novo sem o dado ter mudado
+ * (ex. `vehicles.list()`/`drivers.list()` abertos direto na página e de novo pra popular um
+ * seletor no modal de outra tela). TTL curto o bastante pra nunca mostrar dado visivelmente
+ * desatualizado, longo o bastante pra cortar a maioria dos refetch redundantes numa mesma
+ * sessão de navegação. Invalidação é por prefixo, chamada nos pontos de mutação abaixo.
+ */
+const LIST_CACHE_TTL_MS = 30_000;
+const listCache = new Map<string, { data: unknown; expiresAt: number }>();
+
+function cachedGet<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const cached = listCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return Promise.resolve(cached.data as T);
+  }
+  return fetcher().then((data) => {
+    listCache.set(key, { data, expiresAt: Date.now() + LIST_CACHE_TTL_MS });
+    return data;
+  });
+}
+
+function invalidateListCache(prefix: string): void {
+  for (const key of listCache.keys()) {
+    if (key.startsWith(prefix)) listCache.delete(key);
+  }
 }
 
 /**
@@ -192,14 +222,27 @@ export const coreApi = {
       const params = new URLSearchParams({ page: String(page), size: String(size) });
       if (search) params.set('search', search);
       if (status) params.set('status', status);
-      return request<PageResponse<VehicleResponse>>(`/v1/vehicles?${params.toString()}`);
+      const query = params.toString();
+      return cachedGet(`vehicles:${query}`, () =>
+        request<PageResponse<VehicleResponse>>(`/v1/vehicles?${query}`),
+      );
     },
     get: (id: string) => request<VehicleResponse>(`/v1/vehicles/${id}`),
     create: (body: VehicleRequest) =>
-      request<VehicleResponse>('/v1/vehicles', { method: 'POST', body: JSON.stringify(body) }),
+      request<VehicleResponse>('/v1/vehicles', { method: 'POST', body: JSON.stringify(body) }).then((r) => {
+        invalidateListCache('vehicles:');
+        return r;
+      }),
     update: (id: string, body: VehicleRequest) =>
-      request<VehicleResponse>(`/v1/vehicles/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    remove: (id: string) => request<void>(`/v1/vehicles/${id}`, { method: 'DELETE' }),
+      request<VehicleResponse>(`/v1/vehicles/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => {
+        invalidateListCache('vehicles:');
+        return r;
+      }),
+    remove: (id: string) =>
+      request<void>(`/v1/vehicles/${id}`, { method: 'DELETE' }).then((r) => {
+        invalidateListCache('vehicles:');
+        return r;
+      }),
     maintenanceDue: () => request<VehicleMaintenanceAlertResponse[]>('/v1/vehicles/maintenance-due'),
     costTrend: () => request<MonthlyCostResponse[]>('/v1/vehicles/cost-trend'),
   },
@@ -208,22 +251,45 @@ export const coreApi = {
     /** Paginado (cleanup de performance). `size` alto cobre a equipe inteira na
      *  imensa maioria dos tenants numa request só, mesmo padrão de `vehicles.list`. */
     list: (page = 0, size = 200) =>
-      request<PageResponse<DriverResponse>>(`/v1/drivers?page=${page}&size=${size}`),
+      cachedGet(`drivers:${page}:${size}`, () =>
+        request<PageResponse<DriverResponse>>(`/v1/drivers?page=${page}&size=${size}`),
+      ),
     create: (body: DriverRequest) =>
-      request<DriverResponse>('/v1/drivers', { method: 'POST', body: JSON.stringify(body) }),
+      request<DriverResponse>('/v1/drivers', { method: 'POST', body: JSON.stringify(body) }).then((r) => {
+        invalidateListCache('drivers:');
+        return r;
+      }),
     update: (id: string, body: DriverRequest) =>
-      request<DriverResponse>(`/v1/drivers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    remove: (id: string) => request<void>(`/v1/drivers/${id}`, { method: 'DELETE' }),
+      request<DriverResponse>(`/v1/drivers/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => {
+        invalidateListCache('drivers:');
+        return r;
+      }),
+    remove: (id: string) =>
+      request<void>(`/v1/drivers/${id}`, { method: 'DELETE' }).then((r) => {
+        invalidateListCache('drivers:');
+        return r;
+      }),
     licenseExpiring: () => request<DriverLicenseAlertResponse[]>('/v1/drivers/license-expiring'),
     /** Envia o convite de acesso ao app (ADR 0013). Exige e-mail cadastrado no motorista. */
-    invite: (id: string) => request<DriverInviteResponse>(`/v1/drivers/${id}/invite`, { method: 'POST' }),
+    invite: (id: string) =>
+      request<DriverInviteResponse>(`/v1/drivers/${id}/invite`, { method: 'POST' }).then((r) => {
+        invalidateListCache('drivers:');
+        return r;
+      }),
     /** Designação de veículo (ADR 0014). */
     assign: (id: string, body: AssignVehicleRequest) =>
       request<DriverAssignmentResponse>(`/v1/drivers/${id}/assignment`, {
         method: 'POST',
         body: JSON.stringify(body),
+      }).then((r) => {
+        invalidateListCache('drivers:');
+        return r;
       }),
-    endAssignment: (id: string) => request<void>(`/v1/drivers/${id}/assignment/end`, { method: 'POST' }),
+    endAssignment: (id: string) =>
+      request<void>(`/v1/drivers/${id}/assignment/end`, { method: 'POST' }).then((r) => {
+        invalidateListCache('drivers:');
+        return r;
+      }),
     activeAssignment: (id: string) => request<DriverAssignmentResponse | null>(`/v1/drivers/${id}/assignment`),
     /** "Aviso do gestor" via push (ADR 0016). */
     notify: (id: string, body: NotifyDriverRequest) =>
