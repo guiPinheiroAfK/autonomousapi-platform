@@ -1,5 +1,6 @@
 package com.autonomousapi.core.billing;
 
+import com.autonomousapi.core.billing.dto.BillingPortalSessionResponse;
 import com.autonomousapi.core.billing.dto.CheckoutSessionResponse;
 import com.autonomousapi.core.billing.dto.SubscriptionResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
@@ -30,6 +31,11 @@ public class BillingController {
     @PostMapping("/checkout")
     public CheckoutSessionResponse checkout(Authentication auth) {
         return billingService.createCheckoutSession((JwtPrincipal) auth.getPrincipal());
+    }
+
+    @PostMapping("/portal")
+    public BillingPortalSessionResponse portal(Authentication auth) {
+        return billingService.createPortalSession((JwtPrincipal) auth.getPrincipal());
     }
 
     /**

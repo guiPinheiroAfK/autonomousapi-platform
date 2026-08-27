@@ -36,6 +36,7 @@ export type VehicleMaintenanceAlertResponse = Schemas['VehicleMaintenanceAlertRe
 export type MonthlyCostResponse = Schemas['MonthlyCostResponse'];
 export type SubscriptionResponse = Schemas['SubscriptionResponse'];
 export type CheckoutSessionResponse = Schemas['CheckoutSessionResponse'];
+export type BillingPortalSessionResponse = Schemas['BillingPortalSessionResponse'];
 export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
 export type TokenResponse = Schemas['TokenResponse'];
 export type UserResponse = Schemas['UserResponse'];
@@ -378,6 +379,10 @@ export const coreApi = {
   billing: {
     subscription: () => request<SubscriptionResponse>('/v1/billing/subscription'),
     checkout: () => request<CheckoutSessionResponse>('/v1/billing/checkout', { method: 'POST' }),
+    /** Portal hospedado pela Stripe (cancelar, trocar cartão, baixar nota) — só existe
+     *  depois de um checkout real (backend rejeita se a assinatura ainda não tem
+     *  stripeCustomerId, ex. quem está só no trial). */
+    portal: () => request<BillingPortalSessionResponse>('/v1/billing/portal', { method: 'POST' }),
   },
 
   /** Superfície do app do motorista (spec 07) — escopado ao token, motorista-only no backend. */

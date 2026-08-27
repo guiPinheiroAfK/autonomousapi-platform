@@ -1,5 +1,6 @@
 package com.autonomousapi.core.billing;
 
+import com.autonomousapi.core.billing.dto.BillingPortalSessionResponse;
 import com.autonomousapi.core.billing.dto.CheckoutSessionResponse;
 import com.autonomousapi.core.billing.dto.SubscriptionResponse;
 import com.autonomousapi.core.error.BillingNotConfiguredException;
@@ -91,6 +92,41 @@ public class BillingService {
             return new CheckoutSessionResponse(session.getUrl());
         } catch (StripeException e) {
             throw new BillingNotConfiguredException("Falha ao criar sessão de checkout: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sessão do portal de billing hospedado pela Stripe (cancelar, trocar cartão, baixar
+     * nota fiscal) — só existe depois de um checkout real (é o `stripeCustomerId` que a
+     * Stripe cria nesse momento, ver {@link #onCheckoutCompleted}); quem ainda está só no
+     * trial nunca chega a ver o botão que chama isto (ver BillingPage.tsx).
+     */
+    @Transactional(readOnly = true)
+    public BillingPortalSessionResponse createPortalSession(JwtPrincipal principal) {
+        if (stripeSecretKey.isBlank()) {
+            throw new BillingNotConfiguredException(
+                    "Billing ainda não configurado neste ambiente (STRIPE_SECRET_KEY ausente).");
+        }
+        String customerId = subscriptions.findByTenantId(principal.tenantId())
+                .map(Subscription::getStripeCustomerId)
+                .orElse(null);
+        if (customerId == null) {
+            throw new BillingNotConfiguredException("Nenhuma assinatura Stripe ativa para abrir o portal.");
+        }
+        Stripe.apiKey = stripeSecretKey;
+
+        com.stripe.param.billingportal.SessionCreateParams params =
+                com.stripe.param.billingportal.SessionCreateParams.builder()
+                        .setCustomer(customerId)
+                        .setReturnUrl(webAppUrl + "/assinatura")
+                        .build();
+
+        try {
+            com.stripe.model.billingportal.Session session =
+                    com.stripe.model.billingportal.Session.create(params);
+            return new BillingPortalSessionResponse(session.getUrl());
+        } catch (StripeException e) {
+            throw new BillingNotConfiguredException("Falha ao abrir o portal de billing: " + e.getMessage());
         }
     }
 

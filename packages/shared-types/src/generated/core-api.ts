@@ -708,6 +708,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/billing/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["portal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/billing/checkout": {
         parameters: {
             query?: never;
@@ -1781,6 +1797,9 @@ export interface components {
             valorLimite?: number;
             valorConsumido?: number;
             percentualConsumido?: number;
+        };
+        BillingPortalSessionResponse: {
+            portalUrl?: string;
         };
         CheckoutSessionResponse: {
             checkoutUrl?: string;
@@ -3616,6 +3635,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    portal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BillingPortalSessionResponse"];
+                };
             };
         };
     };

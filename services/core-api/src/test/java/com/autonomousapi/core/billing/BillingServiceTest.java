@@ -61,4 +61,30 @@ class BillingServiceTest {
 
         assertThrows(BillingNotConfiguredException.class, () -> service.handleWebhook("{}", "assinatura-fake"));
     }
+
+    @Test
+    void portalSemChaveStripeConfiguradaLancaErroClaro() {
+        BillingService service = serviceWithoutStripeKey();
+
+        assertThrows(BillingNotConfiguredException.class, () -> service.createPortalSession(principal));
+    }
+
+    @Test
+    void portalSemAssinaturaAindaLancaErroClaro() {
+        BillingService service = new BillingService(subscriptionRepo, vehicleRepo, "sk_test_123", "", "", "http://localhost:5180");
+        when(subscriptionRepo.findByTenantId(tenantId)).thenReturn(Optional.empty());
+
+        assertThrows(BillingNotConfiguredException.class, () -> service.createPortalSession(principal));
+    }
+
+    @Test
+    void portalSemCheckoutAindaFeitoLancaErroClaro() {
+        // TRIALING nunca passou pela Stripe de verdade — stripeCustomerId continua nulo até o
+        // primeiro checkout completar (ver Subscription#trial / BillingService#onCheckoutCompleted).
+        BillingService service = new BillingService(subscriptionRepo, vehicleRepo, "sk_test_123", "", "", "http://localhost:5180");
+        Subscription semCheckout = Subscription.trial(tenantId, java.time.Instant.now().plusSeconds(3600));
+        when(subscriptionRepo.findByTenantId(tenantId)).thenReturn(Optional.of(semCheckout));
+
+        assertThrows(BillingNotConfiguredException.class, () -> service.createPortalSession(principal));
+    }
 }

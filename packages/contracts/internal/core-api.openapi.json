@@ -2181,6 +2181,26 @@
         }
       }
     },
+    "/v1/billing/portal": {
+      "post": {
+        "tags": [
+          "billing-controller"
+        ],
+        "operationId": "portal",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPortalSessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/billing/checkout": {
       "post": {
         "tags": [
@@ -4595,6 +4615,14 @@
           },
           "percentualConsumido": {
             "type": "number"
+          }
+        }
+      },
+      "BillingPortalSessionResponse": {
+        "type": "object",
+        "properties": {
+          "portalUrl": {
+            "type": "string"
           }
         }
       },

@@ -12,6 +12,7 @@ export function BillingPage() {
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
 
   useEffect(() => {
     coreApi.billing
@@ -32,6 +33,18 @@ export function BillingPage() {
       toast.error(err instanceof Error ? err.message : t('pages.billing.toasts.falhaCheckout'));
     } finally {
       setCheckingOut(false);
+    }
+  }
+
+  async function handleOpenPortal() {
+    setOpeningPortal(true);
+    try {
+      const { portalUrl } = await coreApi.billing.portal();
+      window.location.href = portalUrl!;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.billing.toasts.falhaPortal'));
+    } finally {
+      setOpeningPortal(false);
     }
   }
 
@@ -88,7 +101,9 @@ export function BillingPage() {
                   </Button>
                 </div>
               ) : (
-                <p className="text-[11px] text-muted-foreground">{t('pages.billing.gerenciamentoStripe')}</p>
+                <Button variant="outline" size="sm" onClick={handleOpenPortal} disabled={openingPortal}>
+                  {openingPortal ? t('pages.billing.abrindoPortal') : t('pages.billing.gerenciarAssinatura')}
+                </Button>
               )}
             </div>
           ) : (

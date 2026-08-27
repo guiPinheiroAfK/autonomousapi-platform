@@ -496,10 +496,11 @@
       "avisoTrial": "Depois do trial, cadastrar veículo/motorista novo exige assinatura ativa — o que já está cadastrado continua acessível.",
       "abrindoCheckout": "Abrindo checkout...",
       "assinarAgora": "Assinar agora",
-      "gerenciamentoStripe": "Gerenciamento de forma de pagamento e cancelamento fica no portal da Stripe (em breve, link direto aqui).",
+      "gerenciarAssinatura": "Gerenciar assinatura",
+      "abrindoPortal": "Abrindo portal...",
       "semAssinaturaAtiva": "Você ainda não tem uma assinatura ativa. O plano é cobrado por veículo ativo na frota.",
       "status": { "ACTIVE": "Ativa", "TRIALING": "Em teste", "PAST_DUE": "Pagamento pendente", "CANCELED": "Cancelada", "INCOMPLETE": "Incompleta" },
-      "toasts": { "falhaCarregar": "Erro ao carregar assinatura", "falhaCheckout": "Billing ainda não está configurado neste ambiente (falta chave da Stripe)." }
+      "toasts": { "falhaCarregar": "Erro ao carregar assinatura", "falhaCheckout": "Billing ainda não está configurado neste ambiente (falta chave da Stripe).", "falhaPortal": "Não foi possível abrir o portal de gerenciamento da assinatura." }
     },
     "affiliates": {
       "titulo": "Parceiros",
