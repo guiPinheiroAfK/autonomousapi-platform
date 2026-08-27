@@ -284,6 +284,7 @@ export function RoutePlansPage() {
                     onClick={() =>
                       deleteWithConfirm({
                         confirmMessage: t('pages.routePlans.confirmarCancelamento'),
+                        confirmLabel: t('pages.routePlans.cancelarRota'),
                         remove: () => coreApi.routePlans.cancel(p.id!),
                         successMessage: t('pages.routePlans.toasts.rotaCancelada'),
                         fallbackErrorMessage: t('pages.routePlans.toasts.falhaCancelar'),

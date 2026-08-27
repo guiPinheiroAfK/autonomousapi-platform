@@ -57,8 +57,11 @@ export async function deleteWithConfirm(opts: {
   successMessage: string;
   fallbackErrorMessage: string;
   onSuccess: () => void;
+  /** Sobrescreve o rótulo padrão "Excluir" — usado por ações que confirmam algo que não é
+   *  exclusão (ex. cancelar rota, achado ao testar: "Excluir" pra cancelar rota confundia). */
+  confirmLabel?: string;
 }): Promise<void> {
-  if (!(await confirmDialog(opts.confirmMessage))) return;
+  if (!(await confirmDialog(opts.confirmMessage, { confirmLabel: opts.confirmLabel }))) return;
   try {
     await opts.remove();
     toast.success(opts.successMessage);

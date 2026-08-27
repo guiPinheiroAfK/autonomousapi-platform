@@ -116,6 +116,7 @@ const ROUTE_PLAN_TONE: Record<string, Tone> = {
   PLANEJADA: 'info',
   EM_ANDAMENTO: 'warning',
   CONCLUIDA: 'success',
+  CANCELADA: 'neutral',
 };
 
 export function StatusBadgeRotaPlan({ status, className }: { status?: string; className?: string }) {
