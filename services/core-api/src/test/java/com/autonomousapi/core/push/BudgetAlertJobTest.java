@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.autonomousapi.core.budget.Budget;
 import com.autonomousapi.core.budget.BudgetRepository;
 import com.autonomousapi.core.budget.BudgetService;
+import com.autonomousapi.core.notification.NotificationService;
 import com.autonomousapi.core.user.Role;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
@@ -31,9 +32,9 @@ class BudgetAlertJobTest {
     private final BudgetRepository budgets = mock(BudgetRepository.class);
     private final BudgetService budgetService = mock(BudgetService.class);
     private final UserRepository users = mock(UserRepository.class);
-    private final PushNotificationService pushNotificationService = mock(PushNotificationService.class);
+    private final NotificationService notificationService = mock(NotificationService.class);
 
-    private final BudgetAlertJob job = new BudgetAlertJob(budgets, budgetService, users, pushNotificationService);
+    private final BudgetAlertJob job = new BudgetAlertJob(budgets, budgetService, users, notificationService);
 
     private final UUID tenantId = UUID.randomUUID();
 
@@ -51,7 +52,7 @@ class BudgetAlertJobTest {
 
         job.run();
 
-        verify(pushNotificationService).notifyUser(eq(gestor.getId()), any(), any());
+        verify(notificationService).notify(eq(gestor.getId()), any(), any(), any(), any());
     }
 
     @Test
@@ -64,7 +65,7 @@ class BudgetAlertJobTest {
         job.run(); // 0 -> 80: notifica
         job.run(); // continua em 85%: já notificado nesse patamar, não repete
 
-        verify(pushNotificationService, times(1)).notifyUser(any(), any(), any());
+        verify(notificationService, times(1)).notify(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -79,7 +80,7 @@ class BudgetAlertJobTest {
         when(budgetService.progressoAtual(budget)).thenReturn(new BigDecimal("110.00"));
         job.run(); // 80 -> 100
 
-        verify(pushNotificationService, times(2)).notifyUser(any(), any(), any());
+        verify(notificationService, times(2)).notify(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -90,7 +91,7 @@ class BudgetAlertJobTest {
 
         job.run();
 
-        verify(pushNotificationService, never()).notifyUser(any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -110,6 +111,6 @@ class BudgetAlertJobTest {
 
         job.run(); // mês novo: reseta o patamar, 85% notifica de novo
 
-        verify(pushNotificationService, times(2)).notifyUser(any(), any(), any());
+        verify(notificationService, times(2)).notify(any(), any(), any(), any(), any());
     }
 }

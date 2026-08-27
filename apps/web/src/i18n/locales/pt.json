@@ -241,10 +241,8 @@
       "temaClaroTitulo": "Mudar para tema claro",
       "temaEscuroTitulo": "Mudar para tema escuro",
       "notificacoes": "Notificações",
-      "notif1Titulo": "2 veículos com manutenção vencida",
-      "notif1Sub": "Verifique os alertas no Dashboard",
-      "notif2Titulo": "CNHs vencendo em 30 dias",
-      "notif2Sub": "Motoristas com CNH próxima do vencimento",
+      "semNotificacoes": "Nenhuma notificação por aqui.",
+      "verTodas": "Ver todas",
       "sair": "Sair",
       "idioma": "Idioma"
     }
@@ -358,7 +356,8 @@
         "confirmarExcluir": "Excluir este motorista?", "excluido": "Motorista excluído.", "falhaExcluir": "Falha ao excluir motorista",
         "falhaAvaliacao": "Falha ao registrar avaliação", "conviteEnviado": "Convite enviado para {{email}}.",
         "falhaConvite": "Falha ao enviar convite", "falhaDesignar": "Falha ao designar veículo",
-        "falhaEncerrar": "Falha ao encerrar designação", "avisoDoGestor": "Aviso do gestor", "falhaAviso": "Falha ao enviar aviso"
+        "falhaEncerrar": "Falha ao encerrar designação", "avisoDoGestor": "Aviso do gestor", "falhaAviso": "Falha ao enviar aviso",
+        "avaliacaoExcluida": "Avaliação excluída.", "falhaExcluirAvaliacao": "Falha ao excluir avaliação"
       },
       "detalhe": {
         "avaliacaoSoGestor": "Avaliação (visível só para o gestor)",
@@ -377,6 +376,8 @@
         "designando": "Designando...",
         "designar": "Designar",
         "avaliacoesContagem": "{{n}} avaliação(ões)",
+        "excluirAvaliacao": "Excluir",
+        "confirmarExcluirAvaliacao": "Excluir esta avaliação? A nota média é recalculada sem ela.",
         "novaAvaliacao": "Nova avaliação",
         "comentarioOpcional": "Comentário (opcional)",
         "salvando": "Salvando...",
@@ -508,6 +509,15 @@
       "verOferta": "Ver oferta",
       "categoria": { "dashcam": "Dashcam", "rastreador": "Rastreador", "seguro": "Seguro" },
       "toasts": { "falhaCarregar": "Erro ao carregar parceiros", "falhaAbrir": "Falha ao abrir parceiro" }
+    },
+    "notifications": {
+      "titulo": "Notificações",
+      "subtitulo": "Tudo o que já te avisamos, em um só lugar.",
+      "nenhumaNotificacao": "Nenhuma notificação por aqui.",
+      "marcarTodasLidas": "Marcar todas como lidas",
+      "paginaXDeY": "Página {{atual}} de {{total}}",
+      "anterior": "Anterior",
+      "proxima": "Próxima"
     },
     "chat": {
       "conversas": "Conversas",
@@ -672,9 +682,12 @@
       "custoReparoOpcional": "Custo de reparo (opcional)",
       "registrando": "Registrando...",
       "registrarSinistro": "Registrar sinistro",
+      "excluirSinistro": "Excluir",
+      "confirmarExcluirSinistro": "Excluir este sinistro? O score de condição é recalculado sem ele.",
       "toasts": {
         "fipeLancado": "Valor FIPE lançado.", "falhaFipe": "Falha ao lançar valor FIPE",
-        "sinistroRegistrado": "Sinistro registrado.", "falhaSinistro": "Falha ao registrar sinistro"
+        "sinistroRegistrado": "Sinistro registrado.", "falhaSinistro": "Falha ao registrar sinistro",
+        "sinistroExcluido": "Sinistro excluído.", "falhaExcluirSinistro": "Falha ao excluir sinistro"
       }
     },
     "vehicleCosts": {

@@ -25,6 +25,7 @@ import { diasAteVencer, formatDateBR, iniciais } from '../lib/format';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 const STATUS_OPTIONS = ['ATIVO', 'INATIVO'] as const;
 
@@ -187,6 +188,18 @@ export function DriversPage() {
     }
   }
 
+  async function handleRemoveRating(ratingId: string) {
+    if (!detail) return;
+    const driverId = detail.id!;
+    await deleteWithConfirm({
+      confirmMessage: t('pages.drivers.detalhe.confirmarExcluirAvaliacao'),
+      remove: () => coreApi.driverRatings.remove(driverId, ratingId),
+      successMessage: t('pages.drivers.toasts.avaliacaoExcluida'),
+      fallbackErrorMessage: t('pages.drivers.toasts.falhaExcluirAvaliacao'),
+      onSuccess: () => refreshRatings(driverId),
+    });
+  }
+
   async function handleInvite() {
     if (!detail) return;
     setInviteSending(true);
@@ -329,11 +342,11 @@ export function DriversPage() {
                   <th className="px-5 py-2.5" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <StaggerGroup as="tbody" className="divide-y divide-border">
                 {filtered.map((d) => {
                   const dias = d.cnhValidade ? diasAteVencer(d.cnhValidade) : null;
                   return (
-                    <tr key={d.id} className="hover:bg-muted/50">
+                    <StaggerItem as="tr" key={d.id} className="hover:bg-muted/50">
                       <td className="px-5 py-2.5">
                         <div className="flex items-center gap-2.5">
                           <Avatar className="size-7">
@@ -389,7 +402,7 @@ export function DriversPage() {
                           </Button>
                         </div>
                       </td>
-                    </tr>
+                    </StaggerItem>
                   );
                 })}
                 {filtered.length === 0 && (
@@ -399,7 +412,7 @@ export function DriversPage() {
                     </td>
                   </tr>
                 )}
-              </tbody>
+              </StaggerGroup>
             </table>
           )}
         </div>
@@ -594,6 +607,13 @@ export function DriversPage() {
                         </span>
                       </div>
                       {r.comentario && <p className="mt-1 text-foreground">{r.comentario}</p>}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRating(r.id!)}
+                        className="mt-1.5 text-[11px] font-medium text-status-danger hover:underline"
+                      >
+                        {t('pages.drivers.detalhe.excluirAvaliacao')}
+                      </button>
                     </li>
                   ))}
                 </ul>

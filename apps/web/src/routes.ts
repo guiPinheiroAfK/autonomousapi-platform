@@ -24,6 +24,7 @@ export const ROUTES = {
   billing: '/assinatura',
   affiliates: '/parceiros',
   chat: '/mensagens',
+  notifications: '/notificacoes',
   chargingStations: '/pontos-de-recarga',
   routes: '/rotas',
   routePlans: '/coleta-e-entrega',

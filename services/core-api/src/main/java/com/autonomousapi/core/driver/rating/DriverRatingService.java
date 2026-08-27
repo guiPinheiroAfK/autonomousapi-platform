@@ -63,6 +63,18 @@ public class DriverRatingService {
         return DriverRatingResponse.from(rating);
     }
 
+    /** Corrige uma avaliação lançada errada (motorista trocado, nota digitada errada) — o
+     *  resumo é recalculado a partir do que sobra, nunca fica desatualizado. Não afeta o
+     *  componente automático, que segue sendo do {@link DriverAutoRatingJob}. */
+    @Transactional
+    public void delete(JwtPrincipal principal, UUID driverId, UUID ratingId) {
+        Driver driver = findOwnedDriver(principal, driverId);
+        DriverRatingManual rating = Lookups.orNotFound(
+                manualRatings.findByIdAndDriverId(ratingId, driver.getId()), "Avaliação não encontrada.");
+        manualRatings.delete(rating);
+        recomputarResumo(driver.getId());
+    }
+
     @Transactional(readOnly = true)
     public Page<DriverRatingResponse> list(JwtPrincipal principal, UUID driverId, Pageable pageable) {
         Driver driver = findOwnedDriver(principal, driverId);
@@ -95,6 +107,11 @@ public class DriverRatingService {
         List<DriverRatingAuto> automaticas = autoRatings.findAllByDriverId(driverId);
 
         if (manuais.isEmpty() && automaticas.isEmpty()) {
+            // Não é só "nunca teve avaliação" (caso em que não criar linha nenhuma já basta,
+            // ver #summary) — também é o caso de ter tido e a última ter sido apagada agora
+            // (achado ao adicionar DriverRatingService#delete). Sem isso, o resumo antigo
+            // ficava parado com a nota de uma avaliação que não existe mais.
+            summaries.findByDriverId(driverId).ifPresent(summaries::delete);
             return;
         }
 

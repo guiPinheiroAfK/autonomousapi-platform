@@ -5,6 +5,7 @@ import { coreApi, type AffiliatePartnerResponse } from '../api/client';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from '../lib/toast';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 /**
  * Catálogo de parceiros (spec 06, item 4) — negociado pela AutonomousAPI, não pelo
@@ -63,9 +64,10 @@ export function AffiliatesPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerGroup className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {partners.map((p) => (
-            <Card key={p.id}>
+            <StaggerItem key={p.id}>
+            <Card>
               <CardHeader>
                 <CardTitle className="text-sm">{p.name}</CardTitle>
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -84,8 +86,9 @@ export function AffiliatesPage() {
                 </Button>
               </div>
             </Card>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       )}
     </div>
   );

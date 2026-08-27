@@ -20,6 +20,7 @@ const TITLE_RULES: { test: (path: string) => boolean; title: string }[] = [
   { test: (p) => p === ROUTES.billing, title: 'Assinatura' },
   { test: (p) => p === ROUTES.affiliates, title: 'Parceiros' },
   { test: (p) => p === ROUTES.chat, title: 'Mensagens' },
+  { test: (p) => p === ROUTES.notifications, title: 'Notificações' },
   { test: (p) => p === ROUTES.chargingStations, title: 'Pontos de Recarga' },
   { test: (p) => p === ROUTES.routePlans, title: 'Coleta & Entrega' },
   { test: (p) => p === ROUTES.routes, title: 'Rotas' },

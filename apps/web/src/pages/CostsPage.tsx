@@ -27,6 +27,7 @@ import { cn } from '../lib/utils';
 import { formatBRL, formatDateBR, hojeISO } from '../lib/format';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
 
 const CATEGORY_OPTIONS: ExpenseCategory[] = [
@@ -339,9 +340,9 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                   <th className="px-5 py-2.5" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <StaggerGroup as="tbody" className="divide-y divide-border">
                 {entries.map((e) => (
-                  <tr key={e.id} className="hover:bg-muted/50">
+                  <StaggerItem as="tr" key={e.id} className="hover:bg-muted/50">
                     <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(e.data!)}</td>
                     <td className="px-5 py-2.5">
                       {e.plate ? (
@@ -365,7 +366,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                         {t('pages.costs.despesas.excluir')}
                       </Button>
                     </td>
-                  </tr>
+                  </StaggerItem>
                 ))}
                 {entries.length === 0 && (
                   <tr>
@@ -374,7 +375,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                     </td>
                   </tr>
                 )}
-              </tbody>
+              </StaggerGroup>
             </table>
           </div>
         )}

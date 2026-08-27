@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { StatCard } from '../components/shared/StatCard';
 import { DonutChart } from '../components/shared/DonutChart';
 import { formatBRL, monthLabel } from '../lib/format';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 const TIPO_COLORS: Record<string, string> = {
   Preventiva: 'var(--color-status-info)',
@@ -173,9 +174,9 @@ export function ReportsPage({ onGoToExpenses }: Props) {
         <CardHeader>
           <CardTitle>{t('pages.reports.veiculosMaiorCusto')}</CardTitle>
         </CardHeader>
-        <ul className="space-y-3 px-5 pb-5">
+        <StaggerGroup as="ul" className="space-y-3 px-5 pb-5">
           {ranking.map((r, i) => (
-            <li key={r.placa} className="flex items-center gap-3">
+            <StaggerItem as="li" key={r.placa} className="flex items-center gap-3">
               <span className="w-4 text-xs font-semibold text-muted-foreground">{i + 1}</span>
               <PlacaBR placa={r.placa} size="sm" />
               <div className="min-w-0 flex-1">
@@ -190,9 +191,9 @@ export function ReportsPage({ onGoToExpenses }: Props) {
                   />
                 </div>
               </div>
-            </li>
+            </StaggerItem>
           ))}
-        </ul>
+        </StaggerGroup>
       </Card>
     </div>
   );

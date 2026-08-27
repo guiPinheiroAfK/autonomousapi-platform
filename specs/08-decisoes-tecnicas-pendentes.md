@@ -89,6 +89,8 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Prioridade:** polish, não bloqueia nada — mas como é reaproveitamento de um padrão já pronto (não é design novo), é um item de esforço baixo/médio quando sobrar janela de front-end.
 
+**Status:** implementado (2026-08-27) — `StaggerGroup`/`StaggerItem` aplicado nas 9 telas que faltavam (Motoristas, Ordens de Serviço, Custos, Coleta & Entrega, Pontos de Recarga, Parceiros, Manutenção, Relatórios, detalhe de Veículo). O componente compartilhado (`Stagger.tsx`) ganhou suporte a `ul`/`ol`/`li` além de `div`/`tbody`/`tr` pra cobrir telas em lista, não só tabela/grid.
+
 ## 11. E-mail transacional — Resend configurado, falta domínio verificado
 
 **Situação atual (2026-08-25):** o piloto (Oracle + Neon + Netlify) já está no ar. E-mail transacional (confirmação de conta, convite de motorista) já está configurado via Resend (`MAIL_SMTP_*` no `.env.prod` do `core-api`, documentado em `docs/setup-email-resend.md`) — mas sem domínio verificado no Resend, `MAIL_FROM` fica em `onboarding@resend.dev`, que só entrega no e-mail da própria conta Resend. Contas de piloto reais (qualquer e-mail que não seja o do dono da conta) ainda dependem de confirmação manual direto no Neon (flip do campo de confirmação na tabela).
@@ -107,5 +109,5 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [ ] `npm audit fix` rodado no `apps/web`, resto revisado manualmente (item 7).
 - [ ] Code-splitting por rota no `apps/web`, com medição de antes/depois (item 8).
 - [ ] `develop` com a mesma proteção de branch já ativa em `main` (item 9).
-- [ ] Padrão de transição de página (Dashboard/Frota) replicado nas demais telas (item 10).
+- [x] Padrão de transição de página (Dashboard/Frota) replicado nas demais telas (item 10).
 - [ ] Domínio verificado no Resend + Netlify, confirmação de e-mail deixa de depender do workaround manual (item 11).

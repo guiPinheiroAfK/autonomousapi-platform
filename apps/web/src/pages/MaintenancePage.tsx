@@ -9,6 +9,7 @@ import { StatCard } from '../components/shared/StatCard';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
 import { formatBRL, formatDateBR } from '../lib/format';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 /** Peças/oficina são campos só-visuais (não existem no backend ainda) — atribuídos
  *  deterministicamente a partir do id do lançamento, só pra enriquecer a tela. */
@@ -141,9 +142,9 @@ export function MaintenancePage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <StaggerGroup as="tbody" className="divide-y divide-border">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/50">
+                  <StaggerItem as="tr" key={r.id} className="hover:bg-muted/50">
                     <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(r.data)}</td>
                     <td className="px-5 py-2.5">
                       <div className="flex items-center gap-2">
@@ -169,7 +170,7 @@ export function MaintenancePage() {
                     <td className="px-5 py-2.5 text-right font-data font-semibold text-foreground">
                       {formatBRL(r.custo)}
                     </td>
-                  </tr>
+                  </StaggerItem>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
@@ -178,7 +179,7 @@ export function MaintenancePage() {
                     </td>
                   </tr>
                 )}
-              </tbody>
+              </StaggerGroup>
             </table>
           </div>
         )}

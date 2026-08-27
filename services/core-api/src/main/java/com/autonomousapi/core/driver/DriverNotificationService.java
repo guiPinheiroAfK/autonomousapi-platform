@@ -2,23 +2,24 @@ package com.autonomousapi.core.driver;
 
 import com.autonomousapi.core.error.DriverWithoutLoginException;
 import com.autonomousapi.core.error.Lookups;
-import com.autonomousapi.core.push.PushNotificationService;
+import com.autonomousapi.core.notification.NotificationService;
+import com.autonomousapi.core.notification.NotificationType;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** "Aviso do gestor" via push (spec 07 item 5, ADR 0016) — separado do DriverService para
- *  não acoplar CRUD de motorista a notificação. */
+/** "Aviso do gestor" (spec 07 item 5, ADR 0016) — separado do DriverService para não
+ *  acoplar CRUD de motorista a notificação. */
 @Service
 public class DriverNotificationService {
 
     private final DriverRepository drivers;
-    private final PushNotificationService pushNotificationService;
+    private final NotificationService notificationService;
 
-    public DriverNotificationService(DriverRepository drivers, PushNotificationService pushNotificationService) {
+    public DriverNotificationService(DriverRepository drivers, NotificationService notificationService) {
         this.drivers = drivers;
-        this.pushNotificationService = pushNotificationService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -27,6 +28,6 @@ public class DriverNotificationService {
         if (!driver.hasLogin()) {
             throw new DriverWithoutLoginException();
         }
-        pushNotificationService.notifyUser(driver.getAppUserId(), title, body);
+        notificationService.notify(driver.getAppUserId(), NotificationType.AVISO_GESTOR, title, body, null);
     }
 }

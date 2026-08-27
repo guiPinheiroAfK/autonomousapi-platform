@@ -87,6 +87,7 @@ export type CollectionPointRequest = Schemas['CollectionPointRequest'];
 export type CollectionPointResponse = Schemas['CollectionPointResponse'];
 export type DriverProfileResponse = Schemas['DriverProfileResponse'];
 export type TripResponse = Schemas['TripResponse'];
+export type NotificationResponse = Schemas['NotificationResponse'];
 export type ApiError = { code: string; message: string };
 
 /** Envelope de paginação — usado por endpoints de listagem grandes o bastante pra não
@@ -243,6 +244,9 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    /** Corrige um lançamento errado — o resumo (nota média) é recalculado no backend. */
+    remove: (driverId: string, ratingId: string) =>
+      request<void>(`/v1/drivers/${driverId}/ratings/${ratingId}`, { method: 'DELETE' }),
   },
 
   /** Valor de mercado/FIPE (spec 06) — lançamento manual, ver ADR do backend. */
@@ -268,6 +272,9 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    /** Corrige um lançamento errado — o score de condição é recalculado no backend. */
+    removeIncident: (vehicleId: string, incidentId: string) =>
+      request<void>(`/v1/vehicles/${vehicleId}/incidents/${incidentId}`, { method: 'DELETE' }),
   },
 
   /** Afiliados (spec 06) — catálogo é global, gerido pela AutonomousAPI, não por tenant. */
@@ -466,5 +473,15 @@ export const coreApi = {
     /** Motorista-only: marca uma parada da própria rota ativa como concluída. */
     completeStop: (stopId: string) =>
       request<RouteStopResponse>(`/v1/routes/plans/stops/${stopId}/complete`, { method: 'POST' }),
+  },
+
+  /** Sino do topbar + tela "ver todas". Sem filtro de role — qualquer usuário autenticado
+   *  só enxerga as próprias notificações (escopadas por userId no backend). */
+  notifications: {
+    list: (page = 0, size = 20) =>
+      request<PageResponse<NotificationResponse>>(`/v1/notifications?page=${page}&size=${size}`),
+    unreadCount: () => request<{ count: number }>('/v1/notifications/unread-count'),
+    markRead: (id: string) => request<void>(`/v1/notifications/${id}/read`, { method: 'POST' }),
+    markAllRead: () => request<void>('/v1/notifications/read-all', { method: 'POST' }),
   },
 };

@@ -52,6 +52,17 @@ public class VehicleConditionService {
         return VehicleIncidentResponse.from(incident);
     }
 
+    /** Corrige um lançamento errado (veículo trocado, severidade digitada errada) — o score
+     *  é recalculado a partir do que sobra, nunca fica desatualizado. */
+    @Transactional
+    public void deleteIncident(JwtPrincipal principal, UUID vehicleId, UUID incidentId) {
+        Vehicle vehicle = findOwnedVehicle(principal, vehicleId);
+        VehicleIncident incident = Lookups.orNotFound(
+                incidents.findByIdAndVehicleId(incidentId, vehicle.getId()), "Sinistro não encontrado.");
+        incidents.delete(incident);
+        recomputarScore(vehicle.getId());
+    }
+
     @Transactional(readOnly = true)
     public List<VehicleIncidentResponse> listIncidents(JwtPrincipal principal, UUID vehicleId) {
         Vehicle vehicle = findOwnedVehicle(principal, vehicleId);

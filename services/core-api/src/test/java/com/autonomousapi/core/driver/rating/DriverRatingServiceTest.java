@@ -94,6 +94,38 @@ class DriverRatingServiceTest {
     }
 
     @Test
+    void resumoApagaLinhaExistenteQuandoUltimaFonteSai() {
+        // Achado ao adicionar o delete de avaliação manual: sem isso, apagar a única
+        // avaliação (sem automática) deixava o resumo antigo "preso" com a nota de uma
+        // avaliação que não existe mais.
+        UUID driverId = UUID.randomUUID();
+        DriverRatingSummary resumoAntigo = new DriverRatingSummary(driverId, new BigDecimal("5.00"), 1);
+        when(manualRatings.findAllByDriverIdOrderByCreatedAtDesc(driverId)).thenReturn(List.of());
+        when(autoRatings.findAllByDriverId(driverId)).thenReturn(List.of());
+        when(summaries.findByDriverId(driverId)).thenReturn(Optional.of(resumoAntigo));
+
+        service.recomputarResumo(driverId);
+
+        verify(summaries).delete(resumoAntigo);
+        verify(summaries, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    void deleteRemoveAvaliacaoERecomputaResumo() {
+        Driver driver = new Driver(tenantId, "Fulano", "12345678901", null);
+        DriverRatingManual avaliacao = rating(driver.getId(), (short) 3);
+        when(drivers.findByIdAndTenantId(driver.getId(), tenantId)).thenReturn(Optional.of(driver));
+        when(manualRatings.findByIdAndDriverId(avaliacao.getId(), driver.getId())).thenReturn(Optional.of(avaliacao));
+        when(manualRatings.findAllByDriverIdOrderByCreatedAtDesc(driver.getId())).thenReturn(List.of());
+        when(autoRatings.findAllByDriverId(driver.getId())).thenReturn(List.of());
+        when(summaries.findByDriverId(driver.getId())).thenReturn(Optional.empty());
+
+        service.delete(principal, driver.getId(), avaliacao.getId());
+
+        verify(manualRatings).delete(avaliacao);
+    }
+
+    @Test
     void createRecomputaResumoAposLancarAvaliacaoManual() {
         Driver driver = new Driver(tenantId, "Fulano", "12345678901", null);
         when(drivers.findByIdAndTenantId(driver.getId(), tenantId)).thenReturn(Optional.of(driver));

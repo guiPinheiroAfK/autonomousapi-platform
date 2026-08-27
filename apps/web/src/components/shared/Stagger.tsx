@@ -16,14 +16,18 @@ const item = {
  * real (precisa ser `motion.tbody`/`motion.tr` dentro de <table>, senão o HTML fica
  * inválido). Reduced-motion desliga o stagger e mostra tudo de uma vez, sem atraso.
  */
-export function StaggerGroup({ as = 'div', ...props }: HTMLMotionProps<'div'> & { as?: 'div' | 'tbody' }) {
+type StaggerTag = 'div' | 'tbody' | 'ul' | 'ol';
+
+export function StaggerGroup({ as = 'div', ...props }: HTMLMotionProps<'div'> & { as?: StaggerTag }) {
   const reduceMotion = useReducedMotion();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Comp = motion[as] as any;
   return <Comp variants={container} initial={reduceMotion ? false : 'hidden'} animate="show" {...props} />;
 }
 
-export function StaggerItem({ as = 'div', ...props }: HTMLMotionProps<'div'> & { as?: 'div' | 'tr' }) {
+type StaggerItemTag = 'div' | 'tr' | 'li';
+
+export function StaggerItem({ as = 'div', ...props }: HTMLMotionProps<'div'> & { as?: StaggerItemTag }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Comp = motion[as] as any;
   return <Comp variants={item} {...props} />;

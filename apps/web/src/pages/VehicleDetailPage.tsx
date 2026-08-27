@@ -21,6 +21,8 @@ import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { formatBRL, formatDateBR } from '../lib/format';
 import { toast } from '../lib/toast';
+import { deleteWithConfirm } from '../lib/confirm';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 interface Props {
   vehicleId: string;
@@ -117,6 +119,16 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
     }
   }
 
+  async function handleRemoveIncident(incidentId: string) {
+    await deleteWithConfirm({
+      confirmMessage: t('pages.vehicleDetail.confirmarExcluirSinistro'),
+      remove: () => coreApi.vehicleCondition.removeIncident(vehicleId, incidentId),
+      successMessage: t('pages.vehicleDetail.toasts.sinistroExcluido'),
+      fallbackErrorMessage: t('pages.vehicleDetail.toasts.falhaExcluirSinistro'),
+      onSuccess: refreshCondition,
+    });
+  }
+
   if (loading) {
     return <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>;
   }
@@ -184,17 +196,17 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
           {manutencao.length === 0 ? (
             <p className="py-6 text-center text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumLancamentoManutencao')}</p>
           ) : (
-            <ul className="space-y-2">
+            <StaggerGroup as="ul" className="space-y-2">
               {manutencao.map((c) => (
-                <li key={c.id} className="rounded-md border border-border p-3 text-xs">
+                <StaggerItem as="li" key={c.id} className="rounded-md border border-border p-3 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">{c.descricao}</span>
                     <span className="font-data font-semibold text-foreground">{formatBRL(Number(c.valor))}</span>
                   </div>
                   <span className="text-[11px] text-muted-foreground">{formatDateBR(c.data!)}</span>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerGroup>
           )}
         </TabsContent>
 
@@ -211,9 +223,9 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                   <th className="py-1.5 text-left font-medium">{t('pages.vehicleDetail.osTabela.status')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <StaggerGroup as="tbody" className="divide-y divide-border">
                 {os.map((o) => (
-                  <tr key={o.id}>
+                  <StaggerItem as="tr" key={o.id}>
                     <td className="py-1.5 font-data text-foreground">{o.numero}</td>
                     <td className="py-1.5 text-muted-foreground">{o.tipo ? t(`status.tipoOS.${o.tipo}`) : '—'}</td>
                     <td className="py-1.5 font-data text-muted-foreground">
@@ -222,9 +234,9 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                     <td className="py-1.5">
                       <StatusBadgeOS status={o.status} />
                     </td>
-                  </tr>
+                  </StaggerItem>
                 ))}
-              </tbody>
+              </StaggerGroup>
             </table>
           )}
         </TabsContent>
@@ -297,9 +309,9 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
             {incidents.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumSinistro')}</p>
             ) : (
-              <ul className="space-y-2">
+              <StaggerGroup as="ul" className="space-y-2">
                 {incidents.map((i) => (
-                  <li key={i.id} className="rounded-md border border-border p-3 text-xs">
+                  <StaggerItem as="li" key={i.id} className="rounded-md border border-border p-3 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-data text-muted-foreground">{i.data ? formatDateBR(i.data) : '—'}</span>
                       <StatusBadgeSeveridade severidade={i.severidade} />
@@ -310,9 +322,16 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                         {t('pages.vehicleDetail.reparo', { valor: formatBRL(Number(i.custoReparo)) })}
                       </p>
                     )}
-                  </li>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveIncident(i.id!)}
+                      className="mt-1.5 text-[11px] font-medium text-status-danger hover:underline"
+                    >
+                      {t('pages.vehicleDetail.excluirSinistro')}
+                    </button>
+                  </StaggerItem>
                 ))}
-              </ul>
+              </StaggerGroup>
             )}
 
             <form onSubmit={handleAddIncident} className="space-y-2 border-t border-border pt-4">

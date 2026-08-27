@@ -21,6 +21,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { toast } from '../lib/toast';
 import { hojeISO } from '../lib/format';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 import { deleteWithConfirm } from '../lib/confirm';
 
 const CATEGORIA_OPTIONS: RouteCategoria[] = ['ROTA', 'TRANSFER'];
@@ -259,9 +260,10 @@ export function RoutePlansPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <StaggerGroup className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((p) => (
-            <Card key={p.id}>
+            <StaggerItem key={p.id}>
+            <Card>
               <CardHeader className="flex-row items-center justify-between">
                 <CardTitle>
                   {p.categoria === 'TRANSFER' ? t('pages.routePlans.transfer') : t('pages.routePlans.paradaContagem', { n: p.stops?.length ?? 0 })}
@@ -297,8 +299,9 @@ export function RoutePlansPage() {
                 )}
               </div>
             </Card>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('pages.routePlans.novaRota')} className="max-w-2xl">

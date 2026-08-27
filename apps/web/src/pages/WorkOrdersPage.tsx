@@ -24,6 +24,7 @@ import { formatBRL, formatDateBR } from '../lib/format';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 type ItemForm = WorkOrderItemRequest;
 
@@ -243,9 +244,9 @@ export function WorkOrdersPage() {
                   <Th />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <StaggerGroup as="tbody" className="divide-y divide-border">
                 {filtered.map((os) => (
-                  <tr key={os.id} className="hover:bg-muted/50">
+                  <StaggerItem as="tr" key={os.id} className="hover:bg-muted/50">
                     <td className="px-5 py-2.5 font-data font-medium text-foreground">{os.numero}</td>
                     <td className="px-5 py-2.5">
                       <div className="flex items-center gap-2">
@@ -292,7 +293,7 @@ export function WorkOrdersPage() {
                         </Button>
                       </div>
                     </td>
-                  </tr>
+                  </StaggerItem>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
@@ -301,7 +302,7 @@ export function WorkOrdersPage() {
                     </td>
                   </tr>
                 )}
-              </tbody>
+              </StaggerGroup>
             </table>
           </div>
         )}

@@ -1,6 +1,7 @@
 package com.autonomousapi.core.driver.rating;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,4 +16,8 @@ public interface DriverRatingManualRepository extends JpaRepository<DriverRating
     /** Paginado (cleanup de performance) — a tela de listagem (`GET .../ratings`) não
      *  precisa do histórico inteiro de uma vez. */
     Page<DriverRatingManual> findAllByDriverIdOrderByCreatedAtDesc(UUID driverId, Pageable pageable);
+
+    /** Escopa a exclusão ao motorista do path — id de avaliação de outro motorista (mesmo
+     *  que do mesmo tenant) nunca é encontrado por aqui. */
+    Optional<DriverRatingManual> findByIdAndDriverId(UUID id, UUID driverId);
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { coreApi, type ChargingStationItem } from '../api/client';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { cn } from '../lib/utils';
+import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 
 const STATUS_CLASS: Record<string, string> = {
   DISPONIVEL: 'bg-status-success-bg text-status-success',
@@ -70,9 +71,9 @@ export function ChargingStationsPage() {
             <p>{t('pages.chargingStations.nenhumaEstacao')}</p>
           </div>
         ) : (
-          <ul className="divide-y divide-border">
+          <StaggerGroup as="ul" className="divide-y divide-border">
             {stations.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 px-5 py-3">
+              <StaggerItem as="li" key={s.id} className="flex items-center justify-between gap-3 px-5 py-3">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary">
                     <Zap className="size-4 text-muted-foreground" />
@@ -102,9 +103,9 @@ export function ChargingStationsPage() {
                 >
                   {s.status ? t(`pages.chargingStations.status.${s.status}`, { defaultValue: s.status }) : t('pages.chargingStations.status.DESCONHECIDO')}
                 </span>
-              </li>
+              </StaggerItem>
             ))}
-          </ul>
+          </StaggerGroup>
         )}
       </Card>
     </div>

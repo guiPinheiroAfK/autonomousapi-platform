@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +56,12 @@ public class DriverRatingController {
         int cappedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         return PageResponse.from(
                 ratingService.list(principal(auth), driverId, PageRequest.of(Math.max(page, 0), cappedSize)));
+    }
+
+    @DeleteMapping("/{ratingId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID driverId, @PathVariable UUID ratingId, Authentication auth) {
+        ratingService.delete(principal(auth), driverId, ratingId);
     }
 
     @GetMapping("/summary")

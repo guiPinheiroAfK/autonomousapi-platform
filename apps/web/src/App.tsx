@@ -47,6 +47,9 @@ const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ defa
 const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
 const AffiliatesPage = lazy(() => import('./pages/AffiliatesPage').then((m) => ({ default: m.AffiliatesPage })));
 const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })));
+const NotificationsPage = lazy(() =>
+  import('./pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })),
+);
 const RoutesPage = lazy(() => import('./pages/RoutesPage').then((m) => ({ default: m.RoutesPage })));
 const RoutePlansPage = lazy(() => import('./pages/RoutePlansPage').then((m) => ({ default: m.RoutePlansPage })));
 const CollectionPointsPage = lazy(() =>
@@ -232,6 +235,7 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
       <Route element={<AppShell user={user} onLogout={logout} />}>
         <Route path={ROUTES.home} element={<HomeRoute user={user} />} />
         <Route path={ROUTES.chat} element={<ChatRoute user={user} />} />
+        <Route path={ROUTES.notifications} element={<NotificationsPage />} />
 
         {/* Gestor */}
         <Route

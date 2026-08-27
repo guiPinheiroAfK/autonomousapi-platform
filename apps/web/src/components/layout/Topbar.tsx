@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, Menu, Moon, Search, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
   DropdownMenu,
@@ -13,7 +14,9 @@ import {
 import { Select } from '../ui/select';
 import { LanguageSwitcher } from '../shared/LanguageSwitcher';
 import { useTheme } from '../../lib/theme';
-import type { UserResponse } from '../../api/client';
+import { coreApi, type NotificationResponse, type UserResponse } from '../../api/client';
+import { formatRelativeShortBR } from '../../lib/format';
+import { ROUTES } from '../../routes';
 
 interface TopbarProps {
   title: string;
@@ -28,8 +31,35 @@ function initials(email: string): string {
 
 export function Topbar({ title, user, onLogout, onMenuClick }: TopbarProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [unidade, setUnidade] = useState('todas');
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [recentNotifications, setRecentNotifications] = useState<NotificationResponse[]>([]);
+
+  function refreshUnreadCount() {
+    coreApi.notifications.unreadCount().then((res) => setUnreadCount(res.count));
+  }
+
+  useEffect(() => {
+    refreshUnreadCount();
+    // Sem WebSocket dedicado pra isso ainda — poll simples cobre o caso de uso (o gestor
+    // não precisa ver o contador mudar no instante exato em que o job dispara).
+    const interval = setInterval(refreshUnreadCount, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  function handleBellOpenChange(open: boolean) {
+    if (open) coreApi.notifications.list(0, 5).then((res) => setRecentNotifications(res.content));
+  }
+
+  async function handleNotificationClick(n: NotificationResponse) {
+    if (!n.lida) {
+      await coreApi.notifications.markRead(n.id!);
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+    if (n.link) navigate(n.link);
+  }
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 sm:px-5">
@@ -76,28 +106,46 @@ export function Topbar({ title, user, onLogout, onMenuClick }: TopbarProps) {
           {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
 
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={handleBellOpenChange}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
               className="relative flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
             >
               <Bell className="size-4" />
-              <span className="absolute right-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-status-danger text-[9px] font-semibold text-white">
-                2
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute right-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-status-danger text-[9px] font-semibold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">
             <DropdownMenuLabel>{t('app.topbar.notificacoes')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex-col items-start gap-0.5">
-              <span className="text-xs font-medium">{t('app.topbar.notif1Titulo')}</span>
-              <span className="text-[11px] text-muted-foreground">{t('app.topbar.notif1Sub')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex-col items-start gap-0.5">
-              <span className="text-xs font-medium">{t('app.topbar.notif2Titulo')}</span>
-              <span className="text-[11px] text-muted-foreground">{t('app.topbar.notif2Sub')}</span>
+            {recentNotifications.length === 0 ? (
+              <p className="px-2 py-3 text-center text-[11px] text-muted-foreground">
+                {t('app.topbar.semNotificacoes')}
+              </p>
+            ) : (
+              recentNotifications.map((n) => (
+                <DropdownMenuItem
+                  key={n.id}
+                  className="flex-col items-start gap-0.5"
+                  onClick={() => handleNotificationClick(n)}
+                >
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span className="text-xs font-medium">{n.titulo}</span>
+                    {!n.lida && <span className="size-1.5 shrink-0 rounded-full bg-status-info" />}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">{n.corpo}</span>
+                  <span className="text-[10px] text-muted-foreground/70">{formatRelativeShortBR(n.createdAt!)}</span>
+                </DropdownMenuItem>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="justify-center text-xs font-medium" onClick={() => navigate(ROUTES.notifications)}>
+              {t('app.topbar.verTodas')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

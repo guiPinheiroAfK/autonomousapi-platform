@@ -6,6 +6,8 @@ import com.autonomousapi.core.driver.DriverVehicleAssignment;
 import com.autonomousapi.core.driver.DriverVehicleAssignmentRepository;
 import com.autonomousapi.core.driver.DriverService;
 import com.autonomousapi.core.driver.dto.DriverLicenseAlertResponse;
+import com.autonomousapi.core.notification.NotificationService;
+import com.autonomousapi.core.notification.NotificationType;
 import com.autonomousapi.core.vehicle.VehicleService;
 import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import java.util.Optional;
@@ -29,19 +31,19 @@ public class AlertPushJob {
     private final VehicleService vehicleService;
     private final DriverRepository drivers;
     private final DriverVehicleAssignmentRepository assignments;
-    private final PushNotificationService pushNotificationService;
+    private final NotificationService notificationService;
 
     public AlertPushJob(
             DriverService driverService,
             VehicleService vehicleService,
             DriverRepository drivers,
             DriverVehicleAssignmentRepository assignments,
-            PushNotificationService pushNotificationService) {
+            NotificationService notificationService) {
         this.driverService = driverService;
         this.vehicleService = vehicleService;
         this.drivers = drivers;
         this.assignments = assignments;
-        this.pushNotificationService = pushNotificationService;
+        this.notificationService = notificationService;
     }
 
     /** Todo dia às 08:00 (horário do servidor). */
@@ -55,8 +57,12 @@ public class AlertPushJob {
         for (DriverLicenseAlertResponse alert : driverService.licenseExpiringAcrossAllTenants()) {
             drivers.findById(alert.driverId()).ifPresent(driver -> {
                 String prazo = alert.diasRestantes() < 0 ? "vencida" : "vence em " + alert.diasRestantes() + " dia(s)";
-                pushNotificationService.notifyUser(
-                        driver.getAppUserId(), "CNH " + prazo, "Sua CNH " + prazo + ". Regularize a documentação.");
+                notificationService.notify(
+                        driver.getAppUserId(),
+                        NotificationType.CNH_VENCENDO,
+                        "CNH " + prazo,
+                        "Sua CNH " + prazo + ". Regularize a documentação.",
+                        "/mais");
             });
         }
     }
@@ -67,10 +73,12 @@ public class AlertPushJob {
                     assignments.findByVehicleIdAndEndedAtIsNull(alert.vehicleId());
             assignment.ifPresent(a -> drivers.findById(a.getDriverId())
                     .filter(Driver::hasLogin)
-                    .ifPresent(driver -> pushNotificationService.notifyUser(
+                    .ifPresent(driver -> notificationService.notify(
                             driver.getAppUserId(),
+                            NotificationType.MANUTENCAO_AGENDADA,
                             "Manutenção agendada",
-                            "O veículo " + alert.plate() + " tem manutenção agendada em breve.")));
+                            "O veículo " + alert.plate() + " tem manutenção agendada em breve.",
+                            "/minha-rota")));
         }
     }
 }

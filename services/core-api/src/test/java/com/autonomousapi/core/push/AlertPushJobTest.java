@@ -13,6 +13,7 @@ import com.autonomousapi.core.driver.DriverService;
 import com.autonomousapi.core.driver.DriverVehicleAssignment;
 import com.autonomousapi.core.driver.DriverVehicleAssignmentRepository;
 import com.autonomousapi.core.driver.dto.DriverLicenseAlertResponse;
+import com.autonomousapi.core.notification.NotificationService;
 import com.autonomousapi.core.vehicle.VehicleService;
 import com.autonomousapi.core.vehicle.dto.VehicleMaintenanceAlertResponse;
 import java.time.LocalDate;
@@ -27,10 +28,10 @@ class AlertPushJobTest {
     private final VehicleService vehicleService = mock(VehicleService.class);
     private final DriverRepository drivers = mock(DriverRepository.class);
     private final DriverVehicleAssignmentRepository assignments = mock(DriverVehicleAssignmentRepository.class);
-    private final PushNotificationService pushNotificationService = mock(PushNotificationService.class);
+    private final NotificationService notificationService = mock(NotificationService.class);
 
     private final AlertPushJob job =
-            new AlertPushJob(driverService, vehicleService, drivers, assignments, pushNotificationService);
+            new AlertPushJob(driverService, vehicleService, drivers, assignments, notificationService);
 
     @Test
     void notificaCnhVencendoParaMotoristaComLogin() {
@@ -45,7 +46,7 @@ class AlertPushJobTest {
 
         job.run();
 
-        verify(pushNotificationService).notifyUser(eq(appUserId), any(), any());
+        verify(notificationService).notify(eq(appUserId), any(), any(), any(), any());
     }
 
     @Test
@@ -65,7 +66,7 @@ class AlertPushJobTest {
 
         job.run();
 
-        verify(pushNotificationService).notifyUser(eq(appUserId), any(), any());
+        verify(notificationService).notify(eq(appUserId), any(), any(), any(), any());
     }
 
     @Test
@@ -78,7 +79,7 @@ class AlertPushJobTest {
 
         job.run();
 
-        verify(pushNotificationService, never()).notifyUser(any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -96,6 +97,6 @@ class AlertPushJobTest {
 
         job.run();
 
-        verify(pushNotificationService, never()).notifyUser(any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
     }
 }

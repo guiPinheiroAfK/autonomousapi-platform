@@ -3,6 +3,8 @@ package com.autonomousapi.core.push;
 import com.autonomousapi.core.budget.Budget;
 import com.autonomousapi.core.budget.BudgetRepository;
 import com.autonomousapi.core.budget.BudgetService;
+import com.autonomousapi.core.notification.NotificationService;
+import com.autonomousapi.core.notification.NotificationType;
 import com.autonomousapi.core.user.Role;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
@@ -29,17 +31,17 @@ public class BudgetAlertJob {
     private final BudgetRepository budgets;
     private final BudgetService budgetService;
     private final UserRepository users;
-    private final PushNotificationService pushNotificationService;
+    private final NotificationService notificationService;
 
     public BudgetAlertJob(
             BudgetRepository budgets,
             BudgetService budgetService,
             UserRepository users,
-            PushNotificationService pushNotificationService) {
+            NotificationService notificationService) {
         this.budgets = budgets;
         this.budgetService = budgetService;
         this.users = users;
-        this.pushNotificationService = pushNotificationService;
+        this.notificationService = notificationService;
     }
 
     /** Todo dia às 08:00 (horário do servidor), junto com o AlertPushJob. */
@@ -77,7 +79,7 @@ public class BudgetAlertJob {
                 : "Um orçamento " + escopo + " já passou de 80% do limite deste mês.";
 
         for (User gestor : gestores) {
-            pushNotificationService.notifyUser(gestor.getId(), titulo, corpo);
+            notificationService.notify(gestor.getId(), NotificationType.ORCAMENTO_ALERTA, titulo, corpo, "/custos");
         }
     }
 }

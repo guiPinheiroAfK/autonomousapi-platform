@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.autonomousapi.core.error.DriverWithoutLoginException;
 import com.autonomousapi.core.error.NotFoundException;
-import com.autonomousapi.core.push.PushNotificationService;
+import com.autonomousapi.core.notification.NotificationService;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
 class DriverNotificationServiceTest {
 
     private final DriverRepository drivers = mock(DriverRepository.class);
-    private final PushNotificationService pushNotificationService = mock(PushNotificationService.class);
+    private final NotificationService notificationService = mock(NotificationService.class);
     private final DriverNotificationService service =
-            new DriverNotificationService(drivers, pushNotificationService);
+            new DriverNotificationService(drivers, notificationService);
 
     private final UUID tenantId = UUID.randomUUID();
     private final JwtPrincipal principal = new JwtPrincipal(UUID.randomUUID(), tenantId, "GESTOR_FROTA");
@@ -32,7 +32,7 @@ class DriverNotificationServiceTest {
         when(drivers.findByIdAndTenantId(d.getId(), tenantId)).thenReturn(Optional.of(d));
 
         assertThrows(DriverWithoutLoginException.class, () -> service.notify(principal, d.getId(), "Título", "Corpo"));
-        verify(pushNotificationService, never()).notifyUser(any(), any(), any());
+        verify(notificationService, never()).notify(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -52,6 +52,6 @@ class DriverNotificationServiceTest {
 
         service.notify(principal, d.getId(), "Aviso", "Chegue mais cedo amanhã");
 
-        verify(pushNotificationService).notifyUser(eq(appUserId), eq("Aviso"), eq("Chegue mais cedo amanhã"));
+        verify(notificationService).notify(eq(appUserId), any(), eq("Aviso"), eq("Chegue mais cedo amanhã"), any());
     }
 }
