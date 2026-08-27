@@ -107,39 +107,106 @@ export interface PageResponse<T> {
 let authToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
-/** Chamado pelo AuthContext ao logar/deslogar — mantém o client sem depender de React. */
+/**
+ * Chamado pelo AuthContext ao logar/deslogar E ao restaurar sessão de um reload (token que
+ * já estava salvo no localStorage) — os três casos passam por aqui. Só invalida o cache
+ * quando o token É DE VERDADE outro (login novo, logout, troca de usuário): comparar contra
+ * `authToken` (variável em memória, sempre nula logo após um F5) sempre pareceria "sessão
+ * nova" na restauração, esvaziando o cache a cada reload — exatamente o caso que ele existe
+ * pra sobreviver. Por isso o "dono" anterior do cache fica marcado no próprio
+ * `sessionStorage` (sobrevive ao F5 do mesmo jeito que o cache), não em memória.
+ */
 export function setAuthToken(token: string | null): void {
   authToken = token;
-  // Troca de token = troca de sessão (login, logout, ou refresh pra outro usuário no mesmo
-  // browser) — nunca é seguro deixar a lista cacheada de um usuário vazar pro próximo.
-  listCache.clear();
+  try {
+    const previousOwner = sessionStorage.getItem(CACHE_OWNER_KEY);
+    if (previousOwner !== token) {
+      clearListCache();
+      if (token) sessionStorage.setItem(CACHE_OWNER_KEY, token);
+    }
+  } catch {
+    // sessionStorage indisponível — sem cache persistente mesmo, nada a invalidar.
+  }
 }
 
 /**
- * Cache curto em memória pra listas que várias telas pedem de novo sem o dado ter mudado
- * (ex. `vehicles.list()`/`drivers.list()` abertos direto na página e de novo pra popular um
- * seletor no modal de outra tela). TTL curto o bastante pra nunca mostrar dado visivelmente
- * desatualizado, longo o bastante pra cortar a maioria dos refetch redundantes numa mesma
- * sessão de navegação. Invalidação é por prefixo, chamada nos pontos de mutação abaixo.
+ * Cache curto pra listas que várias telas pedem de novo sem o dado ter mudado (ex.
+ * `vehicles.list()`/`drivers.list()` abertos direto na página e de novo pra popular um
+ * seletor no modal de outra tela). Em `sessionStorage`, não em memória: sobrevive a um F5
+ * dentro da mesma aba (o caso mais comum de "recarreguei e ficou tudo lento de novo"), mas
+ * nunca atravessa pra outra aba nem sobrevive ao fechar o navegador — sem o risco de
+ * persistência longa demais que `localStorage` teria pra dado que já tem TTL curto por
+ * natureza. TTL curto o bastante pra nunca mostrar dado visivelmente desatualizado, longo o
+ * bastante pra cortar a maioria dos refetch redundantes numa mesma sessão de navegação.
+ * Invalidação é por prefixo, chamada nos pontos de mutação abaixo.
+ *
+ * `sessionStorage` pode lançar (modo privado do Safari, quota estourada) — todo acesso é
+ * best-effort: falha vira "sem cache" (sempre busca de novo), nunca quebra a tela.
  */
+const LIST_CACHE_PREFIX = 'autonomousapi.listCache.';
+const CACHE_OWNER_KEY = `${LIST_CACHE_PREFIX}__owner`;
 const LIST_CACHE_TTL_MS = 30_000;
-const listCache = new Map<string, { data: unknown; expiresAt: number }>();
+
+function readListCache<T>(key: string): T | undefined {
+  try {
+    const raw = sessionStorage.getItem(LIST_CACHE_PREFIX + key);
+    if (!raw) return undefined;
+    const { data, expiresAt } = JSON.parse(raw) as { data: T; expiresAt: number };
+    if (expiresAt <= Date.now()) {
+      sessionStorage.removeItem(LIST_CACHE_PREFIX + key);
+      return undefined;
+    }
+    return data;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeListCache<T>(key: string, data: T): void {
+  try {
+    sessionStorage.setItem(
+      LIST_CACHE_PREFIX + key,
+      JSON.stringify({ data, expiresAt: Date.now() + LIST_CACHE_TTL_MS }),
+    );
+  } catch {
+    // sessionStorage indisponível — cache vira no-op, próxima chamada busca direto.
+  }
+}
 
 function cachedGet<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  const cached = listCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) {
-    return Promise.resolve(cached.data as T);
-  }
+  const cached = readListCache<T>(key);
+  if (cached !== undefined) return Promise.resolve(cached);
   return fetcher().then((data) => {
-    listCache.set(key, { data, expiresAt: Date.now() + LIST_CACHE_TTL_MS });
+    writeListCache(key, data);
     return data;
   });
 }
 
-function invalidateListCache(prefix: string): void {
-  for (const key of listCache.keys()) {
-    if (key.startsWith(prefix)) listCache.delete(key);
+function keysMatching(prefix: string): string[] {
+  try {
+    const matches: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k?.startsWith(prefix)) matches.push(k);
+    }
+    return matches;
+  } catch {
+    return [];
   }
+}
+
+function invalidateListCache(prefix: string): void {
+  keysMatching(LIST_CACHE_PREFIX + prefix).forEach((k) => {
+    try {
+      sessionStorage.removeItem(k);
+    } catch {
+      // idem — melhor esforço
+    }
+  });
+}
+
+function clearListCache(): void {
+  invalidateListCache('');
 }
 
 /**

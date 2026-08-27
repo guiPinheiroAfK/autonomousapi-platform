@@ -88,7 +88,7 @@ export function Topbar({ title, user, onLogout, onMenuClick }: TopbarProps) {
         {/* Select fica dentro de um wrapper próprio (ícone + <select>) — esconder o <select>
             sozinho deixaria o ícone órfão flutuando, por isso o hidden vai no wrapper. */}
         <div className="hidden sm:block">
-          <Select value={unidade} onChange={(e) => setUnidade(e.target.value)} className="h-8 w-48 text-xs">
+          <Select value={unidade} onChange={(e) => setUnidade(e.target.value)} className="h-8 w-64 text-xs">
             <option value="todas">{t('app.topbar.todasUnidades')}</option>
             <option value="foz">Foz do Iguaçu</option>
             <option value="curitiba">Curitiba</option>
