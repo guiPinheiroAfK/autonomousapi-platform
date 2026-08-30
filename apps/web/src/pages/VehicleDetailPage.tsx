@@ -55,9 +55,24 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
   });
   const [incidentSaving, setIncidentSaving] = useState(false);
 
+  // Cada aba busca o próprio dado só na primeira vez que é aberta — antes buscava as 4
+  // de uma vez no mount, mesmo pra quem nunca clica em "FIPE" ou "Sinistros". "manutenção"
+  // é exceção: é a aba padrão (já abre visível) e "Gasto histórico" no topo depende dela,
+  // então continua eager. `fetchedTabs` evita rebuscar ao voltar pra uma aba já vista.
+  const [fetchedTabs, setFetchedTabs] = useState<Set<string>>(new Set());
+
+  function ensureTabData(tab: string) {
+    if (fetchedTabs.has(tab)) return;
+    setFetchedTabs((prev) => new Set(prev).add(tab));
+    if (tab === 'os') coreApi.workOrders.list(vehicleId).then((res) => setOs(res.content));
+    if (tab === 'fipe') coreApi.vehicleMarketValue.latest(vehicleId).then(setFipe);
+    if (tab === 'sinistros') refreshCondition();
+  }
+
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
+    setFetchedTabs(new Set(['manutencao']));
     coreApi.vehicles
       .get(vehicleId)
       .then((v) => {
@@ -74,10 +89,6 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
       .finally(() => setLoading(false));
 
     coreApi.expenses.list(vehicleId).then(setCosts);
-    coreApi.workOrders.list(vehicleId).then((res) => setOs(res.content));
-    coreApi.vehicleMarketValue.latest(vehicleId).then(setFipe);
-    coreApi.vehicleCondition.score(vehicleId).then(setScore);
-    coreApi.vehicleCondition.incidents(vehicleId).then(setIncidents);
   }, [vehicleId]);
 
   function refreshCondition() {
@@ -184,7 +195,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
         />
       </div>
 
-      <Tabs defaultValue="manutencao">
+      <Tabs defaultValue="manutencao" onValueChange={ensureTabData}>
         <TabsList>
           <TabsTrigger value="manutencao">{t('pages.vehicleDetail.tabs.manutencao')}</TabsTrigger>
           <TabsTrigger value="os">{t('pages.vehicleDetail.tabs.os')}</TabsTrigger>

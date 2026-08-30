@@ -146,6 +146,13 @@ export function setAuthToken(token: string | null): void {
 const LIST_CACHE_PREFIX = 'autonomousapi.listCache.';
 const CACHE_OWNER_KEY = `${LIST_CACHE_PREFIX}__owner`;
 const LIST_CACHE_TTL_MS = 30_000;
+/** Catálogo global gerido pela AutonomousAPI, não pelo tenant — muda por intervenção
+ *  manual no banco (ver specs/08), não por ação do usuário logado. TTL bem mais longo. */
+const REFERENCE_DATA_TTL_MS = 60 * 60_000;
+/** Dado editável pelo usuário (pontos de coleta) ou de provedor externo (pontos de
+ *  recarga) — muda mais que o catálogo de afiliados, mas ainda bem menos que listas
+ *  operacionais do dia a dia. */
+const SLOW_CHANGING_TTL_MS = 5 * 60_000;
 
 function readListCache<T>(key: string): T | undefined {
   try {
@@ -162,24 +169,40 @@ function readListCache<T>(key: string): T | undefined {
   }
 }
 
-function writeListCache<T>(key: string, data: T): void {
+function writeListCache<T>(key: string, data: T, ttlMs: number): void {
   try {
-    sessionStorage.setItem(
-      LIST_CACHE_PREFIX + key,
-      JSON.stringify({ data, expiresAt: Date.now() + LIST_CACHE_TTL_MS }),
-    );
+    sessionStorage.setItem(LIST_CACHE_PREFIX + key, JSON.stringify({ data, expiresAt: Date.now() + ttlMs }));
   } catch {
     // sessionStorage indisponível — cache vira no-op, próxima chamada busca direto.
   }
 }
 
-function cachedGet<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+/**
+ * Requisição em voo compartilhada: se duas telas pedem a MESMA chave ao mesmo tempo (ex.
+ * dois widgets que precisam de `vehicles.list()` no mesmo instante, antes da primeira
+ * resposta voltar pra popular o cache), a segunda espera a primeira em vez de disparar
+ * outra fetch idêntica. Só existe enquanto a promise não resolve — depois disso quem
+ * decide servir da cache ou buscar de novo é o `readListCache`/TTL normal.
+ */
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
+function cachedGet<T>(key: string, fetcher: () => Promise<T>, ttlMs: number = LIST_CACHE_TTL_MS): Promise<T> {
   const cached = readListCache<T>(key);
   if (cached !== undefined) return Promise.resolve(cached);
-  return fetcher().then((data) => {
-    writeListCache(key, data);
-    return data;
-  });
+
+  const inFlight = inFlightRequests.get(key);
+  if (inFlight) return inFlight as Promise<T>;
+
+  const promise = fetcher()
+    .then((data) => {
+      writeListCache(key, data, ttlMs);
+      return data;
+    })
+    .finally(() => {
+      inFlightRequests.delete(key);
+    });
+  inFlightRequests.set(key, promise);
+  return promise;
 }
 
 function keysMatching(prefix: string): string[] {
@@ -473,7 +496,12 @@ export const coreApi = {
 
   /** Afiliados (spec 06) — catálogo é global, gerido pela AutonomousAPI, não por tenant. */
   affiliates: {
-    listPartners: () => request<AffiliatePartnerResponse[]>('/v1/affiliates/partners'),
+    listPartners: () =>
+      cachedGet(
+        'affiliates:partners',
+        () => request<AffiliatePartnerResponse[]>('/v1/affiliates/partners'),
+        REFERENCE_DATA_TTL_MS,
+      ),
     click: (partnerId: string, vehicleId?: string) =>
       request<AffiliateClickResponse>(`/v1/affiliates/partners/${partnerId}/click`, {
         method: 'POST',
@@ -505,7 +533,11 @@ export const coreApi = {
       if (params?.lon != null) query.set('lon', String(params.lon));
       if (params?.radiusKm != null) query.set('radiusKm', String(params.radiusKm));
       const qs = query.toString();
-      return request<ChargingStationsResponse>(`/v1/charging-stations${qs ? `?${qs}` : ''}`);
+      return cachedGet(
+        `chargingStations:${qs}`,
+        () => request<ChargingStationsResponse>(`/v1/charging-stations${qs ? `?${qs}` : ''}`),
+        SLOW_CHANGING_TTL_MS,
+      );
     },
   },
 
@@ -592,14 +624,36 @@ export const coreApi = {
   /** Pontos de coleta/entrega reutilizáveis (spec 08 item 5) — gestor-only. */
   collectionPoints: {
     /** {@code all=true} devolve inclusive inativos (tela de cadastro); por padrão só ativos. */
-    list: (all = false) => request<CollectionPointResponse[]>(`/v1/collection-points${all ? '?all=true' : ''}`),
+    list: (all = false) =>
+      cachedGet(
+        `collectionPoints:${all}`,
+        () => request<CollectionPointResponse[]>(`/v1/collection-points${all ? '?all=true' : ''}`),
+        SLOW_CHANGING_TTL_MS,
+      ),
     create: (body: CollectionPointRequest) =>
-      request<CollectionPointResponse>('/v1/collection-points', { method: 'POST', body: JSON.stringify(body) }),
+      request<CollectionPointResponse>('/v1/collection-points', { method: 'POST', body: JSON.stringify(body) }).then(
+        (r) => {
+          invalidateListCache('collectionPoints:');
+          return r;
+        },
+      ),
     update: (id: string, body: CollectionPointRequest) =>
-      request<CollectionPointResponse>(`/v1/collection-points/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-    ativar: (id: string) => request<CollectionPointResponse>(`/v1/collection-points/${id}/ativar`, { method: 'POST' }),
+      request<CollectionPointResponse>(`/v1/collection-points/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then(
+        (r) => {
+          invalidateListCache('collectionPoints:');
+          return r;
+        },
+      ),
+    ativar: (id: string) =>
+      request<CollectionPointResponse>(`/v1/collection-points/${id}/ativar`, { method: 'POST' }).then((r) => {
+        invalidateListCache('collectionPoints:');
+        return r;
+      }),
     desativar: (id: string) =>
-      request<CollectionPointResponse>(`/v1/collection-points/${id}/desativar`, { method: 'POST' }),
+      request<CollectionPointResponse>(`/v1/collection-points/${id}/desativar`, { method: 'POST' }).then((r) => {
+        invalidateListCache('collectionPoints:');
+        return r;
+      }),
   },
 
   /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */
