@@ -92,6 +92,11 @@ export function CollectionPointsPage() {
   }
 
   async function alternarAtivo(p: CollectionPointResponse) {
+    const novoAtivo = !p.ativo;
+    // Otimista: já reflete o novo estado na tela, sem esperar a resposta do servidor —
+    // se der erro, desfaz e mostra o toast. `refresh()` continua sendo a fonte da verdade
+    // pra corrigir qualquer divergência (ex. outro usuário mexeu no mesmo ponto).
+    setPontos((atual) => atual.map((x) => (x.id === p.id ? { ...x, ativo: novoAtivo } : x)));
     try {
       if (p.ativo) {
         await coreApi.collectionPoints.desativar(p.id!);
@@ -102,6 +107,7 @@ export function CollectionPointsPage() {
       }
       refresh();
     } catch (e) {
+      setPontos((atual) => atual.map((x) => (x.id === p.id ? { ...x, ativo: p.ativo } : x)));
       toast.error(e instanceof Error ? e.message : t('pages.collectionPoints.toasts.falhaAtualizar'));
     }
   }
