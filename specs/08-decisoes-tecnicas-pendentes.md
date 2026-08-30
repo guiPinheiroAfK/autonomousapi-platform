@@ -63,6 +63,8 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Prioridade:** antes de qualquer novo cliente maior/enterprise entrar (due diligence de segurança costuma pedir isso), e de qualquer forma antes de virar produto licenciado pra parceiro de AV (Fase 4). Não bloqueia o trabalho atual.
 
+**Status (2026-08-27):** `npm audit fix` (sem `--force`) rodado — hoje o audit já está em só 3 achados (1 moderada, 2 altas), bem menor que quando este item foi escrito. O que sobrou (postcss, via XSS/path-traversal — só relevante em build-time, nunca processa CSS de usuário) só resolve subindo Vite 5→8 (`--force`, breaking). Decisão: fazer esse upgrade junto do item 8 (code-splitting também mexe em `vite.config.ts`), não isolado.
+
 ## 8. Bundle do `web` grande (`index.js` ~698KB) — code-splitting pendente
 
 **Situação atual:** o bundle de produção do `apps/web` está em ~698KB para o `index.js` principal, sem divisão por rota — tudo carrega de uma vez no primeiro acesso, mesmo telas que o usuário talvez nunca abra na sessão (ex. gestor que só olha o Dashboard nunca carrega o código da aba Custos, mas hoje carrega de qualquer forma).
@@ -78,6 +80,8 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 **Decisão:** replicar a mesma regra (exigir PR antes de merge, sem push direto) em `develop`, sem exigir número de aprovações (mesmo raciocínio já aplicado em `main`: time é o próprio Guilherme hoje, exigir aprovação de terceiro bloquearia o próprio fluxo de trabalho) — só a disciplina de "sempre via PR" é o que importa aqui, não um segundo revisor.
 
 **Prioridade:** questão de tempo/orçamento — não é urgente (não houve incidente), mas fecha a mesma lacuna que já foi fechada em `main`. Baixo esforço (configuração, não código) — pode ser feito a qualquer momento que sobrar uma janela curta.
+
+**Status:** implementado (2026-08-27) — `develop` replicando exatamente a configuração de `main` (PR obrigatória, `required_approving_review_count: 0`, sem force-push, sem deleção, conversas precisam estar resolvidas).
 
 ## 10. Animações — espalhar o padrão de transição de página
 
@@ -108,6 +112,6 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [x] Chat revisado visualmente para o mesmo padrão do dashboard.
 - [ ] `npm audit fix` rodado no `apps/web`, resto revisado manualmente (item 7).
 - [ ] Code-splitting por rota no `apps/web`, com medição de antes/depois (item 8).
-- [ ] `develop` com a mesma proteção de branch já ativa em `main` (item 9).
+- [x] `develop` com a mesma proteção de branch já ativa em `main` (item 9).
 - [x] Padrão de transição de página (Dashboard/Frota) replicado nas demais telas (item 10).
 - [ ] Domínio verificado no Resend + Netlify, confirmação de e-mail deixa de depender do workaround manual (item 11).
