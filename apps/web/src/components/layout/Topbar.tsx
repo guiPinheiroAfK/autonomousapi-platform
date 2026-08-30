@@ -88,7 +88,17 @@ export function Topbar({ title, user, onLogout, onMenuClick }: TopbarProps) {
         {/* Select fica dentro de um wrapper próprio (ícone + <select>) — esconder o <select>
             sozinho deixaria o ícone órfão flutuando, por isso o hidden vai no wrapper. */}
         <div className="hidden sm:block">
-          <Select value={unidade} onChange={(e) => setUnidade(e.target.value)} className="h-8 w-64 text-xs">
+          {/* py-1 sobrepõe o py-2 padrão do Select só aqui: em h-8 (32px), py-2 (16px) +
+              borda deixava só 14.4px de altura de conteúdo pro texto — MENOS que os ~20px
+              de line-height do text-sm, e o `truncate` (overflow:hidden) cortava o topo e
+              o fundo das letras (não a string na horizontal, que já cabia de sobra). Achado
+              via DevTools > Computed no navegador do usuário, não reproduzia nesta sessão de
+              automação porque o box-model exato depende de altura, não largura. */}
+          <Select
+            value={unidade}
+            onChange={(e) => setUnidade(e.target.value)}
+            className="h-8 w-64 py-1 text-xs"
+          >
             <option value="todas">{t('app.topbar.todasUnidades')}</option>
             <option value="foz">Foz do Iguaçu</option>
             <option value="curitiba">Curitiba</option>
