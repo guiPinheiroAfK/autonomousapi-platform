@@ -13,6 +13,12 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     List<Vehicle> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
 
+    /** Quantidade de assento do checkout da Stripe (BillingService) — evita carregar a
+     *  frota inteira em memória só pra contar (achado da auditoria de performance:
+     *  createCheckoutSession chamava findAllByTenantIdOrderByCreatedAtDesc, que hidrata
+     *  todo veículo do tenant, só pra fazer .filter().count() em memória). */
+    long countByTenantIdAndStatus(UUID tenantId, VehicleStatus status);
+
     /**
      * Busca/filtro server-side (placa/marca/modelo + status) combinados com a paginação —
      * antes da paginação, /v1/vehicles devolvia a frota inteira e o front filtrava em memória;

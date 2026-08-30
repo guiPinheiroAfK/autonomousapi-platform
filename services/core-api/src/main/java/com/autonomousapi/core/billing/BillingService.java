@@ -72,9 +72,7 @@ public class BillingService {
         }
         Stripe.apiKey = stripeSecretKey;
 
-        long quantity = Math.max(1, vehicles.findAllByTenantIdOrderByCreatedAtDesc(principal.tenantId()).stream()
-                .filter(v -> v.getStatus() == VehicleStatus.ATIVO)
-                .count());
+        long quantity = Math.max(1, vehicles.countByTenantIdAndStatus(principal.tenantId(), VehicleStatus.ATIVO));
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
