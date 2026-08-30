@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { useTripTracking } from '../hooks/useTripTracking';
 import { ChargingStationsScreen } from './ChargingStationsScreen';
 import { ChatScreen } from './ChatScreen';
 import { HomeScreen } from './HomeScreen';
@@ -29,11 +30,31 @@ const TABS: { key: Tab; label: string }[] = [
 export function HomeTabs({ userId, onLogout }: Props) {
   const [tab, setTab] = useState<Tab>('inicio');
 
+  // Instanciado aqui, não dentro de TripScreen: HomeTabs nunca desmonta enquanto o
+  // motorista está logado, então o watcher de GPS sobrevive à troca de aba (ver
+  // useTripTracking.ts). TripScreen recebe tudo isso via props, sem estado próprio.
+  const tripTracking = useTripTracking();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.screen}>
         {tab === 'inicio' && <HomeScreen onLogout={onLogout} />}
-        {tab === 'viagem' && <TripScreen onLogout={onLogout} />}
+        {tab === 'viagem' && (
+          <TripScreen
+            loading={tripTracking.loading}
+            vehicles={tripTracking.vehicles}
+            selectedVehicleId={tripTracking.selectedVehicleId}
+            onSelectVehicle={tripTracking.setSelectedVehicleId}
+            trip={tripTracking.trip}
+            pending={tripTracking.pending}
+            status={tripTracking.status}
+            busy={tripTracking.busy}
+            onStart={tripTracking.handleStart}
+            onStop={tripTracking.handleStop}
+            onSync={tripTracking.handleSync}
+            onLogout={onLogout}
+          />
+        )}
         {tab === 'chat' && <ChatScreen userId={userId} />}
         {tab === 'recarga' && <ChargingStationsScreen />}
         {tab === 'rota' && <MinhaRotaScreen />}

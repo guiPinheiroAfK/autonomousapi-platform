@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { coreApi, type PageResponse, type TripResponse, type VehicleResponse } from '../api/client';
 import { flushBatch, pendingCount } from '../offline/pingQueue';
+import { useTripTracking } from '../hooks/useTripTracking';
 import { TripScreen } from './TripScreen';
 
 jest.mock('../api/client', () => ({
@@ -41,6 +42,31 @@ const viagemEmAndamento: TripResponse = {
   endedAt: null,
 };
 
+/**
+ * Mesmo cabeamento que HomeTabs faz de verdade (hook fora, tela só de apresentação) —
+ * testar por aqui em vez de só a tela isolada garante que a integração hook↔tela continua
+ * funcionando, não só a tela sozinha com props soltas.
+ */
+function TripScreenHarness({ onLogout }: { onLogout: () => void }) {
+  const t = useTripTracking();
+  return (
+    <TripScreen
+      loading={t.loading}
+      vehicles={t.vehicles}
+      selectedVehicleId={t.selectedVehicleId}
+      onSelectVehicle={t.setSelectedVehicleId}
+      trip={t.trip}
+      pending={t.pending}
+      status={t.status}
+      busy={t.busy}
+      onStart={t.handleStart}
+      onStop={t.handleStop}
+      onSync={t.handleSync}
+      onLogout={onLogout}
+    />
+  );
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockedPendingCount.mockResolvedValue(0);
@@ -53,7 +79,7 @@ describe('sem viagem em andamento', () => {
   });
 
   it('mostra a lista de veículos e mantém "Iniciar viagem" desabilitado até escolher um', async () => {
-    render(<TripScreen onLogout={jest.fn()} />);
+    render(<TripScreenHarness onLogout={jest.fn()} />);
 
     await screen.findByText(/ABC1D23/);
     expect(screen.getByText('Iniciar viagem').props.disabled).toBe(true);
@@ -66,7 +92,7 @@ describe('sem viagem em andamento', () => {
   it('inicia a viagem com o veículo escolhido e passa pra tela de viagem em andamento', async () => {
     mockedCoreApi.trips.start.mockResolvedValue(viagemEmAndamento);
 
-    render(<TripScreen onLogout={jest.fn()} />);
+    render(<TripScreenHarness onLogout={jest.fn()} />);
     await screen.findByText(/ABC1D23/);
     fireEvent.press(screen.getByText(/ABC1D23/));
     await waitFor(() => expect(screen.getByText('Iniciar viagem').props.disabled).toBe(false));
@@ -86,7 +112,7 @@ describe('com viagem já em andamento ao carregar', () => {
   });
 
   it('pula direto pra tela de viagem em andamento, sem pedir pra escolher veículo', async () => {
-    render(<TripScreen onLogout={jest.fn()} />);
+    render(<TripScreenHarness onLogout={jest.fn()} />);
 
     await screen.findByText('Finalizar viagem');
     expect(screen.queryByText(/ABC1D23/)).toBeNull();
@@ -96,7 +122,7 @@ describe('com viagem já em andamento ao carregar', () => {
   it('finalizar viagem chama trips.stop e volta pra tela de escolher veículo', async () => {
     mockedCoreApi.trips.stop.mockResolvedValue({ ...viagemEmAndamento, status: 'FINALIZADA' });
 
-    render(<TripScreen onLogout={jest.fn()} />);
+    render(<TripScreenHarness onLogout={jest.fn()} />);
     await screen.findByText('Finalizar viagem');
 
     fireEvent.press(screen.getByText('Finalizar viagem'));
@@ -107,15 +133,15 @@ describe('com viagem já em andamento ao carregar', () => {
 
   it('sincronizar esvazia a fila em lote e mostra quantos pings foram enviados', async () => {
     mockedFlushBatch.mockImplementation(async (enviar) => {
-      // Confirma que TripScreen passa o vehicleId certo pro submitPingBatch por
-      // baixo — chama o callback como o pingQueue real chamaria.
+      // Confirma que o hook passa o vehicleId certo pro submitPingBatch por baixo —
+      // chama o callback como o pingQueue real chamaria.
       await enviar([{ recordedAt: '2026-08-25T10:00:00Z', lat: 0, lon: 0 }]);
       return 1;
     });
     mockedCoreApi.trips.submitPingBatch.mockResolvedValue({ accepted: 1, received: 1 });
     mockedPendingCount.mockResolvedValueOnce(3).mockResolvedValueOnce(0);
 
-    render(<TripScreen onLogout={jest.fn()} />);
+    render(<TripScreenHarness onLogout={jest.fn()} />);
     await screen.findByText('Finalizar viagem');
 
     fireEvent.press(screen.getByText('Sincronizar'));
@@ -126,7 +152,7 @@ describe('com viagem já em andamento ao carregar', () => {
 
   it('sai chama onLogout', async () => {
     const onLogout = jest.fn();
-    render(<TripScreen onLogout={onLogout} />);
+    render(<TripScreenHarness onLogout={onLogout} />);
     await screen.findByText('Finalizar viagem');
 
     fireEvent.press(screen.getByText('Sair'));
