@@ -209,23 +209,79 @@ function clearListCache(): void {
   invalidateListCache('');
 }
 
-/**
- * Chamado pelo AuthContext para reagir a 401 (token expirado/inválido) limpando a
- * sessão automaticamente. O access token dura 15min (app.jwt.access-ttl-minutes no
- * core-api) e o front ainda não implementa refresh silencioso — sem isso, uma tela
- * ficava com erro vermelho em vez de simplesmente voltar pro login.
- */
+/** Chamado pelo AuthContext para reagir a 401 quando nem o refresh silencioso (abaixo)
+ *  consegue segurar a sessão — aí sim limpa tudo e volta pro login. */
 export function setUnauthorizedHandler(fn: (() => void) | null): void {
   onUnauthorized = fn;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+let refreshTokenValue: string | null = null;
+let onTokensRefreshed: ((accessToken: string, refreshToken: string) => void) | null = null;
+let refreshInFlight: Promise<boolean> | null = null;
+
+/** Chamado pelo AuthContext ao logar/deslogar/restaurar sessão — espelha `setAuthToken`. */
+export function setRefreshToken(token: string | null): void {
+  refreshTokenValue = token;
+}
+
+/** Chamado pelo AuthContext pra persistir o par novo de tokens no localStorage sempre que
+ *  o refresh silencioso (abaixo) renova a sessão sozinho, sem o usuário perceber. */
+export function setTokensRefreshedHandler(
+  fn: ((accessToken: string, refreshToken: string) => void) | null,
+): void {
+  onTokensRefreshed = fn;
+}
+
+/**
+ * Refresh silencioso (ADR pendente de registrar — achado nesta sessão): o access token dura
+ * só 15min (`app.jwt.access-ttl-minutes`), e sem isso qualquer tela aberta por mais tempo, ou
+ * reaberta depois de um tempo fechada, caía direto pro login — "enrolando" pra logar de novo
+ * mesmo com um refresh token de 30 dias válido guardado à toa. Usa `fetch` cru, não `request`:
+ * `request` chamando refresh chamando `request` de novo é recursão sem necessidade, e o
+ * endpoint de refresh já é público (não manda Bearer).
+ *
+ * Dedup via `refreshInFlight`: o backend ROTACIONA o refresh token a cada uso (revoga o
+ * antigo, emite um novo) — se duas requisições tomassem 401 ao mesmo tempo e cada uma tentasse
+ * seu próprio refresh, a segunda chegaria com um token já revogado pela primeira e falharia à
+ * toa. Uma promise compartilhada garante que N requisições simultâneas rendem UM refresh só.
+ */
+async function refreshTokens(): Promise<boolean> {
+  if (!refreshTokenValue) return false;
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const res = await fetch(`${BASE}/v1/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: refreshTokenValue }),
+        });
+        if (!res.ok) return false;
+        const data = (await res.json()) as TokenResponse;
+        if (!data.accessToken || !data.refreshToken) return false;
+        authToken = data.accessToken;
+        refreshTokenValue = data.refreshToken;
+        onTokensRefreshed?.(data.accessToken, data.refreshToken);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+  }
+  return refreshInFlight;
+}
+
+async function request<T>(path: string, init?: RequestInit, isRetryAfterRefresh = false): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
   const res = await fetch(`${BASE}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
 
   if (!res.ok) {
+    if (res.status === 401 && !isRetryAfterRefresh && (await refreshTokens())) {
+      return request<T>(path, init, true);
+    }
     if (res.status === 401) onUnauthorized?.();
     const body = (await res.json().catch(() => null)) as ApiError | null;
     throw new Error(body?.message ?? `core-api ${res.status} em ${path}`);

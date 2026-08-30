@@ -2,14 +2,18 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import {
   coreApi,
   setAuthToken,
+  setRefreshToken,
+  setTokensRefreshedHandler,
   setUnauthorizedHandler,
   type LoginRequest,
   type SignupRequest,
   type SignupResponse,
+  type TokenResponse,
   type UserResponse,
 } from '../api/client';
 
 const STORAGE_KEY = 'autonomousapi.accessToken';
+const REFRESH_STORAGE_KEY = 'autonomousapi.refreshToken';
 
 interface AuthState {
   user: UserResponse | null;
@@ -34,38 +38,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Registrado antes do efeito de restauração de sessão abaixo, para que um 401
-  // já disparado durante a própria restauração (token salvo expirado) seja coberto.
+  // já disparado durante a própria restauração (token salvo expirado, e o refresh
+  // silencioso também falhou — ex. os 30 dias do refresh token já passaram) seja coberto.
   useEffect(() => {
     setUnauthorizedHandler(logout);
-    return () => setUnauthorizedHandler(null);
+    // Toda vez que o client renova os tokens sozinho (access token expirado no meio de
+    // uma navegação, refresh token de 30 dias ainda válido), persiste o par novo — sem
+    // isso, o refresh silencioso funcionaria na aba aberta mas o próximo F5 voltaria a
+    // usar o access token velho já expirado do localStorage.
+    setTokensRefreshedHandler(persistTokens);
+    return () => {
+      setUnauthorizedHandler(null);
+      setTokensRefreshedHandler(null);
+    };
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
+    const storedAccess = localStorage.getItem(STORAGE_KEY);
+    const storedRefresh = localStorage.getItem(REFRESH_STORAGE_KEY);
+    if (!storedAccess || !storedRefresh) {
       setLoading(false);
       return;
     }
-    setAuthToken(stored);
+    setAuthToken(storedAccess);
+    setRefreshToken(storedRefresh);
+    // Access token de 15min quase sempre já expirou entre uma visita e outra — o refresh
+    // silencioso dentro de `request` (client.ts) cobre isso sozinho no primeiro 401 que
+    // este `.me()` tomar, sem precisar de nenhum código especial aqui pra esse caso.
     coreApi.auth
       .me()
       .then(setUser)
       .catch(() => {
-        localStorage.removeItem(STORAGE_KEY);
+        clearStoredTokens();
         setAuthToken(null);
+        setRefreshToken(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  async function afterAuth(accessToken: string) {
+  function persistTokens(accessToken: string, refreshToken: string) {
     localStorage.setItem(STORAGE_KEY, accessToken);
-    setAuthToken(accessToken);
+    localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
+  }
+
+  function clearStoredTokens() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(REFRESH_STORAGE_KEY);
+  }
+
+  async function afterAuth(tokens: TokenResponse) {
+    persistTokens(tokens.accessToken!, tokens.refreshToken!);
+    setAuthToken(tokens.accessToken!);
+    setRefreshToken(tokens.refreshToken!);
     setUser(await coreApi.auth.me());
   }
 
   async function login(body: LoginRequest) {
-    const tokens = await coreApi.auth.login(body);
-    await afterAuth(tokens.accessToken!);
+    await afterAuth(await coreApi.auth.login(body));
   }
 
   async function signup(body: SignupRequest) {
@@ -73,13 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function verifyEmail(token: string) {
-    const tokens = await coreApi.auth.verifyEmail({ token });
-    await afterAuth(tokens.accessToken!);
+    await afterAuth(await coreApi.auth.verifyEmail({ token }));
   }
 
   function logout() {
-    localStorage.removeItem(STORAGE_KEY);
+    clearStoredTokens();
     setAuthToken(null);
+    setRefreshToken(null);
     setUser(null);
   }
 
