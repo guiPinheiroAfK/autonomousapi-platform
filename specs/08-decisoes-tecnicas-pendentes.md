@@ -63,7 +63,7 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Prioridade:** antes de qualquer novo cliente maior/enterprise entrar (due diligence de segurança costuma pedir isso), e de qualquer forma antes de virar produto licenciado pra parceiro de AV (Fase 4). Não bloqueia o trabalho atual.
 
-**Status (2026-08-27):** `npm audit fix` (sem `--force`) rodado — hoje o audit já está em só 3 achados (1 moderada, 2 altas), bem menor que quando este item foi escrito. O que sobrou (postcss, via XSS/path-traversal — só relevante em build-time, nunca processa CSS de usuário) só resolve subindo Vite 5→8 (`--force`, breaking). Decisão: fazer esse upgrade junto do item 8 (code-splitting também mexe em `vite.config.ts`), não isolado.
+**Status:** implementado (2026-08-27) — `npm audit fix` resolveu o que dava sem breaking change; o que sobrava (postcss, preso à versão do Vite) foi junto do upgrade do item 8. `npm audit` no `apps/web` hoje: **0 vulnerabilidades**.
 
 ## 8. Bundle do `web` grande (`index.js` ~698KB) — code-splitting pendente
 
@@ -72,6 +72,15 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 **Decisão:** code-splitting via `import()` dinâmico por rota (`React.lazy` + `Suspense`, já é o padrão nativo do Vite/React Router, sem lib nova) — cada página principal (Dashboard, Frota, Motoristas, Custos, Pontos de Coleta, etc.) vira um chunk separado, carregado só quando o usuário navega até ela. Não é reescrever nada de lógica, é só trocar `import` estático por `import()` nos pontos de rota.
 
 **Prioridade:** não bloqueia nada hoje (o produto funciona, é questão de tempo de carregamento inicial) — fica para a próxima vez que alguém for mexer em performance do web, não como projeto isolado. Vale medir o "antes/depois" com Lighthouse ou equivalente pra ter número real do ganho, não só "parece mais rápido".
+
+**Status:** implementado (2026-08-27) — as páginas já eram todas `React.lazy`/`Suspense` por rota antes deste item (achado na auditoria: a decisão registrada acima já tinha sido aplicada em sessão anterior, sem atualizar este documento). O ganho real veio de outro lugar: upgrade do Vite 5→8, que troca o bundler interno pra Rolldown — muito mais esperto em split automático de vendor, sem precisar escrever `manualChunks` na mão. Medido antes/depois do build de produção:
+
+| | antes (Vite 5) | depois (Vite 8) |
+|---|---|---|
+| `index.js` principal | 704.86 KB (gzip 223.98 KB) | 383.45 KB (gzip 120.77 KB) |
+| aviso de chunk > 500KB | sim | não (nenhum chunk passa de 500KB) |
+
+`react-dom`, Motion e utilitários compartilhados (~230KB) saíram do chunk principal pra chunks próprios automaticamente. Verificado manualmente no navegador depois do upgrade (Dashboard, Relatórios com gráfico, modal de nova rota) — sem erro de console, sem regressão visual.
 
 ## 9. Branch protection em `develop` — só `main` está protegida hoje
 
@@ -110,8 +119,8 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [x] Ícone por tipo de veículo implementado (PR #49).
 - [x] Aba "Pontos de Coleta" no ar, com CRUD básico e geocodificação de endereço.
 - [x] Chat revisado visualmente para o mesmo padrão do dashboard.
-- [ ] `npm audit fix` rodado no `apps/web`, resto revisado manualmente (item 7).
-- [ ] Code-splitting por rota no `apps/web`, com medição de antes/depois (item 8).
+- [x] `npm audit fix` rodado no `apps/web`, resto revisado manualmente (item 7).
+- [x] Code-splitting por rota no `apps/web`, com medição de antes/depois (item 8).
 - [x] `develop` com a mesma proteção de branch já ativa em `main` (item 9).
 - [x] Padrão de transição de página (Dashboard/Frota) replicado nas demais telas (item 10).
 - [ ] Domínio verificado no Resend + Netlify, confirmação de e-mail deixa de depender do workaround manual (item 11).
