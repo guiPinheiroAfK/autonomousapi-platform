@@ -112,6 +112,41 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Prioridade:** não bloqueia teste com o próprio Guilherme, mas bloqueia qualquer usuário piloto real se cadastrando sem intervenção manual — resolver antes de convidar mais gente pra testar.
 
+## 12. Notificações in-app — sino no topbar
+
+**Situação identificada:** o sino de notificação no topbar existia só como enfeite — sempre visível, sem contador real, sem lista, sem forma de marcar como lida ou ver o histórico completo.
+
+**Decisão:** sistema real, não só ajuste visual — tabela `notification` própria (schema `core`), com tipo (`ORCAMENTO_ALERTA`, `CNH_VENCENDO`, `MANUTENCAO_AGENDADA`, `AVISO_GESTOR`), lida/não lida e link de destino. Os jobs que já existiam (`BudgetAlertJob`, `AlertPushJob`, `DriverNotificationService`) passaram a gravar aqui em vez de só disparar push — o push continua acontecendo, mas agora como efeito colateral de `NotificationService.notify(...)`, não como único registro do aviso.
+
+**Status:** implementado — `com.autonomousapi.core.notification` (migration `V27`), dropdown com itens reais e contador dinâmico no `Topbar.tsx`, página "ver todas" (`NotificationsPage.tsx`).
+
+## 13. Login com Google + sessão persistente via refresh token
+
+**Situação identificada:** relogar depois de deslogar era um ponto de atrito citado explicitamente — sem opção de entrar com Google (padrão esperado em qualquer site moderno) e sem sessão persistente (token expirava e jogava pro login sem aviso).
+
+**Decisão:**
+- **Login/cadastro com Google** — fluxo de ID token do Google Identity Services, verificado no backend via `GoogleIdTokenVerifier` (sem client secret, só o Client ID como audience). Primeiro login com um e-mail novo cria tenant + usuário + trial de 7 dias automaticamente, mesmo caminho de quem se cadastra manual.
+- **Refresh token silencioso** — access token de 15min, refresh token de 30 dias (rotacionado a cada uso). Um 401 dispara retry automático via refresh antes de deslogar de verdade; chamadas concorrentes de refresh compartilham a mesma promise pra não invalidar o token rotacionado umas das outras.
+
+**Pendência real:** o código está completo e no ar, mas **login com Google ainda não funciona em produção** — falta criar o OAuth Client ID no Google Cloud Console e configurar `GOOGLE_CLIENT_ID` (VM, `.env.prod` do `core-api`) + `VITE_GOOGLE_CLIENT_ID` (Netlify). Sem isso, o endpoint responde `503 google_auth_not_configured` de propósito (erro claro, não quebra silenciosamente). Login manual e refresh token já funcionam normalmente, independem dessa configuração.
+
+**Status:** código implementado; ativação em produção depende de uma ação fora do repo (console do Google Cloud).
+
+## 14. Otimizações de fetch no front — brainstorm de performance percebida
+
+**Situação identificada:** sensação de lentidão que não vinha de servidor/banco (latência medida ficou em 150-200ms) — o suspeito era refetch redundante e falta de aproveitamento entre navegações, não capacidade de infraestrutura.
+
+**Decisão — conjunto de técnicas complementares, todas no `apps/web`, sem lib nova:**
+- **Cache de lista com TTL diferenciado por natureza do dado** (`client.ts`) — 30s pra listas operacionais, 5min pra dado editável que muda pouco (pontos de recarga/coleta), 1h pra catálogo global gerido pela plataforma (parceiros afiliados). Persistido em `sessionStorage`, sobrevive a reload dentro da mesma aba.
+- **Dedupe de requisição em voo** — duas telas pedindo a mesma lista ao mesmo tempo compartilham uma única chamada de rede em vez de duas.
+- **Prefetch no hover do menu lateral** — passar o mouse num item do menu já dispara o `import()` dinâmico da página, chegando em cache quando o clique realmente navega.
+- **Lazy por aba no detalhe de veículo** — abas (OS, FIPE, sinistros) só buscam dado no primeiro clique, não todas de uma vez no mount.
+- **Guarda contra resposta obsoleta** — trocar um filtro rapidamente (frota, custos) não deixa uma resposta antiga sobrescrever uma mais nova que chegou primeiro por causa da rede.
+- **Update otimista** — ativar/desativar ponto de coleta reflete na tela na hora do clique, sem esperar o servidor confirmar (desfaz se der erro).
+- **Cache-Control/ETag — avaliado e descartado.** O Spring Security já manda `no-store` por padrão em toda resposta, então o navegador nunca guardaria o corpo pra revalidar depois — um `ETag` no backend ficaria sem efeito sem reimplementar a revalidação inteira na mão no front. Pra listas pequenas que já têm cache de sessão com TTL de minutos/hora, não compensou a complexidade.
+
+**Status:** implementado — sem medição formal de "antes/depois" (não é o tipo de ganho que Lighthouse capta bem, é sensação de fluidez em navegação repetida dentro da sessão), verificado manualmente em cada técnica.
+
 ## Definition of Done
 
 - [x] Rota `/frota/:id` no ar substituindo o dialog, com breadcrumb, botão voltar e acesso direto por link funcionando (PR #44).
@@ -124,3 +159,6 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [x] `develop` com a mesma proteção de branch já ativa em `main` (item 9).
 - [x] Padrão de transição de página (Dashboard/Frota) replicado nas demais telas (item 10).
 - [ ] Domínio verificado no Resend + Netlify, confirmação de e-mail deixa de depender do workaround manual (item 11).
+- [x] Sistema de notificações in-app no ar, substituindo o sino decorativo (item 12).
+- [x] Login com Google e refresh token silencioso implementados no código; ativação em produção pendente de Client ID (item 13).
+- [x] Otimizações de fetch do front (cache TTL, prefetch, dedupe, guarda de resposta obsoleta, update otimista) implementadas (item 14).

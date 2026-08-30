@@ -49,11 +49,10 @@ necessárias para subir o ambiente — os serviços rodam em container.
 docker compose -f infra/docker-compose.yml up
 ```
 
-_(compose e serviços chegam nos próximos checkpoints — ver `docs/adr/` e o roadmap.)_
-
 ## Workflow de Git
 
 Ver [`specs/04-repositorio-e-git-workflow.md`](./specs/04-repositorio-e-git-workflow.md).
 Resumo: branches saem de `develop`, nomes `<tipo>/<escopo>-<descrição>`, commits em
-Conventional Commits com escopo, PR obrigatória com 1 aprovação + CI verde.
-`main` e `develop` são protegidas.
+Conventional Commits com escopo, PR obrigatória (sem exigência de segundo aprovador
+hoje — ver `specs/08-decisoes-tecnicas-pendentes.md` item 9). `main` e `develop` são
+protegidas.
