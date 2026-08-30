@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type VehicleRequest, type VehicleResponse } from '../api/client';
@@ -67,16 +67,29 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Troca de filtro/página rápida pode fazer uma resposta antiga chegar DEPOIS de uma
+  // mais nova (a ordem de chegada na rede não é garantida pela ordem de disparo) — sem
+  // essa guarda, a tela ficaria mostrando o resultado do filtro anterior por cima do
+  // atual. Mesmo padrão de "descartar resposta obsoleta" já usado em BuscaEndereco.tsx.
+  const buscaAtual = useRef(0);
+
   function refresh() {
+    const buscaId = ++buscaAtual.current;
     coreApi.vehicles
       .list(page, VEHICLES_PAGE_SIZE, searchDebounced || undefined, statusFiltro === 'todos' ? undefined : statusFiltro)
       .then((res) => {
+        if (buscaId !== buscaAtual.current) return;
         setVehicles(res.content);
         setTotalElements(res.totalElements);
         setTotalPages(res.totalPages);
       })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('pages.vehicles.toasts.falhaCarregar')))
-      .finally(() => setLoading(false));
+      .catch((e: unknown) => {
+        if (buscaId !== buscaAtual.current) return;
+        setError(e instanceof Error ? e.message : t('pages.vehicles.toasts.falhaCarregar'));
+      })
+      .finally(() => {
+        if (buscaId === buscaAtual.current) setLoading(false);
+      });
   }
 
   useEffect(refresh, [page, searchDebounced, statusFiltro]);

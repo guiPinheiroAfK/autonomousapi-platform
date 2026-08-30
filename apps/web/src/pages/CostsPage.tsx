@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Download, Plus, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -243,16 +243,26 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   const [form, setForm] = useState<ExpenseEntryRequest>(EMPTY_EXPENSE_FORM);
   const [error, setError] = useState('');
 
+  // Troca de categoria/página rápida pode fazer uma resposta antiga chegar DEPOIS de uma
+  // mais nova — sem essa guarda, a tela mostraria o resultado do filtro anterior por cima
+  // do atual. Mesmo padrão de "descartar resposta obsoleta" já usado em BuscaEndereco.tsx
+  // e VehiclesPage.tsx.
+  const buscaAtual = useRef(0);
+
   function refresh() {
+    const buscaId = ++buscaAtual.current;
     setLoading(true);
     coreApi.expenses
       .fleetList(categoriaFiltro === 'todas' ? undefined : categoriaFiltro, page, EXPENSES_PAGE_SIZE)
       .then((res) => {
+        if (buscaId !== buscaAtual.current) return;
         setEntries(res.content);
         setTotalElements(res.totalElements);
         setTotalPages(res.totalPages);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (buscaId === buscaAtual.current) setLoading(false);
+      });
   }
 
   useEffect(refresh, [categoriaFiltro, page]);
