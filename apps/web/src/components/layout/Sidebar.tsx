@@ -26,24 +26,35 @@ import { Marca } from '../shared/Logo';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes';
 
-const NAV_OPERACAO: { path: string; labelKey: string; icon: typeof Car }[] = [
-  { path: ROUTES.home, labelKey: 'app.sidebar.nav.dashboard', icon: LayoutDashboard },
-  { path: ROUTES.vehicles, labelKey: 'app.sidebar.nav.frota', icon: Car },
-  { path: ROUTES.workOrders, labelKey: 'app.sidebar.nav.ordensServico', icon: ClipboardList },
-  { path: ROUTES.drivers, labelKey: 'app.sidebar.nav.motoristas', icon: Users },
-  { path: ROUTES.chat, labelKey: 'app.sidebar.nav.mensagens', icon: MessageCircle },
-  { path: ROUTES.routes, labelKey: 'app.sidebar.nav.rotas', icon: Navigation },
-  { path: ROUTES.routePlans, labelKey: 'app.sidebar.nav.coletaEntrega', icon: MapPinned },
-  { path: ROUTES.collectionPoints, labelKey: 'app.sidebar.nav.pontosColeta', icon: MapPin },
+interface NavItem {
+  path: string;
+  labelKey: string;
+  icon: typeof Car;
+  /** Chunk da página, pra disparar o `import()` no hover — chega já em cache quando o
+   *  clique realmente navega, sem precisar esperar o download depois de decidir ir. Mesmo
+   *  specifier do `lazy()` em App.tsx: o bundler não duplica o chunk por ser chamado de
+   *  dois arquivos diferentes, dedupe é por módulo resolvido, não por call site. */
+  prefetch: () => Promise<unknown>;
+}
+
+const NAV_OPERACAO: NavItem[] = [
+  { path: ROUTES.home, labelKey: 'app.sidebar.nav.dashboard', icon: LayoutDashboard, prefetch: () => import('../../pages/DashboardPage') },
+  { path: ROUTES.vehicles, labelKey: 'app.sidebar.nav.frota', icon: Car, prefetch: () => import('../../pages/VehiclesPage') },
+  { path: ROUTES.workOrders, labelKey: 'app.sidebar.nav.ordensServico', icon: ClipboardList, prefetch: () => import('../../pages/WorkOrdersPage') },
+  { path: ROUTES.drivers, labelKey: 'app.sidebar.nav.motoristas', icon: Users, prefetch: () => import('../../pages/DriversPage') },
+  { path: ROUTES.chat, labelKey: 'app.sidebar.nav.mensagens', icon: MessageCircle, prefetch: () => import('../../pages/ChatPage') },
+  { path: ROUTES.routes, labelKey: 'app.sidebar.nav.rotas', icon: Navigation, prefetch: () => import('../../pages/RoutesPage') },
+  { path: ROUTES.routePlans, labelKey: 'app.sidebar.nav.coletaEntrega', icon: MapPinned, prefetch: () => import('../../pages/RoutePlansPage') },
+  { path: ROUTES.collectionPoints, labelKey: 'app.sidebar.nav.pontosColeta', icon: MapPin, prefetch: () => import('../../pages/CollectionPointsPage') },
 ];
 
-const NAV_GESTAO: { path: string; labelKey: string; icon: typeof Car }[] = [
-  { path: ROUTES.maintenance, labelKey: 'app.sidebar.nav.manutencao', icon: Wrench },
-  { path: ROUTES.expenses, labelKey: 'app.sidebar.nav.custos', icon: Wallet },
-  { path: ROUTES.reports, labelKey: 'app.sidebar.nav.relatorios', icon: BarChart3 },
-  { path: ROUTES.affiliates, labelKey: 'app.sidebar.nav.parceiros', icon: Handshake },
-  { path: ROUTES.chargingStations, labelKey: 'app.sidebar.nav.pontosRecarga', icon: Plug },
-  { path: ROUTES.billing, labelKey: 'app.sidebar.nav.assinatura', icon: CreditCard },
+const NAV_GESTAO: NavItem[] = [
+  { path: ROUTES.maintenance, labelKey: 'app.sidebar.nav.manutencao', icon: Wrench, prefetch: () => import('../../pages/MaintenancePage') },
+  { path: ROUTES.expenses, labelKey: 'app.sidebar.nav.custos', icon: Wallet, prefetch: () => import('../../pages/CostsPage') },
+  { path: ROUTES.reports, labelKey: 'app.sidebar.nav.relatorios', icon: BarChart3, prefetch: () => import('../../pages/ReportsPage') },
+  { path: ROUTES.affiliates, labelKey: 'app.sidebar.nav.parceiros', icon: Handshake, prefetch: () => import('../../pages/AffiliatesPage') },
+  { path: ROUTES.chargingStations, labelKey: 'app.sidebar.nav.pontosRecarga', icon: Plug, prefetch: () => import('../../pages/ChargingStationsPage') },
+  { path: ROUTES.billing, labelKey: 'app.sidebar.nav.assinatura', icon: CreditCard, prefetch: () => import('../../pages/BillingPage') },
 ];
 
 /**
@@ -51,11 +62,11 @@ const NAV_GESTAO: { path: string; labelKey: string; icon: typeof Car }[] = [
  * ou dashboard analítico — ele é funcionário, não "uma empresa" (pedido explícito do
  * usuário). Só o que afeta o próprio trabalho: início, rota do dia e o chat com o gestor.
  */
-const NAV_MOTORISTA: { path: string; labelKey: string; icon: typeof Car }[] = [
-  { path: ROUTES.home, labelKey: 'app.sidebar.nav.inicio', icon: Home },
-  { path: ROUTES.driverRoute, labelKey: 'app.sidebar.nav.minhaRota', icon: RouteIcon },
-  { path: ROUTES.chat, labelKey: 'app.sidebar.nav.mensagens', icon: MessageCircle },
-  { path: ROUTES.driverMore, labelKey: 'app.sidebar.nav.mais', icon: MoreHorizontal },
+const NAV_MOTORISTA: NavItem[] = [
+  { path: ROUTES.home, labelKey: 'app.sidebar.nav.inicio', icon: Home, prefetch: () => import('../../pages/DriverHomePage') },
+  { path: ROUTES.driverRoute, labelKey: 'app.sidebar.nav.minhaRota', icon: RouteIcon, prefetch: () => import('../../pages/DriverRoutePage') },
+  { path: ROUTES.chat, labelKey: 'app.sidebar.nav.mensagens', icon: MessageCircle, prefetch: () => import('../../pages/ChatPage') },
+  { path: ROUTES.driverMore, labelKey: 'app.sidebar.nav.mais', icon: MoreHorizontal, prefetch: () => import('../../pages/DriverMorePage') },
 ];
 
 /** /frota também fica ativo em /frota/:id e /frota/:id/custos — todo o resto é match exato. */
@@ -63,25 +74,21 @@ function isActive(path: string, pathname: string): boolean {
   return path === ROUTES.vehicles ? pathname.startsWith(ROUTES.vehicles) : pathname === path;
 }
 
-function NavSection({
-  title,
-  items,
-  pathname,
-}: {
-  title: string;
-  items: { path: string; labelKey: string; icon: typeof Car }[];
-  pathname: string;
-}) {
+function NavSection({ title, items, pathname }: { title: string; items: NavItem[]; pathname: string }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-0.5">
       <span className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
         {title}
       </span>
-      {items.map(({ path, labelKey, icon: Icon }) => (
+      {items.map(({ path, labelKey, icon: Icon, prefetch }) => (
         <Link
           key={path}
           to={path}
+          // Passar o mouse já dispara o download do chunk da página — dynamic import()
+          // é idempotente (o browser cacheia por módulo), então chamar de novo a cada
+          // hover não gera requisição repetida depois da primeira vez.
+          onMouseEnter={prefetch}
           className={cn(
             'flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors',
             isActive(path, pathname)
