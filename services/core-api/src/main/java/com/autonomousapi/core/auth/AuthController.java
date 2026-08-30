@@ -2,6 +2,7 @@ package com.autonomousapi.core.auth;
 
 import com.autonomousapi.core.auth.dto.AcceptInviteRequest;
 import com.autonomousapi.core.auth.dto.ForgotPasswordRequest;
+import com.autonomousapi.core.auth.dto.GoogleAuthRequest;
 import com.autonomousapi.core.auth.dto.LoginRequest;
 import com.autonomousapi.core.auth.dto.RefreshRequest;
 import com.autonomousapi.core.auth.dto.ResendVerificationRequest;
@@ -70,6 +71,17 @@ public class AuthController {
     public TokenResponse login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
         loginRateLimit.verificar(req.email(), http);
         return authService.login(req);
+    }
+
+    /**
+     * Login ou cadastro via Google (ADR pendente de registrar): o ID token já é a prova de
+     * identidade (o Google assinou e o backend verifica a assinatura), sem senha nem passo
+     * de confirmação de e-mail. Sem token nem senha vazando pela rede além do próprio ID
+     * token — fluxo padrão de Google Identity Services, tudo client-side até aqui.
+     */
+    @PostMapping("/google")
+    public TokenResponse google(@Valid @RequestBody GoogleAuthRequest req) {
+        return authService.googleAuth(req.idToken());
     }
 
     /** Sempre 202, e-mail cadastrado ou não — mesmo raciocínio do resend-verification. */

@@ -7,6 +7,7 @@ import {
   CampoPublico,
   ErroPublico,
 } from '../components/layout/AuthLayout';
+import { GoogleSignInButton, isGoogleSignInEnabled } from '../components/shared/GoogleSignInButton';
 
 interface Props {
   onGoToSignup: () => void;
@@ -16,7 +17,7 @@ interface Props {
 
 export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword }: Props) {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -35,6 +36,18 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
     }
   }
 
+  async function handleGoogleCredential(idToken: string) {
+    setError('');
+    setSubmitting(true);
+    try {
+      await loginWithGoogle(idToken);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.login.falha'));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <AuthLayout
       titulo={t('auth.login.titulo')}
@@ -46,7 +59,22 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
       }
       onVoltar={onVoltarParaHome}
     >
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+      {/* O bloco inteiro some sem VITE_GOOGLE_CLIENT_ID configurado — sem isso, sobraria
+          um divisor "ou" solto sem nenhum botão acima dele. */}
+      {isGoogleSignInEnabled && (
+        <>
+          <div className="mt-8">
+            <GoogleSignInButton onCredential={handleGoogleCredential} />
+          </div>
+          <div className="my-6 flex items-center gap-3 text-[12px] text-[var(--tinta-suave)]">
+            <div className="h-px flex-1 bg-[var(--linha)]" />
+            {t('auth.ou')}
+            <div className="h-px flex-1 bg-[var(--linha)]" />
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className={isGoogleSignInEnabled ? 'space-y-4' : 'mt-8 space-y-4'}>
         <CampoPublico
           id="email"
           rotulo={t('auth.login.email')}

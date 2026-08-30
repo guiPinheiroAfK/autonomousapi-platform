@@ -16,6 +16,7 @@ import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.billing.SubscriptionRepository;
 import com.autonomousapi.core.email.EmailSender;
+import com.autonomousapi.core.error.GoogleAuthNotConfiguredException;
 import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
 import com.autonomousapi.core.error.InvalidVerificationTokenException;
 import com.autonomousapi.core.security.jwt.JwtService;
@@ -45,7 +46,15 @@ class AuthServiceTest {
     private AuthService service() {
         return new AuthService(
                 users, tenants, refreshTokens, verificationTokens, passwordResetTokens, subscriptions, emailSender,
-                passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180");
+                passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180", "");
+    }
+
+    /** GOOGLE_CLIENT_ID vazio (padrão dev/demo) — o botão nem aparece no front, mas o
+     *  backend precisa recusar de forma limpa mesmo assim, não tentar verificar contra
+     *  um audience vazio. */
+    @Test
+    void googleAuthSemClientIdConfiguradoLancaErroClaro() {
+        assertThrows(GoogleAuthNotConfiguredException.class, () -> service().googleAuth("qualquer-id-token"));
     }
 
     @Test

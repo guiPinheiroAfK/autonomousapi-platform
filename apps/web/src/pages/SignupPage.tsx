@@ -8,6 +8,7 @@ import {
   CampoPublico,
   ErroPublico,
 } from '../components/layout/AuthLayout';
+import { GoogleSignInButton, isGoogleSignInEnabled } from '../components/shared/GoogleSignInButton';
 
 interface Props {
   onGoToLogin: () => void;
@@ -16,7 +17,7 @@ interface Props {
 
 export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
   const { t } = useTranslation();
-  const { signup } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
   const [tenantName, setTenantName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,6 +33,21 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
     try {
       const resp = await signup({ email, password, tenantName });
       setEmailPendente(resp.email ?? email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.signup.falha'));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** Cadastro via Google já sai habilitado (o backend decide login-ou-cadastro sozinho,
+   *  ver AuthService#googleAuth) — sem a etapa de "confirme seu e-mail" que o cadastro
+   *  por senha tem, porque o Google já provou posse do e-mail. */
+  async function handleGoogleCredential(idToken: string) {
+    setError('');
+    setSubmitting(true);
+    try {
+      await loginWithGoogle(idToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.signup.falha'));
     } finally {
@@ -63,7 +79,20 @@ export function SignupPage({ onGoToLogin, onVoltarParaHome }: Props) {
     >
       <p className="mt-3 text-[14px] leading-relaxed text-[var(--tinta-suave)]">{t('auth.signup.descricao')}</p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+      {isGoogleSignInEnabled && (
+        <>
+          <div className="mt-8">
+            <GoogleSignInButton onCredential={handleGoogleCredential} />
+          </div>
+          <div className="my-6 flex items-center gap-3 text-[12px] text-[var(--tinta-suave)]">
+            <div className="h-px flex-1 bg-[var(--linha)]" />
+            {t('auth.ou')}
+            <div className="h-px flex-1 bg-[var(--linha)]" />
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className={isGoogleSignInEnabled ? 'space-y-4' : 'mt-8 space-y-4'}>
         <CampoPublico
           id="tenantName"
           rotulo={t('auth.signup.nomeFrota')}

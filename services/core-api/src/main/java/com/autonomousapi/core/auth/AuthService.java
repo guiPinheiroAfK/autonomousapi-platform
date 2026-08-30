@@ -8,6 +8,7 @@ import com.autonomousapi.core.billing.Subscription;
 import com.autonomousapi.core.billing.SubscriptionRepository;
 import com.autonomousapi.core.email.EmailSender;
 import com.autonomousapi.core.error.EmailAlreadyUsedException;
+import com.autonomousapi.core.error.GoogleAuthNotConfiguredException;
 import com.autonomousapi.core.error.InvalidCredentialsException;
 import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
 import com.autonomousapi.core.error.InvalidRefreshTokenException;
@@ -18,13 +19,20 @@ import com.autonomousapi.core.tenant.TenantRepository;
 import com.autonomousapi.core.user.Role;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HexFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,6 +59,8 @@ public class AuthService {
     private final Duration emailVerificationTtl;
     private final Duration passwordResetTtl;
     private final String webAppUrl;
+    private final String googleClientId;
+    private final GoogleIdTokenVerifier googleIdTokenVerifier;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(
@@ -67,7 +77,8 @@ public class AuthService {
             @Value("${app.jwt.access-ttl-minutes}") long accessTtlMinutes,
             @Value("${app.auth.email-verification-ttl-hours}") long emailVerificationTtlHours,
             @Value("${app.auth.password-reset-ttl-minutes}") long passwordResetTtlMinutes,
-            @Value("${app.auth.web-app-url}") String webAppUrl) {
+            @Value("${app.auth.web-app-url}") String webAppUrl,
+            @Value("${app.auth.google-client-id}") String googleClientId) {
         this.users = users;
         this.tenants = tenants;
         this.refreshTokens = refreshTokens;
@@ -79,6 +90,14 @@ public class AuthService {
         this.jwtService = jwtService;
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
         this.accessTtlSeconds = Duration.ofMinutes(accessTtlMinutes).toSeconds();
+        this.googleClientId = googleClientId;
+        // Construir o verifier não faz nenhuma chamada de rede (só monta o cliente HTTP e o
+        // cache de chave, ainda vazio) — seguro criar mesmo sem GOOGLE_CLIENT_ID configurado,
+        // só não é usado nesse caso (ver googleAuth).
+        this.googleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(
+                        new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
         this.emailVerificationTtl = Duration.ofHours(emailVerificationTtlHours);
         this.passwordResetTtl = Duration.ofMinutes(passwordResetTtlMinutes);
         this.webAppUrl = webAppUrl;
@@ -109,6 +128,66 @@ public class AuthService {
         subscriptions.save(Subscription.trial(tenant.getId(), Instant.now().plus(Duration.ofDays(TRIAL_DAYS))));
         sendVerificationEmail(user);
         return SignupResponse.pendingVerification(user.getEmail());
+    }
+
+    /**
+     * Login OU cadastro via Google, na mesma chamada — o ID token já prova posse do e-mail
+     * (Google verificou), então não existe o passo de "confirme seu e-mail" que o signup por
+     * senha tem: usuário novo já nasce habilitado. E-mail existente vira login direto, mesmo
+     * que a conta tenha sido criada originalmente por senha — é a mesma pessoa provando posse
+     * do mesmo e-mail por outro caminho, não duas contas.
+     *
+     * `password_hash` continua NOT NULL no schema (não vale a pena migrar isso só por causa
+     * do Google) — conta só-Google recebe um hash de valor aleatório, nunca comunicado a
+     * ninguém, então login por senha nessa conta simplesmente nunca bate.
+     *
+     * Nome do tenant: sem um passo de onboarding pra perguntar "nome da frota" (o Google só
+     * devolve o nome da PESSOA), usa o nome da pessoa como placeholder — dá pra editar depois
+     * se o produto ganhar uma tela de configurações de tenant.
+     */
+    @Transactional
+    public TokenResponse googleAuth(String idToken) {
+        if (googleClientId.isBlank()) {
+            throw new GoogleAuthNotConfiguredException(
+                    "Login com Google ainda não configurado neste ambiente (GOOGLE_CLIENT_ID ausente).");
+        }
+
+        GoogleIdToken.Payload payload = verifyGoogleIdToken(idToken);
+        String email = payload.getEmail();
+        if (email == null || !Boolean.TRUE.equals(payload.getEmailVerified())) {
+            throw new InvalidCredentialsException();
+        }
+
+        User user = users.findByEmail(email).orElseGet(() -> criarUsuarioViaGoogle(email, payload));
+        if (!user.isEnabled()) {
+            // Conta existia via signup por senha, esperando confirmação por e-mail — o
+            // login com Google já prova posse do mesmo jeito, não faz sentido travar aqui.
+            user.setEnabled(true);
+            users.save(user);
+        }
+        return issueTokens(user);
+    }
+
+    private GoogleIdToken.Payload verifyGoogleIdToken(String idToken) {
+        try {
+            GoogleIdToken token = googleIdTokenVerifier.verify(idToken);
+            if (token == null) {
+                throw new InvalidCredentialsException();
+            }
+            return token.getPayload();
+        } catch (GeneralSecurityException | IOException | IllegalArgumentException e) {
+            throw new InvalidCredentialsException();
+        }
+    }
+
+    private User criarUsuarioViaGoogle(String email, GoogleIdToken.Payload payload) {
+        Object nome = payload.get("name");
+        Tenant tenant = tenants.save(new Tenant(nome instanceof String s && !s.isBlank() ? s : email));
+        User novo = new User(
+                tenant.getId(), email, passwordEncoder.encode(generateRawToken()), Role.GESTOR_FROTA);
+        users.save(novo);
+        subscriptions.save(Subscription.trial(tenant.getId(), Instant.now().plus(Duration.ofDays(TRIAL_DAYS))));
+        return novo;
     }
 
     /**

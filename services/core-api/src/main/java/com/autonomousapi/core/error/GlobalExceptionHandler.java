@@ -75,6 +75,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("billing_not_configured", ex.getMessage()));
     }
 
+    @ExceptionHandler(GoogleAuthNotConfiguredException.class)
+    public ResponseEntity<ApiError> handleGoogleAuthNotConfigured(GoogleAuthNotConfiguredException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError("google_auth_not_configured", ex.getMessage()));
+    }
+
     @ExceptionHandler(SubscriptionRequiredException.class)
     public ResponseEntity<ApiError> handleSubscriptionRequired(SubscriptionRequiredException ex) {
         return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)

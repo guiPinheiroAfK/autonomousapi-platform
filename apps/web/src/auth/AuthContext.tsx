@@ -19,6 +19,8 @@ interface AuthState {
   user: UserResponse | null;
   loading: boolean;
   login: (body: LoginRequest) => Promise<void>;
+  /** Login OU cadastro via Google, na mesma chamada — o backend decide. */
+  loginWithGoogle: (idToken: string) => Promise<void>;
   /** Não loga automaticamente (ADR 0011) — devolve a mensagem de "confirme seu e-mail". */
   signup: (body: SignupRequest) => Promise<SignupResponse>;
   /** Habilita a conta e já loga — o clique no link é a prova de posse do e-mail. */
@@ -97,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await afterAuth(await coreApi.auth.login(body));
   }
 
+  async function loginWithGoogle(idToken: string) {
+    await afterAuth(await coreApi.auth.google(idToken));
+  }
+
   async function signup(body: SignupRequest) {
     return coreApi.auth.signup(body);
   }
@@ -113,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, verifyEmail, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, signup, verifyEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

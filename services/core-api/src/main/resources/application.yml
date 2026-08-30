@@ -86,6 +86,9 @@ app:
     # Convite de motorista dura mais que a confirmação de cadastro: o motorista pode
     # levar dias para abrir o e-mail e instalar o app (ADR 0013).
     driver-invite-ttl-hours: ${DRIVER_INVITE_TTL_HOURS:72}
+    # Login/cadastro com Google — sem client ID configurado (padrão dev/demo), o endpoint
+    # responde 503 com mensagem clara em vez de tentar verificar contra um audience vazio.
+    google-client-id: ${GOOGLE_CLIENT_ID:}
 
 springdoc:
   api-docs:

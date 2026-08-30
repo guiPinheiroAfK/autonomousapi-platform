@@ -215,7 +215,8 @@
       "proximaPreventiva": "Próxima preventiva",
       "emDias": "em {{n}} dias"
     },
-    "rodape": "Gestão de frota · Dado viário · Brasil"
+    "rodape": "Gestão de frota · Dado viário · Brasil",
+    "ou": "ou"
   },
   "app": {
     "sidebar": {

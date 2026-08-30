@@ -319,6 +319,10 @@ export const coreApi = {
   auth: {
     login: (body: LoginRequest) =>
       request<TokenResponse>('/v1/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+    /** Login ou cadastro via Google, na mesma chamada — o backend decide (e-mail já
+     *  cadastrado vira login, novo vira conta nova já habilitada). */
+    google: (idToken: string) =>
+      request<TokenResponse>('/v1/auth/google', { method: 'POST', body: JSON.stringify({ idToken }) }),
     // Não devolve tokens (ADR 0011): a conta nasce desabilitada até confirmar o e-mail.
     signup: (body: SignupRequest) =>
       request<SignupResponse>('/v1/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
