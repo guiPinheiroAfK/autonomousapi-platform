@@ -147,6 +147,16 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Status:** implementado — sem medição formal de "antes/depois" (não é o tipo de ganho que Lighthouse capta bem, é sensação de fluidez em navegação repetida dentro da sessão), verificado manualmente em cada técnica.
 
+## 15. `npm audit` na raiz (workspace) — 27 alertas, todos em toolchain de build do mobile
+
+**Situação atual:** o Dependabot aponta 27 vulnerabilidades no lockfile raiz (1 crítica, 17 altas, 8 moderadas, 1 baixa). Investigado com `npm ls --all`: nenhuma vem de `apps/web` (esse já está zerado, item 7) — todas são dependências transitivas do toolchain de build do `apps/mobile` (`@expo/cli`, `metro`, `@react-native-community/cli-platform-*`, `xcode`). Pacotes como `tar`, `@xmldom/xmldom`, `image-size`, `fast-xml-parser`, `send`, `uuid` são usados só durante `expo` build/dev, nunca entram no bundle JS que roda no celular do usuário final — não é superfície de ataque exposta a terceiro.
+
+**Por que não corrigir agora:** `npm audit fix` sem `--force` não resolve nada (tudo depende de bump de versão maior). `npm audit fix --force` instalaria `expo@57.x`, um major bump do SDK do Expo — historicamente vem com breaking changes reais (APIs, config nativo, `eas.json`), exige teste manual completo em device/simulador antes de confiar. Fazer isso de passagem numa sessão de outra coisa é como trocar vulnerabilidade não-explorada por app mobile quebrado — mesmo raciocínio já registrado no item 7 sobre não usar `--force` cego.
+
+**Prioridade:** baixa hoje (dev-tooling, não roda em produção nem é alcançável por usuário externo) — mas mesma régua do item 7: resolver antes de qualquer due diligence de segurança de cliente maior/enterprise. Merece sessão própria (upgrade de Expo SDK + regressão manual do app), não encaixe de última hora.
+
+**Status:** investigado e documentado (2026-08-30); correção pendente, sem bloqueio atual.
+
 ## Definition of Done
 
 - [x] Rota `/frota/:id` no ar substituindo o dialog, com breadcrumb, botão voltar e acesso direto por link funcionando (PR #44).
@@ -162,3 +172,4 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [x] Sistema de notificações in-app no ar, substituindo o sino decorativo (item 12).
 - [x] Login com Google e refresh token silencioso implementados no código; ativação em produção pendente de Client ID (item 13).
 - [x] Otimizações de fetch do front (cache TTL, prefetch, dedupe, guarda de resposta obsoleta, update otimista) implementadas (item 14).
+- [ ] `npm audit` da raiz zerado (upgrade do Expo SDK, sessão própria com teste manual do mobile) — item 15.
