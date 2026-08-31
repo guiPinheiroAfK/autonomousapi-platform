@@ -18,6 +18,8 @@ Antes de escrever código, leia os arquivos nesta ordem:
 | 10 | `10-gestao-de-custos.md` | Despesas categorizadas (`expense_entry`), orçamento com alerta de estouro, rentabilidade por transfer, recalibração estimado x realizado |
 | 11 | `11-caminho-feliz-rotas.md` | Foco principal atual: levantamento completo do trâmite de rota (caminho feliz + exceções — cancelamento, reatribuição, edição pós-atribuição), telemetria de uso do fluxo (`route_plan_event`) |
 | 12 | `12-notificacoes-operacionais.md` | Notificação interna (Discord/Telegram) de signup/confirmação de conta via webhook do `core-api` |
+| 13 | `13-viagem-redonda-turismo.md` | Ida e volta vinculadas (`viagem_id`) para frota de turismo — mesmo padrão de rota, sem entidade nova |
+| 14 | `14-notificacao-passageiro.md` | Notificação automática ao passageiro/cliente final via bot Telegram, reaproveitando `route_stop` e `route_plan_event` |
 
 ## Como usar isso com o Claude Code
 
