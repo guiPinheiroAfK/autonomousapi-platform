@@ -20,6 +20,7 @@ Antes de escrever código, leia os arquivos nesta ordem:
 | 12 | `12-notificacoes-operacionais.md` | Notificação interna (Discord/Telegram) de signup/confirmação de conta via webhook do `core-api` |
 | 13 | `13-viagem-redonda-turismo.md` | Ida e volta vinculadas (`viagem_id`) para frota de turismo — mesmo padrão de rota, sem entidade nova |
 | 14 | `14-notificacao-passageiro.md` | Notificação automática ao passageiro/cliente final via bot Telegram, reaproveitando `route_stop` e `route_plan_event` |
+| 15 | `15-equipe-e-permissoes.md` | Papéis restritos por tenant (Despachante, Visualizador), convite de equipe, matriz de QA de permissão |
 
 ## Como usar isso com o Claude Code
 
