@@ -14,6 +14,7 @@ import {
   Navigation,
   Plug,
   Route as RouteIcon,
+  UserCog,
   Users,
   Wallet,
   Wrench,
@@ -35,6 +36,9 @@ interface NavItem {
    *  specifier do `lazy()` em App.tsx: o bundler não duplica o chunk por ser chamado de
    *  dois arquivos diferentes, dedupe é por módulo resolvido, não por call site. */
   prefetch: () => Promise<unknown>;
+  /** Assunto de dono de conta (spec 15) — some do menu pra Despachante/Visualizador,
+   *  não só GESTOR_FROTA/ADMIN (o backend também recusa, isso aqui é só a tela). */
+  gestorTotalOnly?: boolean;
 }
 
 const NAV_OPERACAO: NavItem[] = [
@@ -54,7 +58,8 @@ const NAV_GESTAO: NavItem[] = [
   { path: ROUTES.reports, labelKey: 'app.sidebar.nav.relatorios', icon: BarChart3, prefetch: () => import('../../pages/ReportsPage') },
   { path: ROUTES.affiliates, labelKey: 'app.sidebar.nav.parceiros', icon: Handshake, prefetch: () => import('../../pages/AffiliatesPage') },
   { path: ROUTES.chargingStations, labelKey: 'app.sidebar.nav.pontosRecarga', icon: Plug, prefetch: () => import('../../pages/ChargingStationsPage') },
-  { path: ROUTES.billing, labelKey: 'app.sidebar.nav.assinatura', icon: CreditCard, prefetch: () => import('../../pages/BillingPage') },
+  { path: ROUTES.billing, labelKey: 'app.sidebar.nav.assinatura', icon: CreditCard, prefetch: () => import('../../pages/BillingPage'), gestorTotalOnly: true },
+  { path: ROUTES.team, labelKey: 'app.sidebar.nav.equipe', icon: UserCog, prefetch: () => import('../../pages/TeamPage'), gestorTotalOnly: true },
 ];
 
 /**
@@ -120,7 +125,9 @@ interface SidebarProps {
 export function Sidebar({ user, open, onClose }: SidebarProps) {
   const { t } = useTranslation();
   const motorista = user.role === 'MOTORISTA';
+  const gestorTotal = user.role === 'GESTOR_FROTA' || user.role === 'ADMIN';
   const { pathname } = useLocation();
+  const navGestaoVisivel = NAV_GESTAO.filter((item) => !item.gestorTotalOnly || gestorTotal);
 
   useEffect(() => {
     if (!open) return;
@@ -175,7 +182,7 @@ export function Sidebar({ user, open, onClose }: SidebarProps) {
           ) : (
             <>
               <NavSection title={t('app.sidebar.operacao')} items={NAV_OPERACAO} pathname={pathname} />
-              <NavSection title={t('app.sidebar.gestao')} items={NAV_GESTAO} pathname={pathname} />
+              <NavSection title={t('app.sidebar.gestao')} items={navGestaoVisivel} pathname={pathname} />
             </>
           )}
         </nav>

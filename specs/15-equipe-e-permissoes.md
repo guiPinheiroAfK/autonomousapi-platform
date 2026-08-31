@@ -97,7 +97,9 @@ rota pro `DESPACHANTE` nos poucos endpoints que já são `@PreAuthorize("hasAnyR
 | Criar rota / sugerir ordem | ✅ | ✅ | ❌ (403 + botão escondido) |
 | Atribuir motorista a uma rota | ✅ | ✅ | ❌ |
 | Cancelar rota | ✅ | ❌ (403 + botão escondido) | ❌ |
-| Criar/editar/excluir veículo, motorista, custo, OS, ponto de coleta, passageiro, etc. | ✅ | ❌ (403 — botão continua visível nesta fatia) | ❌ (idem) |
+| Criar/editar/excluir veículo, motorista, custo, OS, ponto de coleta, etc. | ✅ | ❌ (403 — botão continua visível nesta fatia) | ❌ (idem) |
+| Cadastrar passageiro novo (contato de parada) | ✅ | ✅ (precisa pra montar rota) | ❌ |
+| Editar/excluir passageiro do cadastro | ✅ | ❌ | ❌ |
 | Convidar/gerenciar equipe | ✅ | ❌ (403 + tela escondida) | ❌ (idem) |
 | Mudar de plano / abrir portal de pagamento | ✅ | ❌ | ❌ |
 | Aceitar convite de equipe e definir senha | — | — | (qualquer papel, é o próprio aceite) |
@@ -123,20 +125,64 @@ rota pro `DESPACHANTE` nos poucos endpoints que já são `@PreAuthorize("hasAnyR
   chamada autenticada dele falha (usuário desabilitado — mesma checagem que já existe pra
   conta desabilitada em outros fluxos).
 
+## Achados durante a implementação (não estavam no desenho original)
+
+- **Bug pré-existente: papel sem permissão devolvia 401, não 403.** `SecurityConfig` usava
+  `response.sendError(...)` tanto pro "não autenticado" quanto pro "sem permissão" — sem um
+  `accessDeniedHandler` explícito, e pior: `sendError` dispara o redirecionamento de página
+  de erro do Tomcat pra `/error`, que reentra na cadeia de filtros de segurança e
+  **sobrescreve o status original** com 401 do `authenticationEntryPoint`. Reproduzido ao
+  vivo antes do fix (Despachante batendo em `/v1/billing/subscription` recebia 401, não
+  403) e confirmado com um endpoint antigo já testado (`/v1/drivers` com token MOTORISTA —
+  mesmo sintoma, então não era regressão desta spec). Corrigido escrevendo a resposta direto
+  no `HttpServletResponse` (`setStatus` + corpo JSON com charset UTF-8 explícito — sem isso
+  acentuação saía corrompida), sem `sendError`. Importa porque o front trata 401 como "sessão
+  expirou, desloga e manda pro login" — sem o fix, todo Despachante/Visualizador barrado por
+  papel seria deslogado em vez de ver "sem permissão".
+- **`DriverController`, `BudgetController`, `CollectionPointController`, `PassengerController`
+  tinham leitura mais fechada do que a própria matriz de QA deste documento previa.** A
+  maioria dos endpoints de leitura do sistema já não tinha `@PreAuthorize` (aberto a
+  qualquer autenticado), mas esses quatro tinham — `DriverController.list/get/license-
+  expiring` era Gestor-only por uma correção de segurança anterior (não relacionada a esta
+  spec), e os outros três tinham `@PreAuthorize` de **classe** herdado do padrão usado
+  quando cada um foi criado. Descoberto ao testar o papel Despachante de verdade no
+  navegador: o Dashboard mostrava "0 veículos" pro mesmo tenant que o Gestor via 20 mil.
+  Abertos pros três papéis de gestão (leitura); escrita continua Gestor-only nos quatro,
+  exceto `PassengerController.create`, que também abre pro Despachante (ele monta rota e
+  precisa poder cadastrar um contato novo na hora). `DriverRatingController` (avaliação
+  privada de motorista, spec 06) foi revisado e **mantido** Gestor-only de propósito — é
+  dado sensível que não estava implícito em "ver motoristas" da matriz.
+- **`DashboardPage.tsx` usava `Promise.all` misturando endpoints com permissão diferente.**
+  Um único 403 (`drivers.licenseExpiring`, antes de abrir pra Despachante) derrubava a
+  promise inteira e zerava todos os cards, não só o widget sem permissão — reproduzido ao
+  vivo antes do fix acima resolver a causa raiz. Trocado por `Promise.allSettled` de
+  qualquer forma, como defesa em profundidade (falha de rede parcial não devia derrubar a
+  tela inteira, independente de ser 403 ou qualquer outro erro).
+
 ## Definition of Done
 
-- [ ] `Role` ganha `DESPACHANTE`/`VISUALIZADOR`.
-- [ ] `team_invite` (migration), `TeamInviteService`, `TeamController` (invite/list/mudar
+- [x] `Role` ganha `DESPACHANTE`/`VISUALIZADOR`.
+- [x] `team_invite` (migration V30), `TeamService`, `TeamController` (invite/list/mudar
       papel/remover).
-- [ ] `POST /v1/auth/accept-team-invite`.
-- [ ] `RoutePlanController`: `list`/`suggest-order`/`create`/`assign` abrem pra
+- [x] `POST /v1/auth/accept-team-invite`.
+- [x] `RoutePlanController`: `list`/`suggest-order`/`create`/`assign` abrem pra
       `DESPACHANTE`; `cancel` continua fechado.
-- [ ] `BillingController.subscription` ganha `@PreAuthorize` explícito (achado da
-      auditoria, fechado de graça).
-- [ ] Front: `RequireGestor` aceita os três papéis; Assinatura escondida de
-      Despachante/Visualizador; tela "Equipe" (convidar/listar/mudar papel/remover);
-      "Cancelar rota" escondido do Despachante.
-- [ ] Matriz de QA acima verificada manualmente ponta a ponta (os 3 papéis × as ações da
-      tabela).
-- [ ] Registrado como fast-follow (não bloqueia esta entrega): esconder botão de
-      criar/editar/excluir nas telas fora de rotas pro Despachante/Visualizador.
+- [x] `BillingController` (subscription/checkout/portal) ganha `@PreAuthorize` explícito
+      por método (achado da auditoria — não podia ser por classe, quebraria o webhook da
+      Stripe, que não tem JWT).
+- [x] `DriverController`/`BudgetController`/`CollectionPointController`/`PassengerController`:
+      leitura aberta aos três papéis (achado ao testar de verdade, não previsto no desenho
+      original — ver seção acima).
+- [x] Bug de status 401×403 em `SecurityConfig` corrigido (achado ao testar — ver seção
+      acima).
+- [x] Front: `RequireGestor` aceita os três papéis; `RequireGestorTotal` (novo) restringe
+      Assinatura e Equipe ao Gestor; tela "Equipe" (convidar/listar/mudar papel/remover);
+      "Nova rota" escondido do Visualizador, "Cancelar rota" escondido do Despachante.
+- [x] `DashboardPage` migrado pra `Promise.allSettled` (achado ao testar — ver seção acima).
+- [x] Matriz de QA verificada manualmente ponta a ponta — backend via curl com token real
+      (Gestor/Despachante/Visualizador, incluindo os casos de borda de convite) e front no
+      navegador (convite → aceite → login → menu correto pro papel → Dashboard com dado
+      real, não zerado).
+- [ ] Fast-follow (não bloqueia esta entrega): esconder botão de criar/editar/excluir nas
+      telas fora de rotas pro Despachante/Visualizador — o backend já bloqueia a escrita
+      (403), o que falta é só a tela não mostrar um botão que vai dar erro.

@@ -53,6 +53,16 @@ public class SmtpEmailSender implements EmailSender {
                         + "Depois de definir a senha, é só entrar no app com seu e-mail.");
     }
 
+    @Override
+    public void sendTeamInviteEmail(String to, String nome, String inviteUrl) {
+        send(to, "Você foi convidado para a equipe — AutonomousAPI",
+                "Olá, " + nome + ".\n\n"
+                        + "Você foi convidado a fazer parte da equipe de gestão de frota na AutonomousAPI.\n\n"
+                        + "Defina sua senha clicando no link abaixo (válido por 3 dias):\n"
+                        + inviteUrl + "\n\n"
+                        + "Depois de definir a senha, é só entrar com seu e-mail.");
+    }
+
     private void send(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromAddress);

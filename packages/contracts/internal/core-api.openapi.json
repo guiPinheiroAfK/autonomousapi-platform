@@ -166,6 +166,47 @@
         }
       }
     },
+    "/v1/team/{userId}/role": {
+      "put": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "changeRole",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeTeamRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/passengers/{id}": {
       "put": {
         "tags": [
@@ -924,6 +965,36 @@
         }
       }
     },
+    "/v1/team/invite": {
+      "post": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "invite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTeamInviteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamInviteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/routes/plans": {
       "get": {
         "tags": [
@@ -1468,7 +1539,7 @@
         "tags": [
           "driver-controller"
         ],
-        "operationId": "invite",
+        "operationId": "invite_1",
         "parameters": [
           {
             "name": "id",
@@ -2554,6 +2625,29 @@
         }
       }
     },
+    "/v1/auth/accept-team-invite": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "acceptTeamInvite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/v1/auth/accept-invite": {
       "post": {
         "tags": [
@@ -2718,6 +2812,26 @@
                   "items": {
                     "$ref": "#/components/schemas/MonthlyCostResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/team": {
+      "get": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "overview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamOverviewResponse"
                 }
               }
             }
@@ -3336,6 +3450,30 @@
         }
       }
     },
+    "/v1/team/{userId}": {
+      "delete": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "remove",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/v1/expenses/{id}": {
       "delete": {
         "tags": [
@@ -3752,6 +3890,55 @@
             "format": "date-time"
           },
           "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChangeTeamRoleRequest": {
+        "required": [
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "GESTOR_FROTA",
+              "MOTORISTA",
+              "ADMIN",
+              "PARCEIRO_API",
+              "DESPACHANTE",
+              "VISUALIZADOR"
+            ]
+          }
+        }
+      },
+      "TeamMemberResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "GESTOR_FROTA",
+              "MOTORISTA",
+              "ADMIN",
+              "PARCEIRO_API",
+              "DESPACHANTE",
+              "VISUALIZADOR"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -4229,6 +4416,63 @@
           "received": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "CreateTeamInviteRequest": {
+        "required": [
+          "email",
+          "nome",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "GESTOR_FROTA",
+              "MOTORISTA",
+              "ADMIN",
+              "PARCEIRO_API",
+              "DESPACHANTE",
+              "VISUALIZADOR"
+            ]
+          }
+        }
+      },
+      "TeamInviteResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "GESTOR_FROTA",
+              "MOTORISTA",
+              "ADMIN",
+              "PARCEIRO_API",
+              "DESPACHANTE",
+              "VISUALIZADOR"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -5158,6 +5402,23 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "TeamOverviewResponse": {
+        "type": "object",
+        "properties": {
+          "membros": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberResponse"
+            }
+          },
+          "convitesPendentes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamInviteResponse"
+            }
           }
         }
       },

@@ -41,24 +41,27 @@ public class RoutePlanController {
         this.routePlanService = routePlanService;
     }
 
-    /** Stateless — não persiste nada, só devolve a sugestão pro gestor revisar. */
+    /** Stateless — não persiste nada, só devolve a sugestão pro gestor revisar. Despachante
+     *  (spec 15) também cria/atribui rota, então também precisa sugerir ordem. */
     @PostMapping("/suggest-order")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
     public List<StopInput> suggestOrder(@Valid @RequestBody SuggestOrderRequest req, Authentication auth) {
         return routePlanService.suggestOrder(principal(auth), req.stops());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
     public RoutePlanResponse create(@Valid @RequestBody CreateRoutePlanRequest req, Authentication auth) {
         return routePlanService.create(
                 principal(auth), req.driverId(), req.vehicleId(), req.categoria(), req.dataExecucao(),
                 req.valor(), req.stops(), req.viagemId());
     }
 
+    /** Leitura aberta pros três papéis de gestão (spec 15) — Visualizador só lê, mas
+     *  precisa ver a lista igual aos outros dois. */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
     public PageResponse<RoutePlanResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -69,13 +72,15 @@ public class RoutePlanController {
     }
 
     @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
     public RoutePlanResponse assign(@PathVariable UUID id, @Valid @RequestBody AssignDriverRequest req, Authentication auth) {
         return routePlanService.assignDriver(principal(auth), id, req.driverId());
     }
 
     /** Cancelamento direto — só funciona pra PLANEJADA (ADR 0021). Rota já EM_ANDAMENTO
-     *  devolve 400 explicando que precisa passar pelo chat. */
+     *  devolve 400 explicando que precisa passar pelo chat. Despachante não cancela (spec
+     *  15) — de propósito sem DESPACHANTE aqui, diferente dos outros endpoints de escrita
+     *  desta classe. */
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public RoutePlanResponse cancel(@PathVariable UUID id, Authentication auth) {

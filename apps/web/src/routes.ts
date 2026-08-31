@@ -12,6 +12,7 @@ export const ROUTES = {
   resetPassword: '/redefinir-senha',
   verifyEmail: '/verificar-email',
   acceptInvite: '/aceitar-convite',
+  acceptTeamInvite: '/aceitar-convite-equipe',
 
   vehicles: '/frota',
   vehicleDetail: (id: string) => `/frota/${id}`,
@@ -22,6 +23,7 @@ export const ROUTES = {
   reports: '/relatorios',
   expenses: '/custos',
   billing: '/assinatura',
+  team: '/equipe',
   affiliates: '/parceiros',
   chat: '/mensagens',
   notifications: '/notificacoes',

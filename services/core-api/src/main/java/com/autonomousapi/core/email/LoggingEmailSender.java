@@ -28,4 +28,9 @@ public class LoggingEmailSender implements EmailSender {
     public void sendDriverInviteEmail(String to, String inviteUrl) {
         log.info("[email de convite de motorista — sem SMTP configurado] destinatário={} link={}", to, inviteUrl);
     }
+
+    @Override
+    public void sendTeamInviteEmail(String to, String nome, String inviteUrl) {
+        log.info("[email de convite de equipe — sem SMTP configurado] destinatário={} nome={} link={}", to, nome, inviteUrl);
+    }
 }

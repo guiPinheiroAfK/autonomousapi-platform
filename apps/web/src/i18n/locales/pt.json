@@ -232,7 +232,7 @@
         "motoristas": "Motoristas", "mensagens": "Mensagens", "rotas": "Rotas",
         "coletaEntrega": "Coleta & Entrega", "pontosColeta": "Pontos de Coleta", "passageiros": "Passageiros",
         "manutencao": "Manutenção", "custos": "Custos", "relatorios": "Relatórios",
-        "parceiros": "Parceiros", "pontosRecarga": "Pontos de Recarga", "assinatura": "Assinatura",
+        "parceiros": "Parceiros", "pontosRecarga": "Pontos de Recarga", "assinatura": "Assinatura", "equipe": "Equipe",
         "inicio": "Início", "minhaRota": "Minha Rota", "mais": "Mais"
       }
     },
@@ -626,6 +626,32 @@
         "falhaCarregar": "Erro ao carregar passageiros", "atualizado": "Passageiro atualizado.",
         "cadastrado": "Passageiro cadastrado.", "falhaSalvar": "Falha ao salvar passageiro",
         "excluido": "Passageiro excluído.", "falhaExcluir": "Falha ao excluir passageiro"
+      }
+    },
+    "team": {
+      "titulo": "Equipe",
+      "subtitulo": "Quem tem acesso à operação e em que nível — convide, mude o papel ou remova.",
+      "convidar": "Convidar",
+      "convidarTitulo": "Convidar integrante",
+      "membros": "Integrantes",
+      "convitesPendentes": "Convites pendentes",
+      "pendente": "Pendente",
+      "remover": "Remover",
+      "confirmarRemover": "Remover o acesso deste integrante? Ele não vai mais conseguir entrar.",
+      "papel": {
+        "gestor": "Gestor", "despachante": "Despachante", "visualizador": "Visualizador"
+      },
+      "form": {
+        "nome": "Nome", "nomePlaceholder": "Maria Silva",
+        "email": "E-mail", "emailPlaceholder": "maria@suafrota.com.br",
+        "papel": "Papel",
+        "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar convite"
+      },
+      "toasts": {
+        "falhaCarregar": "Erro ao carregar equipe", "convidado": "Convite enviado.",
+        "falhaConvidar": "Falha ao enviar convite", "papelAtualizado": "Papel atualizado.",
+        "falhaAtualizarPapel": "Falha ao atualizar papel", "removido": "Acesso removido.",
+        "falhaRemover": "Falha ao remover acesso"
       }
     },
     "chargingStations": {

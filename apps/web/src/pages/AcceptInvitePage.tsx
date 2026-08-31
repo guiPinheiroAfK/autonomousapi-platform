@@ -7,14 +7,18 @@ interface Props {
   token: string;
   onGoToLogin: () => void;
   onVoltarParaHome: () => void;
+  /** 'equipe' (spec 15) usa /v1/auth/accept-team-invite em vez do convite de motorista —
+   *  mesma tela, mesmo texto, só troca a chamada de API por baixo. */
+  tipo?: 'motorista' | 'equipe';
 }
 
 /**
- * Chega pelo link do e-mail de convite (ADR 0013): App.tsx lê ?token= de /aceitar-convite.
- * O clique no link já é a prova de posse — a conta nasce habilitada aqui, sem passo extra
- * de confirmação (mesmo raciocínio do verifyEmail).
+ * Chega pelo link do e-mail de convite (ADR 0013 pra motorista, spec 15 pra equipe):
+ * App.tsx lê ?token= de /aceitar-convite ou /aceitar-convite-equipe. O clique no link já é
+ * a prova de posse — a conta nasce habilitada aqui, sem passo extra de confirmação (mesmo
+ * raciocínio do verifyEmail).
  */
-export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props) {
+export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome, tipo = 'motorista' }: Props) {
   const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,7 +30,11 @@ export function AcceptInvitePage({ token, onGoToLogin, onVoltarParaHome }: Props
     setError('');
     setSubmitting(true);
     try {
-      await coreApi.auth.acceptInvite({ token, password });
+      if (tipo === 'equipe') {
+        await coreApi.auth.acceptTeamInvite({ token, password });
+      } else {
+        await coreApi.auth.acceptInvite({ token, password });
+      }
       setSucesso(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.acceptInvite.falha'));

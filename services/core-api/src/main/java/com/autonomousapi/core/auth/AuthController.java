@@ -15,6 +15,7 @@ import com.autonomousapi.core.auth.dto.VerifyEmailRequest;
 import com.autonomousapi.core.driver.DriverInviteService;
 import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.security.ratelimit.LoginRateLimitGuard;
+import com.autonomousapi.core.team.TeamService;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,16 +38,19 @@ public class AuthController {
     private final UserRepository users;
     private final LoginRateLimitGuard loginRateLimit;
     private final DriverInviteService driverInviteService;
+    private final TeamService teamService;
 
     public AuthController(
             AuthService authService,
             UserRepository users,
             LoginRateLimitGuard loginRateLimit,
-            DriverInviteService driverInviteService) {
+            DriverInviteService driverInviteService,
+            TeamService teamService) {
         this.authService = authService;
         this.users = users;
         this.loginRateLimit = loginRateLimit;
         this.driverInviteService = driverInviteService;
+        this.teamService = teamService;
     }
 
     @PostMapping("/signup")
@@ -105,6 +109,14 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void acceptInvite(@Valid @RequestBody AcceptInviteRequest req) {
         driverInviteService.accept(req.token(), req.password());
+    }
+
+    /** Aceite do convite de equipe (spec 15) — mesmo raciocínio do convite de motorista:
+     *  público, o token do e-mail é a prova de posse. */
+    @PostMapping("/accept-team-invite")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void acceptTeamInvite(@Valid @RequestBody AcceptInviteRequest req) {
+        teamService.accept(req.token(), req.password());
     }
 
     @PostMapping("/refresh")

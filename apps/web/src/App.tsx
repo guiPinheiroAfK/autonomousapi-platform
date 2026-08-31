@@ -51,6 +51,7 @@ const WorkOrdersPage = lazy(() => import('./pages/WorkOrdersPage').then((m) => (
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) => ({ default: m.MaintenancePage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const BillingPage = lazy(() => import('./pages/BillingPage').then((m) => ({ default: m.BillingPage })));
+const TeamPage = lazy(() => import('./pages/TeamPage').then((m) => ({ default: m.TeamPage })));
 const AffiliatesPage = lazy(() => import('./pages/AffiliatesPage').then((m) => ({ default: m.AffiliatesPage })));
 const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })));
 const NotificationsPage = lazy(() =>
@@ -92,6 +93,13 @@ function RequireToken({ children }: { children: (token: string) => ReactNode }) 
  *  na mão não pode contornar isso. */
 function RequireGestor({ user, children }: { user: UserResponse; children: ReactNode }) {
   if (user.role === 'MOTORISTA') return <Navigate to={ROUTES.home} replace />;
+  return <>{children}</>;
+}
+
+/** Assunto de dono de conta (spec 15): Assinatura e gestão de Equipe ficam de fora de
+ *  Despachante/Visualizador, diferente do resto do painel gestor. */
+function RequireGestorTotal({ user, children }: { user: UserResponse; children: ReactNode }) {
+  if (user.role !== 'GESTOR_FROTA' && user.role !== 'ADMIN') return <Navigate to={ROUTES.home} replace />;
   return <>{children}</>;
 }
 
@@ -226,6 +234,21 @@ function PublicRoutes() {
         }
       />
       <Route
+        path={ROUTES.acceptTeamInvite}
+        element={
+          <RequireToken>
+            {(token) => (
+              <AcceptInvitePage
+                token={token}
+                tipo="equipe"
+                onGoToLogin={() => navigate(ROUTES.login)}
+                onVoltarParaHome={() => navigate(ROUTES.home)}
+              />
+            )}
+          </RequireToken>
+        }
+      />
+      <Route
         path="*"
         element={<LandingPage onEntrar={() => navigate(ROUTES.login)} onCriarConta={() => navigate(ROUTES.signup)} />}
       />
@@ -311,9 +334,17 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
         <Route
           path={ROUTES.billing}
           element={
-            <RequireGestor user={user}>
+            <RequireGestorTotal user={user}>
               <BillingPage />
-            </RequireGestor>
+            </RequireGestorTotal>
+          }
+        />
+        <Route
+          path={ROUTES.team}
+          element={
+            <RequireGestorTotal user={user}>
+              <TeamPage />
+            </RequireGestorTotal>
           }
         />
         <Route

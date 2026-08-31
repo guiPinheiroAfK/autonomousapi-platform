@@ -86,6 +86,9 @@ app:
     # Convite de motorista dura mais que a confirmação de cadastro: o motorista pode
     # levar dias para abrir o e-mail e instalar o app (ADR 0013).
     driver-invite-ttl-hours: ${DRIVER_INVITE_TTL_HOURS:72}
+    # Convite de equipe (spec 15) — mesmo raciocínio do convite de motorista: dias, não
+    # horas, pra não expirar antes da pessoa abrir o e-mail.
+    team-invite-ttl-hours: ${TEAM_INVITE_TTL_HOURS:72}
     # Login/cadastro com Google — sem client ID configurado (padrão dev/demo), o endpoint
     # responde 503 com mensagem clara em vez de tentar verificar contra um audience vazio.
     google-client-id: ${GOOGLE_CLIENT_ID:}

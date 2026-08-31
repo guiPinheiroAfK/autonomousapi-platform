@@ -51,6 +51,18 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("driver_without_login", ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidTeamInviteTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidTeamInvite(InvalidTeamInviteTokenException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("invalid_team_invite_token", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidTeamRoleException.class)
+    public ResponseEntity<ApiError> handleInvalidTeamRole(InvalidTeamRoleException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("invalid_team_role", ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

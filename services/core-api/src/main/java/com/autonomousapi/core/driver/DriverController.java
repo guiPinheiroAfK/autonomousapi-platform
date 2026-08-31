@@ -58,14 +58,15 @@ public class DriverController {
     }
 
     /**
-     * Gestor-only. Achado da revisão do plano de rota multi-parada: até então este endpoint
-     * não tinha nenhum {@code @PreAuthorize} (nem comentário justificando, ao contrário do
+     * Papéis de gestão (spec 15: Gestor/Despachante/Visualizador — nunca MOTORISTA). Achado
+     * da revisão do plano de rota multi-parada: até então este endpoint não tinha nenhum
+     * {@code @PreAuthorize} (nem comentário justificando, ao contrário do
      * {@code VehicleController}) — um token MOTORISTA conseguia listar nome e CNH de todos os
      * motoristas do tenant, o que contraria o spec 07 ("dados de outros motoristas... fora de
      * escopo"). Fechado junto por já estarmos revisando o shell por papel.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
     public PageResponse<DriverResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -75,21 +76,23 @@ public class DriverController {
     }
 
     /**
-     * Gestor-only. Achado da revisão de spec (2026-08-17): não tinha nenhum @PreAuthorize —
-     * um token MOTORISTA conseguia ler nome, CNH, telefone e e-mail de qualquer motorista
-     * do tenant pelo id, mesmo com {@link #list} já fechado. O próprio motorista consulta
-     * o próprio perfil via {@code GET /v1/me/profile} (MeController), nunca por aqui.
+     * Papéis de gestão (spec 15). Achado da revisão de spec (2026-08-17): não tinha nenhum
+     * @PreAuthorize — um token MOTORISTA conseguia ler nome, CNH, telefone e e-mail de
+     * qualquer motorista do tenant pelo id, mesmo com {@link #list} já fechado. O próprio
+     * motorista consulta o próprio perfil via {@code GET /v1/me/profile} (MeController),
+     * nunca por aqui.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
     public DriverResponse get(@PathVariable UUID id, Authentication auth) {
         return driverService.get(principal(auth), id);
     }
 
-    /** Motoristas com CNH vencida ou a vencer (alerta, spec 05 Fase 1). Gestor-only — mesmo
-     *  motivo do {@link #list}: CNH de outros motoristas não é dado do motorista logado. */
+    /** Motoristas com CNH vencida ou a vencer (alerta, spec 05 Fase 1). Papéis de gestão
+     *  (spec 15) — mesmo motivo do {@link #list}: CNH de outros motoristas não é dado do
+     *  motorista logado. */
     @GetMapping("/license-expiring")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
     public List<DriverLicenseAlertResponse> licenseExpiring(Authentication auth) {
         return driverService.licenseExpiring(principal(auth));
     }

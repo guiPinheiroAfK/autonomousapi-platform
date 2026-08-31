@@ -18,10 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Orçamento com alerta de estouro (spec 10, item 2). Gestor-only, como o resto da gestão financeira. */
+/** Orçamento com alerta de estouro (spec 10, item 2) — parte da tela de Custos. Leitura
+ *  aberta aos três papéis de gestão (spec 15: Gestor/Despachante/Visualizador leem tudo
+ *  exceto Assinatura); criar/excluir orçamento continua Gestor-only. */
 @RestController
 @RequestMapping("/v1/budgets")
-@PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
 public class BudgetController {
 
     private final BudgetService budgetService;
@@ -32,17 +33,20 @@ public class BudgetController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public BudgetResponse create(@Valid @RequestBody BudgetRequest req, Authentication auth) {
         return budgetService.create(principal(auth), req);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
     public List<BudgetResponse> list(Authentication auth) {
         return budgetService.list(principal(auth));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         budgetService.delete(principal(auth), id);
     }

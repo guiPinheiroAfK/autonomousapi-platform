@@ -44,7 +44,13 @@ export function DashboardPage({ onViewVehicles }: Props) {
     // bastante pra cobrir frota/equipe inteiras na imensa maioria dos tenants nos
     // gráficos abaixo. O total exibido no card vem de totalElements (exato), não de
     // vehicles.length/drivers.length (só a página).
-    Promise.all([
+    //
+    // allSettled, não all (spec 15, achado ao testar o papel Despachante): com Promise.all,
+    // um único 403 (ex. drivers.list, gestor-only) derrubava a promise inteira e zerava
+    // TODOS os cards, não só o widget que de fato não tinha permissão — o gestor via 20 mil
+    // veículos, o mesmo tenant como Despachante via "0" em tudo. Cada card agora falha (ou
+    // não) independente dos outros.
+    Promise.allSettled([
       coreApi.vehicles.list(0, 500),
       coreApi.drivers.list(),
       coreApi.vehicles.maintenanceDue(),
@@ -52,12 +58,14 @@ export function DashboardPage({ onViewVehicles }: Props) {
       coreApi.vehicles.costTrend(),
     ])
       .then(([v, d, m, l, t]) => {
-        setVehicles(v.content);
-        setTotalVehicles(v.totalElements);
-        setTotalDrivers(d.totalElements);
-        setMaintenanceAlerts(m);
-        setLicenseAlerts(l);
-        setCostTrend(t);
+        if (v.status === 'fulfilled') {
+          setVehicles(v.value.content);
+          setTotalVehicles(v.value.totalElements);
+        }
+        if (d.status === 'fulfilled') setTotalDrivers(d.value.totalElements);
+        if (m.status === 'fulfilled') setMaintenanceAlerts(m.value);
+        if (l.status === 'fulfilled') setLicenseAlerts(l.value);
+        if (t.status === 'fulfilled') setCostTrend(t.value);
       })
       .finally(() => setLoading(false));
   }, []);

@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Pontos de coleta/entrega reutilizáveis (spec 08 item 5) — gestor-only, mesmo padrão de
- *  autorização de RoutePlanController. */
+/** Pontos de coleta/entrega reutilizáveis (spec 08 item 5). Leitura aberta aos três papéis
+ *  de gestão (spec 15) — inclusive Despachante precisa listar pra montar rota (ele cria
+ *  rota, ver RoutePlanController); cadastrar/editar/ativar continua Gestor-only. */
 @RestController
 @RequestMapping("/v1/collection-points")
-@PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
 public class CollectionPointController {
 
     private final CollectionPointService service;
@@ -34,6 +34,7 @@ public class CollectionPointController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public CollectionPointResponse create(@Valid @RequestBody CollectionPointRequest req, Authentication auth) {
         return service.create(principal(auth), req);
     }
@@ -41,23 +42,27 @@ public class CollectionPointController {
     /** {@code all=true} devolve inclusive os inativos (tela de cadastro); por padrão só ativos
      *  (é o que a tela de montar rota consome). */
     @GetMapping
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
     public List<CollectionPointResponse> list(
             @RequestParam(defaultValue = "false") boolean all, Authentication auth) {
         return all ? service.listAll(principal(auth)) : service.listActive(principal(auth));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public CollectionPointResponse update(
             @PathVariable UUID id, @Valid @RequestBody CollectionPointRequest req, Authentication auth) {
         return service.update(principal(auth), id, req);
     }
 
     @PostMapping("/{id}/ativar")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public CollectionPointResponse ativar(@PathVariable UUID id, Authentication auth) {
         return service.setAtivo(principal(auth), id, true);
     }
 
     @PostMapping("/{id}/desativar")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public CollectionPointResponse desativar(@PathVariable UUID id, Authentication auth) {
         return service.setAtivo(principal(auth), id, false);
     }

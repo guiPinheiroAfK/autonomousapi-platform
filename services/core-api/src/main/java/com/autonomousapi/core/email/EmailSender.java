@@ -13,4 +13,7 @@ public interface EmailSender {
 
     /** Convite de acesso do motorista ao app (ADR 0013). */
     void sendDriverInviteEmail(String to, String inviteUrl);
+
+    /** Convite de acesso de equipe — Despachante/Visualizador (spec 15). */
+    void sendTeamInviteEmail(String to, String nome, String inviteUrl);
 }

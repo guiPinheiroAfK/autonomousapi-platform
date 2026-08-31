@@ -231,7 +231,7 @@
         "motoristas": "Drivers", "mensagens": "Messages", "rotas": "Routes",
         "coletaEntrega": "Pickup & Delivery", "pontosColeta": "Pickup Points", "passageiros": "Passengers",
         "manutencao": "Maintenance", "custos": "Costs", "relatorios": "Reports",
-        "parceiros": "Partners", "pontosRecarga": "Charging Points", "assinatura": "Subscription",
+        "parceiros": "Partners", "pontosRecarga": "Charging Points", "assinatura": "Subscription", "equipe": "Team",
         "inicio": "Home", "minhaRota": "My Route", "mais": "More"
       }
     },
@@ -608,6 +608,32 @@
         "falhaCarregar": "Error loading passengers", "atualizado": "Passenger updated.",
         "cadastrado": "Passenger registered.", "falhaSalvar": "Failed to save passenger",
         "excluido": "Passenger deleted.", "falhaExcluir": "Failed to delete passenger"
+      }
+    },
+    "team": {
+      "titulo": "Team",
+      "subtitulo": "Who has access to the operation and at what level — invite, change role, or remove.",
+      "convidar": "Invite",
+      "convidarTitulo": "Invite team member",
+      "membros": "Members",
+      "convitesPendentes": "Pending invites",
+      "pendente": "Pending",
+      "remover": "Remove",
+      "confirmarRemover": "Remove this member's access? They won't be able to log in anymore.",
+      "papel": {
+        "gestor": "Owner", "despachante": "Dispatcher", "visualizador": "Viewer"
+      },
+      "form": {
+        "nome": "Name", "nomePlaceholder": "Maria Silva",
+        "email": "Email", "emailPlaceholder": "maria@yourfleet.com",
+        "papel": "Role",
+        "cancelar": "Cancel", "enviando": "Sending...", "enviarConvite": "Send invite"
+      },
+      "toasts": {
+        "falhaCarregar": "Error loading team", "convidado": "Invite sent.",
+        "falhaConvidar": "Failed to send invite", "papelAtualizado": "Role updated.",
+        "falhaAtualizarPapel": "Failed to update role", "removido": "Access removed.",
+        "falhaRemover": "Failed to remove access"
       }
     },
     "chargingStations": {

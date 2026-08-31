@@ -231,7 +231,7 @@
         "motoristas": "Conductores", "mensagens": "Mensajes", "rotas": "Rutas",
         "coletaEntrega": "Recolección y Entrega", "pontosColeta": "Puntos de Recolección", "passageiros": "Pasajeros",
         "manutencao": "Mantenimiento", "custos": "Costos", "relatorios": "Informes",
-        "parceiros": "Socios", "pontosRecarga": "Puntos de Carga", "assinatura": "Suscripción",
+        "parceiros": "Socios", "pontosRecarga": "Puntos de Carga", "assinatura": "Suscripción", "equipe": "Equipo",
         "inicio": "Inicio", "minhaRota": "Mi Ruta", "mais": "Más"
       }
     },
@@ -608,6 +608,32 @@
         "falhaCarregar": "Error al cargar pasajeros", "atualizado": "Pasajero actualizado.",
         "cadastrado": "Pasajero registrado.", "falhaSalvar": "Error al guardar el pasajero",
         "excluido": "Pasajero eliminado.", "falhaExcluir": "Error al eliminar el pasajero"
+      }
+    },
+    "team": {
+      "titulo": "Equipo",
+      "subtitulo": "Quién tiene acceso a la operación y en qué nivel — invita, cambia el papel o elimina.",
+      "convidar": "Invitar",
+      "convidarTitulo": "Invitar integrante",
+      "membros": "Integrantes",
+      "convitesPendentes": "Invitaciones pendientes",
+      "pendente": "Pendiente",
+      "remover": "Eliminar",
+      "confirmarRemover": "¿Eliminar el acceso de este integrante? Ya no podrá iniciar sesión.",
+      "papel": {
+        "gestor": "Dueño", "despachante": "Despachante", "visualizador": "Visualizador"
+      },
+      "form": {
+        "nome": "Nombre", "nomePlaceholder": "Maria Silva",
+        "email": "Correo", "emailPlaceholder": "maria@tuflota.com",
+        "papel": "Papel",
+        "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar invitación"
+      },
+      "toasts": {
+        "falhaCarregar": "Error al cargar el equipo", "convidado": "Invitación enviada.",
+        "falhaConvidar": "Error al enviar la invitación", "papelAtualizado": "Papel actualizado.",
+        "falhaAtualizarPapel": "Error al actualizar el papel", "removido": "Acceso eliminado.",
+        "falhaRemover": "Error al eliminar el acceso"
       }
     },
     "chargingStations": {

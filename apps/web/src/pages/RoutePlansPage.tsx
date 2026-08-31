@@ -12,6 +12,7 @@ import {
   type StopInput,
   type VehicleResponse,
 } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 import { BuscaEndereco } from '../components/shared/BuscaEndereco';
 import { StatusBadgeRotaPlan } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
@@ -38,6 +39,10 @@ interface RascunhoParada extends StopInput {
  */
 export function RoutePlansPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  // Despachante cria/atribui rota, mas não cancela (spec 15) — backend também recusa,
+  // isso aqui só evita mostrar um botão que ia dar 403.
+  const podeCancelar = user?.role === 'GESTOR_FROTA' || user?.role === 'ADMIN';
   const [plans, setPlans] = useState<RoutePlanResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -356,9 +361,11 @@ export function RoutePlansPage() {
           <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.routePlans.titulo')}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.routePlans.subtitulo')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.routePlans.novaRota')}
-        </Button>
+        {user?.role !== 'VISUALIZADOR' && (
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.routePlans.novaRota')}
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -399,7 +406,7 @@ export function RoutePlansPage() {
                 {p.vehiclePlate && <p>{p.vehiclePlate}</p>}
                 <p>{p.dataExecucao}</p>
                 {p.valor != null && <p>R$ {p.valor.toFixed(2)}</p>}
-                {p.status === 'PLANEJADA' && (
+                {p.status === 'PLANEJADA' && podeCancelar && (
                   <Button
                     type="button"
                     variant="ghost"

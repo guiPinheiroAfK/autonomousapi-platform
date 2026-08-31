@@ -1,9 +1,12 @@
 package com.autonomousapi.core.security;
 
+import com.autonomousapi.core.error.ApiError;
 import com.autonomousapi.core.security.jwt.JwtAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,6 +38,7 @@ public class SecurityConfig {
             "/v1/auth/forgot-password",
             "/v1/auth/reset-password",
             "/v1/auth/accept-invite",
+            "/v1/auth/accept-team-invite",
             "/v1/auth/refresh",
             "/v1/health",
             "/v3/api-docs/**",
@@ -56,12 +60,42 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC).permitAll()
                         .anyRequest().authenticated())
-                // API REST: requisição não autenticada = 401 (não o 403 default do Spring).
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                        (request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Não autenticado")))
+                // API REST: requisição não autenticada = 401, papel sem permissão = 403 —
+                // achado da spec 15 (equipe/permissões): resposta escrita direto no
+                // HttpServletResponse (setStatus + corpo), nunca `sendError`. `sendError`
+                // dispara o redirecionamento de página de erro do Tomcat pra "/error", que
+                // reentra na cadeia de filtros de segurança — sem Authorization válido nesse
+                // dispatch interno, cai de novo no authenticationEntryPoint e SOBRESCREVE o
+                // status original. Era por isso que um Despachante barrado por papel (403)
+                // recebia 401 — o mesmo bug do "não autenticado" (front desloga e manda pro
+                // login) em vez de mostrar "sem permissão". Reproduzido ao vivo antes do
+                // fix: response.sendError(403) virava 401 na resposta HTTP de verdade.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                (request, response, authException) ->
+                                        writeApiError(response, HttpServletResponse.SC_UNAUTHORIZED, "not_authenticated", "Não autenticado"))
+                        .accessDeniedHandler(
+                                (request, response, accessDeniedException) ->
+                                        writeApiError(response, HttpServletResponse.SC_FORBIDDEN, "access_denied", "Sem permissão para esta ação")))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    private static final ObjectMapper JSON = new ObjectMapper();
+
+    private static void writeApiError(HttpServletResponse response, int status, String code, String message) {
+        try {
+            response.setStatus(status);
+            // getWriter() usa ISO-8859-1 por padrão (default do Servlet spec) se o charset
+            // não for setado antes — sem isso, "Não autenticado"/"permissão" saem
+            // corrompidos pra qualquer cliente de verdade, não só no terminal.
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write(JSON.writeValueAsString(new ApiError(code, message)));
+        } catch (java.io.IOException e) {
+            // Cliente já desconectou ou stream fechou no meio — nada a fazer, não há mais
+            // resposta pra escrever.
+        }
     }
 
     @Bean

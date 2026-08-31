@@ -76,6 +76,12 @@ public class User {
         return role;
     }
 
+    /** Só TeamService chama isso, e só entre DESPACHANTE/VISUALIZADOR (spec 15) — nunca
+     *  pra GESTOR_FROTA/ADMIN, validado no service antes de chegar aqui. */
+    public void mudarPapelDeEquipe(Role novoPapel) {
+        this.role = novoPapel;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }

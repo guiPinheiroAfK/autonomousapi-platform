@@ -88,6 +88,12 @@ export type CollectionPointRequest = Schemas['CollectionPointRequest'];
 export type CollectionPointResponse = Schemas['CollectionPointResponse'];
 export type PassengerRequest = Schemas['PassengerRequest'];
 export type PassengerResponse = Schemas['PassengerResponse'];
+export type TeamRole = Schemas['CreateTeamInviteRequest']['role'];
+export type CreateTeamInviteRequest = Schemas['CreateTeamInviteRequest'];
+export type ChangeTeamRoleRequest = Schemas['ChangeTeamRoleRequest'];
+export type TeamMemberResponse = Schemas['TeamMemberResponse'];
+export type TeamInviteResponse = Schemas['TeamInviteResponse'];
+export type TeamOverviewResponse = Schemas['TeamOverviewResponse'];
 export type DriverProfileResponse = Schemas['DriverProfileResponse'];
 export type TripResponse = Schemas['TripResponse'];
 export type NotificationResponse = Schemas['NotificationResponse'];
@@ -362,6 +368,9 @@ export const coreApi = {
     /** Aceite do convite de motorista (ADR 0013) — cria o login MOTORISTA e define a senha. */
     acceptInvite: (body: AcceptInviteRequest) =>
       request<void>('/v1/auth/accept-invite', { method: 'POST', body: JSON.stringify(body) }),
+    /** Aceite do convite de equipe (spec 15) — cria o login no papel definido no convite. */
+    acceptTeamInvite: (body: AcceptInviteRequest) =>
+      request<void>('/v1/auth/accept-team-invite', { method: 'POST', body: JSON.stringify(body) }),
     me: () => request<UserResponse>('/v1/auth/me'),
   },
 
@@ -676,6 +685,16 @@ export const coreApi = {
         invalidateListCache('passengers:');
         return r;
       }),
+  },
+
+  /** Equipe e permissões (spec 15) — Gestor-only, backend também recusa. */
+  team: {
+    overview: () => request<TeamOverviewResponse>('/v1/team'),
+    invite: (body: CreateTeamInviteRequest) =>
+      request<TeamInviteResponse>('/v1/team/invite', { method: 'POST', body: JSON.stringify(body) }),
+    changeRole: (userId: string, body: ChangeTeamRoleRequest) =>
+      request<TeamMemberResponse>(`/v1/team/${userId}/role`, { method: 'PUT', body: JSON.stringify(body) }),
+    remove: (userId: string) => request<void>(`/v1/team/${userId}`, { method: 'DELETE' }),
   },
 
   /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */
