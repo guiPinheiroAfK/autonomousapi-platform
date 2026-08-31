@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, MapPin, Plus, Sparkles, Trash2, Truck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,6 +62,13 @@ export function RoutePlansPage() {
   const [custoEstimado, setCustoEstimado] = useState<number | null>(null);
   const [valorSugerido, setValorSugerido] = useState<number | null>(null);
 
+  // Viagem redonda (spec 13): idaEVolta é a intenção marcada pelo gestor; pernaVolta e
+  // viagemIdAtual só existem depois que a ida já foi salva, controlando o segundo passo
+  // do fluxo (formulário reaberto pré-preenchido pra volta, mesmo viagemId da ida).
+  const [idaEVolta, setIdaEVolta] = useState(false);
+  const [pernaVolta, setPernaVolta] = useState(false);
+  const [viagemIdAtual, setViagemIdAtual] = useState<string | null>(null);
+
   const isTransfer = categoria === 'TRANSFER';
   const limiteParadasAtingido = isTransfer && paradas.length >= 2;
 
@@ -95,6 +102,30 @@ export function RoutePlansPage() {
     };
   }, [isTransfer, paradas, vehicleId]);
 
+  // Rótulo "Ida"/"Volta" (spec 13) — pernas com o mesmo viagemId, ordenadas por data de
+  // execução; a primeira é a ida, as demais viram "Volta"/"Perna N" (3+ pernas é suportado
+  // pelo dado, mesmo que o fluxo de criação de hoje só monte automaticamente duas).
+  const legendaViagem = useMemo(() => {
+    const porViagem = new Map<string, RoutePlanResponse[]>();
+    plans.forEach((p) => {
+      if (!p.viagemId) return;
+      const lista = porViagem.get(p.viagemId) ?? [];
+      lista.push(p);
+      porViagem.set(p.viagemId, lista);
+    });
+    const rotulos = new Map<string, string>();
+    porViagem.forEach((pernas) => {
+      const ordenadas = [...pernas].sort((a, b) => (a.dataExecucao ?? '').localeCompare(b.dataExecucao ?? ''));
+      ordenadas.forEach((p, i) => {
+        rotulos.set(
+          p.id!,
+          i === 0 ? t('pages.routePlans.ida') : i === 1 ? t('pages.routePlans.volta') : t('pages.routePlans.perna', { n: i + 1 }),
+        );
+      });
+    });
+    return rotulos;
+  }, [plans, t]);
+
   function refresh() {
     coreApi.routePlans
       .list()
@@ -119,6 +150,9 @@ export function RoutePlansPage() {
     setCustoEstimado(null);
     setValorSugerido(null);
     setFormError('');
+    setIdaEVolta(false);
+    setPernaVolta(false);
+    setViagemIdAtual(null);
     coreApi.drivers.list().then((res) => setDrivers(res.content.filter((d) => d.hasLogin)));
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o seletor de veículo da rota.
@@ -205,6 +239,9 @@ export function RoutePlansPage() {
     }
     setSaving(true);
     setFormError('');
+    // Ida gera um viagemId novo (spec 13); volta reaproveita o já gerado na ida — o
+    // backend só armazena o que chega, nunca gera nada sozinho.
+    const viagemId = pernaVolta ? viagemIdAtual ?? undefined : idaEVolta ? crypto.randomUUID() : undefined;
     try {
       await coreApi.routePlans.create({
         driverId: driverId || undefined,
@@ -221,10 +258,27 @@ export function RoutePlansPage() {
           janelaInicio,
           janelaFim,
         })),
+        viagemId,
       });
-      toast.success(t('pages.routePlans.toasts.criada'));
-      setModalOpen(false);
-      refresh();
+
+      if (idaEVolta && !pernaVolta) {
+        // Ida salva — reabre o formulário pré-preenchido pra volta em vez de fechar o
+        // modal: mesmos pontos em ordem inversa, mesmo motorista/veículo, tudo editável.
+        toast.success(t('pages.routePlans.toasts.idaSalvaRevisarVolta'));
+        setParadas((prev) => {
+          const [origem, destino] = prev;
+          return [
+            { ...destino, key: `${Date.now()}-0`, tipo: 'COLETA' },
+            { ...origem, key: `${Date.now()}-1`, tipo: 'ENTREGA' },
+          ];
+        });
+        setPernaVolta(true);
+        setViagemIdAtual(viagemId ?? null);
+      } else {
+        toast.success(t('pages.routePlans.toasts.criada'));
+        setModalOpen(false);
+        refresh();
+      }
     } catch (e) {
       setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaCriar'));
     } finally {
@@ -263,10 +317,15 @@ export function RoutePlansPage() {
         <StaggerGroup className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((p) => (
             <StaggerItem key={p.id}>
-            <Card>
+            <Card className={p.viagemId ? 'border-l-2 border-l-primary' : undefined}>
               <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>
+                <CardTitle className="flex items-center gap-1.5">
                   {p.categoria === 'TRANSFER' ? t('pages.routePlans.transfer') : t('pages.routePlans.paradaContagem', { n: p.stops?.length ?? 0 })}
+                  {p.viagemId && legendaViagem.has(p.id!) && (
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {legendaViagem.get(p.id!)}
+                    </span>
+                  )}
                 </CardTitle>
                 <StatusBadgeRotaPlan status={p.status} />
               </CardHeader>
@@ -304,7 +363,12 @@ export function RoutePlansPage() {
         </StaggerGroup>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('pages.routePlans.novaRota')} className="max-w-2xl">
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={pernaVolta ? t('pages.routePlans.novaRotaVolta') : t('pages.routePlans.novaRota')}
+        className="max-w-2xl"
+      >
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -334,6 +398,24 @@ export function RoutePlansPage() {
               <Label htmlFor="valor">{t('pages.routePlans.valorCombinadoOpcional')}</Label>
               <Input id="valor" type="number" min="0" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
             </div>
+          )}
+
+          {isTransfer && !pernaVolta && (
+            <label className="flex items-center gap-2 text-xs text-foreground">
+              <input
+                type="checkbox"
+                checked={idaEVolta}
+                onChange={(e) => setIdaEVolta(e.target.checked)}
+                className="size-3.5 rounded border-input"
+              />
+              {t('pages.routePlans.idaEVolta')}
+            </label>
+          )}
+
+          {pernaVolta && (
+            <p className="rounded-md border border-border bg-secondary/40 p-2.5 text-xs text-muted-foreground">
+              {t('pages.routePlans.revisandoVolta')}
+            </p>
           )}
 
           {!limiteParadasAtingido && (

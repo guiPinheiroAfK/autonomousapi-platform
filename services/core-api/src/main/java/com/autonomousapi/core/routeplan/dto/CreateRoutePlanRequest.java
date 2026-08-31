@@ -11,12 +11,15 @@ import java.util.UUID;
 
 /** {@code stops} já vem na ordem final que o gestor confirmou na tela (pós-revisão da
  *  sugestão) — o backend não reordena de novo aqui. {@code categoria} default ROTA no
- *  front; TRANSFER exige exatamente 2 stops (validado no service). */
+ *  front; TRANSFER exige exatamente 2 stops (validado no service). {@code viagemId}
+ *  (spec 13) é opcional — o front gera o UUID na ida (viagem de ida e volta marcada) e
+ *  reenvia o mesmo valor ao criar a volta; o backend só armazena, nunca gera sozinho. */
 public record CreateRoutePlanRequest(
         UUID driverId,
         UUID vehicleId,
         @NotNull RouteCategoria categoria,
         @NotNull LocalDate dataExecucao,
         BigDecimal valor,
-        @NotEmpty @Valid List<StopInput> stops) {
+        @NotEmpty @Valid List<StopInput> stops,
+        UUID viagemId) {
 }

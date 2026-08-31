@@ -60,6 +60,12 @@ public class RoutePlan {
     @Column(name = "pricing_formula_version", length = 10)
     private String pricingFormulaVersion;
 
+    /** Chave de agrupamento entre pernas de uma viagem de ida e volta (spec 13) — não é
+     *  FK, não referencia outro {@code route_plan}: duas linhas com o mesmo valor aqui
+     *  são pernas da mesma viagem. Nulo pra rota avulsa (o caso comum). */
+    @Column(name = "viagem_id")
+    private UUID viagemId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -69,7 +75,7 @@ public class RoutePlan {
 
     public RoutePlan(
             UUID tenantId, UUID gestorUserId, UUID driverId, UUID vehicleId,
-            RouteCategoria categoria, LocalDate dataExecucao, BigDecimal valor) {
+            RouteCategoria categoria, LocalDate dataExecucao, BigDecimal valor, UUID viagemId) {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.gestorUserId = gestorUserId;
@@ -79,6 +85,7 @@ public class RoutePlan {
         this.categoria = categoria;
         this.dataExecucao = dataExecucao;
         this.valor = valor;
+        this.viagemId = viagemId;
         this.createdAt = Instant.now();
     }
 
@@ -138,6 +145,10 @@ public class RoutePlan {
 
     public String getPricingFormulaVersion() {
         return pricingFormulaVersion;
+    }
+
+    public UUID getViagemId() {
+        return viagemId;
     }
 
     public Instant getCreatedAt() {

@@ -31,7 +31,9 @@ Isso não é obrigatório — rota avulsa, sem ida/volta, continua funcionando e
 
 ## Definition of Done
 
-- [ ] `route_plan.viagem_id` (UUID, nullable) adicionado, sem exigir preenchimento em nenhum fluxo existente.
-- [ ] Checkbox "ida e volta" no formulário de criação de rota, com o fluxo de pré-preenchimento automático da volta descrito acima.
-- [ ] Lista de rotas agrupa visualmente pernas com o mesmo `viagem_id`.
-- [ ] Rentabilidade de transfers (spec 10) soma valor/custo das pernas de uma mesma viagem quando aplicável, mantendo os números individuais também visíveis.
+- [x] `route_plan.viagem_id` (UUID, nullable) adicionado, sem exigir preenchimento em nenhum fluxo existente (V28).
+- [x] Checkbox "ida e volta" no formulário de criação de rota, com o fluxo de pré-preenchimento automático da volta descrito acima.
+- [x] Lista de rotas agrupa visualmente pernas com o mesmo `viagem_id` (indicador "Ida"/"Volta" + borda lateral).
+- [x] Rentabilidade de transfers (spec 10) soma valor/custo das pernas de uma mesma viagem quando aplicável, mantendo os números individuais também visíveis.
+
+**Status:** implementado (2026-08-31) — verificado ponta a ponta (criação das duas pernas com `viagemId` compartilhado, indicador na lista, total combinado na aba Rentabilidade).

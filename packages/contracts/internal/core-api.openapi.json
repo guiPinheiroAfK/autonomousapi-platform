@@ -3325,7 +3325,7 @@
             "format": "int32"
           },
           "valorUnitario": {
-            "minimum": 0.0,
+            "minimum": 0,
             "exclusiveMinimum": true,
             "type": "number"
           }
@@ -3800,7 +3800,7 @@
         "type": "object",
         "properties": {
           "valorFipe": {
-            "minimum": 0.0,
+            "minimum": 0,
             "exclusiveMinimum": true,
             "type": "number"
           },
@@ -3859,7 +3859,7 @@
             "type": "string"
           },
           "custoReparo": {
-            "minimum": 0.0,
+            "minimum": 0,
             "exclusiveMinimum": false,
             "type": "number"
           }
@@ -4123,6 +4123,10 @@
             "items": {
               "$ref": "#/components/schemas/StopInput"
             }
+          },
+          "viagemId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -4223,6 +4227,10 @@
             "items": {
               "$ref": "#/components/schemas/RouteStopResponse"
             }
+          },
+          "viagemId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

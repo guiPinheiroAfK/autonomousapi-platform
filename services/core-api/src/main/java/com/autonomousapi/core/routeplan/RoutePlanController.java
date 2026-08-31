@@ -54,7 +54,7 @@ public class RoutePlanController {
     public RoutePlanResponse create(@Valid @RequestBody CreateRoutePlanRequest req, Authentication auth) {
         return routePlanService.create(
                 principal(auth), req.driverId(), req.vehicleId(), req.categoria(), req.dataExecucao(),
-                req.valor(), req.stops());
+                req.valor(), req.stops(), req.viagemId());
     }
 
     @GetMapping

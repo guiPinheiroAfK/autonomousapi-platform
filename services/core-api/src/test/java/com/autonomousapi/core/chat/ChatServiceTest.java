@@ -202,7 +202,7 @@ class ChatServiceTest {
         when(routePlanService.assignDriver(gestorPrincipal, routePlanId, d.getId(), false, "chat"))
                 .thenReturn(new RoutePlanResponse(routePlanId, d.getId(), d.getName(), null, null,
                         RoutePlanStatus.PLANEJADA, com.autonomousapi.core.routeplan.RouteCategoria.ROTA,
-                        java.time.LocalDate.now(), null, null, null, java.time.Instant.now(), List.of()));
+                        java.time.LocalDate.now(), null, null, null, java.time.Instant.now(), List.of(), null));
         when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
 

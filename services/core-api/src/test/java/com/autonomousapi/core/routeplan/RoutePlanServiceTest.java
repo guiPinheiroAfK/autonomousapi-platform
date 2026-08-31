@@ -74,7 +74,7 @@ class RoutePlanServiceTest {
     }
 
     private RoutePlan routePlan(UUID driverId) {
-        return new RoutePlan(tenantId, gestorUserId, driverId, null, RouteCategoria.ROTA, HOJE, null);
+        return new RoutePlan(tenantId, gestorUserId, driverId, null, RouteCategoria.ROTA, HOJE, null, null);
     }
 
     @Test
@@ -124,7 +124,7 @@ class RoutePlanServiceTest {
         LocalDate ontem = HOJE.minusDays(1);
 
         assertThrows(RoutePlanInvalidException.class,
-                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, ontem, null, List.of(s)));
+                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, ontem, null, List.of(s), null));
     }
 
     @Test
@@ -133,7 +133,7 @@ class RoutePlanServiceTest {
 
         assertThrows(RoutePlanInvalidException.class,
                 () -> service.create(
-                        gestorPrincipal, null, null, RouteCategoria.TRANSFER, HOJE, null, List.of(s)));
+                        gestorPrincipal, null, null, RouteCategoria.TRANSFER, HOJE, null, List.of(s), null));
     }
 
     @Test
@@ -150,7 +150,7 @@ class RoutePlanServiceTest {
         StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.6, -46.7, null, null, null);
 
         RoutePlanResponse resp = service.create(gestorPrincipal, null, vehicleId, RouteCategoria.TRANSFER,
-                HOJE, new BigDecimal("100.00"), List.of(origem, destino));
+                HOJE, new BigDecimal("100.00"), List.of(origem, destino), null);
 
         assertEquals(new BigDecimal("42.50"), resp.custoEstimado());
     }
@@ -168,7 +168,7 @@ class RoutePlanServiceTest {
         StopInput s = new StopInput(StopType.COLETA, "Parada", -23.5, -46.6, null, null, null);
 
         RoutePlanResponse resp = service.create(gestorPrincipal, null, vehicleId, RouteCategoria.ROTA,
-                HOJE, null, List.of(s));
+                HOJE, null, List.of(s), null);
 
         assertEquals(null, resp.custoEstimado());
         org.mockito.Mockito.verifyNoInteractions(costEstimator);
@@ -177,7 +177,7 @@ class RoutePlanServiceTest {
     @Test
     void margemRealizadaSoApareceQuandoRotaConcluida() {
         RoutePlan plan = new RoutePlan(tenantId, gestorUserId, null, null,
-                RouteCategoria.TRANSFER, HOJE, new BigDecimal("100.00"));
+                RouteCategoria.TRANSFER, HOJE, new BigDecimal("100.00"), null);
         plan.registrarCustoEstimado(new BigDecimal("40.00"), "v1");
 
         RoutePlanResponse planejada = RoutePlanResponse.from(plan, null, null, List.of());
@@ -195,7 +195,23 @@ class RoutePlanServiceTest {
                 StopType.COLETA, "Parada", -23.5, -46.6, null, LocalTime.of(12, 0), LocalTime.of(10, 0));
 
         assertThrows(RoutePlanInvalidException.class,
-                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, HOJE, null, List.of(s)));
+                () -> service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, HOJE, null, List.of(s), null));
+    }
+
+    @Test
+    void createPropagaViagemIdQuandoInformado() {
+        // spec 13: o backend só armazena o viagemId que o front manda (gerado lá, na ida) —
+        // não gera nada sozinho, e rota avulsa (viagemId null) continua funcionando normal.
+        when(routePlans.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(any())).thenReturn(List.of());
+        UUID viagemId = UUID.randomUUID();
+        StopInput origem = new StopInput(StopType.COLETA, "Origem", -23.5, -46.6, null, null, null);
+        StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.6, -46.7, null, null, null);
+
+        RoutePlanResponse resp = service.create(
+                gestorPrincipal, null, null, RouteCategoria.TRANSFER, HOJE, null, List.of(origem, destino), viagemId);
+
+        assertEquals(viagemId, resp.viagemId());
     }
 
     @Test
@@ -213,7 +229,7 @@ class RoutePlanServiceTest {
         StopInput destino = new StopInput(StopType.ENTREGA, "Destino", -23.3, -46.4, null, null, null);
 
         service.create(gestorPrincipal, null, null, RouteCategoria.ROTA, HOJE, null,
-                List.of(spoofado, destino));
+                List.of(spoofado, destino), null);
 
         org.mockito.ArgumentCaptor<RouteStop> captor = org.mockito.ArgumentCaptor.forClass(RouteStop.class);
         org.mockito.Mockito.verify(routeStops, org.mockito.Mockito.atLeastOnce()).save(captor.capture());

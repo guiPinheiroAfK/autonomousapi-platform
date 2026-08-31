@@ -471,7 +471,8 @@
       "rentabilidade": {
         "valorCombinadoTotal": "Valor combinado (total)", "custoEstimadoTotal": "Custo estimado (total)", "margemRealizadaTotal": "Margem realizada (total)",
         "transfersConcluidos": "Transfers concluídos", "nenhumTransfer": "Nenhum transfer concluído ainda — a margem realizada só aparece depois que a rota é finalizada.",
-        "tabela": { "motorista": "Motorista", "data": "Data", "valor": "Valor", "custoEstimado": "Custo estimado", "margem": "Margem" }
+        "tabela": { "motorista": "Motorista", "data": "Data", "valor": "Valor", "custoEstimado": "Custo estimado", "margem": "Margem" },
+        "totalViagemRedonda": "Total da viagem (ida + volta)"
       }
     },
     "reports": {
@@ -621,6 +622,12 @@
       "titulo": "Rotas",
       "subtitulo": "Pontos de coleta e entrega — monte a rota, revise a ordem sugerida e designe um motorista.",
       "novaRota": "Nova rota",
+      "novaRotaVolta": "Nova rota — volta",
+      "idaEVolta": "Esta é uma viagem de ida e volta?",
+      "revisandoVolta": "Ida salva. Revise os dados da volta (pontos pré-preenchidos em ordem inversa) e confirme.",
+      "ida": "Ida",
+      "volta": "Volta",
+      "perna": "Perna {{n}}",
       "nenhumaRota": "Nenhuma rota cadastrada ainda.",
       "transfer": "Transfer",
       "paradaContagem": "{{n}} parada(s)",
@@ -655,6 +662,7 @@
         "dataNoPassado": "Data de execução não pode ser no passado.",
         "transferExige2Paradas": "Transfer exige exatamente 2 paradas: origem e destino.",
         "criada": "Rota criada.", "falhaCriar": "Falha ao criar rota",
+        "idaSalvaRevisarVolta": "Ida salva — revise a volta.",
         "rotaCancelada": "Rota cancelada.", "falhaCancelar": "Falha ao cancelar rota"
       }
     },

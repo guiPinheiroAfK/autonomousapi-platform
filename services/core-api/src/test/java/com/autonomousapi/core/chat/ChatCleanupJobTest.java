@@ -118,7 +118,7 @@ class ChatCleanupJobTest {
         UUID routePlanId = UUID.randomUUID();
         RoutePlan plan = new RoutePlan(
                 tenantId, gestorUserId, driverId, null, com.autonomousapi.core.routeplan.RouteCategoria.ROTA,
-                java.time.LocalDate.now(), null);
+                java.time.LocalDate.now(), null, null);
         setField(plan, "id", routePlanId);
         // PLANEJADA por padrão no construtor — ainda não CONCLUIDA.
 

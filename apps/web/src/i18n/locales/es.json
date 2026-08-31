@@ -469,7 +469,8 @@
       "rentabilidade": {
         "valorCombinadoTotal": "Valor acordado (total)", "custoEstimadoTotal": "Costo estimado (total)", "margemRealizadaTotal": "Margen realizado (total)",
         "transfersConcluidos": "Transfers completados", "nenhumTransfer": "Aún no hay transfers completados — el margen realizado solo aparece cuando la ruta finaliza.",
-        "tabela": { "motorista": "Conductor", "data": "Fecha", "valor": "Valor", "custoEstimado": "Costo estimado", "margem": "Margen" }
+        "tabela": { "motorista": "Conductor", "data": "Fecha", "valor": "Valor", "custoEstimado": "Costo estimado", "margem": "Margen" },
+        "totalViagemRedonda": "Total del viaje (ida + vuelta)"
       }
     },
     "reports": {
@@ -603,6 +604,12 @@
       "titulo": "Rutas",
       "subtitulo": "Puntos de recolección y entrega — arma la ruta, revisa el orden sugerido y asigna un conductor.",
       "novaRota": "Nueva ruta",
+      "novaRotaVolta": "Nueva ruta — vuelta",
+      "idaEVolta": "¿Es un viaje de ida y vuelta?",
+      "revisandoVolta": "Ida guardada. Revisa los datos de la vuelta (puntos prellenados en orden inverso) y confirma.",
+      "ida": "Ida",
+      "volta": "Vuelta",
+      "perna": "Tramo {{n}}",
       "nenhumaRota": "Aún no hay rutas registradas.",
       "transfer": "Transfer",
       "paradaContagem": "{{n}} parada(s)",
@@ -634,7 +641,8 @@
         "falhaCarregar": "Error al cargar las rutas", "falhaSugerir": "Error al sugerir el orden",
         "dataNoPassado": "La fecha de ejecución no puede ser en el pasado.",
         "transferExige2Paradas": "El transfer requiere exactamente 2 paradas: origen y destino.",
-        "criada": "Ruta creada.", "falhaCriar": "Error al crear la ruta"
+        "criada": "Ruta creada.", "falhaCriar": "Error al crear la ruta",
+        "idaSalvaRevisarVolta": "Ida guardada — revisa la vuelta."
       }
     },
     "vehicleDetail": {

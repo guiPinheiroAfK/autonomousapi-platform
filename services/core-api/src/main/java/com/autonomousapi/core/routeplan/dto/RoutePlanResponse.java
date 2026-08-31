@@ -25,7 +25,9 @@ public record RoutePlanResponse(
          *  margem "prevista", é a margem de uma rota que de fato aconteceu). */
         BigDecimal margemRealizada,
         Instant createdAt,
-        List<RouteStopResponse> stops) {
+        List<RouteStopResponse> stops,
+        /** Chave de agrupamento entre pernas de ida/volta (spec 13) — null pra rota avulsa. */
+        UUID viagemId) {
 
     public static RoutePlanResponse from(
             RoutePlan p, String driverName, String vehiclePlate, List<RouteStopResponse> stops) {
@@ -36,6 +38,6 @@ public record RoutePlanResponse(
         return new RoutePlanResponse(
                 p.getId(), p.getDriverId(), driverName, p.getVehicleId(), vehiclePlate, p.getStatus(),
                 p.getCategoria(), p.getDataExecucao(), p.getValor(), p.getCustoEstimado(), margemRealizada,
-                p.getCreatedAt(), stops);
+                p.getCreatedAt(), stops, p.getViagemId());
     }
 }

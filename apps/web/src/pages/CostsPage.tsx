@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Download, Plus, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -730,6 +730,19 @@ function RentabilidadeTab() {
     [plans],
   );
 
+  // Viagem redonda (spec 13): pernas com o mesmo viagemId somadas como um total único,
+  // além dos números individuais de cada perna (que continuam na tabela normalmente).
+  const gruposViagem = useMemo(() => {
+    const m = new Map<string, RoutePlanResponse[]>();
+    transfers.forEach((p) => {
+      if (!p.viagemId) return;
+      const lista = m.get(p.viagemId) ?? [];
+      lista.push(p);
+      m.set(p.viagemId, lista);
+    });
+    return m;
+  }, [transfers]);
+
   const totalValor = transfers.reduce((sum, p) => sum + Number(p.valor ?? 0), 0);
   const totalCusto = transfers.reduce((sum, p) => sum + Number(p.custoEstimado ?? 0), 0);
   const totalMargem = transfers.reduce((sum, p) => sum + Number(p.margemRealizada ?? 0), 0);
@@ -781,29 +794,58 @@ function RentabilidadeTab() {
               <tbody className="divide-y divide-border">
                 {transfers.map((p) => {
                   const margem = p.margemRealizada != null ? Number(p.margemRealizada) : null;
+                  const grupo = p.viagemId ? gruposViagem.get(p.viagemId) : undefined;
+                  const ehUltimaPernaDoGrupo = grupo && grupo.length >= 2 && grupo[grupo.length - 1]?.id === p.id;
+                  const totalGrupo = grupo?.reduce(
+                    (acc, leg) => ({
+                      valor: acc.valor + Number(leg.valor ?? 0),
+                      custo: acc.custo + Number(leg.custoEstimado ?? 0),
+                      margem: acc.margem + (leg.margemRealizada != null ? Number(leg.margemRealizada) : 0),
+                    }),
+                    { valor: 0, custo: 0, margem: 0 } as { valor: number; custo: number; margem: number },
+                  );
                   return (
-                    <tr key={p.id} className="hover:bg-muted/50">
-                      <td className="px-5 py-2.5 text-foreground">{p.driverName ?? '—'}</td>
-                      <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(p.dataExecucao!)}</td>
-                      <td className="px-5 py-2.5 text-right font-data text-foreground">
-                        {p.valor != null ? formatBRL(Number(p.valor)) : '—'}
-                      </td>
-                      <td className="px-5 py-2.5 text-right font-data text-muted-foreground">
-                        {p.custoEstimado != null ? formatBRL(Number(p.custoEstimado)) : '—'}
-                      </td>
-                      <td
-                        className={cn(
-                          'px-5 py-2.5 text-right font-data font-semibold',
-                          margem == null
-                            ? 'text-muted-foreground'
-                            : margem >= 0
-                              ? 'text-status-success'
-                              : 'text-status-danger',
-                        )}
-                      >
-                        {margem != null ? formatBRL(margem) : '—'}
-                      </td>
-                    </tr>
+                    <Fragment key={p.id}>
+                      <tr className="hover:bg-muted/50">
+                        <td className="px-5 py-2.5 text-foreground">{p.driverName ?? '—'}</td>
+                        <td className="px-5 py-2.5 font-data text-muted-foreground">{formatDateBR(p.dataExecucao!)}</td>
+                        <td className="px-5 py-2.5 text-right font-data text-foreground">
+                          {p.valor != null ? formatBRL(Number(p.valor)) : '—'}
+                        </td>
+                        <td className="px-5 py-2.5 text-right font-data text-muted-foreground">
+                          {p.custoEstimado != null ? formatBRL(Number(p.custoEstimado)) : '—'}
+                        </td>
+                        <td
+                          className={cn(
+                            'px-5 py-2.5 text-right font-data font-semibold',
+                            margem == null
+                              ? 'text-muted-foreground'
+                              : margem >= 0
+                                ? 'text-status-success'
+                                : 'text-status-danger',
+                          )}
+                        >
+                          {margem != null ? formatBRL(margem) : '—'}
+                        </td>
+                      </tr>
+                      {ehUltimaPernaDoGrupo && totalGrupo && (
+                        <tr className="bg-secondary/40">
+                          <td colSpan={2} className="px-5 py-2 text-[11px] font-medium text-muted-foreground">
+                            {t('pages.costs.rentabilidade.totalViagemRedonda')}
+                          </td>
+                          <td className="px-5 py-2 text-right font-data text-foreground">{formatBRL(totalGrupo.valor)}</td>
+                          <td className="px-5 py-2 text-right font-data text-muted-foreground">{formatBRL(totalGrupo.custo)}</td>
+                          <td
+                            className={cn(
+                              'px-5 py-2 text-right font-data font-semibold',
+                              totalGrupo.margem >= 0 ? 'text-status-success' : 'text-status-danger',
+                            )}
+                          >
+                            {formatBRL(totalGrupo.margem)}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>

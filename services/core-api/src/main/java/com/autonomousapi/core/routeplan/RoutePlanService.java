@@ -240,7 +240,8 @@ public class RoutePlanService {
             RouteCategoria categoria,
             LocalDate dataExecucao,
             BigDecimal valor,
-            List<StopInput> stops) {
+            List<StopInput> stops,
+            UUID viagemId) {
         UUID tenantId = gestorPrincipal.tenantId();
         if (driverId != null) {
             Lookups.orNotFound(drivers.findByIdAndTenantId(driverId, tenantId), "Motorista não encontrado.");
@@ -253,8 +254,8 @@ public class RoutePlanService {
         List<StopInput> resolvidos = resolveStops(tenantId, stops);
         validar(categoria, dataExecucao, resolvidos);
 
-        RoutePlan plan =
-                new RoutePlan(tenantId, gestorPrincipal.userId(), driverId, vehicleId, categoria, dataExecucao, valor);
+        RoutePlan plan = new RoutePlan(
+                tenantId, gestorPrincipal.userId(), driverId, vehicleId, categoria, dataExecucao, valor, viagemId);
         if (categoria == RouteCategoria.TRANSFER && vehicle != null) {
             calcularCustoEstimado(tenantId, vehicle, resolvidos)
                     .ifPresent(e -> plan.registrarCustoEstimado(

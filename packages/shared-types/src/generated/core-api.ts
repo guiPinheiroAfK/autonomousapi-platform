@@ -1626,6 +1626,8 @@ export interface components {
             dataExecucao: string;
             valor?: number;
             stops: components["schemas"]["StopInput"][];
+            /** Format: uuid */
+            viagemId?: string;
         };
         StopInput: {
             /** @enum {string} */
@@ -1663,6 +1665,8 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             stops?: components["schemas"]["RouteStopResponse"][];
+            /** Format: uuid */
+            viagemId?: string;
         };
         RouteStopResponse: {
             /** Format: uuid */

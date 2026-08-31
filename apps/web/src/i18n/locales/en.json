@@ -469,7 +469,8 @@
       "rentabilidade": {
         "valorCombinadoTotal": "Agreed value (total)", "custoEstimadoTotal": "Estimated cost (total)", "margemRealizadaTotal": "Realized margin (total)",
         "transfersConcluidos": "Completed transfers", "nenhumTransfer": "No completed transfers yet — realized margin only appears once the route is finished.",
-        "tabela": { "motorista": "Driver", "data": "Date", "valor": "Value", "custoEstimado": "Estimated cost", "margem": "Margin" }
+        "tabela": { "motorista": "Driver", "data": "Date", "valor": "Value", "custoEstimado": "Estimated cost", "margem": "Margin" },
+        "totalViagemRedonda": "Round trip total (outbound + return)"
       }
     },
     "reports": {
@@ -603,6 +604,12 @@
       "titulo": "Routes",
       "subtitulo": "Pickup and delivery points — build the route, review the suggested order and assign a driver.",
       "novaRota": "New route",
+      "novaRotaVolta": "New route — return leg",
+      "idaEVolta": "Is this a round trip?",
+      "revisandoVolta": "Outbound leg saved. Review the return leg details (points pre-filled in reverse order) and confirm.",
+      "ida": "Outbound",
+      "volta": "Return",
+      "perna": "Leg {{n}}",
       "nenhumaRota": "No routes registered yet.",
       "transfer": "Transfer",
       "paradaContagem": "{{n}} stop(s)",
@@ -634,7 +641,8 @@
         "falhaCarregar": "Error loading routes", "falhaSugerir": "Failed to suggest order",
         "dataNoPassado": "Execution date can't be in the past.",
         "transferExige2Paradas": "Transfer requires exactly 2 stops: origin and destination.",
-        "criada": "Route created.", "falhaCriar": "Failed to create route"
+        "criada": "Route created.", "falhaCriar": "Failed to create route",
+        "idaSalvaRevisarVolta": "Outbound leg saved — review the return leg."
       }
     },
     "vehicleDetail": {
