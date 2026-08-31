@@ -14,8 +14,20 @@ import logging
 from dataclasses import dataclass, field
 
 import httpx
+from cachetools import TTLCache
 
 logger = logging.getLogger(__name__)
+
+# Cache L1 em memória pra /route (achado da auditoria de performance): a mesma origem/
+# destino é pedida de novo com frequência (gestor planejando, preview de preço do transfer
+# recalculando) e o resultado só muda se o grafo do OSRM for reconstruído — não a cada
+# request. `OsrmRoutingClient` é instanciado por request (ver routers/internal.py), então o
+# cache precisa viver aqui, no módulo, pra sobreviver entre instâncias.
+#
+# Só resultado disponível é cacheado — "indisponível" (motor fora do ar, sem rota) não entra,
+# pra não mascarar o OSRM voltando a responder dentro da janela do TTL.
+_ROTA_CACHE_TTL_SEGUNDOS = 300
+_rota_cache: TTLCache = TTLCache(maxsize=2000, ttl=_ROTA_CACHE_TTL_SEGUNDOS)
 
 # Raio máximo (metros) para "grudar" um ponto pedido na via mais próxima do grafo.
 #
@@ -96,6 +108,15 @@ class OsrmRoutingClient:
         if not self._base_url:
             return Route.indisponivel("Motor de roteamento não configurado.")
 
+        # Arredondado a 5 casas (~1,1m de precisão) — o suficiente pra "mesmo par de pontos
+        # pedido de novo" bater no cache sem exigir igualdade bit-a-bit de float.
+        chave_cache = (
+            self._base_url, round(from_lat, 5), round(from_lon, 5), round(to_lat, 5), round(to_lon, 5),
+        )
+        em_cache = _rota_cache.get(chave_cache)
+        if em_cache is not None:
+            return em_cache
+
         # OSRM recebe lon,lat (ordem GeoJSON), não lat,lon — trocar aqui é o erro clássico
         # de integração com OSRM, e ele não acusa: devolve rota errada do outro lado do mundo.
         coords = f"{from_lon},{from_lat};{to_lon},{to_lat}"
@@ -124,7 +145,9 @@ class OsrmRoutingClient:
         if codigo != "Ok" or not corpo.get("routes"):
             return Route.indisponivel(_motivo_para(codigo, resp.status_code))
 
-        return _para_route(corpo["routes"][0])
+        rota_resolvida = _para_route(corpo["routes"][0])
+        _rota_cache[chave_cache] = rota_resolvida
+        return rota_resolvida
 
     def table(self, pontos: list[tuple[float, float]]) -> Matrix:
         if not self._base_url:

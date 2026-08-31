@@ -43,6 +43,16 @@ OSRM_OK = {
 }
 
 
+@pytest.fixture(autouse=True)
+def limpar_cache_de_rota():
+    """Vários testes usam as mesmas coordenadas com respostas mockadas diferentes (ex.
+    testam distância vs. ordem lon/lat vs. raio de snap) — sem limpar, o cache do módulo
+    (app/routing.py) faria um teste "vazar" resultado pro seguinte."""
+    routing._rota_cache.clear()
+    yield
+    routing._rota_cache.clear()
+
+
 @pytest.fixture
 def osrm_respondendo(monkeypatch):
     """Troca o httpx.get do módulo de roteamento por uma resposta controlada."""
@@ -129,6 +139,50 @@ def test_sem_ligacao_viaria_tem_motivo_proprio(osrm_respondendo):
 
     assert resultado.available is False
     assert "ligação viária" in resultado.unavailable_reason
+
+
+def test_mesma_origem_destino_de_novo_nao_chama_o_osrm_de_novo(monkeypatch):
+    chamadas = {"n": 0}
+
+    def fake_get(url, **kwargs):
+        chamadas["n"] += 1
+        return _resposta(OSRM_OK)
+
+    monkeypatch.setattr(routing.httpx, "get", fake_get)
+
+    cliente = OsrmRoutingClient("http://osrm:5000")
+    primeira = cliente.rota(-23.5614, -46.6559, -23.5750, -46.6400)
+    segunda = cliente.rota(-23.5614, -46.6559, -23.5750, -46.6400)
+
+    assert chamadas["n"] == 1
+    assert primeira.distance_m == segunda.distance_m == 3563.8
+
+
+def test_par_de_coordenadas_diferente_nao_bate_no_cache_do_outro_par(osrm_respondendo):
+    capturado: dict = {}
+    osrm_respondendo(_resposta(OSRM_OK), capturar=capturado)
+
+    OsrmRoutingClient("http://osrm:5000").rota(-23.5614, -46.6559, -23.5750, -46.6400)
+    capturado.clear()
+    OsrmRoutingClient("http://osrm:5000").rota(-23.9999, -46.6559, -23.5750, -46.6400)
+
+    # Se batesse no cache da chamada anterior, capturado nunca seria repopulado.
+    assert capturado.get("url") is not None
+
+
+def test_resultado_indisponivel_nao_fica_em_cache(osrm_respondendo):
+    osrm_respondendo(httpx.ConnectError("connection refused"))
+    cliente = OsrmRoutingClient("http://osrm:5000")
+    cliente.rota(-23.56, -46.65, -23.57, -46.64)
+
+    capturado: dict = {}
+    osrm_respondendo(_resposta(OSRM_OK), capturar=capturado)
+    resultado = cliente.rota(-23.56, -46.65, -23.57, -46.64)
+
+    # OSRM "voltou a responder" — se o indisponível tivesse sido cacheado, isso não chamaria
+    # a rede de novo e continuaria devolvendo indisponível.
+    assert resultado.available is True
+    assert capturado.get("url") is not None
 
 
 def test_motor_fora_do_ar_vira_indisponivel_e_nao_propaga_excecao(osrm_respondendo):
