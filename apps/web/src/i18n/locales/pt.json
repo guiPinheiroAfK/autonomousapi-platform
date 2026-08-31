@@ -548,11 +548,29 @@
       "solicitacaoCancelamento": "Solicitou cancelamento da rota",
       "solicitacaoTroca": "Solicitou passar a rota pra outra pessoa",
       "verRota": "Ver rota",
+      "voltar": "Voltar",
+      "responder": "Responder",
+      "editar": "Editar",
+      "excluir": "Excluir",
+      "encaminhar": "Encaminhar",
+      "reagir": "Reagir",
+      "mensagemApagada": "Mensagem apagada",
+      "editadoSufixo": "(editado)",
+      "encaminhadaLabel": "Encaminhada",
+      "respondendoA": "Respondendo a {{nome}}",
+      "encaminharTitulo": "Encaminhar mensagem",
+      "selecioneConversaDestino": "Selecione uma conversa...",
+      "nenhumaOutraConversa": "Nenhuma outra conversa pra encaminhar.",
+      "confirmarExcluirMensagem": "Excluir esta mensagem? Ela some para os dois lados.",
       "toasts": {
         "falhaCarregarConversas": "Erro ao carregar conversas", "falhaEnviar": "Falha ao enviar mensagem",
         "conversaIniciada": "Conversa iniciada.", "falhaIniciar": "Falha ao iniciar conversa",
         "rotaAnexada": "Rota anexada.", "falhaAnexar": "Falha ao anexar rota",
-        "rotaCancelada": "Rota cancelada.", "falhaCancelar": "Falha ao cancelar rota"
+        "rotaCancelada": "Rota cancelada.", "falhaCancelar": "Falha ao cancelar rota",
+        "mensagemEncaminhada": "Mensagem encaminhada.", "falhaEncaminhar": "Falha ao encaminhar mensagem",
+        "falhaEditar": "Falha ao editar mensagem",
+        "mensagemExcluida": "Mensagem excluída.", "falhaExcluirMensagem": "Falha ao excluir mensagem",
+        "falhaReagir": "Falha ao reagir"
       }
     },
     "routes": {

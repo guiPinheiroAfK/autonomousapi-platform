@@ -27,4 +27,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
 
     /** Mensagens do outro participante ainda não marcadas como lidas — usado por markAsRead. */
     List<ChatMessage> findAllByConversationIdAndSenderUserIdNotAndLidoEmIsNull(UUID conversationId, UUID senderUserId);
+
+    /** Escopo por conversa — usado por editar/excluir/reagir, mesmo padrão de
+     *  {@code findByIdAndTenantId} usado alhures pra não vazar mensagem de outra conversa. */
+    Optional<ChatMessage> findByIdAndConversationId(UUID id, UUID conversationId);
 }

@@ -72,6 +72,7 @@ export type RouteStep = Schemas['RouteStep'];
 export type PlaceResponse = Schemas['PlaceResponse'];
 export type ChatConversationResponse = Schemas['ChatConversationResponse'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
+export type ChatReactionResponse = Schemas['ChatReactionResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
 export type SendMessageRequest = Schemas['SendMessageRequest'];
 export type SendRoutePlanRequest = Schemas['SendRoutePlanRequest'];
@@ -711,6 +712,32 @@ export const coreApi = {
       request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
         body: JSON.stringify(body),
+      }),
+    /** Só o autor, só TEXTO, só enquanto `stillOnServer` (janela de retenção do servidor). */
+    editMessage: (conversationId: string, messageId: string, body: { body: string }) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/messages/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    /** Apagar pra todo mundo (sem "apagar só pra mim") — mesmas guardas de editMessage. */
+    deleteMessage: (conversationId: string, messageId: string) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/messages/${messageId}`, {
+        method: 'DELETE',
+      }),
+    forwardMessage: (conversationId: string, messageId: string, body: { targetConversationId: string }) =>
+      request<ChatMessageResponse>(`/v1/chat/conversations/${conversationId}/messages/${messageId}/forward`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    /** Upsert — substitui a reação anterior desta pessoa nesta mensagem, se houver. */
+    react: (conversationId: string, messageId: string, body: { emoji: string }) =>
+      request<ChatReactionResponse[]>(`/v1/chat/conversations/${conversationId}/messages/${messageId}/reaction`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    removeReaction: (conversationId: string, messageId: string) =>
+      request<ChatReactionResponse[]>(`/v1/chat/conversations/${conversationId}/messages/${messageId}/reaction`, {
+        method: 'DELETE',
       }),
     /** Gestor-only: confirma que o device já persistiu localmente até syncedAt (habilita a limpeza no servidor). */
     syncCursor: (body: SyncCursorRequest) =>

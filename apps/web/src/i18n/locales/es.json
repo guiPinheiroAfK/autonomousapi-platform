@@ -531,10 +531,28 @@
       "jaDesignadaMotorista": "· ya asignada a este conductor",
       "anexar": "Adjuntar",
       "paradasDaRota": "Paradas de la ruta",
+      "voltar": "Volver",
+      "responder": "Responder",
+      "editar": "Editar",
+      "excluir": "Eliminar",
+      "encaminhar": "Reenviar",
+      "reagir": "Reaccionar",
+      "mensagemApagada": "Mensaje eliminado",
+      "editadoSufixo": "(editado)",
+      "encaminhadaLabel": "Reenviado",
+      "respondendoA": "Respondiendo a {{nome}}",
+      "encaminharTitulo": "Reenviar mensaje",
+      "selecioneConversaDestino": "Selecciona una conversación...",
+      "nenhumaOutraConversa": "No hay otra conversación para reenviar.",
+      "confirmarExcluirMensagem": "¿Eliminar este mensaje? Desaparece para ambos lados.",
       "toasts": {
         "falhaCarregarConversas": "Error al cargar las conversaciones", "falhaEnviar": "Error al enviar el mensaje",
         "conversaIniciada": "Conversación iniciada.", "falhaIniciar": "Error al iniciar la conversación",
-        "rotaAnexada": "Ruta adjuntada.", "falhaAnexar": "Error al adjuntar la ruta"
+        "rotaAnexada": "Ruta adjuntada.", "falhaAnexar": "Error al adjuntar la ruta",
+        "mensagemEncaminhada": "Mensaje reenviado.", "falhaEncaminhar": "Error al reenviar el mensaje",
+        "falhaEditar": "Error al editar el mensaje",
+        "mensagemExcluida": "Mensaje eliminado.", "falhaExcluirMensagem": "Error al eliminar el mensaje",
+        "falhaReagir": "Error al reaccionar"
       }
     },
     "routes": {

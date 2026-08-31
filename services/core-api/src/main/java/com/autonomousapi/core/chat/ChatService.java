@@ -2,9 +2,11 @@ package com.autonomousapi.core.chat;
 
 import com.autonomousapi.core.chat.dto.ChatConversationResponse;
 import com.autonomousapi.core.chat.dto.ChatMessageResponse;
+import com.autonomousapi.core.chat.dto.ChatReactionResponse;
 import com.autonomousapi.core.driver.CurrentDriverResolver;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
+import com.autonomousapi.core.error.ChatMessageActionInvalidException;
 import com.autonomousapi.core.error.DriverWithoutLoginException;
 import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.NotFoundException;
@@ -33,6 +35,7 @@ public class ChatService {
 
     private final ChatConversationRepository conversations;
     private final ChatMessageRepository messages;
+    private final ChatMessageReactionRepository reactions;
     private final ChatSyncCursorRepository syncCursors;
     private final DriverRepository drivers;
     private final VehicleRepository vehicles;
@@ -45,6 +48,7 @@ public class ChatService {
     public ChatService(
             ChatConversationRepository conversations,
             ChatMessageRepository messages,
+            ChatMessageReactionRepository reactions,
             ChatSyncCursorRepository syncCursors,
             DriverRepository drivers,
             VehicleRepository vehicles,
@@ -55,6 +59,7 @@ public class ChatService {
             TypingIndicatorService typingIndicator) {
         this.conversations = conversations;
         this.messages = messages;
+        this.reactions = reactions;
         this.syncCursors = syncCursors;
         this.drivers = drivers;
         this.vehicles = vehicles;
@@ -102,16 +107,42 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageResponse> listMessages(JwtPrincipal principal, UUID conversationId) {
         ChatConversation conversation = findAsParticipant(principal, conversationId);
-        return messages.findAllByConversationIdAndAindaNoServidorTrueOrderBySentAtAsc(conversation.getId()).stream()
-                .map(ChatMessageResponse::from)
+        List<ChatMessage> list =
+                messages.findAllByConversationIdAndAindaNoServidorTrueOrderBySentAtAsc(conversation.getId());
+        java.util.Map<UUID, List<ChatReactionResponse>> reactionsByMessage = reactionsByMessage(list);
+        return list.stream()
+                .map(m -> ChatMessageResponse.from(m, reactionsByMessage.getOrDefault(m.getId(), List.of())))
                 .toList();
     }
 
-    /** Envia e notifica por push o outro participante da conversa. */
+    /** Batch pra não fazer N+1 (mesmo padrão de {@link #toResponses}). */
+    private java.util.Map<UUID, List<ChatReactionResponse>> reactionsByMessage(List<ChatMessage> list) {
+        if (list.isEmpty()) {
+            return java.util.Map.of();
+        }
+        List<UUID> ids = list.stream().map(ChatMessage::getId).toList();
+        return reactions.findAllByMessageIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        ChatMessageReaction::getMessageId,
+                        java.util.stream.Collectors.mapping(ChatReactionResponse::from, java.util.stream.Collectors.toList())));
+    }
+
+    /** Envia e notifica por push o outro participante da conversa. {@code replyToMessageId}
+     *  opcional (V31): copia um retrato do texto/autor original pra dentro da mensagem nova,
+     *  sem depender de a original ainda estar na janela de retenção depois. */
     @Transactional
-    public ChatMessageResponse sendMessage(JwtPrincipal principal, UUID conversationId, String body) {
+    public ChatMessageResponse sendMessage(JwtPrincipal principal, UUID conversationId, String body, UUID replyToMessageId) {
         ChatConversation conversation = findAsParticipant(principal, conversationId);
-        ChatMessage message = messages.save(new ChatMessage(conversation.getId(), principal.userId(), body));
+        ChatMessage message = new ChatMessage(conversation.getId(), principal.userId(), body);
+        if (replyToMessageId != null) {
+            ChatMessage original = Lookups.orNotFound(
+                    messages.findByIdAndConversationId(replyToMessageId, conversation.getId()), "Mensagem não encontrada.");
+            if (original.getDeletedAt() != null) {
+                throw new ChatMessageActionInvalidException("Mensagem excluída não pode ser respondida.");
+            }
+            message.responderA(original.getId(), preview(original.getBody()), original.getSenderUserId());
+        }
+        messages.save(message);
 
         UUID recipientUserId = principal.userId().equals(conversation.getGestorUserId())
                 ? drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null)
@@ -121,6 +152,105 @@ public class ChatService {
         }
 
         return ChatMessageResponse.from(message);
+    }
+
+    /** Só o autor, só {@code TEXTO}, só enquanto ainda na janela de retenção (V31) — fora
+     *  disso o outro lado não teria como ver a edição (poll só busca {@code aindaNoServidor}). */
+    @Transactional
+    public ChatMessageResponse editMessage(JwtPrincipal principal, UUID conversationId, UUID messageId, String novoBody) {
+        ChatMessage message = findEditableOwnMessage(principal, conversationId, messageId);
+        message.editar(novoBody);
+        return ChatMessageResponse.from(message);
+    }
+
+    /** Mesmas guardas de {@link #editMessage} — soft delete, ver {@link ChatMessage#apagar}. */
+    @Transactional
+    public ChatMessageResponse deleteMessage(JwtPrincipal principal, UUID conversationId, UUID messageId) {
+        ChatMessage message = findEditableOwnMessage(principal, conversationId, messageId);
+        message.apagar();
+        return ChatMessageResponse.from(message);
+    }
+
+    private ChatMessage findEditableOwnMessage(JwtPrincipal principal, UUID conversationId, UUID messageId) {
+        ChatConversation conversation = findAsParticipant(principal, conversationId);
+        ChatMessage message = Lookups.orNotFound(
+                messages.findByIdAndConversationId(messageId, conversation.getId()), "Mensagem não encontrada.");
+        if (!message.getSenderUserId().equals(principal.userId())) {
+            throw new ChatMessageActionInvalidException("Só quem enviou pode editar ou excluir esta mensagem.");
+        }
+        if (message.getMessageType() != ChatMessageType.TEXTO) {
+            throw new ChatMessageActionInvalidException("Só mensagens de texto podem ser editadas ou excluídas.");
+        }
+        if (!message.isAindaNoServidor()) {
+            throw new ChatMessageActionInvalidException("Mensagem antiga demais — já saiu da janela de retenção do servidor.");
+        }
+        if (message.getDeletedAt() != null) {
+            throw new ChatMessageActionInvalidException("Mensagem já foi excluída.");
+        }
+        return message;
+    }
+
+    /**
+     * Encaminha o texto de uma mensagem pra outra conversa da mesma pessoa — valida
+     * participação nas DUAS conversas (reusa {@link #findAsParticipant} pros dois lados, o
+     * que já cobre sozinho o caso de alguém tentar encaminhar pra uma conversa que não é
+     * dela). Sem a restrição de janela de {@link #editMessage}: cria uma mensagem NOVA, não
+     * depende de a original ainda estar retida.
+     */
+    @Transactional
+    public ChatMessageResponse forwardMessage(
+            JwtPrincipal principal, UUID sourceConversationId, UUID messageId, UUID targetConversationId) {
+        ChatConversation source = findAsParticipant(principal, sourceConversationId);
+        ChatMessage original = Lookups.orNotFound(
+                messages.findByIdAndConversationId(messageId, source.getId()), "Mensagem não encontrada.");
+        if (original.getDeletedAt() != null) {
+            throw new ChatMessageActionInvalidException("Mensagem excluída não pode ser encaminhada.");
+        }
+        ChatConversation target = findAsParticipant(principal, targetConversationId);
+
+        ChatMessage forwarded = new ChatMessage(target.getId(), principal.userId(), original.getBody());
+        forwarded.marcarComoEncaminhada(original.getId());
+        messages.save(forwarded);
+
+        UUID recipientUserId = principal.userId().equals(target.getGestorUserId())
+                ? drivers.findById(target.getDriverId()).map(Driver::getAppUserId).orElse(null)
+                : target.getGestorUserId();
+        if (recipientUserId != null) {
+            pushNotificationService.notifyUser(recipientUserId, "Nova mensagem", preview(original.getBody()));
+        }
+        return ChatMessageResponse.from(forwarded);
+    }
+
+    /** Upsert — substitui a reação anterior desta pessoa nesta mensagem, se houver (igual
+     *  WhatsApp: tocar em outro emoji troca, tocar no mesmo remove via {@link #removeReaction}). */
+    @Transactional
+    public List<ChatReactionResponse> reactToMessage(
+            JwtPrincipal principal, UUID conversationId, UUID messageId, String emoji) {
+        ChatMessage message = findReactableMessage(principal, conversationId, messageId);
+        reactions.findByMessageIdAndUserId(message.getId(), principal.userId()).ifPresent(reactions::delete);
+        reactions.save(new ChatMessageReaction(message.getId(), principal.userId(), emoji));
+        return reactions.findAllByMessageIdIn(List.of(message.getId())).stream()
+                .map(ChatReactionResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public List<ChatReactionResponse> removeReaction(JwtPrincipal principal, UUID conversationId, UUID messageId) {
+        ChatMessage message = findReactableMessage(principal, conversationId, messageId);
+        reactions.deleteByMessageIdAndUserId(message.getId(), principal.userId());
+        return reactions.findAllByMessageIdIn(List.of(message.getId())).stream()
+                .map(ChatReactionResponse::from)
+                .toList();
+    }
+
+    private ChatMessage findReactableMessage(JwtPrincipal principal, UUID conversationId, UUID messageId) {
+        ChatConversation conversation = findAsParticipant(principal, conversationId);
+        ChatMessage message = Lookups.orNotFound(
+                messages.findByIdAndConversationId(messageId, conversation.getId()), "Mensagem não encontrada.");
+        if (!message.isAindaNoServidor()) {
+            throw new ChatMessageActionInvalidException("Mensagem antiga demais — já saiu da janela de retenção do servidor.");
+        }
+        return message;
     }
 
     /**
