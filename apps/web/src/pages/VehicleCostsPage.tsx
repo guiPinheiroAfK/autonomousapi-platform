@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type ExpenseEntryRequest, type ExpenseEntryResponse, type ExpenseSummaryResponse } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { StatusBadgeCusto } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
@@ -11,6 +12,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
 import { formatDateBR } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
@@ -40,6 +42,7 @@ interface Props {
 
 export function VehicleCostsPage({ vehicleId, onBack }: Props) {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   // Busca a placa em vez de receber por prop: essa tela agora tem URL própria
   // (/frota/:id/custos), então precisa se sustentar sozinha num F5 ou link direto —
   // o vehicleId da URL é o único dado garantido, o resto (placa) o front tem que buscar.
@@ -106,9 +109,11 @@ export function VehicleCostsPage({ vehicleId, onBack }: Props) {
           <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.vehicleCosts.custosDe', { placa: plate })}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.vehicleCosts.subtitulo')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.vehicleCosts.lancarCusto')}
-        </Button>
+        {podeEscrever && (
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.vehicleCosts.lancarCusto')}
+          </Button>
+        )}
       </div>
 
       {summary && (
@@ -172,14 +177,16 @@ export function VehicleCostsPage({ vehicleId, onBack }: Props) {
                     <td className="px-5 py-2.5 font-data font-medium text-foreground">R$ {c.valor?.toFixed(2)}</td>
                     <td className="px-5 py-2.5 text-muted-foreground">{c.descricao ?? '—'}</td>
                     <td className="px-5 py-2.5">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="h-auto p-0 text-destructive"
-                        onClick={() => handleDelete(c.id!)}
-                      >
-                        {t('pages.vehicleCosts.excluir')}
-                      </Button>
+                      {podeEscrever && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-destructive"
+                          onClick={() => handleDelete(c.id!)}
+                        >
+                          {t('pages.vehicleCosts.excluir')}
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -224,11 +231,9 @@ export function VehicleCostsPage({ vehicleId, onBack }: Props) {
               <Label htmlFor="valor">{t('pages.vehicleCosts.form.valorReais')}</Label>
               <Input
                 id="valor"
-                type="number"
-                min={0.01}
-                step="0.01"
-                value={form.valor}
-                onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
+                inputMode="decimal"
+                value={form.valor ? maskMoedaBR(String(Math.round(form.valor * 100))) : ''}
+                onChange={(e) => setForm({ ...form, valor: parseMoedaBR(maskMoedaBR(e.target.value)) })}
                 required
               />
             </div>

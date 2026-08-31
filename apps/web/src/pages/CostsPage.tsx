@@ -13,6 +13,7 @@ import {
   type RoutePlanResponse,
   type VehicleResponse,
 } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { StatusBadgeCusto } from '../components/shared/StatusBadge';
 import { StatCard } from '../components/shared/StatCard';
 import { PlacaBR } from '../components/shared/PlacaBR';
@@ -25,6 +26,7 @@ import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { cn } from '../lib/utils';
 import { formatBRL, formatDateBR, hojeISO } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
@@ -233,6 +235,7 @@ const EXPENSES_PAGE_SIZE = 20;
 
 function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [entries, setEntries] = useState<FleetExpenseEntryResponse[]>([]);
   const [categoriaFiltro, setCategoriaFiltro] = useState<ExpenseCategory | 'todas'>('todas');
   const [page, setPage] = useState(0);
@@ -316,9 +319,11 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             </option>
           ))}
         </Select>
-        <Button onClick={openCreate} className="ml-auto">
-          <Plus /> {t('pages.costs.despesas.novaDespesa')}
-        </Button>
+        {podeEscrever && (
+          <Button onClick={openCreate} className="ml-auto">
+            <Plus /> {t('pages.costs.despesas.novaDespesa')}
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -367,14 +372,16 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                     <td className="px-5 py-2.5 font-data font-medium text-foreground">{formatBRL(Number(e.valor))}</td>
                     <td className="px-5 py-2.5 text-muted-foreground">{e.descricao ?? '—'}</td>
                     <td className="px-5 py-2.5">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="h-auto p-0 text-destructive"
-                        onClick={() => handleDelete(e.id!)}
-                      >
-                        {t('pages.costs.despesas.excluir')}
-                      </Button>
+                      {podeEscrever && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-destructive"
+                          onClick={() => handleDelete(e.id!)}
+                        >
+                          {t('pages.costs.despesas.excluir')}
+                        </Button>
+                      )}
                     </td>
                   </StaggerItem>
                 ))}
@@ -459,11 +466,9 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
               <Label htmlFor="valor">{t('pages.costs.despesas.form.valorReais')}</Label>
               <Input
                 id="valor"
-                type="number"
-                min={0.01}
-                step="0.01"
-                value={form.valor}
-                onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
+                inputMode="decimal"
+                value={form.valor ? maskMoedaBR(String(Math.round(form.valor * 100))) : ''}
+                onChange={(e) => setForm({ ...form, valor: parseMoedaBR(maskMoedaBR(e.target.value)) })}
                 required
               />
             </div>
@@ -532,6 +537,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 
 function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -587,11 +593,13 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex justify-end">
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.costs.orcamento.novoOrcamento')}
-        </Button>
-      </div>
+      {podeEscrever && (
+        <div className="mb-4 flex justify-end">
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.costs.orcamento.novoOrcamento')}
+          </Button>
+        </div>
+      )}
 
       {loading ? (
         <p className="p-8 text-center text-xs text-muted-foreground">{t('common.carregando')}</p>
@@ -618,14 +626,16 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
                       · {b.periodo === 'MENSAL' ? t('pages.costs.orcamento.mensal') : b.periodo}
                     </p>
                   </div>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-auto shrink-0 p-0 text-destructive"
-                    onClick={() => handleDelete(b.id!)}
-                  >
-                    {t('pages.costs.orcamento.excluir')}
-                  </Button>
+                  {podeEscrever && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto shrink-0 p-0 text-destructive"
+                      onClick={() => handleDelete(b.id!)}
+                    >
+                      {t('pages.costs.orcamento.excluir')}
+                    </Button>
+                  )}
                 </div>
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
@@ -686,11 +696,9 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             <Label htmlFor="valorLimite">{t('pages.costs.orcamento.form.valorLimiteMensal')}</Label>
             <Input
               id="valorLimite"
-              type="number"
-              min={0.01}
-              step="0.01"
-              value={form.valorLimite}
-              onChange={(e) => setForm({ ...form, valorLimite: Number(e.target.value) })}
+              inputMode="decimal"
+              value={form.valorLimite ? maskMoedaBR(String(Math.round(form.valorLimite * 100))) : ''}
+              onChange={(e) => setForm({ ...form, valorLimite: parseMoedaBR(maskMoedaBR(e.target.value)) })}
               required
             />
           </div>

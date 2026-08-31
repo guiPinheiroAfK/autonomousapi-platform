@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapPin, Plus, Power } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type CollectionPointResponse, type PlaceResponse } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { BuscaEndereco } from '../components/shared/BuscaEndereco';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -19,6 +20,7 @@ import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
  */
 export function CollectionPointsPage() {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [pontos, setPontos] = useState<CollectionPointResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -119,9 +121,11 @@ export function CollectionPointsPage() {
           <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.collectionPoints.titulo')}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.collectionPoints.subtitulo')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.collectionPoints.novoPonto')}
-        </Button>
+        {podeEscrever && (
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.collectionPoints.novoPonto')}
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -145,27 +149,41 @@ export function CollectionPointsPage() {
             <StaggerItem key={p.id}>
             <Card>
               <div className="flex items-start justify-between gap-2 p-4">
-                <button type="button" onClick={() => openEdit(p)} className="min-w-0 flex-1 text-left">
-                  <p className="truncate text-sm font-medium text-foreground">{p.nome}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.endereco}</p>
-                  {(p.janelaInicio || p.janelaFim) && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {t('pages.collectionPoints.janelaPadrao', { inicio: p.janelaInicio ?? '—', fim: p.janelaFim ?? '—' })}
-                    </p>
-                  )}
-                </button>
+                {podeEscrever ? (
+                  <button type="button" onClick={() => openEdit(p)} className="min-w-0 flex-1 text-left">
+                    <p className="truncate text-sm font-medium text-foreground">{p.nome}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.endereco}</p>
+                    {(p.janelaInicio || p.janelaFim) && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {t('pages.collectionPoints.janelaPadrao', { inicio: p.janelaInicio ?? '—', fim: p.janelaFim ?? '—' })}
+                      </p>
+                    )}
+                  </button>
+                ) : (
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{p.nome}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.endereco}</p>
+                    {(p.janelaInicio || p.janelaFim) && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {t('pages.collectionPoints.janelaPadrao', { inicio: p.janelaInicio ?? '—', fim: p.janelaFim ?? '—' })}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   <Badge variant={p.ativo ? 'default' : 'secondary'}>
                     {p.ativo ? t('pages.collectionPoints.ativo') : t('pages.collectionPoints.inativo')}
                   </Badge>
-                  <button
-                    type="button"
-                    onClick={() => alternarAtivo(p)}
-                    title={p.ativo ? t('pages.collectionPoints.desativar') : t('pages.collectionPoints.ativar')}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <Power className="size-3.5" />
-                  </button>
+                  {podeEscrever && (
+                    <button
+                      type="button"
+                      onClick={() => alternarAtivo(p)}
+                      title={p.ativo ? t('pages.collectionPoints.desativar') : t('pages.collectionPoints.ativar')}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Power className="size-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </Card>

@@ -80,12 +80,15 @@ rota pro `DESPACHANTE` nos poucos endpoints que já são `@PreAuthorize("hasAnyR
   integrantes + convites pendentes, mudar papel, remover.
 - Botão "Nova rota" e picker de motorista continuam visíveis pro Despachante; botão
   "Cancelar rota" só aparece pro Gestor.
-- **Fora de escopo desta fatia (fast-follow):** esconder/desabilitar botão de criar/editar/
-  excluir nas outras ~15 telas (Frota, Motoristas, Custos, OS, Manutenção, etc.) pro
-  Despachante/Visualizador. O backend já bloqueia essas escritas pra quem não é
-  `GESTOR_FROTA`/`ADMIN` (comportamento já existente, sem mudança) — o buraco que sobra é
-  só de UX (o botão aparece, clicar dá 403), não de segurança. Fechar isso é tela por tela,
-  registrado aqui pra não esquecer, não bloqueia esta entrega.
+- **Fast-follow implementado (2026-08-31):** hook `usePodeEscrever()` (`auth/AuthContext.tsx`,
+  mesma checagem de `podeCancelar`) usado pra esconder criar/editar/excluir em Frota,
+  Motoristas (incluindo convite/notificar/designar veículo/avaliação — todos Gestor-only no
+  backend), Custos (despesas e orçamento), Custos por veículo, OS, Detalhe do veículo (FIPE
+  e sinistro), Pontos de coleta (inclusive o card inteiro deixa de ser clicável pra quem não
+  escreve) e exclusão de contato do cadastro de passageiro dentro do fluxo de rota (criar
+  contato continua liberado pro Despachante). Manutenção e Recarga elétrica não têm nenhuma
+  escrita de usuário (dado só-leitura/externo), não precisaram de mudança. Parceiros só tem
+  clique de afiliado, não é uma escrita de cadastro, também ficou de fora.
 
 ## Matriz de QA (usar pra testar manualmente e pra guiar os testes automatizados)
 
@@ -183,6 +186,6 @@ rota pro `DESPACHANTE` nos poucos endpoints que já são `@PreAuthorize("hasAnyR
       (Gestor/Despachante/Visualizador, incluindo os casos de borda de convite) e front no
       navegador (convite → aceite → login → menu correto pro papel → Dashboard com dado
       real, não zerado).
-- [ ] Fast-follow (não bloqueia esta entrega): esconder botão de criar/editar/excluir nas
-      telas fora de rotas pro Despachante/Visualizador — o backend já bloqueia a escrita
-      (403), o que falta é só a tela não mostrar um botão que vai dar erro.
+- [x] Fast-follow: esconder botão de criar/editar/excluir nas telas fora de rotas pro
+      Despachante/Visualizador — o backend já bloqueia a escrita (403), o que faltava era só
+      a tela não mostrar um botão que ia dar erro.
