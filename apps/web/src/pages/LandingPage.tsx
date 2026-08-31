@@ -821,7 +821,7 @@ function Rodape() {
           <Marca tamanho={20} />
           <span className="fonte-editorial text-[16px] text-[var(--tinta)]">AutonomousAPI</span>
         </span>
-        <span>{t('landing.rodape.status')}</span>
+        <span>{t('landing.rodape.direitos', { ano: new Date().getFullYear() })}</span>
       </div>
     </footer>
   );

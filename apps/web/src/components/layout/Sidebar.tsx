@@ -179,9 +179,6 @@ export function Sidebar({ user, open, onClose }: SidebarProps) {
             </>
           )}
         </nav>
-
-        <div className="mx-4 mb-3 h-px bg-sidebar-border" />
-        <div className="px-4 pb-4 text-[10px] text-sidebar-muted">v0.1.0 · Fase 1</div>
       </aside>
     </>
   );

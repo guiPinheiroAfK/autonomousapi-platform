@@ -14,7 +14,6 @@ import { useAuth } from './auth/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignupPage } from './pages/SignupPage';
@@ -32,7 +31,14 @@ import type { UserResponse } from './api/client';
  *
  * Login e Signup ficam no bundle inicial de propósito: são a primeira tela renderizada, e
  * adiar justamente elas trocaria peso por um flash de carregamento na abertura.
+ *
+ * LandingPage também é lazy, apesar de ser a primeira tela de quem ainda não tem conta:
+ * é a página mais pesada do app inteiro (seções, animações de Reveal), e diferente de
+ * Login/Signup ela só existe pra quem chega direto na raiz sem token — quem já tem sessão
+ * nunca a renderiza. Achado na auditoria de performance: ela estava fora do lazy() por
+ * omissão, não por decisão — todo visitante frio pagava o peso dela antes de decidir logar.
  */
+const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const VehiclesPage = lazy(() => import('./pages/VehiclesPage').then((m) => ({ default: m.VehiclesPage })));
 const VehicleDetailPage = lazy(() =>

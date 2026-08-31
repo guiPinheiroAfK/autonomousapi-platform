@@ -128,7 +128,7 @@
         { "q": "Is there a contract or cancellation fee?", "a": "No. The plan is monthly and you can cancel whenever you want. The annual plan gives a discount, it doesn't lock you in." }
       ]
     },
-    "rodape": { "status": "Product in development · Phase 1" }
+    "rodape": { "direitos": "© {{ano}} AutonomousAPI. All rights reserved." }
   },
   "auth": {
     "login": {

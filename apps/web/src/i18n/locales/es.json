@@ -128,7 +128,7 @@
         { "q": "¿Hay permanencia o multa por cancelar?", "a": "No. El plan es mensual y puedes cancelar cuando quieras. El plan anual da descuento, no te ata." }
       ]
     },
-    "rodape": { "status": "Producto en desarrollo · Fase 1" }
+    "rodape": { "direitos": "© {{ano}} AutonomousAPI. Todos los derechos reservados." }
   },
   "auth": {
     "login": {

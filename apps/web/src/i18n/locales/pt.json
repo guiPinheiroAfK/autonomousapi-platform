@@ -128,7 +128,7 @@
         { "q": "Tem fidelidade ou multa para cancelar?", "a": "Não. O plano é mensal e você cancela quando quiser. O anual dá desconto, não amarra." }
       ]
     },
-    "rodape": { "status": "Produto em desenvolvimento · Fase 1" }
+    "rodape": { "direitos": "© {{ano}} AutonomousAPI. Todos os direitos reservados." }
   },
   "auth": {
     "login": {
