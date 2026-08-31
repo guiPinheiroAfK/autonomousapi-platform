@@ -166,6 +166,69 @@
         }
       }
     },
+    "/v1/passengers/{id}": {
+      "put": {
+        "tags": [
+          "passenger-controller"
+        ],
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassengerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassengerResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "passenger-controller"
+        ],
+        "operationId": "delete_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/v1/drivers/{id}": {
       "get": {
         "tags": [
@@ -200,7 +263,7 @@
         "tags": [
           "driver-controller"
         ],
-        "operationId": "update_2",
+        "operationId": "update_3",
         "parameters": [
           {
             "name": "id",
@@ -239,7 +302,7 @@
         "tags": [
           "driver-controller"
         ],
-        "operationId": "delete_3",
+        "operationId": "delete_4",
         "parameters": [
           {
             "name": "id",
@@ -263,7 +326,7 @@
         "tags": [
           "collection-point-controller"
         ],
-        "operationId": "update_3",
+        "operationId": "update_4",
         "parameters": [
           {
             "name": "id",
@@ -1090,6 +1153,57 @@
         }
       }
     },
+    "/v1/passengers": {
+      "get": {
+        "tags": [
+          "passenger-controller"
+        ],
+        "operationId": "list_5",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PassengerResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "passenger-controller"
+        ],
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassengerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassengerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/notifications/{id}/read": {
       "post": {
         "tags": [
@@ -1250,7 +1364,7 @@
         "tags": [
           "driver-controller"
         ],
-        "operationId": "list_6",
+        "operationId": "list_7",
         "parameters": [
           {
             "name": "page",
@@ -1290,7 +1404,7 @@
         "tags": [
           "driver-controller"
         ],
-        "operationId": "create_3",
+        "operationId": "create_4",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1479,7 +1593,7 @@
         "tags": [
           "driver-rating-controller"
         ],
-        "operationId": "list_7",
+        "operationId": "list_8",
         "parameters": [
           {
             "name": "driverId",
@@ -1528,7 +1642,7 @@
         "tags": [
           "driver-rating-controller"
         ],
-        "operationId": "create_4",
+        "operationId": "create_5",
         "parameters": [
           {
             "name": "driverId",
@@ -1569,7 +1683,7 @@
         "tags": [
           "collection-point-controller"
         ],
-        "operationId": "list_8",
+        "operationId": "list_9",
         "parameters": [
           {
             "name": "all",
@@ -1601,7 +1715,7 @@
         "tags": [
           "collection-point-controller"
         ],
-        "operationId": "create_5",
+        "operationId": "create_6",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2102,7 +2216,7 @@
         "tags": [
           "budget-controller"
         ],
-        "operationId": "list_10",
+        "operationId": "list_11",
         "responses": {
           "200": {
             "description": "OK",
@@ -2123,7 +2237,7 @@
         "tags": [
           "budget-controller"
         ],
-        "operationId": "create_6",
+        "operationId": "create_7",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2777,7 +2891,7 @@
         "tags": [
           "notification-controller"
         ],
-        "operationId": "list_5",
+        "operationId": "list_6",
         "parameters": [
           {
             "name": "page",
@@ -3049,7 +3163,7 @@
         "tags": [
           "charging-station-controller"
         ],
-        "operationId": "list_9",
+        "operationId": "list_10",
         "parameters": [
           {
             "name": "lat",
@@ -3251,7 +3365,7 @@
         "tags": [
           "driver-rating-controller"
         ],
-        "operationId": "delete_4",
+        "operationId": "delete_5",
         "parameters": [
           {
             "name": "driverId",
@@ -3284,7 +3398,7 @@
         "tags": [
           "budget-controller"
         ],
-        "operationId": "delete_5",
+        "operationId": "delete_6",
         "parameters": [
           {
             "name": "id",
@@ -3640,6 +3754,36 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PassengerRequest": {
+        "required": [
+          "nome",
+          "telefone"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": "string"
+          }
+        }
+      },
+      "PassengerResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": "string"
           }
         }
       },

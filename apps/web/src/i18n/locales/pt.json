@@ -230,7 +230,7 @@
       "nav": {
         "dashboard": "Dashboard", "frota": "Frota", "ordensServico": "Ordens de Serviço",
         "motoristas": "Motoristas", "mensagens": "Mensagens", "rotas": "Rotas",
-        "coletaEntrega": "Coleta & Entrega", "pontosColeta": "Pontos de Coleta",
+        "coletaEntrega": "Coleta & Entrega", "pontosColeta": "Pontos de Coleta", "passageiros": "Passageiros",
         "manutencao": "Manutenção", "custos": "Custos", "relatorios": "Relatórios",
         "parceiros": "Parceiros", "pontosRecarga": "Pontos de Recarga", "assinatura": "Assinatura",
         "inicio": "Início", "minhaRota": "Minha Rota", "mais": "Mais"
@@ -606,6 +606,26 @@
         "cadastrado": "Ponto de coleta cadastrado.", "falhaSalvar": "Falha ao salvar ponto de coleta",
         "desativado": "Ponto de coleta desativado.", "ativado": "Ponto de coleta ativado.",
         "falhaAtualizar": "Falha ao atualizar ponto de coleta"
+      }
+    },
+    "passengers": {
+      "titulo": "Passageiros",
+      "subtitulo": "Cadastro reutilizável de passageiro/cliente final — vincule a uma parada pra ativar notificação automática.",
+      "novoPassageiro": "Novo passageiro",
+      "nenhumPassageiro": "Nenhum passageiro cadastrado ainda.",
+      "excluir": "Excluir",
+      "confirmarExcluir": "Excluir este passageiro do cadastro? Essa ação não pode ser desfeita.",
+      "editarPassageiro": "Editar passageiro",
+      "novoPassageiroTitulo": "Novo passageiro",
+      "form": {
+        "nome": "Nome", "nomePlaceholder": "Maria Silva",
+        "telefone": "Telefone", "telefonePlaceholder": "+55 45 99999-0000",
+        "cancelar": "Cancelar", "salvando": "Salvando...", "salvar": "Salvar"
+      },
+      "toasts": {
+        "falhaCarregar": "Erro ao carregar passageiros", "atualizado": "Passageiro atualizado.",
+        "cadastrado": "Passageiro cadastrado.", "falhaSalvar": "Falha ao salvar passageiro",
+        "excluido": "Passageiro excluído.", "falhaExcluir": "Falha ao excluir passageiro"
       }
     },
     "chargingStations": {

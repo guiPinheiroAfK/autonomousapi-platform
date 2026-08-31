@@ -229,7 +229,7 @@
       "nav": {
         "dashboard": "Panel", "frota": "Flota", "ordensServico": "Órdenes de Servicio",
         "motoristas": "Conductores", "mensagens": "Mensajes", "rotas": "Rutas",
-        "coletaEntrega": "Recolección y Entrega", "pontosColeta": "Puntos de Recolección",
+        "coletaEntrega": "Recolección y Entrega", "pontosColeta": "Puntos de Recolección", "passageiros": "Pasajeros",
         "manutencao": "Mantenimiento", "custos": "Costos", "relatorios": "Informes",
         "parceiros": "Socios", "pontosRecarga": "Puntos de Carga", "assinatura": "Suscripción",
         "inicio": "Inicio", "minhaRota": "Mi Ruta", "mais": "Más"
@@ -588,6 +588,26 @@
         "cadastrado": "Punto de recolección registrado.", "falhaSalvar": "Error al guardar el punto de recolección",
         "desativado": "Punto de recolección desactivado.", "ativado": "Punto de recolección activado.",
         "falhaAtualizar": "Error al actualizar el punto de recolección"
+      }
+    },
+    "passengers": {
+      "titulo": "Pasajeros",
+      "subtitulo": "Registro reutilizable de pasajero/cliente final — vincúlalo a una parada para activar notificación automática.",
+      "novoPassageiro": "Nuevo pasajero",
+      "nenhumPassageiro": "Aún no hay pasajeros registrados.",
+      "excluir": "Eliminar",
+      "confirmarExcluir": "¿Eliminar este pasajero del registro? Esta acción no se puede deshacer.",
+      "editarPassageiro": "Editar pasajero",
+      "novoPassageiroTitulo": "Nuevo pasajero",
+      "form": {
+        "nome": "Nombre", "nomePlaceholder": "Maria Silva",
+        "telefone": "Teléfono", "telefonePlaceholder": "+55 45 99999-0000",
+        "cancelar": "Cancelar", "salvando": "Guardando...", "salvar": "Guardar"
+      },
+      "toasts": {
+        "falhaCarregar": "Error al cargar pasajeros", "atualizado": "Pasajero actualizado.",
+        "cadastrado": "Pasajero registrado.", "falhaSalvar": "Error al guardar el pasajero",
+        "excluido": "Pasajero eliminado.", "falhaExcluir": "Error al eliminar el pasajero"
       }
     },
     "chargingStations": {

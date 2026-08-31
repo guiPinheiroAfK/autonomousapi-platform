@@ -229,7 +229,7 @@
       "nav": {
         "dashboard": "Dashboard", "frota": "Fleet", "ordensServico": "Service Orders",
         "motoristas": "Drivers", "mensagens": "Messages", "rotas": "Routes",
-        "coletaEntrega": "Pickup & Delivery", "pontosColeta": "Pickup Points",
+        "coletaEntrega": "Pickup & Delivery", "pontosColeta": "Pickup Points", "passageiros": "Passengers",
         "manutencao": "Maintenance", "custos": "Costs", "relatorios": "Reports",
         "parceiros": "Partners", "pontosRecarga": "Charging Points", "assinatura": "Subscription",
         "inicio": "Home", "minhaRota": "My Route", "mais": "More"
@@ -588,6 +588,26 @@
         "cadastrado": "Pickup point registered.", "falhaSalvar": "Failed to save pickup point",
         "desativado": "Pickup point deactivated.", "ativado": "Pickup point activated.",
         "falhaAtualizar": "Failed to update pickup point"
+      }
+    },
+    "passengers": {
+      "titulo": "Passengers",
+      "subtitulo": "Reusable passenger/end-customer registry — link one to a stop to enable automatic notifications.",
+      "novoPassageiro": "New passenger",
+      "nenhumPassageiro": "No passengers registered yet.",
+      "excluir": "Delete",
+      "confirmarExcluir": "Delete this passenger from the registry? This action can't be undone.",
+      "editarPassageiro": "Edit passenger",
+      "novoPassageiroTitulo": "New passenger",
+      "form": {
+        "nome": "Name", "nomePlaceholder": "Maria Silva",
+        "telefone": "Phone", "telefonePlaceholder": "+55 45 99999-0000",
+        "cancelar": "Cancel", "salvando": "Saving...", "salvar": "Save"
+      },
+      "toasts": {
+        "falhaCarregar": "Error loading passengers", "atualizado": "Passenger updated.",
+        "cadastrado": "Passenger registered.", "falhaSalvar": "Failed to save passenger",
+        "excluido": "Passenger deleted.", "falhaExcluir": "Failed to delete passenger"
       }
     },
     "chargingStations": {

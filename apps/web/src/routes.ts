@@ -29,6 +29,7 @@ export const ROUTES = {
   routes: '/rotas',
   routePlans: '/coleta-e-entrega',
   collectionPoints: '/pontos-de-coleta',
+  passengers: '/passageiros',
 
   driverRoute: '/minha-rota',
   driverMore: '/mais',

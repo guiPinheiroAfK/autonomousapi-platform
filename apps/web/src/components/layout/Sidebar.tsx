@@ -46,6 +46,7 @@ const NAV_OPERACAO: NavItem[] = [
   { path: ROUTES.routes, labelKey: 'app.sidebar.nav.rotas', icon: Navigation, prefetch: () => import('../../pages/RoutesPage') },
   { path: ROUTES.routePlans, labelKey: 'app.sidebar.nav.coletaEntrega', icon: MapPinned, prefetch: () => import('../../pages/RoutePlansPage') },
   { path: ROUTES.collectionPoints, labelKey: 'app.sidebar.nav.pontosColeta', icon: MapPin, prefetch: () => import('../../pages/CollectionPointsPage') },
+  { path: ROUTES.passengers, labelKey: 'app.sidebar.nav.passageiros', icon: Users, prefetch: () => import('../../pages/PassengersPage') },
 ];
 
 const NAV_GESTAO: NavItem[] = [

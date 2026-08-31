@@ -86,6 +86,8 @@ export type AssignDriverRequest = Schemas['AssignDriverRequest'];
 export type RouteCategoria = 'ROTA' | 'TRANSFER';
 export type CollectionPointRequest = Schemas['CollectionPointRequest'];
 export type CollectionPointResponse = Schemas['CollectionPointResponse'];
+export type PassengerRequest = Schemas['PassengerRequest'];
+export type PassengerResponse = Schemas['PassengerResponse'];
 export type DriverProfileResponse = Schemas['DriverProfileResponse'];
 export type TripResponse = Schemas['TripResponse'];
 export type NotificationResponse = Schemas['NotificationResponse'];
@@ -652,6 +654,26 @@ export const coreApi = {
     desativar: (id: string) =>
       request<CollectionPointResponse>(`/v1/collection-points/${id}/desativar`, { method: 'POST' }).then((r) => {
         invalidateListCache('collectionPoints:');
+        return r;
+      }),
+  },
+
+  /** Cadastro reutilizável de passageiro/cliente final (spec 14). */
+  passengers: {
+    list: () => cachedGet('passengers:', () => request<PassengerResponse[]>('/v1/passengers'), SLOW_CHANGING_TTL_MS),
+    create: (body: PassengerRequest) =>
+      request<PassengerResponse>('/v1/passengers', { method: 'POST', body: JSON.stringify(body) }).then((r) => {
+        invalidateListCache('passengers:');
+        return r;
+      }),
+    update: (id: string, body: PassengerRequest) =>
+      request<PassengerResponse>(`/v1/passengers/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => {
+        invalidateListCache('passengers:');
+        return r;
+      }),
+    delete: (id: string) =>
+      request<void>(`/v1/passengers/${id}`, { method: 'DELETE' }).then((r) => {
+        invalidateListCache('passengers:');
         return r;
       }),
   },
