@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { StatCard } from '../components/shared/StatCard';
 import { formatDateBR } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
@@ -224,11 +225,9 @@ export function VehicleCostsPage({ vehicleId, onBack }: Props) {
               <Label htmlFor="valor">{t('pages.vehicleCosts.form.valorReais')}</Label>
               <Input
                 id="valor"
-                type="number"
-                min={0.01}
-                step="0.01"
-                value={form.valor}
-                onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
+                inputMode="decimal"
+                value={form.valor ? maskMoedaBR(String(Math.round(form.valor * 100))) : ''}
+                onChange={(e) => setForm({ ...form, valor: parseMoedaBR(maskMoedaBR(e.target.value)) })}
                 required
               />
             </div>

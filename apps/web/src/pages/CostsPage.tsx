@@ -25,6 +25,7 @@ import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { cn } from '../lib/utils';
 import { formatBRL, formatDateBR, hojeISO } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
@@ -459,11 +460,9 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
               <Label htmlFor="valor">{t('pages.costs.despesas.form.valorReais')}</Label>
               <Input
                 id="valor"
-                type="number"
-                min={0.01}
-                step="0.01"
-                value={form.valor}
-                onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
+                inputMode="decimal"
+                value={form.valor ? maskMoedaBR(String(Math.round(form.valor * 100))) : ''}
+                onChange={(e) => setForm({ ...form, valor: parseMoedaBR(maskMoedaBR(e.target.value)) })}
                 required
               />
             </div>
@@ -686,11 +685,9 @@ function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
             <Label htmlFor="valorLimite">{t('pages.costs.orcamento.form.valorLimiteMensal')}</Label>
             <Input
               id="valorLimite"
-              type="number"
-              min={0.01}
-              step="0.01"
-              value={form.valorLimite}
-              onChange={(e) => setForm({ ...form, valorLimite: Number(e.target.value) })}
+              inputMode="decimal"
+              value={form.valorLimite ? maskMoedaBR(String(Math.round(form.valorLimite * 100))) : ''}
+              onChange={(e) => setForm({ ...form, valorLimite: parseMoedaBR(maskMoedaBR(e.target.value)) })}
               required
             />
           </div>

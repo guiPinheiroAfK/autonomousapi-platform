@@ -21,6 +21,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { Separator } from '../components/ui/separator';
 import { formatBRL, formatDateBR } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
@@ -484,11 +485,9 @@ export function WorkOrdersPage() {
                     required
                   />
                   <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={item.valorUnitario}
-                    onChange={(e) => updateItem(i, { valorUnitario: Number(e.target.value) })}
+                    inputMode="decimal"
+                    value={item.valorUnitario ? maskMoedaBR(String(Math.round(item.valorUnitario * 100))) : ''}
+                    onChange={(e) => updateItem(i, { valorUnitario: parseMoedaBR(maskMoedaBR(e.target.value)) })}
                     className="w-28"
                     required
                   />

@@ -20,6 +20,7 @@ import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { formatBRL, formatDateBR } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
@@ -101,7 +102,7 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
     setFipeSaving(true);
     try {
       const body: VehicleMarketValueRequest = {
-        valorFipe: Number(fipeForm.valorFipe),
+        valorFipe: parseMoedaBR(fipeForm.valorFipe),
         dataReferencia: fipeForm.dataReferencia,
         codigoFipe: fipeForm.codigoFipe || undefined,
       };
@@ -277,12 +278,10 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
 
             <form onSubmit={handleAddFipe} className="grid grid-cols-3 gap-2 border-t border-border pt-4">
               <Input
-                type="number"
-                min={0}
-                step="0.01"
+                inputMode="decimal"
                 placeholder={t('pages.vehicleDetail.valorReais')}
                 value={fipeForm.valorFipe}
-                onChange={(e) => setFipeForm({ ...fipeForm, valorFipe: e.target.value })}
+                onChange={(e) => setFipeForm({ ...fipeForm, valorFipe: maskMoedaBR(e.target.value) })}
                 required
               />
               <Input
@@ -370,14 +369,13 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                 onChange={(e) => setIncidentForm({ ...incidentForm, descricao: e.target.value || undefined })}
               />
               <Input
-                type="number"
-                min={0}
-                step="0.01"
+                inputMode="decimal"
                 placeholder={t('pages.vehicleDetail.custoReparoOpcional')}
-                value={incidentForm.custoReparo ?? ''}
-                onChange={(e) =>
-                  setIncidentForm({ ...incidentForm, custoReparo: e.target.value ? Number(e.target.value) : undefined })
-                }
+                value={incidentForm.custoReparo ? maskMoedaBR(String(Math.round(incidentForm.custoReparo * 100))) : ''}
+                onChange={(e) => {
+                  const texto = maskMoedaBR(e.target.value);
+                  setIncidentForm({ ...incidentForm, custoReparo: texto ? parseMoedaBR(texto) : undefined });
+                }}
               />
               <Button type="submit" size="sm" className="w-full" disabled={incidentSaving}>
                 {incidentSaving ? t('pages.vehicleDetail.registrando') : t('pages.vehicleDetail.registrarSinistro')}

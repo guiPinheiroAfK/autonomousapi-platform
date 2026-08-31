@@ -23,6 +23,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { toast } from '../lib/toast';
 import { hojeISO } from '../lib/format';
+import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
 import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 import { deleteWithConfirm } from '../lib/confirm';
 
@@ -315,7 +316,7 @@ export function RoutePlansPage() {
         vehicleId: vehicleId || undefined,
         categoria,
         dataExecucao,
-        valor: valor ? Number(valor) : undefined,
+        valor: valor ? parseMoedaBR(valor) : undefined,
         stops: paradas.map(({ tipo, label, lat, lon, collectionPointId, janelaInicio, janelaFim, passengerId }) => ({
           tipo,
           label,
@@ -466,7 +467,7 @@ export function RoutePlansPage() {
           {isTransfer && (
             <div>
               <Label htmlFor="valor">{t('pages.routePlans.valorCombinadoOpcional')}</Label>
-              <Input id="valor" type="number" min="0" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
+              <Input id="valor" inputMode="decimal" value={valor} onChange={(e) => setValor(maskMoedaBR(e.target.value))} />
             </div>
           )}
 

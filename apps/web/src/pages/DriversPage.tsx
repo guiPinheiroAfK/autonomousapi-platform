@@ -22,6 +22,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { cn } from '../lib/utils';
 import { diasAteVencer, formatDateBR, iniciais } from '../lib/format';
+import { maskCnh, maskTelefoneBR } from '../lib/masks';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { TableSkeleton } from '../components/shared/TableSkeleton';
@@ -432,8 +433,9 @@ export function DriversPage() {
             <Label htmlFor="cnh">{t('pages.drivers.form.cnh')}</Label>
             <Input
               id="cnh"
+              inputMode="numeric"
               value={form.cnh}
-              onChange={(e) => setForm({ ...form, cnh: e.target.value })}
+              onChange={(e) => setForm({ ...form, cnh: maskCnh(e.target.value) })}
               pattern="\d{11}"
               title={t('pages.drivers.form.cnh11Digitos')}
               required
@@ -441,7 +443,12 @@ export function DriversPage() {
           </div>
           <div>
             <Label htmlFor="phone">{t('pages.drivers.form.telefone')}</Label>
-            <Input id="phone" value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <Input
+              id="phone"
+              inputMode="tel"
+              value={maskTelefoneBR(form.phone ?? '')}
+              onChange={(e) => setForm({ ...form, phone: maskTelefoneBR(e.target.value) })}
+            />
           </div>
           <div>
             <Label htmlFor="email">{t('pages.drivers.form.email')}</Label>
