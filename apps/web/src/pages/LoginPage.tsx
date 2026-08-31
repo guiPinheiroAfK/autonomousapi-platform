@@ -23,10 +23,23 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  /**
+   * Dispara o download do chunk do Dashboard (mesmo specifier do `lazy()` em App.tsx —
+   * bundler dedupe por módulo resolvido, não duplica) em paralelo com a chamada de login,
+   * não depois dela. Sem isso, o usuário via duas esperas em sequência: a rede do login, e
+   * só depois o download do chunk (Suspense fallback) — pedido explícito do Guilherme pra
+   * a transição pro painel parecer instantânea assim que o login responde. Se o login falhar,
+   * o chunk baixado não faz mal nenhum — já fica em cache pra um próximo login bem-sucedido.
+   */
+  function prefetchDashboard() {
+    import('./DashboardPage');
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
+    prefetchDashboard();
     try {
       await login({ email, password });
     } catch (err) {
@@ -39,6 +52,7 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
   async function handleGoogleCredential(idToken: string) {
     setError('');
     setSubmitting(true);
+    prefetchDashboard();
     try {
       await loginWithGoogle(idToken);
     } catch (err) {

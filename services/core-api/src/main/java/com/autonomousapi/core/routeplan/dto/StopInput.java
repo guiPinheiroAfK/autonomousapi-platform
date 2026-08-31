@@ -26,5 +26,9 @@ public record StopInput(
         Double lon,
         UUID collectionPointId,
         @Schema(type = "string", example = "08:00:00") LocalTime janelaInicio,
-        @Schema(type = "string", example = "18:00:00") LocalTime janelaFim) {
+        @Schema(type = "string", example = "18:00:00") LocalTime janelaFim,
+        /** Contato do passageiro/cliente final dessa parada (spec 14) — opcional, sempre
+         *  um {@code Passenger} já existente (o front cria na hora se for contato novo,
+         *  então aqui já chega como referência, nunca nome/telefone crus). */
+        UUID passengerId) {
 }

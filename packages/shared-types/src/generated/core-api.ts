@@ -1685,6 +1685,8 @@ export interface components {
             janelaInicio?: string;
             /** @example 18:00:00 */
             janelaFim?: string;
+            /** Format: uuid */
+            passengerId?: string;
         };
         RoutePlanResponse: {
             /** Format: uuid */
@@ -1732,6 +1734,8 @@ export interface components {
             ordemRealExecutada?: number;
             /** Format: date-time */
             concluidaEm?: string;
+            /** Format: uuid */
+            passengerId?: string;
         };
         AssignDriverRequest: {
             /** Format: uuid */

@@ -61,7 +61,6 @@ const RoutePlansPage = lazy(() => import('./pages/RoutePlansPage').then((m) => (
 const CollectionPointsPage = lazy(() =>
   import('./pages/CollectionPointsPage').then((m) => ({ default: m.CollectionPointsPage })),
 );
-const PassengersPage = lazy(() => import('./pages/PassengersPage').then((m) => ({ default: m.PassengersPage })));
 const ChargingStationsPage = lazy(() =>
   import('./pages/ChargingStationsPage').then((m) => ({ default: m.ChargingStationsPage })),
 );
@@ -357,15 +356,6 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
             </RequireGestor>
           }
         />
-        <Route
-          path={ROUTES.passengers}
-          element={
-            <RequireGestor user={user}>
-              <PassengersPage />
-            </RequireGestor>
-          }
-        />
-
         {/* Motorista */}
         <Route
           path={ROUTES.driverRoute}

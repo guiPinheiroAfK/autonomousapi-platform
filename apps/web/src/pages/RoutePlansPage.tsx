@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, MapPin, Plus, Sparkles, Trash2, Truck } from 'lucide-react';
+import { ArrowDown, ArrowUp, MapPin, Plus, Sparkles, Trash2, Truck, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type CollectionPointResponse,
   type DriverResponse,
+  type PassengerResponse,
   type PlaceResponse,
   type RouteCategoria,
   type RoutePlanResponse,
@@ -61,6 +62,17 @@ export function RoutePlansPage() {
   const [vehicleId, setVehicleId] = useState('');
   const [custoEstimado, setCustoEstimado] = useState<number | null>(null);
   const [valorSugerido, setValorSugerido] = useState<number | null>(null);
+
+  // Contato do passageiro por parada (spec 14) — dobrado direto aqui, sem tela própria
+  // (pedido explícito do Guilherme: "usuário precisa achar tudo facilmente", sem seção
+  // nova no menu). "+ Novo contato" cria na hora via API e já entra na lista pra reusar
+  // na próxima parada/rota, sem passo extra de "salvar pra depois".
+  const [passengers, setPassengers] = useState<PassengerResponse[]>([]);
+  const [passengerIdSelecionado, setPassengerIdSelecionado] = useState('');
+  const [novoPassageiroAberto, setNovoPassageiroAberto] = useState(false);
+  const [novoPassageiroNome, setNovoPassageiroNome] = useState('');
+  const [novoPassageiroTelefone, setNovoPassageiroTelefone] = useState('');
+  const [salvandoPassageiro, setSalvandoPassageiro] = useState(false);
 
   // Viagem redonda (spec 13): idaEVolta é a intenção marcada pelo gestor; pernaVolta e
   // viagemIdAtual só existem depois que a ida já foi salva, controlando o segundo passo
@@ -153,11 +165,16 @@ export function RoutePlansPage() {
     setIdaEVolta(false);
     setPernaVolta(false);
     setViagemIdAtual(null);
+    setPassengerIdSelecionado('');
+    setNovoPassageiroAberto(false);
+    setNovoPassageiroNome('');
+    setNovoPassageiroTelefone('');
     coreApi.drivers.list().then((res) => setDrivers(res.content.filter((d) => d.hasLogin)));
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o seletor de veículo da rota.
     coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
     coreApi.collectionPoints.list().then(setCollectionPoints);
+    coreApi.passengers.list().then(setPassengers);
     setModalOpen(true);
   }
 
@@ -170,9 +187,17 @@ export function RoutePlansPage() {
   function adicionarParadaAvulsa(lugar: PlaceResponse) {
     setParadas((prev) => [
       ...prev,
-      { key: `${Date.now()}-${prev.length}`, tipo: novoTipo, label: lugar.displayName!, lat: lugar.lat!, lon: lugar.lon! },
+      {
+        key: `${Date.now()}-${prev.length}`,
+        tipo: novoTipo,
+        label: lugar.displayName!,
+        lat: lugar.lat!,
+        lon: lugar.lon!,
+        passengerId: passengerIdSelecionado || undefined,
+      },
     ]);
     setEnderecoAvulso(null);
+    setPassengerIdSelecionado('');
   }
 
   function adicionarParadaCadastrada() {
@@ -189,13 +214,50 @@ export function RoutePlansPage() {
         collectionPointId: ponto.id,
         janelaInicio: ponto.janelaInicio,
         janelaFim: ponto.janelaFim,
+        passengerId: passengerIdSelecionado || undefined,
       },
     ]);
     setPontoEscolhidoId('');
+    setPassengerIdSelecionado('');
   }
 
   function removerParada(key: string) {
     setParadas((prev) => prev.filter((p) => p.key !== key));
+  }
+
+  /** Cria já reutilizável (spec 14) — sem passo de "salvar pra depois", pra não exigir
+   *  decisão extra do gestor no meio de montar a rota. */
+  async function criarPassageiroRapido() {
+    if (!novoPassageiroNome.trim() || !novoPassageiroTelefone.trim()) return;
+    setSalvandoPassageiro(true);
+    try {
+      const criado = await coreApi.passengers.create({
+        nome: novoPassageiroNome.trim(),
+        telefone: novoPassageiroTelefone.trim(),
+      });
+      setPassengers((prev) => [...prev, criado].sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '')));
+      setPassengerIdSelecionado(criado.id!);
+      setNovoPassageiroAberto(false);
+      setNovoPassageiroNome('');
+      setNovoPassageiroTelefone('');
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaSalvarPassageiro'));
+    } finally {
+      setSalvandoPassageiro(false);
+    }
+  }
+
+  async function excluirPassageiroDoCadastro(id: string) {
+    deleteWithConfirm({
+      confirmMessage: t('pages.passengers.confirmarExcluir'),
+      remove: () => coreApi.passengers.delete(id),
+      successMessage: t('pages.passengers.toasts.excluido'),
+      fallbackErrorMessage: t('pages.passengers.toasts.falhaExcluir'),
+      onSuccess: () => {
+        setPassengers((prev) => prev.filter((p) => p.id !== id));
+        if (passengerIdSelecionado === id) setPassengerIdSelecionado('');
+      },
+    });
   }
 
   function mover(key: string, direcao: -1 | 1) {
@@ -249,7 +311,7 @@ export function RoutePlansPage() {
         categoria,
         dataExecucao,
         valor: valor ? Number(valor) : undefined,
-        stops: paradas.map(({ tipo, label, lat, lon, collectionPointId, janelaInicio, janelaFim }) => ({
+        stops: paradas.map(({ tipo, label, lat, lon, collectionPointId, janelaInicio, janelaFim, passengerId }) => ({
           tipo,
           label,
           lat,
@@ -257,6 +319,7 @@ export function RoutePlansPage() {
           collectionPointId,
           janelaInicio,
           janelaFim,
+          passengerId,
         })),
         viagemId,
       });
@@ -430,6 +493,72 @@ export function RoutePlansPage() {
                   <option value="cadastrado">{t('pages.routePlans.pontoCadastrado')}</option>
                 </Select>
               </div>
+
+              {/* Contato do passageiro (spec 14) — opcional, por parada. Dobrado aqui em vez
+                  de tela própria: cadastro reutilizável (aparece nas próximas rotas também),
+                  mas sem exigir navegar pra outro lugar pra criar um novo. */}
+              <div className="rounded-md border border-dashed border-border p-2.5">
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={passengerIdSelecionado}
+                    onChange={(e) => {
+                      if (e.target.value === '__novo__') {
+                        setNovoPassageiroAberto(true);
+                        setPassengerIdSelecionado('');
+                      } else {
+                        setNovoPassageiroAberto(false);
+                        setPassengerIdSelecionado(e.target.value);
+                      }
+                    }}
+                    className="flex-1"
+                  >
+                    <option value="">{t('pages.routePlans.semPassageiro')}</option>
+                    {passengers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nome} — {p.telefone}
+                      </option>
+                    ))}
+                    <option value="__novo__">{t('pages.routePlans.novoContato')}</option>
+                  </Select>
+                  {passengerIdSelecionado && (
+                    <button
+                      type="button"
+                      onClick={() => excluirPassageiroDoCadastro(passengerIdSelecionado)}
+                      title={t('pages.passengers.excluir')}
+                      className="shrink-0 text-muted-foreground hover:text-status-danger"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+                {novoPassageiroAberto && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      placeholder={t('pages.passengers.form.nomePlaceholder')}
+                      value={novoPassageiroNome}
+                      onChange={(e) => setNovoPassageiroNome(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="tel"
+                      placeholder={t('pages.passengers.form.telefonePlaceholder')}
+                      value={novoPassageiroTelefone}
+                      onChange={(e) => setNovoPassageiroTelefone(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={criarPassageiroRapido}
+                      disabled={!novoPassageiroNome.trim() || !novoPassageiroTelefone.trim() || salvandoPassageiro}
+                    >
+                      {t('pages.routePlans.adicionar')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               {fonteParada === 'avulso' ? (
                 <BuscaEndereco selecionado={enderecoAvulso} onSelecionar={(l) => (l ? adicionarParadaAvulsa(l) : setEnderecoAvulso(l))} />
               ) : (
@@ -461,6 +590,14 @@ export function RoutePlansPage() {
                     {p.tipo === 'COLETA' ? t('pages.routePlans.coleta') : t('pages.routePlans.entrega')}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-foreground">{p.label}</span>
+                  {p.passengerId && (
+                    <span
+                      className="flex shrink-0 items-center gap-1 text-muted-foreground"
+                      title={passengers.find((pass) => pass.id === p.passengerId)?.nome}
+                    >
+                      <UserRound className="size-3.5" />
+                    </span>
+                  )}
                   {!isTransfer && (
                     <>
                       <button

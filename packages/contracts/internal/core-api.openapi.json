@@ -4309,6 +4309,10 @@
           "janelaFim": {
             "type": "string",
             "example": "18:00:00"
+          },
+          "passengerId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -4426,6 +4430,10 @@
           "concluidaEm": {
             "type": "string",
             "format": "date-time"
+          },
+          "passengerId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

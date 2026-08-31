@@ -9,6 +9,7 @@ import com.autonomousapi.core.error.Lookups;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
 import com.autonomousapi.core.error.RoutePlanInvalidException;
+import com.autonomousapi.core.passenger.PassengerRepository;
 import com.autonomousapi.core.pricing.RouteCostEstimator;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.RouteStopResponse;
@@ -58,6 +59,7 @@ public class RoutePlanService {
     private final DriverRepository drivers;
     private final VehicleRepository vehicles;
     private final CollectionPointRepository collectionPoints;
+    private final PassengerRepository passengers;
     private final CurrentDriverResolver driverResolver;
     private final RouteMatrixService routeMatrix;
     private final OrToolsRouteOptimizer optimizer;
@@ -70,6 +72,7 @@ public class RoutePlanService {
             DriverRepository drivers,
             VehicleRepository vehicles,
             CollectionPointRepository collectionPoints,
+            PassengerRepository passengers,
             CurrentDriverResolver driverResolver,
             RouteMatrixService routeMatrix,
             OrToolsRouteOptimizer optimizer,
@@ -80,6 +83,7 @@ public class RoutePlanService {
         this.drivers = drivers;
         this.vehicles = vehicles;
         this.collectionPoints = collectionPoints;
+        this.passengers = passengers;
         this.driverResolver = driverResolver;
         this.routeMatrix = routeMatrix;
         this.optimizer = optimizer;
@@ -136,6 +140,10 @@ public class RoutePlanService {
     private List<StopInput> resolveStops(UUID tenantId, List<StopInput> stops) {
         List<StopInput> resolvidos = new ArrayList<>();
         for (StopInput s : stops) {
+            if (s.passengerId() != null) {
+                Lookups.orNotFound(
+                        passengers.findByIdAndTenantId(s.passengerId(), tenantId), "Passageiro não encontrado.");
+            }
             if (s.collectionPointId() == null) {
                 if (s.label() == null || s.lat() == null || s.lon() == null) {
                     throw new RoutePlanInvalidException(
@@ -153,7 +161,8 @@ public class RoutePlanService {
                     ponto.getLon(),
                     ponto.getId(),
                     s.janelaInicio() != null ? s.janelaInicio() : ponto.getJanelaInicio(),
-                    s.janelaFim() != null ? s.janelaFim() : ponto.getJanelaFim()));
+                    s.janelaFim() != null ? s.janelaFim() : ponto.getJanelaFim(),
+                    s.passengerId()));
         }
         return resolvidos;
     }
@@ -266,7 +275,7 @@ public class RoutePlanService {
             StopInput s = resolvidos.get(i);
             routeStops.save(new RouteStop(
                     plan.getId(), s.tipo(), s.label(), s.lat(), s.lon(), s.collectionPointId(),
-                    s.janelaInicio(), s.janelaFim(), i));
+                    s.janelaInicio(), s.janelaFim(), i, s.passengerId()));
         }
         registrarEvento(plan.getId(), RoutePlanEventType.CRIADA, gestorPrincipal.userId(), null);
         return toResponse(plan);

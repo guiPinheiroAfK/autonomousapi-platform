@@ -627,6 +627,8 @@
       "novaRotaVolta": "Nueva ruta — vuelta",
       "idaEVolta": "¿Es un viaje de ida y vuelta?",
       "revisandoVolta": "Ida guardada. Revisa los datos de la vuelta (puntos prellenados en orden inverso) y confirma.",
+      "semPassageiro": "Sin contacto de pasajero",
+      "novoContato": "+ Nuevo contacto",
       "ida": "Ida",
       "volta": "Vuelta",
       "perna": "Tramo {{n}}",
@@ -662,7 +664,8 @@
         "dataNoPassado": "La fecha de ejecución no puede ser en el pasado.",
         "transferExige2Paradas": "El transfer requiere exactamente 2 paradas: origen y destino.",
         "criada": "Ruta creada.", "falhaCriar": "Error al crear la ruta",
-        "idaSalvaRevisarVolta": "Ida guardada — revisa la vuelta."
+        "idaSalvaRevisarVolta": "Ida guardada — revisa la vuelta.",
+        "falhaSalvarPassageiro": "Error al guardar el contacto del pasajero"
       }
     },
     "vehicleDetail": {

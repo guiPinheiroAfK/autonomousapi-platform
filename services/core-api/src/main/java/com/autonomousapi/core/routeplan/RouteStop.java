@@ -39,6 +39,9 @@ public class RouteStop {
     @Column(name = "collection_point_id", updatable = false)
     private UUID collectionPointId;
 
+    @Column(name = "passenger_id", updatable = false)
+    private UUID passengerId;
+
     @Column(name = "janela_inicio")
     private LocalTime janelaInicio;
 
@@ -67,7 +70,8 @@ public class RouteStop {
             UUID collectionPointId,
             LocalTime janelaInicio,
             LocalTime janelaFim,
-            int ordemSugerida) {
+            int ordemSugerida,
+            UUID passengerId) {
         this.id = UUID.randomUUID();
         this.routePlanId = routePlanId;
         this.tipo = tipo;
@@ -78,6 +82,7 @@ public class RouteStop {
         this.janelaInicio = janelaInicio;
         this.janelaFim = janelaFim;
         this.ordemSugerida = ordemSugerida;
+        this.passengerId = passengerId;
     }
 
     public boolean isConcluida() {
@@ -115,6 +120,10 @@ public class RouteStop {
 
     public UUID getCollectionPointId() {
         return collectionPointId;
+    }
+
+    public UUID getPassengerId() {
+        return passengerId;
     }
 
     public LocalTime getJanelaInicio() {

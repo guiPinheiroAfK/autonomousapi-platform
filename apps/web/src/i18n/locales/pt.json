@@ -645,6 +645,8 @@
       "novaRotaVolta": "Nova rota — volta",
       "idaEVolta": "Esta é uma viagem de ida e volta?",
       "revisandoVolta": "Ida salva. Revise os dados da volta (pontos pré-preenchidos em ordem inversa) e confirme.",
+      "semPassageiro": "Sem contato de passageiro",
+      "novoContato": "+ Novo contato",
       "ida": "Ida",
       "volta": "Volta",
       "perna": "Perna {{n}}",
@@ -683,6 +685,7 @@
         "transferExige2Paradas": "Transfer exige exatamente 2 paradas: origem e destino.",
         "criada": "Rota criada.", "falhaCriar": "Falha ao criar rota",
         "idaSalvaRevisarVolta": "Ida salva — revise a volta.",
+        "falhaSalvarPassageiro": "Falha ao salvar contato do passageiro",
         "rotaCancelada": "Rota cancelada.", "falhaCancelar": "Falha ao cancelar rota"
       }
     },

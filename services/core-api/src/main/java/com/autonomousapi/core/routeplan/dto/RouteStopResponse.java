@@ -18,7 +18,8 @@ public record RouteStopResponse(
         @Schema(type = "string", example = "18:00:00") LocalTime janelaFim,
         int ordemSugerida,
         Integer ordemRealExecutada,
-        Instant concluidaEm) {
+        Instant concluidaEm,
+        UUID passengerId) {
 
     public static RouteStopResponse from(RouteStop s) {
         return new RouteStopResponse(
@@ -32,6 +33,7 @@ public record RouteStopResponse(
                 s.getJanelaFim(),
                 s.getOrdemSugerida(),
                 s.getOrdemRealExecutada(),
-                s.getConcluidaEm());
+                s.getConcluidaEm(),
+                s.getPassengerId());
     }
 }

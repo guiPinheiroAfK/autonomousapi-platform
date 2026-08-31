@@ -627,6 +627,8 @@
       "novaRotaVolta": "New route — return leg",
       "idaEVolta": "Is this a round trip?",
       "revisandoVolta": "Outbound leg saved. Review the return leg details (points pre-filled in reverse order) and confirm.",
+      "semPassageiro": "No passenger contact",
+      "novoContato": "+ New contact",
       "ida": "Outbound",
       "volta": "Return",
       "perna": "Leg {{n}}",
@@ -662,7 +664,8 @@
         "dataNoPassado": "Execution date can't be in the past.",
         "transferExige2Paradas": "Transfer requires exactly 2 stops: origin and destination.",
         "criada": "Route created.", "falhaCriar": "Failed to create route",
-        "idaSalvaRevisarVolta": "Outbound leg saved — review the return leg."
+        "idaSalvaRevisarVolta": "Outbound leg saved — review the return leg.",
+        "falhaSalvarPassageiro": "Failed to save passenger contact"
       }
     },
     "vehicleDetail": {
