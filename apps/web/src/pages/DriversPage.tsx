@@ -10,6 +10,7 @@ import {
   type DriverResponse,
   type VehicleResponse,
 } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { StatusBadgeMotorista } from '../components/shared/StatusBadge';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
@@ -50,6 +51,7 @@ function categoriaCnh(cnh: string): string {
 
 export function DriversPage() {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [form, setForm] = useState<DriverRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -279,9 +281,11 @@ export function DriversPage() {
           <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.drivers.titulo')}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.drivers.subtitulo', { n: drivers.length })}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.drivers.novoMotorista')}
-        </Button>
+        {podeEscrever && (
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.drivers.novoMotorista')}
+          </Button>
+        )}
       </div>
 
       {error && !modalOpen && (
@@ -390,17 +394,21 @@ export function DriversPage() {
                           >
                             <Eye className="size-4" />
                           </button>
-                          <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(d)}>
-                            {t('pages.drivers.editar')}
-                          </Button>
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0 text-destructive"
-                            onClick={() => handleDelete(d.id!)}
-                          >
-                            {t('pages.drivers.excluir')}
-                          </Button>
+                          {podeEscrever && (
+                            <>
+                              <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(d)}>
+                                {t('pages.drivers.editar')}
+                              </Button>
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="h-auto p-0 text-destructive"
+                                onClick={() => handleDelete(d.id!)}
+                              >
+                                {t('pages.drivers.excluir')}
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </StaggerItem>
@@ -527,7 +535,7 @@ export function DriversPage() {
                       </p>
                     </div>
                   </div>
-                  {!detail.hasLogin && detail.email && (
+                  {podeEscrever && !detail.hasLogin && detail.email && (
                     <Button type="button" size="sm" variant="outline" onClick={handleInvite} disabled={inviteSending}>
                       {inviteSending ? t('pages.drivers.detalhe.enviando') : t('pages.drivers.detalhe.convidar')}
                     </Button>
@@ -536,7 +544,7 @@ export function DriversPage() {
                 {inviteSent && <p className="mt-2 text-[11px] text-status-success">{inviteSent}</p>}
                 {inviteError && <p className="mt-2 text-[11px] text-status-danger">{inviteError}</p>}
 
-                {detail.hasLogin && (
+                {podeEscrever && detail.hasLogin && (
                   <form onSubmit={handleNotify} className="mt-3 flex items-center gap-2 border-t border-border pt-3">
                     <Input
                       placeholder={t('pages.drivers.detalhe.avisoRapidoPlaceholder')}
@@ -563,28 +571,32 @@ export function DriversPage() {
                     <span className="font-data text-xs text-foreground">
                       {detailAssignment.plate} — {detailAssignment.brand} {detailAssignment.model}
                     </span>
-                    <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={handleEndAssignment}>
-                      {t('pages.drivers.detalhe.encerrar')}
-                    </Button>
+                    {podeEscrever && (
+                      <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={handleEndAssignment}>
+                        {t('pages.drivers.detalhe.encerrar')}
+                      </Button>
+                    )}
                   </div>
                 ) : (
-                  <form onSubmit={handleAssign} className="flex items-center gap-2">
-                    <Select
-                      value={assignVehicleId}
-                      onChange={(e) => setAssignVehicleId(e.target.value)}
-                      className="flex-1"
-                    >
-                      <option value="">{t('pages.drivers.detalhe.selecioneVeiculo')}</option>
-                      {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.plate} — {v.brand} {v.model}
-                        </option>
-                      ))}
-                    </Select>
-                    <Button type="submit" size="sm" disabled={!assignVehicleId || assignSaving}>
-                      {assignSaving ? t('pages.drivers.detalhe.designando') : t('pages.drivers.detalhe.designar')}
-                    </Button>
-                  </form>
+                  podeEscrever && (
+                    <form onSubmit={handleAssign} className="flex items-center gap-2">
+                      <Select
+                        value={assignVehicleId}
+                        onChange={(e) => setAssignVehicleId(e.target.value)}
+                        className="flex-1"
+                      >
+                        <option value="">{t('pages.drivers.detalhe.selecioneVeiculo')}</option>
+                        {vehicles.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.plate} — {v.brand} {v.model}
+                          </option>
+                        ))}
+                      </Select>
+                      <Button type="submit" size="sm" disabled={!assignVehicleId || assignSaving}>
+                        {assignSaving ? t('pages.drivers.detalhe.designando') : t('pages.drivers.detalhe.designar')}
+                      </Button>
+                    </form>
+                  )
                 )}
                 {assignError && <p className="mt-2 text-[11px] text-status-danger">{assignError}</p>}
               </div>
@@ -614,18 +626,21 @@ export function DriversPage() {
                         </span>
                       </div>
                       {r.comentario && <p className="mt-1 text-foreground">{r.comentario}</p>}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRating(r.id!)}
-                        className="mt-1.5 text-[11px] font-medium text-status-danger hover:underline"
-                      >
-                        {t('pages.drivers.detalhe.excluirAvaliacao')}
-                      </button>
+                      {podeEscrever && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRating(r.id!)}
+                          className="mt-1.5 text-[11px] font-medium text-status-danger hover:underline"
+                        >
+                          {t('pages.drivers.detalhe.excluirAvaliacao')}
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
               )}
 
+              {podeEscrever && (
               <form onSubmit={handleAddRating} className="space-y-2 border-t border-border pt-4">
                 <Label htmlFor="novaNota">{t('pages.drivers.detalhe.novaAvaliacao')}</Label>
                 <Select id="novaNota" value={novaNota} onChange={(e) => setNovaNota(Number(e.target.value))}>
@@ -646,6 +661,7 @@ export function DriversPage() {
                   {ratingSaving ? t('pages.drivers.detalhe.salvando') : t('pages.drivers.detalhe.registrarAvaliacao')}
                 </Button>
               </form>
+              )}
             </div>
           </DialogContent>
         )}

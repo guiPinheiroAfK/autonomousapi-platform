@@ -12,6 +12,7 @@ import {
   type VehicleResponse,
   type WorkOrderResponse,
 } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgeSeveridade, StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
@@ -36,6 +37,7 @@ interface Props {
  */
 export function VehicleDetailPage({ vehicleId, onBack }: Props) {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [vehicle, setVehicle] = useState<VehicleResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -276,29 +278,31 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
               <p className="text-xs text-muted-foreground">{t('pages.vehicleDetail.nenhumFipe')}</p>
             )}
 
-            <form onSubmit={handleAddFipe} className="grid grid-cols-3 gap-2 border-t border-border pt-4">
-              <Input
-                inputMode="decimal"
-                placeholder={t('pages.vehicleDetail.valorReais')}
-                value={fipeForm.valorFipe}
-                onChange={(e) => setFipeForm({ ...fipeForm, valorFipe: maskMoedaBR(e.target.value) })}
-                required
-              />
-              <Input
-                type="date"
-                value={fipeForm.dataReferencia}
-                onChange={(e) => setFipeForm({ ...fipeForm, dataReferencia: e.target.value })}
-                required
-              />
-              <Input
-                placeholder={t('pages.vehicleDetail.codigoFipeOpcional')}
-                value={fipeForm.codigoFipe}
-                onChange={(e) => setFipeForm({ ...fipeForm, codigoFipe: e.target.value })}
-              />
-              <Button type="submit" size="sm" className="col-span-3" disabled={fipeSaving}>
-                {fipeSaving ? t('pages.vehicleDetail.salvando') : t('pages.vehicleDetail.lancarValor')}
-              </Button>
-            </form>
+            {podeEscrever && (
+              <form onSubmit={handleAddFipe} className="grid grid-cols-3 gap-2 border-t border-border pt-4">
+                <Input
+                  inputMode="decimal"
+                  placeholder={t('pages.vehicleDetail.valorReais')}
+                  value={fipeForm.valorFipe}
+                  onChange={(e) => setFipeForm({ ...fipeForm, valorFipe: maskMoedaBR(e.target.value) })}
+                  required
+                />
+                <Input
+                  type="date"
+                  value={fipeForm.dataReferencia}
+                  onChange={(e) => setFipeForm({ ...fipeForm, dataReferencia: e.target.value })}
+                  required
+                />
+                <Input
+                  placeholder={t('pages.vehicleDetail.codigoFipeOpcional')}
+                  value={fipeForm.codigoFipe}
+                  onChange={(e) => setFipeForm({ ...fipeForm, codigoFipe: e.target.value })}
+                />
+                <Button type="submit" size="sm" className="col-span-3" disabled={fipeSaving}>
+                  {fipeSaving ? t('pages.vehicleDetail.salvando') : t('pages.vehicleDetail.lancarValor')}
+                </Button>
+              </form>
+            )}
           </div>
         </TabsContent>
 
@@ -332,55 +336,59 @@ export function VehicleDetailPage({ vehicleId, onBack }: Props) {
                         {t('pages.vehicleDetail.reparo', { valor: formatBRL(Number(i.custoReparo)) })}
                       </p>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveIncident(i.id!)}
-                      className="mt-1.5 text-[11px] font-medium text-status-danger hover:underline"
-                    >
-                      {t('pages.vehicleDetail.excluirSinistro')}
-                    </button>
+                    {podeEscrever && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveIncident(i.id!)}
+                        className="mt-1.5 text-[11px] font-medium text-status-danger hover:underline"
+                      >
+                        {t('pages.vehicleDetail.excluirSinistro')}
+                      </button>
+                    )}
                   </StaggerItem>
                 ))}
               </StaggerGroup>
             )}
 
-            <form onSubmit={handleAddIncident} className="space-y-2 border-t border-border pt-4">
-              <div className="grid grid-cols-2 gap-2">
+            {podeEscrever && (
+              <form onSubmit={handleAddIncident} className="space-y-2 border-t border-border pt-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="date"
+                    value={incidentForm.data}
+                    onChange={(e) => setIncidentForm({ ...incidentForm, data: e.target.value })}
+                    required
+                  />
+                  <Select
+                    value={incidentForm.severidade}
+                    onChange={(e) =>
+                      setIncidentForm({ ...incidentForm, severidade: e.target.value as VehicleIncidentRequest['severidade'] })
+                    }
+                  >
+                    <option value="LEVE">{t('status.severidade.LEVE')}</option>
+                    <option value="MODERADA">{t('status.severidade.MODERADA')}</option>
+                    <option value="GRAVE">{t('status.severidade.GRAVE')}</option>
+                  </Select>
+                </div>
                 <Input
-                  type="date"
-                  value={incidentForm.data}
-                  onChange={(e) => setIncidentForm({ ...incidentForm, data: e.target.value })}
-                  required
+                  placeholder={t('pages.vehicleDetail.descricaoOpcional')}
+                  value={incidentForm.descricao ?? ''}
+                  onChange={(e) => setIncidentForm({ ...incidentForm, descricao: e.target.value || undefined })}
                 />
-                <Select
-                  value={incidentForm.severidade}
-                  onChange={(e) =>
-                    setIncidentForm({ ...incidentForm, severidade: e.target.value as VehicleIncidentRequest['severidade'] })
-                  }
-                >
-                  <option value="LEVE">{t('status.severidade.LEVE')}</option>
-                  <option value="MODERADA">{t('status.severidade.MODERADA')}</option>
-                  <option value="GRAVE">{t('status.severidade.GRAVE')}</option>
-                </Select>
-              </div>
-              <Input
-                placeholder={t('pages.vehicleDetail.descricaoOpcional')}
-                value={incidentForm.descricao ?? ''}
-                onChange={(e) => setIncidentForm({ ...incidentForm, descricao: e.target.value || undefined })}
-              />
-              <Input
-                inputMode="decimal"
-                placeholder={t('pages.vehicleDetail.custoReparoOpcional')}
-                value={incidentForm.custoReparo ? maskMoedaBR(String(Math.round(incidentForm.custoReparo * 100))) : ''}
-                onChange={(e) => {
-                  const texto = maskMoedaBR(e.target.value);
-                  setIncidentForm({ ...incidentForm, custoReparo: texto ? parseMoedaBR(texto) : undefined });
-                }}
-              />
-              <Button type="submit" size="sm" className="w-full" disabled={incidentSaving}>
-                {incidentSaving ? t('pages.vehicleDetail.registrando') : t('pages.vehicleDetail.registrarSinistro')}
-              </Button>
-            </form>
+                <Input
+                  inputMode="decimal"
+                  placeholder={t('pages.vehicleDetail.custoReparoOpcional')}
+                  value={incidentForm.custoReparo ? maskMoedaBR(String(Math.round(incidentForm.custoReparo * 100))) : ''}
+                  onChange={(e) => {
+                    const texto = maskMoedaBR(e.target.value);
+                    setIncidentForm({ ...incidentForm, custoReparo: texto ? parseMoedaBR(texto) : undefined });
+                  }}
+                />
+                <Button type="submit" size="sm" className="w-full" disabled={incidentSaving}>
+                  {incidentSaving ? t('pages.vehicleDetail.registrando') : t('pages.vehicleDetail.registrarSinistro')}
+                </Button>
+              </form>
+            )}
           </div>
         </TabsContent>
       </Tabs>

@@ -12,7 +12,7 @@ import {
   type StopInput,
   type VehicleResponse,
 } from '../api/client';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth, usePodeEscrever } from '../auth/AuthContext';
 import { BuscaEndereco } from '../components/shared/BuscaEndereco';
 import { StatusBadgeRotaPlan } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
@@ -23,7 +23,7 @@ import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { toast } from '../lib/toast';
 import { hojeISO } from '../lib/format';
-import { maskMoedaBR, parseMoedaBR } from '../lib/masks';
+import { maskMoedaBR, maskTelefoneBR, parseMoedaBR } from '../lib/masks';
 import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
 import { deleteWithConfirm } from '../lib/confirm';
 
@@ -44,6 +44,9 @@ export function RoutePlansPage() {
   // Despachante cria/atribui rota, mas não cancela (spec 15) — backend também recusa,
   // isso aqui só evita mostrar um botão que ia dar 403.
   const podeCancelar = user?.role === 'GESTOR_FROTA' || user?.role === 'ADMIN';
+  // Excluir contato do cadastro (diferente de criar um novo) é Gestor-only (spec 15) —
+  // Despachante monta rota e cadastra passageiro novo, mas não apaga o cadastro de ninguém.
+  const podeEscrever = usePodeEscrever();
   const [plans, setPlans] = useState<RoutePlanResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -528,7 +531,7 @@ export function RoutePlansPage() {
                     ))}
                     <option value="__novo__">{t('pages.routePlans.novoContato')}</option>
                   </Select>
-                  {passengerIdSelecionado && (
+                  {podeEscrever && passengerIdSelecionado && (
                     <button
                       type="button"
                       onClick={() => excluirPassageiroDoCadastro(passengerIdSelecionado)}
@@ -548,10 +551,10 @@ export function RoutePlansPage() {
                       className="flex-1"
                     />
                     <Input
-                      type="tel"
+                      inputMode="tel"
                       placeholder={t('pages.passengers.form.telefonePlaceholder')}
                       value={novoPassageiroTelefone}
-                      onChange={(e) => setNovoPassageiroTelefone(e.target.value)}
+                      onChange={(e) => setNovoPassageiroTelefone(maskTelefoneBR(e.target.value))}
                       className="flex-1"
                     />
                     <Button

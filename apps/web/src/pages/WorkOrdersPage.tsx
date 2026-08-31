@@ -9,6 +9,7 @@ import {
   type WorkOrderRequest,
   type WorkOrderResponse,
 } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { PRIORIDADE_OS_OPTIONS, STATUS_OS_OPTIONS, TIPO_OS_OPTIONS } from '../lib/workOrderLabels';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgePrioridade } from '../components/shared/StatusBadge';
@@ -46,6 +47,7 @@ const EMPTY_FORM: WorkOrderRequest = {
 
 export function WorkOrdersPage() {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [orders, setOrders] = useState<WorkOrderResponse[]>([]);
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
@@ -179,9 +181,11 @@ export function WorkOrdersPage() {
           <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.workOrders.titulo')}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.workOrders.subtitulo')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.workOrders.novaOS')}
-        </Button>
+        {podeEscrever && (
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.workOrders.novaOS')}
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -281,9 +285,12 @@ export function WorkOrdersPage() {
                         >
                           <Eye className="size-4" />
                         </button>
+                        {podeEscrever && (
                         <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(os)}>
                           {t('pages.workOrders.editar')}
                         </Button>
+                        )}
+                        {podeEscrever && (
                         <Button
                           variant="link"
                           size="sm"
@@ -292,6 +299,7 @@ export function WorkOrdersPage() {
                         >
                           {t('pages.workOrders.excluir')}
                         </Button>
+                        )}
                       </div>
                     </td>
                   </StaggerItem>

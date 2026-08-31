@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type VehicleRequest, type VehicleResponse } from '../api/client';
+import { usePodeEscrever } from '../auth/AuthContext';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { PlacaBR } from '../components/shared/PlacaBR';
@@ -41,6 +42,7 @@ const VEHICLES_PAGE_SIZE = 20;
 
 export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
   const { t } = useTranslation();
+  const podeEscrever = usePodeEscrever();
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [form, setForm] = useState<VehicleRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -166,9 +168,11 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
           <h2 className="font-display text-lg font-semibold text-foreground">{t('pages.vehicles.titulo')}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('pages.vehicles.subtitulo')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus /> {t('pages.vehicles.novoVeiculo')}
-        </Button>
+        {podeEscrever && (
+          <Button onClick={openCreate}>
+            <Plus /> {t('pages.vehicles.novoVeiculo')}
+          </Button>
+        )}
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -285,17 +289,21 @@ export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
                         <Button variant="link" size="sm" className="h-auto p-0" onClick={() => onViewCosts(v.id!, v.plate!)}>
                           {t('pages.vehicles.custos')}
                         </Button>
-                        <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(v)}>
-                          {t('pages.vehicles.editar')}
-                        </Button>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="h-auto p-0 text-destructive"
-                          onClick={() => handleDelete(v.id!)}
-                        >
-                          {t('pages.vehicles.excluir')}
-                        </Button>
+                        {podeEscrever && (
+                          <>
+                            <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openEdit(v)}>
+                              {t('pages.vehicles.editar')}
+                            </Button>
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-destructive"
+                              onClick={() => handleDelete(v.id!)}
+                            >
+                              {t('pages.vehicles.excluir')}
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </StaggerItem>

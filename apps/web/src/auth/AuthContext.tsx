@@ -130,3 +130,14 @@ export function useAuth(): AuthState {
   if (!ctx) throw new Error('useAuth precisa estar dentro de <AuthProvider>');
   return ctx;
 }
+
+/**
+ * Fora do fluxo de rota, criar/editar/excluir (frota, motorista, custo, OS, manutenção,
+ * etc.) é Gestor-only — Despachante/Visualizador só leem. O backend já bloqueia essas
+ * escritas com 403 pra quem não é `GESTOR_FROTA`/`ADMIN`; isso só esconde o botão que ia
+ * dar erro (spec 15, fast-follow).
+ */
+export function usePodeEscrever(): boolean {
+  const { user } = useAuth();
+  return user?.role === 'GESTOR_FROTA' || user?.role === 'ADMIN';
+}
