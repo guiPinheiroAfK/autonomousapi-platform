@@ -1,20 +1,26 @@
-# 14 — Notificação Automática ao Passageiro/Cliente Final (bot Telegram)
+# 14 — Notificação Automática ao Passageiro/Cliente Final
 
 ## Contexto
 
 Diferente da spec `12-notificacoes-operacionais.md` (que avisa a **equipe interna** sobre signup), isso aqui é voltado para o **passageiro/cliente final** da frota — alguém que, na maioria dos casos, nunca interagiu com o sistema, não tem conta, não é motorista nem gestor. É a pessoa esperando a van do passeio, ou o cliente que vai receber uma entrega/transfer. Hoje esse aviso ("motorista está a caminho", "rota confirmada") é feito manualmente por WhatsApp pelo gestor, ou nem é feito — automatizar isso fecha um gap real de experiência, principalmente no segmento de turismo (spec `13-viagem-redonda-turismo.md`).
 
-**Decisão de canal:** Telegram primeiro. WhatsApp é onde o cliente final brasileiro realmente está no dia a dia, mas exige WhatsApp Business API — custo por mensagem e processo de aprovação antes de sair do papel. Telegram é gratuito, sem aprovação de terceiro, no ar em horas — permite validar se o fluxo de notificação automática entrega valor de verdade antes de investir no canal mais caro/lento de configurar. Migrar ou expandir para WhatsApp depois é decisão separada, não bloqueada por nada deste desenho.
+**Decisão de canal — abstração pensando em migrar pra WhatsApp em breve:** Telegram é o canal ativo agora (gratuito, sem aprovação de terceiro, no ar em horas), mas a intenção explícita é migrar para WhatsApp assim que fizer sentido (é onde o cliente final brasileiro realmente está no dia a dia — WhatsApp Business API tem custo por mensagem e processo de aprovação, por isso não é o ponto de partida). Por causa disso, o envio é modelado atrás de uma interface `PassengerNotificationSender` (mesmo espírito de `NotificationWebhookSender`, spec 12) — hoje com uma única implementação Telegram, mas o resto do sistema (gatilhos automáticos, botão manual, service) nunca fala com a API do Telegram diretamente. Trocar ou adicionar WhatsApp depois é escrever uma segunda implementação da mesma interface, não redesenhar o fluxo.
 
-## Modelo de dados — reaproveitar `route_stop`, não criar cadastro de cliente paralelo
+## Modelo de dados — `passenger`, cadastro reutilizável (decisão revista)
 
-**Decisão:** cada `route_stop` (spec 02) ganha um contato opcional: `contato_nome`, `contato_telefone`. Quando preenchido, o passageiro/cliente daquela parada específica recebe notificação automática nos eventos relevantes. Motivo de não criar uma entidade "Cliente"/"Passageiro" própria: o dado que importa pra notificação já pertence à parada (quem está sendo buscado ali, nesse trajeto específico) — um cadastro de cliente reutilizável entre rotas é um passo maior (CRM de passageiro), que não foi pedido e não deveria entrar de carona aqui. Se o padrão de reuso aparecer na prática (mesmo cliente em várias viagens), isso é decisão futura, no mesmo espírito de `collection_point` ter nascido depois que o atrito de redigitar endereço ficou óbvio — não antecipar.
+**Decisão (revista a partir do desenho original deste documento):** existe uma entidade própria `passenger` (schema `core`, tenant-scoped) — nome, telefone — com CRUD dedicado no web, mesmo padrão já usado por `collection_point`: o gestor cadastra uma vez, reaproveita em quantas viagens quiser, sem redigitar. Cada `route_stop` (spec 02) ganha `passenger_id` (nullable, FK). Quando preenchido, esse passageiro recebe notificação automática nos eventos relevantes daquela parada.
+
+**Por que mudou do desenho original (campo solto em `route_stop`):** o desenho anterior evitava de propósito um cadastro reutilizável, no mesmo espírito de "não antecipar" que orienta o resto do projeto. Decisão explícita do Guilherme foi na direção contrária — cliente recorrente (comum em turismo — mesmo passageiro em passeios diferentes) torna o cadastro reutilizável genuinamente útil desde já, não uma antecipação especulativa.
+
+## Botão de envio manual — motorista dispara quando achar necessário
+
+Além dos gatilhos automáticos (próxima seção), o motorista tem um botão "Avisar passageiro" na parada que tem um `passenger_id` vinculado — dispara a mesma notificação (mesmo `PassengerNotificationSender`, mesmo texto-base do evento correspondente ao estado atual da parada) sob demanda, sem esperar o gatilho automático. Cobre o caso em que o motorista quer confirmar algo fora do timing dos 3 eventos padrão (ex. atraso, mudança de ponto de encontro combinada por telefone). Mesma regra de falha silenciosa da seção "Falha do bot" abaixo — botão nunca trava a tela do motorista esperando confirmação de entrega da mensagem.
 
 ## Ponto de atenção: isso é dado de terceiro sem consentimento direto — diferente de tudo que já existe no produto
 
-**Não confundir com o consentimento do motorista (spec 02/03):** o motorista se cadastra no app, aceita termos, sabe que está sendo rastreado. O passageiro aqui **não interage com o sistema em nenhum momento antes da notificação chegar** — o dado (nome, telefone) é digitado pelo gestor, terceiro à relação. Duas implicações práticas, não teóricas:
+**Não confundir com o consentimento do motorista (spec 02/03):** o motorista se cadastra no app, aceita termos, sabe que está sendo rastreado. O passageiro aqui **não interage com o sistema em nenhum momento antes da notificação chegar** — o dado (nome, telefone) é digitado pelo gestor, terceiro à relação. Implicações práticas, não teóricas:
 - A mensagem enviada deve deixar claro, na primeira interação, quem está mandando e por quê (nome da empresa de frota, não "sistema desconhecido") — reduz risco de ser marcado como spam/golpe, e é o mínimo de transparência esperável.
-- Reter esse telefone/nome além do necessário (ex. depois que a rota é concluída e não há viagem futura vinculada) não tem justificativa de negócio — vale mesma disciplina de retenção documentada em spec 02 pra dado de GPS: não guardar indefinidamente por padrão.
+- Sendo cadastro reutilizável (não mais "descartado depois da viagem"), a disciplina de retenção muda de forma: não é "apagar após a rota concluir", é o gestor poder **excluir o passageiro do cadastro** quando não faz mais sentido mantê-lo (cliente que não volta) — exclusão real, não soft-delete, dado que é justamente o tipo de dado que não deveria acumular sem motivo de negócio.
 
 Isso não bloqueia o desenvolvimento, mas precisa estar registrado e revisado antes de considerar o item "pronto" — é o tipo de detalhe que vira problema de verdade se ignorado agora.
 
@@ -32,11 +38,13 @@ Não notificar em `ordem_ajustada_manualmente`, `cancelada` sem contexto, ou qua
 
 Mesma regra já estabelecida em `12-notificacoes-operacionais.md`: chamada fire-and-forget, timeout curto, erro capturado e logado, nunca propagado — o gestor/motorista opera normalmente mesmo se o Telegram estiver fora do ar ou o número do passageiro for inválido.
 
-## Definition de Done
+## Definition of Done
 
-- [ ] `route_stop.contato_nome`/`contato_telefone` (opcionais) adicionados.
-- [ ] Bot Telegram configurado, mesmo padrão de `NotificationWebhookSender` (spec 12) — no-op quando não configurado.
-- [ ] Notificação disparada nos 3 eventos listados, reaproveitando `route_plan_event` como gatilho.
+- [ ] Entidade `passenger` (nome, telefone, tenant-scoped) com CRUD próprio no web, mesmo padrão de `collection_point`.
+- [ ] `route_stop.passenger_id` (nullable, FK) adicionado.
+- [ ] Interface `PassengerNotificationSender` com implementação Telegram; no-op quando não configurado (mesmo padrão de `NotificationWebhookSender`, spec 12).
+- [ ] Notificação automática disparada nos 3 eventos listados, reaproveitando `route_plan_event` como gatilho.
+- [ ] Botão "Avisar passageiro" no app do motorista (mobile e/ou web) pra disparo manual, na parada com `passenger_id`.
 - [ ] Mensagem inicial identifica claramente a empresa remetente.
-- [ ] Política de retenção do contato do passageiro documentada (quando/se é descartado após a viagem).
+- [ ] Exclusão de passageiro do cadastro disponível (dado de terceiro, sem justificativa de retenção indefinida).
 - [ ] Cancelamento de rota com passageiro já notificado dispara aviso de cancelamento.
