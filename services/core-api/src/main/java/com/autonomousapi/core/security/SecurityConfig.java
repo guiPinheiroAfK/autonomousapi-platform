@@ -46,6 +46,9 @@ public class SecurityConfig {
             "/swagger-ui.html",
             // A própria Stripe chama isso, sem JWT — a assinatura HMAC do payload é a segurança.
             "/v1/billing/webhook",
+            // A própria Telegram chama isso, sem JWT — o header de secret token (quando
+            // configurado) é a segurança (spec 14).
+            "/v1/telegram/webhook",
             // Observabilidade (métricas/health do Actuator) para acompanhar teste de carga
             // local — mesma postura de exposição sem JWT que /v3/api-docs já tem hoje.
             "/actuator/**"

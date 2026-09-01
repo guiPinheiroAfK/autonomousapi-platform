@@ -10,4 +10,8 @@ public interface PassengerRepository extends JpaRepository<Passenger, UUID> {
     List<Passenger> findAllByTenantIdOrderByNomeAsc(UUID tenantId);
 
     Optional<Passenger> findByIdAndTenantId(UUID id, UUID tenantId);
+
+    /** Usado pelo webhook do Telegram — token vem no payload do /start, sem tenant no
+     *  contexto (chamada pública, sem JWT). O token em si já escopa pra um passageiro só. */
+    Optional<Passenger> findByTelegramLinkToken(String token);
 }

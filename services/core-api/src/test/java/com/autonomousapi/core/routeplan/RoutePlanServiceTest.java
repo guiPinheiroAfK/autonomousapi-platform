@@ -64,9 +64,12 @@ class RoutePlanServiceTest {
     }
 
     private final RouteCostEstimator costEstimator = mock(RouteCostEstimator.class);
+    private final com.autonomousapi.core.passenger.notification.PassengerNotificationService passengerNotifications =
+            mock(com.autonomousapi.core.passenger.notification.PassengerNotificationService.class);
 
     private final RoutePlanService service = new RoutePlanService(routePlans, routeStops, routePlanEvents, drivers,
-            vehicles, collectionPoints, passengers, driverResolver, routeMatrix, optimizer, costEstimator);
+            vehicles, collectionPoints, passengers, driverResolver, routeMatrix, optimizer, costEstimator,
+            passengerNotifications);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();

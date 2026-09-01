@@ -69,6 +69,12 @@ public class RoutePlan {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** Spec 14: só existe pra decidir, num cancelamento, se precisa avisar os passageiros
+     *  de volta — "confirmado" não pode ser a última mensagem que eles receberam se a
+     *  viagem não está mais de pé. */
+    @Column(name = "passageiros_notificados", nullable = false)
+    private boolean passageirosNotificados;
+
     protected RoutePlan() {
         // JPA
     }
@@ -101,6 +107,14 @@ public class RoutePlan {
 
     public void avancarStatus(RoutePlanStatus novo) {
         this.status = novo;
+    }
+
+    public void marcarPassageirosNotificados() {
+        this.passageirosNotificados = true;
+    }
+
+    public boolean isPassageirosNotificados() {
+        return passageirosNotificados;
     }
 
     public UUID getId() {

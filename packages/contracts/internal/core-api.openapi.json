@@ -1147,6 +1147,39 @@
         }
       }
     },
+    "/v1/telegram/webhook": {
+      "post": {
+        "tags": [
+          "telegram-webhook-controller"
+        ],
+        "operationId": "webhook",
+        "parameters": [
+          {
+            "name": "X-Telegram-Bot-Api-Secret-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonNode"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/team/invite": {
       "post": {
         "tags": [
@@ -1352,6 +1385,30 @@
         }
       }
     },
+    "/v1/routes/plans/stops/{stopId}/notify-passenger": {
+      "post": {
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "notifyPassenger",
+        "parameters": [
+          {
+            "name": "stopId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/v1/routes/plans/stops/{stopId}/complete": {
       "post": {
         "tags": [
@@ -1450,6 +1507,66 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PassengerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/passengers/{id}/telegram-link": {
+      "get": {
+        "tags": [
+          "passenger-controller"
+        ],
+        "operationId": "telegramLink",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramLinkResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "passenger-controller"
+        ],
+        "operationId": "regenerateTelegramLink",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramLinkResponse"
                 }
               }
             }
@@ -2570,7 +2687,7 @@
         "tags": [
           "billing-controller"
         ],
-        "operationId": "webhook",
+        "operationId": "webhook_1",
         "parameters": [
           {
             "name": "Stripe-Signature",
@@ -4765,6 +4882,9 @@
           }
         }
       },
+      "JsonNode": {
+        "type": "object"
+      },
       "CreateTeamInviteRequest": {
         "required": [
           "email",
@@ -5065,6 +5185,17 @@
           "plataforma": {
             "pattern": "ANDROID|IOS|WEB",
             "type": "string"
+          }
+        }
+      },
+      "TelegramLinkResponse": {
+        "type": "object",
+        "properties": {
+          "linkUrl": {
+            "type": "string"
+          },
+          "vinculado": {
+            "type": "boolean"
           }
         }
       },

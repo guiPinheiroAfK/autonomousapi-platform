@@ -81,10 +81,16 @@ contra o texto dos specs.
   0020).
 - ✅ **App mobile mostra a rota atribuída** e permite concluir parada (`MinhaRotaScreen.tsx`,
   spec 11).
-- 📋 **Notificação automática ao passageiro** (Telegram) — o cadastro do contato já existe
-  (item acima), mas o disparo automático de "motorista a caminho"/"chegou"/"cancelada" via
-  bot **ainda não foi construído** (spec 14, parte 2 — `PassengerNotificationSender` não
-  existe no código).
+- ✅ **Notificação automática ao passageiro** (Telegram) — confirmação, "a caminho",
+  embarque confirmado e cancelamento disparam sozinhos nas transições que
+  `RoutePlanService` já grava; botão "Avisar passageiro" no app do motorista pra disparo
+  manual. Vínculo por deep-link (`t.me/<bot>?start=<token>`, o passageiro clica e dá
+  `/start` uma vez) — Telegram só deixa bot mandar mensagem pra quem já iniciou conversa
+  com ele antes (spec 14, achado na implementação). Testado ponta a ponta contra o
+  backend real (webhook simulado, 5 gatilhos confirmados via log). **Ativação em produção
+  pendente** de criar o bot (`@BotFather`) e configurar `TELEGRAM_BOT_TOKEN`/
+  `TELEGRAM_BOT_USERNAME`/`TELEGRAM_WEBHOOK_SECRET` — mesmo padrão do Google OAuth (spec
+  08, item 13).
 - 📋 **Gaps priorizados restantes do levantamento de rota** — push consistente entre os dois
   caminhos de atribuição, gestor acompanhar progresso em tempo real, fallback do OSRM
   visível pro gestor, edição de rota já atribuída (hoje o paliativo é cancelar e recriar) —
@@ -127,7 +133,7 @@ contra o texto dos specs.
 - 📋 **Notificação operacional interna** (Discord/Telegram avisando signup/confirmação de
   conta pro time) — spec 12 escrita, `NotificationWebhookSender` **não existe no código
   ainda**. Uso interno, não é feature de cliente final.
-- 📋 **Notificação automática ao passageiro** — ver seção "Rotas" acima.
+- ✅ **Notificação automática ao passageiro** — ver seção "Rotas, coleta e entrega" acima.
 
 ## Pontos de recarga elétrica
 

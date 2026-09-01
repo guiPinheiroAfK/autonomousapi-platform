@@ -89,6 +89,7 @@ export type CollectionPointRequest = Schemas['CollectionPointRequest'];
 export type CollectionPointResponse = Schemas['CollectionPointResponse'];
 export type PassengerRequest = Schemas['PassengerRequest'];
 export type PassengerResponse = Schemas['PassengerResponse'];
+export type TelegramLinkResponse = Schemas['TelegramLinkResponse'];
 export type TeamRole = Schemas['CreateTeamInviteRequest']['role'];
 export type CreateTeamInviteRequest = Schemas['CreateTeamInviteRequest'];
 export type ChangeTeamRoleRequest = Schemas['ChangeTeamRoleRequest'];
@@ -686,6 +687,12 @@ export const coreApi = {
         invalidateListCache('passengers:');
         return r;
       }),
+    /** Deep-link pra vincular o Telegram do passageiro (spec 14) — linkUrl vem null sem
+     *  bot configurado no backend. */
+    telegramLink: (id: string) => request<TelegramLinkResponse>(`/v1/passengers/${id}/telegram-link`),
+    /** Gera um token novo — usado se o gestor quiser reenviar o link. */
+    regenerateTelegramLink: (id: string) =>
+      request<TelegramLinkResponse>(`/v1/passengers/${id}/telegram-link`, { method: 'POST' }),
   },
 
   /** Equipe e permissões (spec 15) — Gestor-only, backend também recusa. */

@@ -617,6 +617,10 @@
       "confirmarExcluir": "Delete this passenger from the registry? This action can't be undone.",
       "editarPassageiro": "Edit passenger",
       "novoPassageiroTitulo": "New passenger",
+      "copiarLinkTelegram": "Copy Telegram link",
+      "telegramLinkCopiado": "Link copied! Send it to the passenger (WhatsApp, SMS, or verbally) — they tap it and hit /start to turn on automatic notifications.",
+      "telegramLinkCopiadoJaVinculado": "Link copied. This passenger is already linked — only resend if they switched Telegram accounts.",
+      "telegramNaoConfigurado": "Telegram bot not configured on this instance yet.",
       "form": {
         "nome": "Name", "nomePlaceholder": "Maria Silva",
         "telefone": "Phone", "telefonePlaceholder": "+55 45 99999-0000",
@@ -625,7 +629,8 @@
       "toasts": {
         "falhaCarregar": "Error loading passengers", "atualizado": "Passenger updated.",
         "cadastrado": "Passenger registered.", "falhaSalvar": "Failed to save passenger",
-        "excluido": "Passenger deleted.", "falhaExcluir": "Failed to delete passenger"
+        "excluido": "Passenger deleted.", "falhaExcluir": "Failed to delete passenger",
+        "falhaTelegramLink": "Failed to generate Telegram link"
       }
     },
     "team": {

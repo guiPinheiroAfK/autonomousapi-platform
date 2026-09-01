@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, MapPin, Plus, Sparkles, Trash2, Truck, UserRound } from 'lucide-react';
+import { ArrowDown, ArrowUp, Link as LinkIcon, MapPin, Plus, Sparkles, Trash2, Truck, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   coreApi,
@@ -253,6 +253,23 @@ export function RoutePlansPage() {
       setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaSalvarPassageiro'));
     } finally {
       setSalvandoPassageiro(false);
+    }
+  }
+
+  /** Deep-link pra vincular o Telegram do passageiro (spec 14) — o gestor/despachante manda
+   *  esse link uma vez (WhatsApp, SMS, verbalmente); o passageiro clica, dá /start, e o
+   *  bot passa a poder notificar ele automaticamente dali em diante. */
+  async function copiarLinkTelegram(id: string) {
+    try {
+      const resp = await coreApi.passengers.telegramLink(id);
+      if (!resp.linkUrl) {
+        toast.error(t('pages.passengers.telegramNaoConfigurado'));
+        return;
+      }
+      await navigator.clipboard.writeText(resp.linkUrl);
+      toast.success(resp.vinculado ? t('pages.passengers.telegramLinkCopiadoJaVinculado') : t('pages.passengers.telegramLinkCopiado'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.passengers.toasts.falhaTelegramLink'));
     }
   }
 
@@ -531,6 +548,16 @@ export function RoutePlansPage() {
                     ))}
                     <option value="__novo__">{t('pages.routePlans.novoContato')}</option>
                   </Select>
+                  {passengerIdSelecionado && (
+                    <button
+                      type="button"
+                      onClick={() => copiarLinkTelegram(passengerIdSelecionado)}
+                      title={t('pages.passengers.copiarLinkTelegram')}
+                      className="shrink-0 text-muted-foreground hover:text-foreground"
+                    >
+                      <LinkIcon className="size-3.5" />
+                    </button>
+                  )}
                   {podeEscrever && passengerIdSelecionado && (
                     <button
                       type="button"

@@ -31,6 +31,12 @@ public class Passenger {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "telegram_chat_id")
+    private Long telegramChatId;
+
+    @Column(name = "telegram_link_token", length = 64)
+    private String telegramLinkToken;
+
     protected Passenger() {
         // JPA
     }
@@ -41,11 +47,28 @@ public class Passenger {
         this.nome = nome;
         this.telefone = telefone;
         this.createdAt = Instant.now();
+        this.telegramLinkToken = UUID.randomUUID().toString();
     }
 
     public void atualizar(String nome, String telefone) {
         this.nome = nome;
         this.telefone = telefone;
+    }
+
+    /** Chamado pelo webhook do Telegram quando o passageiro dá /start no link — a partir
+     *  daqui ele passa a receber notificação automática de verdade, não só ter o cadastro. */
+    public void vincularTelegram(long chatId) {
+        this.telegramChatId = chatId;
+    }
+
+    /** Gera um token novo — usado se o gestor quiser reenviar o link (ex. passageiro trocou
+     *  de conta do Telegram). Não invalida o vínculo já feito, só o link antigo. */
+    public void gerarNovoTokenDeVinculo() {
+        this.telegramLinkToken = UUID.randomUUID().toString();
+    }
+
+    public boolean temTelegramVinculado() {
+        return telegramChatId != null;
     }
 
     public UUID getId() {
@@ -66,5 +89,13 @@ public class Passenger {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Long getTelegramChatId() {
+        return telegramChatId;
+    }
+
+    public String getTelegramLinkToken() {
+        return telegramLinkToken;
     }
 }

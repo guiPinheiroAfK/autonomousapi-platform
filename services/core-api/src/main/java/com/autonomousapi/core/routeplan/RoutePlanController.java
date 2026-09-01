@@ -99,6 +99,15 @@ public class RoutePlanController {
         return routePlanService.completeStop(principal(auth), stopId);
     }
 
+    /** Botão "Avisar passageiro" (spec 14) — sem corpo de resposta de propósito: falha de
+     *  envio nunca aparece pro motorista (fire-and-forget, mesma regra da spec 12/14). */
+    @PostMapping("/stops/{stopId}/notify-passenger")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('MOTORISTA')")
+    public void notifyPassenger(@PathVariable UUID stopId, Authentication auth) {
+        routePlanService.notifyPassenger(principal(auth), stopId);
+    }
+
     private JwtPrincipal principal(Authentication auth) {
         return (JwtPrincipal) auth.getPrincipal();
     }

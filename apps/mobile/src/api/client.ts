@@ -151,6 +151,7 @@ export interface RouteStopResponse {
   lat: number;
   lon: number;
   collectionPointId: string | null;
+  passengerId: string | null;
   janelaInicio: string | null;
   janelaFim: string | null;
   ordemSugerida: number;
@@ -345,5 +346,9 @@ export const coreApi = {
     active: () => request<RoutePlanResponse | null>('/v1/routes/plans/active'),
     completeStop: (stopId: string) =>
       request<RouteStopResponse>(`/v1/routes/plans/stops/${stopId}/complete`, { method: 'POST' }),
+    /** Botão "Avisar passageiro" (spec 14) — disparo manual, sob demanda. Sem corpo de
+     *  resposta: falha de envio nunca aparece pro motorista (fire-and-forget). */
+    notifyPassenger: (stopId: string) =>
+      request<void>(`/v1/routes/plans/stops/${stopId}/notify-passenger`, { method: 'POST' }),
   },
 };
