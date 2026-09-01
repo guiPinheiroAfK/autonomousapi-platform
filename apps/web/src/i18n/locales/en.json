@@ -531,10 +531,28 @@
       "jaDesignadaMotorista": "· already assigned to this driver",
       "anexar": "Attach",
       "paradasDaRota": "Route stops",
+      "voltar": "Back",
+      "responder": "Reply",
+      "editar": "Edit",
+      "excluir": "Delete",
+      "encaminhar": "Forward",
+      "reagir": "React",
+      "mensagemApagada": "Message deleted",
+      "editadoSufixo": "(edited)",
+      "encaminhadaLabel": "Forwarded",
+      "respondendoA": "Replying to {{nome}}",
+      "encaminharTitulo": "Forward message",
+      "selecioneConversaDestino": "Select a conversation...",
+      "nenhumaOutraConversa": "No other conversation to forward to.",
+      "confirmarExcluirMensagem": "Delete this message? It disappears for both sides.",
       "toasts": {
         "falhaCarregarConversas": "Error loading conversations", "falhaEnviar": "Failed to send message",
         "conversaIniciada": "Conversation started.", "falhaIniciar": "Failed to start conversation",
-        "rotaAnexada": "Route attached.", "falhaAnexar": "Failed to attach route"
+        "rotaAnexada": "Route attached.", "falhaAnexar": "Failed to attach route",
+        "mensagemEncaminhada": "Message forwarded.", "falhaEncaminhar": "Failed to forward message",
+        "falhaEditar": "Failed to edit message",
+        "mensagemExcluida": "Message deleted.", "falhaExcluirMensagem": "Failed to delete message",
+        "falhaReagir": "Failed to react"
       }
     },
     "routes": {

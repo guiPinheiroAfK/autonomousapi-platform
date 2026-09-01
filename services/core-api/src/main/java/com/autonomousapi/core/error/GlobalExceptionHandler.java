@@ -135,6 +135,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("route_plan_invalid", ex.getMessage()));
     }
 
+    @ExceptionHandler(ChatMessageActionInvalidException.class)
+    public ResponseEntity<ApiError> handleChatMessageActionInvalid(ChatMessageActionInvalidException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("chat_message_action_invalid", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()

@@ -1,10 +1,27 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Check, CheckCheck, MapPin, MessageCirclePlus, MessagesSquare, Route as RouteIcon, Send } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Forward as ForwardIcon,
+  MapPin,
+  MessageCirclePlus,
+  MessagesSquare,
+  MoreVertical,
+  Pencil,
+  Reply as ReplyIcon,
+  Route as RouteIcon,
+  Send,
+  Smile,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   coreApi,
   type ChatConversationResponse,
   type ChatMessageResponse,
+  type ChatReactionResponse,
   type DriverResponse,
   type RoutePlanResponse,
   type UserResponse,
@@ -19,9 +36,11 @@ import { Select } from '../components/ui/select';
 import { cn } from '../lib/utils';
 import { formatRelativeShortBR, formatTimeBR, iniciais } from '../lib/format';
 import { getDeviceId, getMessages, markChatSeenNow, saveMessages } from '../lib/chatDb';
+import { confirmDialog } from '../lib/confirm';
 import { toast } from '../lib/toast';
 
 const POLL_INTERVAL_MS = 5000;
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 
 /** Nome de quem está do outro lado da conversa: gestor vê o motorista, motorista vê a
  *  frota (não existe nome de pessoa pro gestor — ver ChatConversationResponse.tenantName
@@ -66,6 +85,14 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
   const [routeDetail, setRouteDetail] = useState<RoutePlanResponse | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
+
+  const [replyingTo, setReplyingTo] = useState<ChatMessageResponse | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [reactingId, setReactingId] = useState<string | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<ChatMessageResponse | null>(null);
+  const [forwardTargetId, setForwardTargetId] = useState('');
+  const [forwardSending, setForwardSending] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const deviceId = useMemo(() => getDeviceId(), []);
@@ -171,17 +198,125 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     if (!selectedId || !newBody.trim()) return;
     setSending(true);
     try {
-      const sent = await coreApi.chat.sendMessage(selectedId, { body: newBody.trim() });
-      await saveMessages([sent]);
-      setMessages((prev) => [...prev, sent]);
-      setNewBody('');
-      refreshConversations();
+      if (editingId) {
+        const updated = await coreApi.chat.editMessage(selectedId, editingId, { body: newBody.trim() });
+        await applyUpdatedMessage(updated);
+        setEditingId(null);
+        setNewBody('');
+      } else {
+        const sent = await coreApi.chat.sendMessage(selectedId, {
+          body: newBody.trim(),
+          replyToMessageId: replyingTo?.id,
+        });
+        await saveMessages([sent]);
+        setMessages((prev) => [...prev, sent]);
+        setNewBody('');
+        setReplyingTo(null);
+        refreshConversations();
+      }
     } catch (err) {
       // Sem toast de sucesso aqui de propósito: a mensagem aparecendo na conversa já é a
       // confirmação — um toast a mais seria ruído numa tela pensada pra troca rápida.
-      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaEnviar'));
+      toast.error(
+        err instanceof Error ? err.message : t(editingId ? 'pages.chat.toasts.falhaEditar' : 'pages.chat.toasts.falhaEnviar'),
+      );
     } finally {
       setSending(false);
+    }
+  }
+
+  /** Merge local (state + IndexedDB) depois de editar/excluir uma mensagem — mesmo padrão
+   *  de upsert por id já usado no poll normal (saveMessages). */
+  async function applyUpdatedMessage(updated: ChatMessageResponse) {
+    setMessages((prev) => prev.map((mm) => (mm.id === updated.id ? updated : mm)));
+    await saveMessages([updated]);
+  }
+
+  async function applyReactions(messageId: string, newReactions: ChatReactionResponse[]) {
+    let patched: ChatMessageResponse | undefined;
+    setMessages((prev) =>
+      prev.map((mm) => {
+        if (mm.id !== messageId) return mm;
+        patched = { ...mm, reactions: newReactions };
+        return patched;
+      }),
+    );
+    if (patched) await saveMessages([patched]);
+  }
+
+  function closeMenus() {
+    setOpenMenuId(null);
+    setReactingId(null);
+  }
+
+  function startReply(m: ChatMessageResponse) {
+    setEditingId(null);
+    setReplyingTo(m);
+    closeMenus();
+  }
+
+  function startEdit(m: ChatMessageResponse) {
+    setReplyingTo(null);
+    setEditingId(m.id!);
+    setNewBody(m.body ?? '');
+    closeMenus();
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setNewBody('');
+  }
+
+  async function handleDeleteMessage(m: ChatMessageResponse) {
+    closeMenus();
+    if (!selectedId) return;
+    if (!(await confirmDialog(t('pages.chat.confirmarExcluirMensagem')))) return;
+    try {
+      const updated = await coreApi.chat.deleteMessage(selectedId, m.id!);
+      await applyUpdatedMessage(updated);
+      toast.success(t('pages.chat.toasts.mensagemExcluida'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaExcluirMensagem'));
+    }
+  }
+
+  async function handleReact(m: ChatMessageResponse, emoji: string) {
+    closeMenus();
+    if (!selectedId) return;
+    const minhaReacaoAtual = (m.reactions ?? []).find((r) => r.userId === user?.id);
+    try {
+      const updated =
+        minhaReacaoAtual?.emoji === emoji
+          ? await coreApi.chat.removeReaction(selectedId, m.id!)
+          : await coreApi.chat.react(selectedId, m.id!, { emoji });
+      await applyReactions(m.id!, updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaReagir'));
+    }
+  }
+
+  function openForward(m: ChatMessageResponse) {
+    closeMenus();
+    setForwardTargetId('');
+    setForwardMessage(m);
+  }
+
+  async function handleForwardConfirm(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedId || !forwardMessage || !forwardTargetId) return;
+    setForwardSending(true);
+    try {
+      const sent = await coreApi.chat.forwardMessage(selectedId, forwardMessage.id!, {
+        targetConversationId: forwardTargetId,
+      });
+      await saveMessages([sent]);
+      setForwardMessage(null);
+      refreshConversations();
+      toast.success(t('pages.chat.toasts.mensagemEncaminhada'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaEncaminhar'));
+    } finally {
+      setForwardSending(false);
     }
   }
 
@@ -272,9 +407,21 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
   const selected = conversations.find((c) => c.id === selectedId);
 
+  // Abaixo de `md`, lista e conversa viram 2 painéis sobrepostos (position: absolute, cada
+  // um 100% do container) que deslizam pra dentro/fora via transição CSS pura — mesma
+  // técnica do WhatsApp Web em tela estreita. Em `md`+ os painéis voltam ao normal
+  // (position: static, lado a lado) via classes do Tailwind — puro CSS, sem JS decidindo
+  // largura de tela (nenhuma detecção de breakpoint em JS, só `md:` do Tailwind, que nunca
+  // erra por causa de timing de emulação de viewport). `motion-reduce:transition-none`
+  // respeita a preferência do sistema sem precisar de hook nenhum.
   return (
-    <div className="flex h-full gap-3 overflow-hidden p-3">
-      <Card className="flex w-72 shrink-0 flex-col overflow-hidden">
+    <div className="relative flex h-full overflow-hidden md:gap-3 md:p-3">
+      <Card
+        className={cn(
+          'absolute inset-3 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out motion-reduce:transition-none md:static md:inset-auto md:w-72 md:shrink-0 md:translate-x-0',
+          selectedId != null ? '-translate-x-full' : 'translate-x-0',
+        )}
+      >
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="font-display text-sm font-semibold text-foreground">{t('pages.chat.conversas')}</h2>
           {user?.role !== 'MOTORISTA' && (
@@ -329,7 +476,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         </div>
       </Card>
 
-      <Card className="flex flex-1 flex-col overflow-hidden">
+      <Card
+        className={cn(
+          'absolute inset-3 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out motion-reduce:transition-none md:static md:inset-auto md:flex-1 md:translate-x-0',
+          selectedId != null ? 'translate-x-0' : 'translate-x-full',
+        )}
+      >
         {!selected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <MessagesSquare className="size-6 text-muted-foreground/60" />
@@ -338,6 +490,14 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         ) : (
           <>
             <div className="flex items-center gap-2.5 border-b border-border p-4">
+              <button
+                type="button"
+                onClick={() => setSelectedId(null)}
+                aria-label={t('pages.chat.voltar')}
+                className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
+              >
+                <ArrowLeft className="size-4" />
+              </button>
               <Avatar className="size-8">
                 <AvatarFallback>{iniciais(nomeDoOutroLado(selected, user))}</AvatarFallback>
               </Avatar>
@@ -347,7 +507,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               )}
             </div>
 
-            <div className="flex-1 space-y-2 overflow-y-auto p-4">
+            <div className="flex-1 space-y-2 overflow-y-auto p-4" onClick={closeMenus}>
               {messages.length === 0 && (
                 <p className="pt-8 text-center text-xs text-muted-foreground">{t('pages.chat.nenhumaMensagem')}</p>
               )}
@@ -387,25 +547,189 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     </div>
                   );
                 }
+                const apagada = m.deletedAt != null;
+                const podeEditarOuExcluir = mine && !apagada && m.stillOnServer;
+                const podeEncaminhar = !apagada && conversations.some((c) => c.id !== selectedId);
+                const menuAberto = openMenuId === m.id;
+                const paletaAberta = reactingId === m.id;
+                const minhaReacao = (m.reactions ?? []).find((r) => r.userId === user?.id);
+                const contagemPorEmoji = (m.reactions ?? []).reduce<Record<string, number>>((acc, r) => {
+                  if (!r.emoji) return acc;
+                  acc[r.emoji] = (acc[r.emoji] ?? 0) + 1;
+                  return acc;
+                }, {});
+
+                const menu = (menuAberto || paletaAberta) && (
+                  <div
+                    className={cn(
+                      'absolute top-7 z-10 min-w-[9rem] rounded-md border border-border bg-popover p-1 text-xs shadow-lg',
+                      mine ? 'right-0' : 'left-0',
+                    )}
+                  >
+                    {paletaAberta ? (
+                      <div className="flex items-center gap-1 p-1">
+                        {REACTION_EMOJIS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => handleReact(m, emoji)}
+                            className="flex size-7 items-center justify-center rounded-md text-base hover:bg-secondary"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReactingId(m.id!);
+                          }}
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary"
+                        >
+                          <Smile className="size-3.5" /> {t('pages.chat.reagir')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startReply(m)}
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary"
+                        >
+                          <ReplyIcon className="size-3.5" /> {t('pages.chat.responder')}
+                        </button>
+                        {podeEncaminhar && (
+                          <button
+                            type="button"
+                            onClick={() => openForward(m)}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary"
+                          >
+                            <ForwardIcon className="size-3.5" /> {t('pages.chat.encaminhar')}
+                          </button>
+                        )}
+                        {podeEditarOuExcluir && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(m)}
+                              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary"
+                            >
+                              <Pencil className="size-3.5" /> {t('pages.chat.editar')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMessage(m)}
+                              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-status-danger hover:bg-secondary"
+                            >
+                              <Trash2 className="size-3.5" /> {t('pages.chat.excluir')}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+
                 return (
-                  <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
-                    <div
-                      className={cn(
-                        'max-w-[70%] rounded-lg px-3 py-2 text-xs',
-                        mine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
-                      )}
-                    >
-                      <p>{m.body}</p>
-                      <p
+                  <div key={m.id} className={cn('group flex items-start gap-1', mine ? 'justify-end' : 'justify-start')}>
+                    {!mine && !apagada && (
+                      <div className="relative shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            menuAberto ? closeMenus() : setOpenMenuId(m.id!);
+                          }}
+                          className="mt-1 flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-100 hover:bg-secondary md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <MoreVertical className="size-3.5" />
+                        </button>
+                        {menu}
+                      </div>
+                    )}
+                    <div className={cn('flex flex-col gap-1', mine ? 'items-end' : 'items-start')}>
+                      <div
                         className={cn(
-                          'mt-1 flex items-center justify-end gap-1 text-[10px]',
-                          mine ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                          'max-w-[70%] rounded-lg px-3 py-2 text-xs',
+                          apagada
+                            ? 'border border-dashed border-border text-muted-foreground italic'
+                            : mine
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-foreground',
                         )}
                       >
-                        {m.sentAt ? formatTimeBR(m.sentAt) : ''}
-                        {mine && (m.lidoEm ? <CheckCheck className="size-3" /> : <Check className="size-3" />)}
-                      </p>
+                        {m.forwardedFromMessageId && !apagada && (
+                          <p
+                            className={cn(
+                              'mb-1 flex items-center gap-1 text-[10px]',
+                              mine ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                            )}
+                          >
+                            <ForwardIcon className="size-3" /> {t('pages.chat.encaminhadaLabel')}
+                          </p>
+                        )}
+                        {m.replyToMessageId && !apagada && (
+                          <p
+                            className={cn(
+                              'mb-1 truncate border-l-2 pl-1.5 text-[11px] opacity-80',
+                              mine ? 'border-primary-foreground/40' : 'border-foreground/30',
+                            )}
+                          >
+                            {m.replyToBody}
+                          </p>
+                        )}
+                        {apagada ? (
+                          <p>{t('pages.chat.mensagemApagada')}</p>
+                        ) : (
+                          <p>{m.body}</p>
+                        )}
+                        <p
+                          className={cn(
+                            'mt-1 flex items-center justify-end gap-1 text-[10px]',
+                            mine ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                          )}
+                        >
+                          {m.editedAt && !apagada && <span>{t('pages.chat.editadoSufixo')}</span>}
+                          {m.sentAt ? formatTimeBR(m.sentAt) : ''}
+                          {mine && (m.lidoEm ? <CheckCheck className="size-3" /> : <Check className="size-3" />)}
+                        </p>
+                      </div>
+                      {Object.keys(contagemPorEmoji).length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(contagemPorEmoji).map(([emoji, n]) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => handleReact(m, emoji)}
+                              className={cn(
+                                'flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px]',
+                                minhaReacao?.emoji === emoji
+                                  ? 'border-primary bg-primary/10'
+                                  : 'border-border bg-secondary/60',
+                              )}
+                            >
+                              <span>{emoji}</span>
+                              {n > 1 && <span className="text-muted-foreground">{n}</span>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                    {mine && !apagada && (
+                      <div className="relative shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            menuAberto ? closeMenus() : setOpenMenuId(m.id!);
+                          }}
+                          className="mt-1 flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-100 hover:bg-secondary md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <MoreVertical className="size-3.5" />
+                        </button>
+                        {menu}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -417,8 +741,41 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               <div ref={bottomRef} />
             </div>
 
+            {replyingTo && (
+              <div className="flex items-center gap-2 border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+                <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-foreground">
+                    {t('pages.chat.respondendoA', {
+                      nome: replyingTo.senderUserId === user?.id ? (user?.email ?? '') : nomeDoOutroLado(selected, user),
+                    })}
+                  </p>
+                  <p className="truncate text-muted-foreground">{replyingTo.body}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
+            {editingId && (
+              <div className="flex items-center gap-2 border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+                <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
+                <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
             <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-border p-3">
-              {user?.role !== 'MOTORISTA' && (
+              {user?.role !== 'MOTORISTA' && !editingId && (
                 <button
                   type="button"
                   onClick={openAttach}
@@ -529,6 +886,37 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             )}
           </div>
         )}
+      </Modal>
+
+      <Modal open={!!forwardMessage} onClose={() => setForwardMessage(null)} title={t('pages.chat.encaminharTitulo')}>
+        {(() => {
+          const outrasConversas = conversations.filter((c) => c.id !== selectedId);
+          return outrasConversas.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t('pages.chat.nenhumaOutraConversa')}</p>
+          ) : (
+            <form onSubmit={handleForwardConfirm} className="space-y-3">
+              <p className="truncate rounded-md bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                {forwardMessage?.body}
+              </p>
+              <Select value={forwardTargetId} onChange={(e) => setForwardTargetId(e.target.value)}>
+                <option value="">{t('pages.chat.selecioneConversaDestino')}</option>
+                {outrasConversas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {nomeDoOutroLado(c, user)}
+                  </option>
+                ))}
+              </Select>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setForwardMessage(null)}>
+                  {t('pages.chat.cancelar')}
+                </Button>
+                <Button type="submit" size="sm" disabled={!forwardTargetId || forwardSending}>
+                  {t('pages.chat.encaminhar')}
+                </Button>
+              </div>
+            </form>
+          );
+        })()}
       </Modal>
     </div>
   );

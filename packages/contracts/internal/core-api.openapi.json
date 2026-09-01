@@ -403,6 +403,188 @@
         }
       }
     },
+    "/v1/chat/conversations/{id}/messages/{messageId}": {
+      "put": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "editMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "deleteMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/conversations/{id}/messages/{messageId}/reaction": {
+      "put": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "react",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatReactionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "removeReaction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatReactionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/work-orders": {
       "get": {
         "tags": [
@@ -2282,6 +2464,56 @@
         }
       }
     },
+    "/v1/chat/conversations/{id}/messages/{messageId}/forward": {
+      "post": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "forwardMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/budgets": {
       "get": {
         "tags": [
@@ -4123,6 +4355,120 @@
           }
         }
       },
+      "EditMessageRequest": {
+        "required": [
+          "body"
+        ],
+        "type": "object",
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          }
+        }
+      },
+      "ChatMessageResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lidoEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "messageType": {
+            "type": "string",
+            "enum": [
+              "TEXTO",
+              "ATRIBUICAO_ROTA",
+              "CANCELAMENTO_ROTA",
+              "TROCA_MOTORISTA",
+              "SOLICITACAO_CANCELAMENTO",
+              "SOLICITACAO_TROCA_MOTORISTA",
+              "SISTEMA"
+            ]
+          },
+          "routePlanId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stillOnServer": {
+            "type": "boolean"
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "replyToMessageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "replyToBody": {
+            "type": "string"
+          },
+          "replyToSenderUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "forwardedFromMessageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatReactionResponse"
+            }
+          }
+        }
+      },
+      "ChatReactionResponse": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ReactRequest": {
+        "required": [
+          "emoji"
+        ],
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "maxLength": 8,
+            "minLength": 0,
+            "type": "string"
+          }
+        }
+      },
       "VehicleMarketValueRequest": {
         "required": [
           "dataReferencia",
@@ -4927,50 +5273,6 @@
           }
         }
       },
-      "ChatMessageResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "conversationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "senderUserId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "body": {
-            "type": "string"
-          },
-          "sentAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lidoEm": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "messageType": {
-            "type": "string",
-            "enum": [
-              "TEXTO",
-              "ATRIBUICAO_ROTA",
-              "CANCELAMENTO_ROTA",
-              "TROCA_MOTORISTA",
-              "SOLICITACAO_CANCELAMENTO",
-              "SOLICITACAO_TROCA_MOTORISTA",
-              "SISTEMA"
-            ]
-          },
-          "routePlanId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
       "SendMessageRequest": {
         "required": [
           "body"
@@ -4981,6 +5283,22 @@
             "maxLength": 2000,
             "minLength": 0,
             "type": "string"
+          },
+          "replyToMessageId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ForwardMessageRequest": {
+        "required": [
+          "targetConversationId"
+        ],
+        "type": "object",
+        "properties": {
+          "targetConversationId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

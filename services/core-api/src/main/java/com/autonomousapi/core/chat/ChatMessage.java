@@ -49,6 +49,24 @@ public class ChatMessage {
     @Column(name = "route_plan_id")
     private UUID routePlanId;
 
+    @Column(name = "edited_at")
+    private Instant editedAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Column(name = "reply_to_message_id")
+    private UUID replyToMessageId;
+
+    @Column(name = "reply_to_body_snapshot", length = 200)
+    private String replyToBodySnapshot;
+
+    @Column(name = "reply_to_sender_user_id")
+    private UUID replyToSenderUserId;
+
+    @Column(name = "forwarded_from_message_id")
+    private UUID forwardedFromMessageId;
+
     protected ChatMessage() {
         // JPA
     }
@@ -70,6 +88,18 @@ public class ChatMessage {
         this.routePlanId = routePlanId;
     }
 
+    /** Resposta a outra mensagem — o retrato (texto + autor) é copiado aqui no momento do
+     *  envio, não uma referência viva (a original pode sair da janela de retenção depois). */
+    public void responderA(UUID originalId, String originalBodySnapshot, UUID originalSenderUserId) {
+        this.replyToMessageId = originalId;
+        this.replyToBodySnapshot = originalBodySnapshot;
+        this.replyToSenderUserId = originalSenderUserId;
+    }
+
+    public void marcarComoEncaminhada(UUID originalMessageId) {
+        this.forwardedFromMessageId = originalMessageId;
+    }
+
     /** Removida do servidor pelo job de limpeza — o dispositivo do gestor já sincronizou. */
     public void removerDoServidor() {
         this.aindaNoServidor = false;
@@ -80,6 +110,21 @@ public class ChatMessage {
         if (this.lidoEm == null) {
             this.lidoEm = Instant.now();
         }
+    }
+
+    /** Só {@code TEXTO}, só enquanto {@code aindaNoServidor} (checado pelo service antes de
+     *  chamar isto) — editar mensagem estruturada ou fora da janela de retenção não faz
+     *  sentido (o outro lado não teria como ver a mudança). */
+    public void editar(String novoBody) {
+        this.body = novoBody;
+        this.editedAt = Instant.now();
+    }
+
+    /** Soft delete — mantém a linha (mesma filosofia de {@link #removerDoServidor}), só
+     *  marca {@code deletedAt}; a resposta da API esconde o {@code body} original a partir
+     *  daqui, mas o texto continua no banco. */
+    public void apagar() {
+        this.deletedAt = Instant.now();
     }
 
     public UUID getId() {
@@ -120,5 +165,29 @@ public class ChatMessage {
 
     public UUID getRoutePlanId() {
         return routePlanId;
+    }
+
+    public Instant getEditedAt() {
+        return editedAt;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public UUID getReplyToMessageId() {
+        return replyToMessageId;
+    }
+
+    public String getReplyToBodySnapshot() {
+        return replyToBodySnapshot;
+    }
+
+    public UUID getReplyToSenderUserId() {
+        return replyToSenderUserId;
+    }
+
+    public UUID getForwardedFromMessageId() {
+        return forwardedFromMessageId;
     }
 }

@@ -2,7 +2,11 @@ package com.autonomousapi.core.chat;
 
 import com.autonomousapi.core.chat.dto.ChatConversationResponse;
 import com.autonomousapi.core.chat.dto.ChatMessageResponse;
+import com.autonomousapi.core.chat.dto.ChatReactionResponse;
 import com.autonomousapi.core.chat.dto.CreateConversationRequest;
+import com.autonomousapi.core.chat.dto.EditMessageRequest;
+import com.autonomousapi.core.chat.dto.ForwardMessageRequest;
+import com.autonomousapi.core.chat.dto.ReactRequest;
 import com.autonomousapi.core.chat.dto.SendMessageRequest;
 import com.autonomousapi.core.chat.dto.SendRoutePlanRequest;
 import com.autonomousapi.core.chat.dto.SyncCursorRequest;
@@ -13,9 +17,11 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -59,7 +65,46 @@ public class ChatController {
     @ResponseStatus(HttpStatus.CREATED)
     public ChatMessageResponse sendMessage(
             @PathVariable UUID id, @Valid @RequestBody SendMessageRequest req, Authentication auth) {
-        return chatService.sendMessage(principal(auth), id, req.body());
+        return chatService.sendMessage(principal(auth), id, req.body(), req.replyToMessageId());
+    }
+
+    /** Só o autor, só {@code TEXTO}, só enquanto ainda na janela de retenção do servidor (V31). */
+    @PutMapping("/conversations/{id}/messages/{messageId}")
+    public ChatMessageResponse editMessage(
+            @PathVariable UUID id, @PathVariable UUID messageId,
+            @Valid @RequestBody EditMessageRequest req, Authentication auth) {
+        return chatService.editMessage(principal(auth), id, messageId, req.body());
+    }
+
+    /** Apagar pra todo mundo (sem "apagar só pra mim") — mesmas guardas de {@link #editMessage}. */
+    @DeleteMapping("/conversations/{id}/messages/{messageId}")
+    public ChatMessageResponse deleteMessage(
+            @PathVariable UUID id, @PathVariable UUID messageId, Authentication auth) {
+        return chatService.deleteMessage(principal(auth), id, messageId);
+    }
+
+    /** Encaminha pra outra conversa da mesma pessoa — sem a restrição de janela de retenção
+     *  (cria mensagem nova, não depende de a original ainda estar retida). */
+    @PostMapping("/conversations/{id}/messages/{messageId}/forward")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChatMessageResponse forwardMessage(
+            @PathVariable UUID id, @PathVariable UUID messageId,
+            @Valid @RequestBody ForwardMessageRequest req, Authentication auth) {
+        return chatService.forwardMessage(principal(auth), id, messageId, req.targetConversationId());
+    }
+
+    /** Upsert — substitui a reação anterior desta pessoa, se houver. */
+    @PutMapping("/conversations/{id}/messages/{messageId}/reaction")
+    public List<ChatReactionResponse> react(
+            @PathVariable UUID id, @PathVariable UUID messageId,
+            @Valid @RequestBody ReactRequest req, Authentication auth) {
+        return chatService.reactToMessage(principal(auth), id, messageId, req.emoji());
+    }
+
+    @DeleteMapping("/conversations/{id}/messages/{messageId}/reaction")
+    public List<ChatReactionResponse> removeReaction(
+            @PathVariable UUID id, @PathVariable UUID messageId, Authentication auth) {
+        return chatService.removeReaction(principal(auth), id, messageId);
     }
 
     /** Gestor-only: anexa uma rota já cadastrada à conversa (spec 07 item 8). */

@@ -11,9 +11,11 @@ import static org.mockito.Mockito.when;
 
 import com.autonomousapi.core.chat.dto.ChatConversationResponse;
 import com.autonomousapi.core.chat.dto.ChatMessageResponse;
+import com.autonomousapi.core.chat.dto.ChatReactionResponse;
 import com.autonomousapi.core.driver.CurrentDriverResolver;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
+import com.autonomousapi.core.error.ChatMessageActionInvalidException;
 import com.autonomousapi.core.error.DriverWithoutLoginException;
 import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
@@ -34,6 +36,7 @@ class ChatServiceTest {
 
     private final ChatConversationRepository conversations = mock(ChatConversationRepository.class);
     private final ChatMessageRepository messages = mock(ChatMessageRepository.class);
+    private final ChatMessageReactionRepository reactions = mock(ChatMessageReactionRepository.class);
     private final ChatSyncCursorRepository syncCursors = mock(ChatSyncCursorRepository.class);
     private final DriverRepository drivers = mock(DriverRepository.class);
     private final VehicleRepository vehicles = mock(VehicleRepository.class);
@@ -44,7 +47,7 @@ class ChatServiceTest {
     private final TypingIndicatorService typingIndicator = new TypingIndicatorService();
 
     private final ChatService service = new ChatService(
-            conversations, messages, syncCursors, drivers, vehicles, tenants, driverResolver,
+            conversations, messages, reactions, syncCursors, drivers, vehicles, tenants, driverResolver,
             pushNotificationService, routePlanService, typingIndicator);
 
     private final UUID tenantId = UUID.randomUUID();
@@ -140,7 +143,7 @@ class ChatServiceTest {
         when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
 
-        service.sendMessage(gestorPrincipal, conversationId, "Oi, tudo bem?");
+        service.sendMessage(gestorPrincipal, conversationId, "Oi, tudo bem?", null);
 
         verify(pushNotificationService).notifyUser(eq(d.getAppUserId()), eq("Nova mensagem"), any());
     }
@@ -155,7 +158,7 @@ class ChatServiceTest {
         when(driverResolver.resolve(motoristaPrincipal)).thenReturn(d);
         when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.sendMessage(motoristaPrincipal, conversationId, "Cheguei na oficina");
+        service.sendMessage(motoristaPrincipal, conversationId, "Cheguei na oficina", null);
 
         verify(pushNotificationService).notifyUser(eq(gestorUserId), eq("Nova mensagem"), any());
     }
@@ -258,5 +261,148 @@ class ChatServiceTest {
         service.registerTyping(motoristaPrincipal, conversationId);
 
         assertEquals(true, service.isOtherParticipantTyping(gestorPrincipal, conversationId));
+    }
+
+    @Test
+    void sendMessageComRespostaCopiaRetratoDaOriginal() {
+        UUID conversationId = UUID.randomUUID();
+        Driver d = driverComLogin();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
+        ChatMessage original = new ChatMessage(conv.getId(), d.getAppUserId(), "Cheguei no ponto A");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(original.getId(), conv.getId())).thenReturn(Optional.of(original));
+        when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
+
+        ChatMessageResponse resp = service.sendMessage(gestorPrincipal, conversationId, "Show, valeu!", original.getId());
+
+        assertEquals(original.getId(), resp.replyToMessageId());
+        assertEquals("Cheguei no ponto A", resp.replyToBody());
+        assertEquals(d.getAppUserId(), resp.replyToSenderUserId());
+    }
+
+    @Test
+    void editMessageRejeitaQuemNaoEOAutor() {
+        UUID conversationId = UUID.randomUUID();
+        Driver d = driverComLogin();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, d.getId(), null);
+        ChatMessage doMotorista = new ChatMessage(conv.getId(), d.getAppUserId(), "oi");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(doMotorista.getId(), conv.getId())).thenReturn(Optional.of(doMotorista));
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.editMessage(gestorPrincipal, conversationId, doMotorista.getId(), "texto novo"));
+    }
+
+    @Test
+    void editMessageRejeitaForaDaJanelaDeRetencao() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage antiga = new ChatMessage(conv.getId(), gestorUserId, "oi");
+        antiga.removerDoServidor();
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(antiga.getId(), conv.getId())).thenReturn(Optional.of(antiga));
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.editMessage(gestorPrincipal, conversationId, antiga.getId(), "texto novo"));
+    }
+
+    @Test
+    void editMessageFuncionaParaOProprioAutorDentroDaJanela() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage minha = new ChatMessage(conv.getId(), gestorUserId, "texto original");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(minha.getId(), conv.getId())).thenReturn(Optional.of(minha));
+
+        ChatMessageResponse resp = service.editMessage(gestorPrincipal, conversationId, minha.getId(), "texto corrigido");
+
+        assertEquals("texto corrigido", resp.body());
+        org.junit.jupiter.api.Assertions.assertNotNull(resp.editedAt());
+    }
+
+    @Test
+    void deleteMessageEscondeOBodyMasMantemALinha() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage minha = new ChatMessage(conv.getId(), gestorUserId, "texto original");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(minha.getId(), conv.getId())).thenReturn(Optional.of(minha));
+
+        ChatMessageResponse resp = service.deleteMessage(gestorPrincipal, conversationId, minha.getId());
+
+        assertEquals(null, resp.body());
+        org.junit.jupiter.api.Assertions.assertNotNull(resp.deletedAt());
+    }
+
+    @Test
+    void forwardMessageValidaParticipacaoNaConversaDeDestino() {
+        UUID sourceConversationId = UUID.randomUUID();
+        UUID targetConversationId = UUID.randomUUID();
+        ChatConversation source = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage original = new ChatMessage(source.getId(), gestorUserId, "olha essa rota aqui");
+        UUID outroGestor = UUID.randomUUID();
+        ChatConversation targetDeOutraPessoa = new ChatConversation(tenantId, outroGestor, UUID.randomUUID(), null);
+        when(conversations.findByIdAndTenantId(sourceConversationId, tenantId)).thenReturn(Optional.of(source));
+        when(messages.findByIdAndConversationId(original.getId(), source.getId())).thenReturn(Optional.of(original));
+        when(conversations.findByIdAndTenantId(targetConversationId, tenantId)).thenReturn(Optional.of(targetDeOutraPessoa));
+
+        assertThrows(NotFoundException.class,
+                () -> service.forwardMessage(gestorPrincipal, sourceConversationId, original.getId(), targetConversationId));
+    }
+
+    @Test
+    void forwardMessageCriaMensagemNovaNoDestinoComMarcacao() {
+        UUID sourceConversationId = UUID.randomUUID();
+        UUID targetConversationId = UUID.randomUUID();
+        Driver dOrigem = driverComLogin();
+        Driver dDestino = driverComLogin();
+        ChatConversation source = new ChatConversation(tenantId, gestorUserId, dOrigem.getId(), null);
+        ChatMessage original = new ChatMessage(source.getId(), gestorUserId, "olha essa rota aqui");
+        ChatConversation target = new ChatConversation(tenantId, gestorUserId, dDestino.getId(), null);
+        when(conversations.findByIdAndTenantId(sourceConversationId, tenantId)).thenReturn(Optional.of(source));
+        when(messages.findByIdAndConversationId(original.getId(), source.getId())).thenReturn(Optional.of(original));
+        when(conversations.findByIdAndTenantId(targetConversationId, tenantId)).thenReturn(Optional.of(target));
+        when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(drivers.findById(dDestino.getId())).thenReturn(Optional.of(dDestino));
+
+        ChatMessageResponse resp = service.forwardMessage(gestorPrincipal, sourceConversationId, original.getId(), targetConversationId);
+
+        assertEquals("olha essa rota aqui", resp.body());
+        assertEquals(original.getId(), resp.forwardedFromMessageId());
+        assertEquals(target.getId(), resp.conversationId());
+    }
+
+    @Test
+    void reactToMessageSubstituiReacaoAnteriorDaMesmaPessoa() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage msg = new ChatMessage(conv.getId(), gestorUserId, "oi");
+        ChatMessageReaction anterior = new ChatMessageReaction(msg.getId(), gestorUserId, "👍");
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(msg.getId(), conv.getId())).thenReturn(Optional.of(msg));
+        when(reactions.findByMessageIdAndUserId(msg.getId(), gestorUserId)).thenReturn(Optional.of(anterior));
+        when(reactions.findAllByMessageIdIn(List.of(msg.getId())))
+                .thenReturn(List.of(new ChatMessageReaction(msg.getId(), gestorUserId, "❤️")));
+
+        List<ChatReactionResponse> result = service.reactToMessage(gestorPrincipal, conversationId, msg.getId(), "❤️");
+
+        verify(reactions).delete(anterior);
+        verify(reactions).save(any(ChatMessageReaction.class));
+        assertEquals(1, result.size());
+        assertEquals("❤️", result.get(0).emoji());
+    }
+
+    @Test
+    void reactToMessageRejeitaForaDaJanelaDeRetencao() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage antiga = new ChatMessage(conv.getId(), gestorUserId, "oi");
+        antiga.removerDoServidor();
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(antiga.getId(), conv.getId())).thenReturn(Optional.of(antiga));
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.reactToMessage(gestorPrincipal, conversationId, antiga.getId(), "👍"));
     }
 }
