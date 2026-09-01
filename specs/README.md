@@ -21,6 +21,7 @@ Antes de escrever código, leia os arquivos nesta ordem:
 | 13 | `13-viagem-redonda-turismo.md` | Ida e volta vinculadas (`viagem_id`) para frota de turismo — mesmo padrão de rota, sem entidade nova |
 | 14 | `14-notificacao-passageiro.md` | Notificação automática ao passageiro/cliente final via bot Telegram, reaproveitando `route_stop` e `route_plan_event` |
 | 15 | `15-equipe-e-permissoes.md` | Papéis restritos por tenant (Despachante, Visualizador), convite de equipe, matriz de QA de permissão |
+| 16 | `16-status-das-funcionalidades.md` | Panorama do produto: o que está implementado, parcial ou planejado, conferido contra o código — não é spec de feature nova, é o resumo pra "isso já tem?" |
 
 ## Como usar isso com o Claude Code
 
