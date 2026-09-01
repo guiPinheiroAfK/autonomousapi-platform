@@ -617,6 +617,10 @@
       "confirmarExcluir": "¿Eliminar este pasajero del registro? Esta acción no se puede deshacer.",
       "editarPassageiro": "Editar pasajero",
       "novoPassageiroTitulo": "Nuevo pasajero",
+      "copiarLinkTelegram": "Copiar enlace de vínculo de Telegram",
+      "telegramLinkCopiado": "¡Enlace copiado! Envíaselo al pasajero (WhatsApp, SMS o de palabra) — toca el enlace y presiona /start para activar los avisos automáticos.",
+      "telegramLinkCopiadoJaVinculado": "Enlace copiado. Este pasajero ya está vinculado — reenvía solo si cambió de cuenta de Telegram.",
+      "telegramNaoConfigurado": "El bot de Telegram todavía no está configurado en esta instancia.",
       "form": {
         "nome": "Nombre", "nomePlaceholder": "Maria Silva",
         "telefone": "Teléfono", "telefonePlaceholder": "+55 45 99999-0000",
@@ -625,7 +629,8 @@
       "toasts": {
         "falhaCarregar": "Error al cargar pasajeros", "atualizado": "Pasajero actualizado.",
         "cadastrado": "Pasajero registrado.", "falhaSalvar": "Error al guardar el pasajero",
-        "excluido": "Pasajero eliminado.", "falhaExcluir": "Error al eliminar el pasajero"
+        "excluido": "Pasajero eliminado.", "falhaExcluir": "Error al eliminar el pasajero",
+        "falhaTelegramLink": "Error al generar el enlace de Telegram"
       }
     },
     "team": {

@@ -13,6 +13,7 @@ import { coreApi, type RoutePlanResponse, type RouteStopResponse } from '../api/
 export function MinhaRotaScreen() {
   const [route, setRoute] = useState<RoutePlanResponse | null | undefined>(undefined);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [notifyingId, setNotifyingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -36,6 +37,21 @@ export function MinhaRotaScreen() {
       Alert.alert('Falha ao concluir parada', e instanceof Error ? e.message : 'Erro desconhecido');
     } finally {
       setCompletingId(null);
+    }
+  }
+
+  /** Spec 14: disparo manual, sob demanda — cobre atraso, mudança de ponto de encontro
+   *  combinada por telefone, ou qualquer coisa fora do timing dos 3 gatilhos automáticos.
+   *  Fire-and-forget de verdade: sem confirmação de entrega, só um toast de "enviado". */
+  async function avisarPassageiro(stopId: string) {
+    setNotifyingId(stopId);
+    try {
+      await coreApi.routePlans.notifyPassenger(stopId);
+      Alert.alert('Aviso enviado', 'O passageiro foi notificado.');
+    } catch (e) {
+      Alert.alert('Falha ao avisar passageiro', e instanceof Error ? e.message : 'Erro desconhecido');
+    } finally {
+      setNotifyingId(null);
     }
   }
 
@@ -108,6 +124,17 @@ export function MinhaRotaScreen() {
             disabled={completingId === proxima.id}
           />
         )}
+        {proxima?.passengerId && (
+          <TouchableOpacity
+            style={styles.botaoAvisar}
+            onPress={() => avisarPassageiro(proxima.id)}
+            disabled={notifyingId === proxima.id}
+          >
+            <Text style={styles.botaoAvisarTexto}>
+              {notifyingId === proxima.id ? 'Enviando...' : 'Avisar passageiro'}
+            </Text>
+          </TouchableOpacity>
+        )}
         <SolicitacoesFooter onSolicitar={solicitar} onAtualizar={refresh} />
       </ScrollView>
     );
@@ -130,15 +157,26 @@ export function MinhaRotaScreen() {
               </Text>
               <Text style={styles.paradaTipo}>{s.tipo === 'COLETA' ? 'Coleta' : 'Entrega'}</Text>
             </View>
-            {!concluida && (
-              <TouchableOpacity
-                style={styles.botaoConcluir}
-                onPress={() => concluir(s.id)}
-                disabled={completingId === s.id}
-              >
-                <Text style={styles.botaoConcluirTexto}>{completingId === s.id ? 'Marcando...' : 'Concluir'}</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.paradaAcoes}>
+              {!concluida && (
+                <TouchableOpacity
+                  style={styles.botaoConcluir}
+                  onPress={() => concluir(s.id)}
+                  disabled={completingId === s.id}
+                >
+                  <Text style={styles.botaoConcluirTexto}>{completingId === s.id ? 'Marcando...' : 'Concluir'}</Text>
+                </TouchableOpacity>
+              )}
+              {s.passengerId && (
+                <TouchableOpacity
+                  style={styles.botaoAvisarPequeno}
+                  onPress={() => avisarPassageiro(s.id)}
+                  disabled={notifyingId === s.id}
+                >
+                  <Text style={styles.botaoAvisarTexto}>{notifyingId === s.id ? 'Enviando...' : 'Avisar'}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         );
       })}
@@ -229,6 +267,22 @@ const styles = StyleSheet.create({
   paradaTipo: { fontSize: 12, color: '#888', marginTop: 2 },
   botaoConcluir: { backgroundColor: '#1f3a5f', borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12 },
   botaoConcluirTexto: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  paradaAcoes: { gap: 6, alignItems: 'flex-end' },
+  botaoAvisarPequeno: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  botaoAvisar: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  botaoAvisarTexto: { fontSize: 12, color: '#555', fontWeight: '600' },
   transferLinha: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   transferRotulo: { fontSize: 11, color: '#888', textTransform: 'uppercase' },
 });

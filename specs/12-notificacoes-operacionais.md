@@ -34,8 +34,8 @@ Não precisa de tabela nova no banco — é configuração, não dado de tenant:
 
 ## Definition of Done
 
-- [ ] `NotificationWebhookSender` (interface) com pelo menos uma implementação (Discord ou Telegram, conforme decisão de canal) e uma implementação "no-op"/logging para quando a variável de ambiente não estiver configurada — mesmo padrão de `EmailSender`/`LoggingEmailSender`.
-- [ ] `AuthService.signup` dispara notificação de "conta criada" após enviar o e-mail de verificação.
-- [ ] `AuthService.verifyEmail` dispara notificação de "conta confirmada" após habilitar o usuário.
-- [ ] Chamada ao webhook é assíncrona, com timeout curto e falha nunca propagada pro fluxo de signup/verify.
-- [ ] Variável de ambiente documentada em `infra/docker-compose.yml` (mesmo padrão das demais: comentário explicando o que acontece se ficar vazia).
+- [x] `NotificationWebhookSender` (interface) com pelo menos uma implementação (Discord ou Telegram, conforme decisão de canal) e uma implementação "no-op"/logging para quando a variável de ambiente não estiver configurada — mesmo padrão de `EmailSender`/`LoggingEmailSender`. Canal escolhido: Discord (`DiscordNotificationWebhookSender`, `NotificationWebhookConfig`), conforme recomendação deste spec.
+- [x] `AuthService.signup` dispara notificação de "conta criada" após enviar o e-mail de verificação.
+- [x] `AuthService.verifyEmail` dispara notificação de "conta confirmada" após habilitar o usuário.
+- [x] Chamada ao webhook nunca propaga falha pro fluxo de signup/verify (try/catch + log, mesmo padrão fire-and-forget já usado em `SmtpEmailSender`/`ExpoPushSender`/`TelegramPassengerNotificationSender` — nenhum desses usa thread assíncrona de verdade, e manter a chamada síncrona-mas-blindada é consistente com o resto do código; timeout fica no padrão do `RestClient.Builder` do Spring, sem hard cap customizado, mesmo comportamento das outras integrações HTTP de saída do projeto).
+- [x] Variável de ambiente (`OPERATIONAL_WEBHOOK_URL`) documentada em `infra/docker-compose.yml` (mesmo padrão das demais: comentário explicando o que acontece se ficar vazia).

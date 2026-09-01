@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/telegram/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["webhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/team/invite": {
         parameters: {
             query?: never;
@@ -356,6 +372,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/routes/plans/stops/{stopId}/notify-passenger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["notifyPassenger"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/routes/plans/stops/{stopId}/complete": {
         parameters: {
             query?: never;
@@ -398,6 +430,22 @@ export interface paths {
         get: operations["list_5"];
         put?: never;
         post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/passengers/{id}/telegram-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["telegramLink"];
+        put?: never;
+        post: operations["regenerateTelegramLink"];
         delete?: never;
         options?: never;
         head?: never;
@@ -813,7 +861,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["webhook"];
+        post: operations["webhook_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1840,6 +1888,7 @@ export interface components {
             /** Format: int32 */
             received?: number;
         };
+        JsonNode: Record<string, never>;
         CreateTeamInviteRequest: {
             email: string;
             nome: string;
@@ -1946,6 +1995,10 @@ export interface components {
         RegisterDeviceRequest: {
             token: string;
             plataforma?: string;
+        };
+        TelegramLinkResponse: {
+            linkUrl?: string;
+            vinculado?: boolean;
         };
         NotifyDriverRequest: {
             title: string;
@@ -3130,6 +3183,30 @@ export interface operations {
             };
         };
     };
+    webhook: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Telegram-Bot-Api-Secret-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JsonNode"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     invite: {
         parameters: {
             query?: never;
@@ -3273,6 +3350,26 @@ export interface operations {
             };
         };
     };
+    notifyPassenger: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                stopId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     completeStop: {
         parameters: {
             query?: never;
@@ -3357,6 +3454,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PassengerResponse"];
+                };
+            };
+        };
+    };
+    telegramLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TelegramLinkResponse"];
+                };
+            };
+        };
+    };
+    regenerateTelegramLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TelegramLinkResponse"];
                 };
             };
         };
@@ -4142,7 +4283,7 @@ export interface operations {
             };
         };
     };
-    webhook: {
+    webhook_1: {
         parameters: {
             query?: never;
             header: {

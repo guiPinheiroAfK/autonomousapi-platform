@@ -40,11 +40,30 @@ Mesma regra já estabelecida em `12-notificacoes-operacionais.md`: chamada fire-
 
 ## Definition of Done
 
-- [ ] Entidade `passenger` (nome, telefone, tenant-scoped) com CRUD próprio no web, mesmo padrão de `collection_point`.
-- [ ] `route_stop.passenger_id` (nullable, FK) adicionado.
-- [ ] Interface `PassengerNotificationSender` com implementação Telegram; no-op quando não configurado (mesmo padrão de `NotificationWebhookSender`, spec 12).
-- [ ] Notificação automática disparada nos 3 eventos listados, reaproveitando `route_plan_event` como gatilho.
-- [ ] Botão "Avisar passageiro" no app do motorista (mobile e/ou web) pra disparo manual, na parada com `passenger_id`.
-- [ ] Mensagem inicial identifica claramente a empresa remetente.
-- [ ] Exclusão de passageiro do cadastro disponível (dado de terceiro, sem justificativa de retenção indefinida).
-- [ ] Cancelamento de rota com passageiro já notificado dispara aviso de cancelamento.
+- [x] Entidade `passenger` (nome, telefone, tenant-scoped) com CRUD próprio no web, mesmo padrão de `collection_point` — cadastro dobrado direto no fluxo de criar rota, não tela própria (decisão de UX revista, ver `RoutePlansPage.tsx`).
+- [x] `route_stop.passenger_id` (nullable, FK) adicionado.
+- [x] Interface `PassengerNotificationSender` com implementação Telegram; no-op quando não configurado (`LoggingPassengerNotificationSender`, mesmo padrão de `EmailSender`/`PushSender`) — migration V32.
+- [x] Notificação automática disparada nos 3 eventos listados, reaproveitando as mesmas transições de `RoutePlanService` que já gravam `route_plan_event` (ATRIBUIDA → confirmação; primeira `parada_concluida` da rota → "a caminho"; `parada_concluida` da própria parada → embarque confirmado).
+- [x] Botão "Avisar passageiro" no app do motorista (mobile, `MinhaRotaScreen.tsx`) pra disparo manual, na parada com `passenger_id` — `POST /v1/routes/plans/stops/{stopId}/notify-passenger`.
+- [x] Mensagem inicial identifica claramente a empresa remetente — toda mensagem (não só a primeira) começa com o nome do tenant, incluindo a própria confirmação de vínculo do webhook.
+- [x] Exclusão de passageiro do cadastro disponível (dado de terceiro, sem justificativa de retenção indefinida) — já existia (`PassengerService.delete`, exclusão real, sem soft-delete).
+- [x] Cancelamento de rota com passageiro já notificado dispara aviso de cancelamento — `RoutePlan.passageirosNotificados` controla isso.
+
+**Resolvido durante a implementação — vínculo Telegram por deep-link:** Telegram só deixa um
+bot mandar mensagem pra quem já iniciou conversa com ELE antes (endereça por chat_id, não
+por telefone) — a spec original não detalhava como resolver isso. Decisão: `passenger`
+ganha `telegram_link_token` (gerado na criação) e `telegram_chat_id` (nulo até vincular); o
+gestor/despachante copia um link `t.me/<bot>?start=<token>` (`GET/POST
+/v1/passengers/{id}/telegram-link`) e manda pro passageiro uma vez (WhatsApp, SMS,
+verbalmente) — passageiro clica, dá `/start`, o webhook (`POST /v1/telegram/webhook`,
+público, validado por `X-Telegram-Bot-Api-Secret-Token`) grava o `chat_id`. Dali em diante,
+notificação automática funciona sozinha. Testado ponta a ponta contra o backend real: link
+sem bot configurado devolve `null` (sem UI quebrada), webhook simulado vincula corretamente,
+e os 5 gatilhos (vínculo, confirmação, a caminho, embarque, cancelamento) dispararam a
+mensagem certa, na ordem certa, identificando a empresa.
+
+**Status:** implementado (2026-09-01). Ativação em produção depende de criar o bot no
+Telegram (`@BotFather`) e configurar `TELEGRAM_BOT_TOKEN`/`TELEGRAM_BOT_USERNAME`/
+`TELEGRAM_WEBHOOK_SECRET` + registrar o webhook via `setWebhook` — mesmo padrão de "código
+pronto, ativação em produção pendente de credencial" já usado pro Google OAuth (spec 08,
+item 13).

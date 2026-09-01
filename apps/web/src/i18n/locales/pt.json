@@ -635,6 +635,10 @@
       "confirmarExcluir": "Excluir este passageiro do cadastro? Essa ação não pode ser desfeita.",
       "editarPassageiro": "Editar passageiro",
       "novoPassageiroTitulo": "Novo passageiro",
+      "copiarLinkTelegram": "Copiar link de vínculo do Telegram",
+      "telegramLinkCopiado": "Link copiado! Envie pro passageiro (WhatsApp, SMS ou verbalmente) — ele clica e dá /start pra ativar os avisos automáticos.",
+      "telegramLinkCopiadoJaVinculado": "Link copiado. Esse passageiro já está vinculado — só reenvie se ele trocou de conta do Telegram.",
+      "telegramNaoConfigurado": "Bot do Telegram ainda não configurado nesta instância.",
       "form": {
         "nome": "Nome", "nomePlaceholder": "Maria Silva",
         "telefone": "Telefone", "telefonePlaceholder": "+55 45 99999-0000",
@@ -643,7 +647,8 @@
       "toasts": {
         "falhaCarregar": "Erro ao carregar passageiros", "atualizado": "Passageiro atualizado.",
         "cadastrado": "Passageiro cadastrado.", "falhaSalvar": "Falha ao salvar passageiro",
-        "excluido": "Passageiro excluído.", "falhaExcluir": "Falha ao excluir passageiro"
+        "excluido": "Passageiro excluído.", "falhaExcluir": "Falha ao excluir passageiro",
+        "falhaTelegramLink": "Falha ao gerar link do Telegram"
       }
     },
     "team": {

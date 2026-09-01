@@ -2,6 +2,7 @@ package com.autonomousapi.core.passenger;
 
 import com.autonomousapi.core.passenger.dto.PassengerRequest;
 import com.autonomousapi.core.passenger.dto.PassengerResponse;
+import com.autonomousapi.core.passenger.dto.TelegramLinkResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -57,6 +58,21 @@ public class PassengerController {
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         service.delete(principal(auth), id);
+    }
+
+    /** Link/QR pra vincular o Telegram do passageiro (spec 14) — Despachante também pode
+     *  ver, é ele quem mais monta rota e cadastra contato novo na hora. */
+    @GetMapping("/{id}/telegram-link")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    public TelegramLinkResponse telegramLink(@PathVariable UUID id, Authentication auth) {
+        return service.telegramLink(principal(auth), id);
+    }
+
+    /** Gera um token novo — usado se o gestor quiser reenviar o link (spec 14). */
+    @PostMapping("/{id}/telegram-link")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    public TelegramLinkResponse regenerateTelegramLink(@PathVariable UUID id, Authentication auth) {
+        return service.regenerateTelegramLink(principal(auth), id);
     }
 
     private JwtPrincipal principal(Authentication auth) {

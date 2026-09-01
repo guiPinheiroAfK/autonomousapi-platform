@@ -151,6 +151,7 @@ export interface RouteStopResponse {
   lat: number;
   lon: number;
   collectionPointId: string | null;
+  passengerId: string | null;
   janelaInicio: string | null;
   janelaFim: string | null;
   ordemSugerida: number;
@@ -181,12 +182,72 @@ export function setAuthToken(token: string | null): void {
   authToken = token;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+let refreshTokenValue: string | null = null;
+let onTokensRefreshed: ((accessToken: string, refreshToken: string) => void) | null = null;
+let refreshInFlight: Promise<boolean> | null = null;
+
+/** Chamado pelo App ao logar/restaurar sessão/deslogar — espelha `setAuthToken`. */
+export function setRefreshToken(token: string | null): void {
+  refreshTokenValue = token;
+}
+
+/** Chamado pelo App pra persistir o par novo de tokens no SecureStore sempre que o
+ *  refresh silencioso (abaixo) renova a sessão sozinha, sem o motorista perceber. */
+export function setTokensRefreshedHandler(
+  fn: ((accessToken: string, refreshToken: string) => void) | null,
+): void {
+  onTokensRefreshed = fn;
+}
+
+/**
+ * Refresh silencioso — mesmo padrão do client web (`apps/web/src/api/client.ts`). Sem
+ * isso, access token de 15min expirando com o app em segundo plano (ou reaberto depois de
+ * um tempo fechado) jogava pro login de novo mesmo com um refresh token de 30 dias válido
+ * guardado à toa no SecureStore — achado nesta sessão (grava um dado que nunca era lido de
+ * volta). `fetch` cru, não `request`: `request` chamando refresh chamando `request` de
+ * novo é recursão sem necessidade, e o endpoint de refresh já é público (sem Bearer).
+ *
+ * Dedup via `refreshInFlight`: o backend ROTACIONA o refresh token a cada uso (revoga o
+ * antigo, emite um novo) — duas chamadas tomando 401 ao mesmo tempo, cada uma tentando seu
+ * próprio refresh, faria a segunda chegar com token já revogado pela primeira e falhar à
+ * toa. Uma promise compartilhada garante um refresh só por N requisições simultâneas.
+ */
+async function refreshTokens(): Promise<boolean> {
+  if (!refreshTokenValue) return false;
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const res = await fetch(`${CORE_API_URL}/v1/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: refreshTokenValue }),
+        });
+        if (!res.ok) return false;
+        const data = (await res.json()) as TokenResponse;
+        if (!data.accessToken || !data.refreshToken) return false;
+        authToken = data.accessToken;
+        refreshTokenValue = data.refreshToken;
+        onTokensRefreshed?.(data.accessToken, data.refreshToken);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+  }
+  return refreshInFlight;
+}
+
+async function request<T>(path: string, init?: RequestInit, isRetryAfterRefresh = false): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
   const res = await fetch(`${CORE_API_URL}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
   if (!res.ok) {
+    if (res.status === 401 && !isRetryAfterRefresh && (await refreshTokens())) {
+      return request<T>(path, init, true);
+    }
     throw new Error(`core-api ${res.status} em ${path}`);
   }
   // Corpo vazio não é só 204: um controller que devolve null (ex. "sem designação
@@ -285,5 +346,9 @@ export const coreApi = {
     active: () => request<RoutePlanResponse | null>('/v1/routes/plans/active'),
     completeStop: (stopId: string) =>
       request<RouteStopResponse>(`/v1/routes/plans/stops/${stopId}/complete`, { method: 'POST' }),
+    /** Botão "Avisar passageiro" (spec 14) — disparo manual, sob demanda. Sem corpo de
+     *  resposta: falha de envio nunca aparece pro motorista (fire-and-forget). */
+    notifyPassenger: (stopId: string) =>
+      request<void>(`/v1/routes/plans/stops/${stopId}/notify-passenger`, { method: 'POST' }),
   },
 };

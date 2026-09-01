@@ -56,8 +56,9 @@ contra o texto dos specs.
 - 🚧 **Avaliação automática** — existe `DriverRatingAuto`/`DriverAutoRatingJob` no código,
   mas o spec 06 marca essa peça como dependente do pipeline de GPS maduro (Fase 3); vale
   conferir a maturidade real antes de anunciar como pronta.
-- 📋 **Consentimento de avaliação de desempenho** no fluxo de onboarding do motorista —
-  pendente (spec 06, DoD).
+- ✅ **Consentimento de avaliação de desempenho** no fluxo de onboarding do motorista —
+  `LocationConsentScreen.tsx` (PR #50); DoD do spec 06 estava desatualizado, item já
+  implementado.
 
 ## Ordens de serviço e manutenção
 
@@ -81,10 +82,16 @@ contra o texto dos specs.
   0020).
 - ✅ **App mobile mostra a rota atribuída** e permite concluir parada (`MinhaRotaScreen.tsx`,
   spec 11).
-- 📋 **Notificação automática ao passageiro** (Telegram) — o cadastro do contato já existe
-  (item acima), mas o disparo automático de "motorista a caminho"/"chegou"/"cancelada" via
-  bot **ainda não foi construído** (spec 14, parte 2 — `PassengerNotificationSender` não
-  existe no código).
+- ✅ **Notificação automática ao passageiro** (Telegram) — confirmação, "a caminho",
+  embarque confirmado e cancelamento disparam sozinhos nas transições que
+  `RoutePlanService` já grava; botão "Avisar passageiro" no app do motorista pra disparo
+  manual. Vínculo por deep-link (`t.me/<bot>?start=<token>`, o passageiro clica e dá
+  `/start` uma vez) — Telegram só deixa bot mandar mensagem pra quem já iniciou conversa
+  com ele antes (spec 14, achado na implementação). Testado ponta a ponta contra o
+  backend real (webhook simulado, 5 gatilhos confirmados via log). **Ativação em produção
+  pendente** de criar o bot (`@BotFather`) e configurar `TELEGRAM_BOT_TOKEN`/
+  `TELEGRAM_BOT_USERNAME`/`TELEGRAM_WEBHOOK_SECRET` — mesmo padrão do Google OAuth (spec
+  08, item 13).
 - 📋 **Gaps priorizados restantes do levantamento de rota** — push consistente entre os dois
   caminhos de atribuição, gestor acompanhar progresso em tempo real, fallback do OSRM
   visível pro gestor, edição de rota já atribuída (hoje o paliativo é cancelar e recriar) —
@@ -124,10 +131,13 @@ contra o texto dos specs.
   (spec 08, item 12).
 - ✅ **Push** — `PushNotificationService`, usado por chat, alertas de orçamento/CNH/manutenção
   (ADR 0016).
-- 📋 **Notificação operacional interna** (Discord/Telegram avisando signup/confirmação de
-  conta pro time) — spec 12 escrita, `NotificationWebhookSender` **não existe no código
-  ainda**. Uso interno, não é feature de cliente final.
-- 📋 **Notificação automática ao passageiro** — ver seção "Rotas" acima.
+- ✅ **Notificação operacional interna** — Discord "Incoming Webhook" avisa o time no
+  signup e na confirmação de e-mail (`NotificationWebhookSender`/
+  `DiscordNotificationWebhookSender`, spec 12). Uso interno, não é feature de cliente
+  final. **Ativação em produção pendente** de criar o webhook no canal do Discord e
+  configurar `OPERATIONAL_WEBHOOK_URL` — mesmo padrão do Google OAuth/Telegram (spec 08,
+  item 13).
+- ✅ **Notificação automática ao passageiro** — ver seção "Rotas, coleta e entrega" acima.
 
 ## Pontos de recarga elétrica
 
@@ -161,6 +171,11 @@ contra o texto dos specs.
   read-only, ocorrência, histórico de viagem, chat (spec 07).
 - ✅ **Rastreamento de GPS sobrevive à troca de aba** — hook levantado pra `HomeTabs`, achado
   e corrigido nesta sessão (bug de perda de dado, não só performance).
+- ✅ **Refresh de sessão silencioso** — o app salvava o refresh token no SecureStore desde o
+  início, mas nunca o usava (achado nesta sessão numa segunda revisão); access token
+  expirado (15min) jogava pro login de novo mesmo com refresh token de 30 dias ainda
+  válido guardado à toa. Corrigido espelhando o client web: `request()` tenta renovar a
+  sessão sozinho num 401 antes de desistir.
 - 📋 **Ações novas do chat (responder/editar/excluir/encaminhar/reagir) só no navegador** —
   o app nativo (`apps/mobile`) ainda não ganhou essas ações (ADR 0022, "fora de escopo").
 

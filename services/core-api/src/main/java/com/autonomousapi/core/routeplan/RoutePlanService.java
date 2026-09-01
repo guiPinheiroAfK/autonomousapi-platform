@@ -10,6 +10,7 @@ import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.error.RoutePlanAlreadyAssignedException;
 import com.autonomousapi.core.error.RoutePlanInvalidException;
 import com.autonomousapi.core.passenger.PassengerRepository;
+import com.autonomousapi.core.passenger.notification.PassengerNotificationService;
 import com.autonomousapi.core.pricing.RouteCostEstimator;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.RouteStopResponse;
@@ -64,6 +65,7 @@ public class RoutePlanService {
     private final RouteMatrixService routeMatrix;
     private final OrToolsRouteOptimizer optimizer;
     private final RouteCostEstimator costEstimator;
+    private final PassengerNotificationService passengerNotifications;
 
     public RoutePlanService(
             RoutePlanRepository routePlans,
@@ -76,7 +78,8 @@ public class RoutePlanService {
             CurrentDriverResolver driverResolver,
             RouteMatrixService routeMatrix,
             OrToolsRouteOptimizer optimizer,
-            RouteCostEstimator costEstimator) {
+            RouteCostEstimator costEstimator,
+            PassengerNotificationService passengerNotifications) {
         this.routePlans = routePlans;
         this.routeStops = routeStops;
         this.routePlanEvents = routePlanEvents;
@@ -88,6 +91,7 @@ public class RoutePlanService {
         this.routeMatrix = routeMatrix;
         this.optimizer = optimizer;
         this.costEstimator = costEstimator;
+        this.passengerNotifications = passengerNotifications;
     }
 
     private void registrarEvento(UUID routePlanId, RoutePlanEventType tipo, UUID atorUserId, Map<String, Object> metadado) {
@@ -331,6 +335,11 @@ public class RoutePlanService {
                 registrarEvento(plan.getId(), RoutePlanEventType.REATRIBUIDA, gestorPrincipal.userId(), metadado);
             } else {
                 registrarEvento(plan.getId(), RoutePlanEventType.ATRIBUIDA, gestorPrincipal.userId(), metadado);
+                // Spec 14: passageiro avisado que a viagem está confirmada, assim que a
+                // rota ganha motorista — fire-and-forget, nunca derruba a atribuição.
+                if (passengerNotifications.notificarConfirmacao(plan)) {
+                    plan.marcarPassageirosNotificados();
+                }
             }
         }
         return toResponse(plan);
@@ -369,6 +378,9 @@ public class RoutePlanService {
         metadado.put("canal", viaChat ? "chat" : "tela");
         plan.avancarStatus(RoutePlanStatus.CANCELADA);
         registrarEvento(plan.getId(), RoutePlanEventType.CANCELADA, gestorPrincipal.userId(), metadado);
+        // Spec 14: só avisa quem já tinha recebido a confirmação — não deixar "confirmado"
+        // ser a última mensagem que o passageiro recebeu de uma viagem que não está mais de pé.
+        passengerNotifications.notificarCancelamento(plan);
         return toResponse(plan);
     }
 
@@ -427,13 +439,33 @@ public class RoutePlanService {
 
         if (plan.getStatus() == RoutePlanStatus.PLANEJADA) {
             plan.avancarStatus(RoutePlanStatus.EM_ANDAMENTO);
+            // Spec 14: primeira parada concluída da rota = "motorista a caminho" pra todos
+            // os passageiros da rota, não só o desta parada.
+            passengerNotifications.notificarACaminho(plan);
         }
+        // Spec 14: embarque confirmado é por parada — cada passageiro só sabe da própria.
+        passengerNotifications.notificarEmbarqueConfirmado(plan, stop);
         boolean todasConcluidas = todas.stream().allMatch(s -> s.getId().equals(stop.getId()) || s.isConcluida());
         if (todasConcluidas) {
             plan.avancarStatus(RoutePlanStatus.CONCLUIDA);
             registrarEvento(plan.getId(), RoutePlanEventType.CONCLUIDA, driverPrincipal.userId(), null);
         }
         return RouteStopResponse.from(stop);
+    }
+
+    /** Botão "Avisar passageiro" (spec 14) — disparo manual, sob demanda, sem esperar o
+     *  gatilho automático (ex. atraso, mudança de ponto de encontro combinada por telefone).
+     *  Mesma checagem de posse de {@link #completeStop}: parada que não é do motorista
+     *  devolve 404 genérico, nunca revela que a rota existe. */
+    @Transactional(readOnly = true)
+    public void notifyPassenger(JwtPrincipal driverPrincipal, UUID stopId) {
+        Driver driver = driverResolver.resolve(driverPrincipal);
+        RouteStop stop = Lookups.orNotFound(routeStops.findById(stopId), "Parada não encontrada.");
+        RoutePlan plan = Lookups.orNotFound(routePlans.findById(stop.getRoutePlanId()), "Parada não encontrada.");
+        if (!driver.getId().equals(plan.getDriverId())) {
+            throw new NotFoundException("Parada não encontrada.");
+        }
+        passengerNotifications.notificarManualmente(plan, stop);
     }
 
     private RoutePlanResponse toResponse(RoutePlan plan) {
