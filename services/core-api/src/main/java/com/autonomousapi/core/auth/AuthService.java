@@ -13,6 +13,7 @@ import com.autonomousapi.core.error.InvalidCredentialsException;
 import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
 import com.autonomousapi.core.error.InvalidRefreshTokenException;
 import com.autonomousapi.core.error.InvalidVerificationTokenException;
+import com.autonomousapi.core.notification.webhook.NotificationWebhookSender;
 import com.autonomousapi.core.security.jwt.JwtService;
 import com.autonomousapi.core.tenant.Tenant;
 import com.autonomousapi.core.tenant.TenantRepository;
@@ -52,6 +53,7 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokens;
     private final SubscriptionRepository subscriptions;
     private final EmailSender emailSender;
+    private final NotificationWebhookSender notificationWebhookSender;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Duration refreshTtl;
@@ -71,6 +73,7 @@ public class AuthService {
             PasswordResetTokenRepository passwordResetTokens,
             SubscriptionRepository subscriptions,
             EmailSender emailSender,
+            NotificationWebhookSender notificationWebhookSender,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
@@ -86,6 +89,7 @@ public class AuthService {
         this.passwordResetTokens = passwordResetTokens;
         this.subscriptions = subscriptions;
         this.emailSender = emailSender;
+        this.notificationWebhookSender = notificationWebhookSender;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
@@ -127,6 +131,8 @@ public class AuthService {
         users.save(user);
         subscriptions.save(Subscription.trial(tenant.getId(), Instant.now().plus(Duration.ofDays(TRIAL_DAYS))));
         sendVerificationEmail(user);
+        notificationWebhookSender.notify(
+                "novo signup: " + tenant.getName() + " / " + user.getEmail() + ", aguardando confirmacao");
         return SignupResponse.pendingVerification(user.getEmail());
     }
 
@@ -209,6 +215,11 @@ public class AuthService {
         verificationTokens.save(token);
         user.setEnabled(true);
         users.save(user);
+
+        String tenantName = tenants.findById(user.getTenantId())
+                .map(Tenant::getName)
+                .orElse(user.getTenantId().toString());
+        notificationWebhookSender.notify("conta confirmada: " + tenantName + " / " + user.getEmail());
 
         return issueTokens(user);
     }

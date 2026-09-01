@@ -19,6 +19,7 @@ import com.autonomousapi.core.email.EmailSender;
 import com.autonomousapi.core.error.GoogleAuthNotConfiguredException;
 import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
 import com.autonomousapi.core.error.InvalidVerificationTokenException;
+import com.autonomousapi.core.notification.webhook.NotificationWebhookSender;
 import com.autonomousapi.core.security.jwt.JwtService;
 import com.autonomousapi.core.tenant.Tenant;
 import com.autonomousapi.core.tenant.TenantRepository;
@@ -40,13 +41,14 @@ class AuthServiceTest {
     private final PasswordResetTokenRepository passwordResetTokens = mock(PasswordResetTokenRepository.class);
     private final SubscriptionRepository subscriptions = mock(SubscriptionRepository.class);
     private final EmailSender emailSender = mock(EmailSender.class);
+    private final NotificationWebhookSender notificationWebhookSender = mock(NotificationWebhookSender.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final JwtService jwtService = mock(JwtService.class);
 
     private AuthService service() {
         return new AuthService(
                 users, tenants, refreshTokens, verificationTokens, passwordResetTokens, subscriptions, emailSender,
-                passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180", "");
+                notificationWebhookSender, passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180", "");
     }
 
     /** GOOGLE_CLIENT_ID vazio (padrão dev/demo) — o botão nem aparece no front, mas o
@@ -67,6 +69,8 @@ class AuthServiceTest {
         assertEquals("nova@frota.com", response.email());
         verify(subscriptions).save(any());
         verify(emailSender).sendVerificationEmail(org.mockito.ArgumentMatchers.eq("nova@frota.com"), anyString());
+        // Spec 12: signup dispara notificação operacional interna, sem travar a resposta.
+        verify(notificationWebhookSender).notify(org.mockito.ArgumentMatchers.contains("nova@frota.com"));
 
         // O usuário salvo precisa estar desabilitado — é a trava real, não só o texto da resposta.
         var captor = org.mockito.ArgumentCaptor.forClass(User.class);
@@ -101,6 +105,8 @@ class AuthServiceTest {
         assertEquals("access-token", response.accessToken());
         assertEquals(true, user.isEnabled());
         verify(refreshTokens, times(1)).save(any());
+        // Spec 12: confirmação de e-mail também dispara notificação operacional interna.
+        verify(notificationWebhookSender).notify(org.mockito.ArgumentMatchers.contains("confirmar@frota.com"));
     }
 
     @Test

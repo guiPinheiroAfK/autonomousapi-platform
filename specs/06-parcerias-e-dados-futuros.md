@@ -85,9 +85,9 @@ Modelo de dados (schema `core`):
       dependência que bloqueava o teste antes não existe mais.
 - [ ] Fallback gracioso implementado para provedor externo de recarga fora do ar.
       (recarga elétrica não entrou ainda — sem provedor de dado real identificado, ver spec 06 item 1)
-- [ ] Consentimento de avaliação de desempenho incluído no fluxo de onboarding do motorista.
-      (login do motorista via convite já existe, mas o consentimento específico de avaliação
-      de desempenho no fluxo de aceite ainda não foi implementado — item genuinamente pendente)
+- [x] Consentimento de avaliação de desempenho incluído no fluxo de onboarding do motorista.
+      (`LocationConsentScreen.tsx`, PR #50 — DoD estava desatualizado, item já implementado
+      junto com o consentimento de localização, mesma tela, mesmo aceite)
 
 ### Nota sobre FIPE (item 2)
 

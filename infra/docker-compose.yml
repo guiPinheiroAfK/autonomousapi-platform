@@ -104,6 +104,15 @@ services:
       MAIL_SMTP_PASSWORD: ${MAIL_SMTP_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@autonomousapi.com.br}
       WEB_APP_URL: ${WEB_APP_URL:-http://localhost:5180}
+      # Notificação automática ao passageiro via Telegram (spec 14). Vazio por padrão: sem
+      # bot configurado, a mensagem só cai no log (LoggingPassengerNotificationSender).
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      # Notificação operacional interna pro time (spec 12) — Discord "Incoming Webhook" do
+      # canal de acompanhamento (signup/confirmação de conta). Vazio por padrão: sem URL
+      # configurada, a mensagem só cai no log (LoggingNotificationWebhookSender).
+      OPERATIONAL_WEBHOOK_URL: ${OPERATIONAL_WEBHOOK_URL:-}
     depends_on:
       db:
         condition: service_healthy

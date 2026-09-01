@@ -92,6 +92,11 @@ app:
     # Login/cadastro com Google — sem client ID configurado (padrão dev/demo), o endpoint
     # responde 503 com mensagem clara em vez de tentar verificar contra um audience vazio.
     google-client-id: ${GOOGLE_CLIENT_ID:}
+  notification-webhook:
+    # Notificacao operacional interna pro time (spec 12) — Discord "Incoming Webhook" do
+    # canal de acompanhamento. Sem URL configurada (padrao dev/demo), so cai no log
+    # (LoggingNotificationWebhookSender). Nao e feature de cliente final.
+    url: ${OPERATIONAL_WEBHOOK_URL:}
   telegram:
     # Notificação automática ao passageiro (spec 14) — sem token configurado (padrão
     # dev/demo), a mensagem só cai no log (LoggingPassengerNotificationSender).

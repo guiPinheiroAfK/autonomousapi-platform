@@ -56,8 +56,9 @@ contra o texto dos specs.
 - 🚧 **Avaliação automática** — existe `DriverRatingAuto`/`DriverAutoRatingJob` no código,
   mas o spec 06 marca essa peça como dependente do pipeline de GPS maduro (Fase 3); vale
   conferir a maturidade real antes de anunciar como pronta.
-- 📋 **Consentimento de avaliação de desempenho** no fluxo de onboarding do motorista —
-  pendente (spec 06, DoD).
+- ✅ **Consentimento de avaliação de desempenho** no fluxo de onboarding do motorista —
+  `LocationConsentScreen.tsx` (PR #50); DoD do spec 06 estava desatualizado, item já
+  implementado.
 
 ## Ordens de serviço e manutenção
 
@@ -130,9 +131,12 @@ contra o texto dos specs.
   (spec 08, item 12).
 - ✅ **Push** — `PushNotificationService`, usado por chat, alertas de orçamento/CNH/manutenção
   (ADR 0016).
-- 📋 **Notificação operacional interna** (Discord/Telegram avisando signup/confirmação de
-  conta pro time) — spec 12 escrita, `NotificationWebhookSender` **não existe no código
-  ainda**. Uso interno, não é feature de cliente final.
+- ✅ **Notificação operacional interna** — Discord "Incoming Webhook" avisa o time no
+  signup e na confirmação de e-mail (`NotificationWebhookSender`/
+  `DiscordNotificationWebhookSender`, spec 12). Uso interno, não é feature de cliente
+  final. **Ativação em produção pendente** de criar o webhook no canal do Discord e
+  configurar `OPERATIONAL_WEBHOOK_URL` — mesmo padrão do Google OAuth/Telegram (spec 08,
+  item 13).
 - ✅ **Notificação automática ao passageiro** — ver seção "Rotas, coleta e entrega" acima.
 
 ## Pontos de recarga elétrica
