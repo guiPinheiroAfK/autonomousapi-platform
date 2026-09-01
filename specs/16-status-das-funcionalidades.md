@@ -92,9 +92,9 @@ contra o texto dos specs.
   pendente** de criar o bot (`@BotFather`) e configurar `TELEGRAM_BOT_TOKEN`/
   `TELEGRAM_BOT_USERNAME`/`TELEGRAM_WEBHOOK_SECRET` — mesmo padrão do Google OAuth (spec
   08, item 13).
-- 📋 **Gaps priorizados restantes do levantamento de rota** — push consistente entre os dois
-  caminhos de atribuição, gestor acompanhar progresso em tempo real, fallback do OSRM
-  visível pro gestor, edição de rota já atribuída (hoje o paliativo é cancelar e recriar) —
+- ✅ **Gaps priorizados do levantamento de rota** — push consistente entre os dois caminhos
+  de atribuição, gestor acompanhar progresso em tempo real (painel com poll), fallback do
+  OSRM visível pro gestor, edição de rota já `PLANEJADA` (`PUT /v1/routes/plans/{id}`) —
   spec 11, DoD, último item.
 
 ## Chat (mensagens gestor↔motorista)

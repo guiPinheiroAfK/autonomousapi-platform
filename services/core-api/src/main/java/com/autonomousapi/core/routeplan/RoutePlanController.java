@@ -5,8 +5,9 @@ import com.autonomousapi.core.routeplan.dto.AssignDriverRequest;
 import com.autonomousapi.core.routeplan.dto.CreateRoutePlanRequest;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.RouteStopResponse;
-import com.autonomousapi.core.routeplan.dto.StopInput;
 import com.autonomousapi.core.routeplan.dto.SuggestOrderRequest;
+import com.autonomousapi.core.routeplan.dto.SuggestOrderResponse;
+import com.autonomousapi.core.routeplan.dto.UpdateRoutePlanRequest;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,7 +47,7 @@ public class RoutePlanController {
      *  (spec 15) também cria/atribui rota, então também precisa sugerir ordem. */
     @PostMapping("/suggest-order")
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
-    public List<StopInput> suggestOrder(@Valid @RequestBody SuggestOrderRequest req, Authentication auth) {
+    public SuggestOrderResponse suggestOrder(@Valid @RequestBody SuggestOrderRequest req, Authentication auth) {
         return routePlanService.suggestOrder(principal(auth), req.stops());
     }
 
@@ -69,6 +71,22 @@ public class RoutePlanController {
         int cappedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         return PageResponse.from(
                 routePlanService.listForGestor(principal(auth), PageRequest.of(Math.max(page, 0), cappedSize)));
+    }
+
+    /** Spec 11, gap "progresso em tempo real" — tela de detalhe da rota faz poll aqui. */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    public RoutePlanResponse getOne(@PathVariable UUID id, Authentication auth) {
+        return routePlanService.getForGestor(principal(auth), id);
+    }
+
+    /** Spec 11, gap "edição de rota já atribuída" — só funciona pra PLANEJADA (400 caso
+     *  contrário). Despachante também edita (mesmo grupo de escrita de {@code create}). */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    public RoutePlanResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateRoutePlanRequest req, Authentication auth) {
+        return routePlanService.update(
+                principal(auth), id, req.vehicleId(), req.dataExecucao(), req.valor(), req.stops());
     }
 
     @PostMapping("/{id}/assign")

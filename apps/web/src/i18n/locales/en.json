@@ -708,13 +708,24 @@
       "cancelar": "Cancel",
       "salvando": "Saving...",
       "criarRota": "Create route",
+      "cancelarRota": "Cancel route",
+      "confirmarCancelamento": "Cancel this route? This action can't be undone.",
+      "editarRota": "Edit route",
+      "salvarEdicao": "Save changes",
+      "verProgresso": "View progress",
+      "progressoTitulo": "Route progress",
+      "paradaConcluidaEm": "Completed at {{hora}}",
+      "paradaPendente": "Pending",
+      "fallbackHaversineAviso": "Simplified suggestion — real route calculation (OSRM) was unavailable, this order uses straight-line distance.",
       "toasts": {
         "falhaCarregar": "Error loading routes", "falhaSugerir": "Failed to suggest order",
         "dataNoPassado": "Execution date can't be in the past.",
         "transferExige2Paradas": "Transfer requires exactly 2 stops: origin and destination.",
         "criada": "Route created.", "falhaCriar": "Failed to create route",
+        "editada": "Route updated.", "falhaEditar": "Failed to edit route",
         "idaSalvaRevisarVolta": "Outbound leg saved — review the return leg.",
-        "falhaSalvarPassageiro": "Failed to save passenger contact"
+        "falhaSalvarPassageiro": "Failed to save passenger contact",
+        "rotaCancelada": "Route canceled.", "falhaCancelar": "Failed to cancel route"
       }
     },
     "vehicleDetail": {

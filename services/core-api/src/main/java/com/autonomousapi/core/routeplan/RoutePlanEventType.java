@@ -11,5 +11,8 @@ public enum RoutePlanEventType {
     REATRIBUIDA,
     SOLICITACAO_CANCELAMENTO,
     SOLICITACAO_TROCA_MOTORISTA,
-    SOLICITACAO_APROVADA
+    SOLICITACAO_APROVADA,
+    /** Spec 11, gap "edição de rota já atribuída" — só rota PLANEJADA, ver
+     *  {@link RoutePlanService#update}. */
+    EDITADA
 }

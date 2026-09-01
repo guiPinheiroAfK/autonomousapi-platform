@@ -13,4 +13,9 @@ public interface RouteStopRepository extends JpaRepository<RouteStop, UUID> {
     List<RouteStop> findAllByRoutePlanIdInOrderByOrdemSugeridaAsc(List<UUID> routePlanIds);
 
     Optional<RouteStop> findByIdAndRoutePlanId(UUID id, UUID routePlanId);
+
+    /** Usado só por {@link RoutePlanService#update} (spec 11, gap "edição de rota já
+     *  atribuída") — substitui a lista inteira de paradas, mesmo raciocínio de
+     *  {@code create}. */
+    void deleteAllByRoutePlanId(UUID routePlanId);
 }

@@ -12,6 +12,7 @@ import com.autonomousapi.core.error.RoutePlanInvalidException;
 import com.autonomousapi.core.passenger.PassengerRepository;
 import com.autonomousapi.core.passenger.notification.PassengerNotificationService;
 import com.autonomousapi.core.pricing.RouteCostEstimator;
+import com.autonomousapi.core.push.PushNotificationService;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.routeplan.dto.RouteStopResponse;
 import com.autonomousapi.core.routeplan.dto.StopInput;
@@ -66,6 +67,7 @@ public class RoutePlanService {
     private final OrToolsRouteOptimizer optimizer;
     private final RouteCostEstimator costEstimator;
     private final PassengerNotificationService passengerNotifications;
+    private final PushNotificationService pushNotifications;
 
     public RoutePlanService(
             RoutePlanRepository routePlans,
@@ -79,7 +81,8 @@ public class RoutePlanService {
             RouteMatrixService routeMatrix,
             OrToolsRouteOptimizer optimizer,
             RouteCostEstimator costEstimator,
-            PassengerNotificationService passengerNotifications) {
+            PassengerNotificationService passengerNotifications,
+            PushNotificationService pushNotifications) {
         this.routePlans = routePlans;
         this.routeStops = routeStops;
         this.routePlanEvents = routePlanEvents;
@@ -92,6 +95,7 @@ public class RoutePlanService {
         this.optimizer = optimizer;
         this.costEstimator = costEstimator;
         this.passengerNotifications = passengerNotifications;
+        this.pushNotifications = pushNotifications;
     }
 
     private void registrarEvento(UUID routePlanId, RoutePlanEventType tipo, UUID atorUserId, Map<String, Object> metadado) {
@@ -111,28 +115,38 @@ public class RoutePlanService {
      * coleta correspondente — fisicamente sem sentido. Não persiste nada; o gestor revisa e
      * reordena livremente antes de confirmar em {@link #create}.
      */
-    public List<StopInput> suggestOrder(JwtPrincipal gestorPrincipal, List<StopInput> stops) {
+    public com.autonomousapi.core.routeplan.dto.SuggestOrderResponse suggestOrder(
+            JwtPrincipal gestorPrincipal, List<StopInput> stops) {
         List<StopInput> resolvidos = resolveStops(gestorPrincipal.tenantId(), stops);
         validarTetoDeParadas(resolvidos);
         List<StopInput> coletas = resolvidos.stream().filter(s -> s.tipo() == StopType.COLETA).toList();
         List<StopInput> entregas = resolvidos.stream().filter(s -> s.tipo() == StopType.ENTREGA).toList();
-        List<StopInput> ordenado = new ArrayList<>(otimizarGrupo(coletas));
-        ordenado.addAll(otimizarGrupo(entregas));
-        return ordenado;
+        GrupoOtimizado coletasOtimizadas = otimizarGrupo(coletas);
+        GrupoOtimizado entregasOtimizadas = otimizarGrupo(entregas);
+        List<StopInput> ordenado = new ArrayList<>(coletasOtimizadas.ordenado());
+        ordenado.addAll(entregasOtimizadas.ordenado());
+        return new com.autonomousapi.core.routeplan.dto.SuggestOrderResponse(
+                ordenado, coletasOtimizadas.fallbackHaversine() || entregasOtimizadas.fallbackHaversine());
+    }
+
+    private record GrupoOtimizado(List<StopInput> ordenado, boolean fallbackHaversine) {
     }
 
     /** Resolve a ordem de um grupo (coletas ou entregas) via matriz real + OR-Tools; cai para
-     *  nearest-neighbor por haversine se o solver não devolver uma solução válida. */
-    private List<StopInput> otimizarGrupo(List<StopInput> grupo) {
+     *  nearest-neighbor por haversine se o solver não devolver uma solução válida — nesse
+     *  caso {@code fallbackHaversine} é sempre true, mesmo que a matriz tenha vindo do OSRM
+     *  (a ordem final não usou distância real de qualquer forma). */
+    private GrupoOtimizado otimizarGrupo(List<StopInput> grupo) {
         if (grupo.size() <= 1) {
-            return grupo;
+            return new GrupoOtimizado(grupo, false);
         }
         RouteMatrixService.Matriz matriz = routeMatrix.obter(grupo);
+        boolean matrizEmFallback = !"OSRM_TABLE".equals(matriz.fonte());
         List<Integer> ordem = optimizer.ordenar(matriz.distanciasM());
         if (ordem == null || ordem.size() != grupo.size()) {
-            return nearestNeighbor(grupo);
+            return new GrupoOtimizado(nearestNeighbor(grupo), true);
         }
-        return ordem.stream().map(grupo::get).toList();
+        return new GrupoOtimizado(ordem.stream().map(grupo::get).toList(), matrizEmFallback);
     }
 
     /**
@@ -285,11 +299,71 @@ public class RoutePlanService {
         return toResponse(plan);
     }
 
+    /** Spec 11, gap "edição de rota já atribuída" — só rota ainda {@code PLANEJADA} (nenhuma
+     *  parada concluída). Rota {@code EM_ANDAMENTO} continua sendo cancelar+recriar, ou
+     *  cancelar pelo chat (ADR 0021). Categoria não é editável — trocar ROTA↔TRANSFER é
+     *  efetivamente outra rota, não uma edição. Substitui as paradas inteiras, mesmo
+     *  raciocínio de {@link #create}: o gestor manda a lista final já revisada, não um diff. */
+    @Transactional
+    public RoutePlanResponse update(
+            JwtPrincipal gestorPrincipal,
+            UUID routePlanId,
+            UUID vehicleId,
+            LocalDate dataExecucao,
+            BigDecimal valor,
+            List<StopInput> stops) {
+        RoutePlan plan = Lookups.orNotFound(
+                routePlans.findForUpdateById(routePlanId), "Rota não encontrada.");
+        if (!plan.getTenantId().equals(gestorPrincipal.tenantId())) {
+            throw new NotFoundException("Rota não encontrada.");
+        }
+        if (plan.getStatus() != RoutePlanStatus.PLANEJADA) {
+            throw new RoutePlanInvalidException(
+                    "Só é possível editar rota ainda PLANEJADA — rota em andamento precisa ser"
+                            + " cancelada e recriada, ou cancelada pelo chat.");
+        }
+
+        UUID tenantId = gestorPrincipal.tenantId();
+        Vehicle vehicle = null;
+        if (vehicleId != null) {
+            vehicle = Lookups.orNotFound(vehicles.findByIdAndTenantId(vehicleId, tenantId), "Veículo não encontrado.");
+        }
+        List<StopInput> resolvidos = resolveStops(tenantId, stops);
+        validar(plan.getCategoria(), dataExecucao, resolvidos);
+
+        plan.editarPlanejamento(vehicleId, dataExecucao, valor);
+        if (plan.getCategoria() == RouteCategoria.TRANSFER && vehicle != null) {
+            calcularCustoEstimado(tenantId, vehicle, resolvidos)
+                    .ifPresent(e -> plan.registrarCustoEstimado(
+                            e.custoEstimado(), RouteCostEstimator.PRICING_FORMULA_VERSION));
+        }
+
+        routeStops.deleteAllByRoutePlanId(plan.getId());
+        for (int i = 0; i < resolvidos.size(); i++) {
+            StopInput s = resolvidos.get(i);
+            routeStops.save(new RouteStop(
+                    plan.getId(), s.tipo(), s.label(), s.lat(), s.lon(), s.collectionPointId(),
+                    s.janelaInicio(), s.janelaFim(), i, s.passengerId()));
+        }
+        registrarEvento(plan.getId(), RoutePlanEventType.EDITADA, gestorPrincipal.userId(), null);
+        return toResponse(plan);
+    }
+
     @Transactional(readOnly = true)
     public Page<RoutePlanResponse> listForGestor(JwtPrincipal gestorPrincipal, Pageable pageable) {
         Page<RoutePlan> plans = routePlans.findAllByTenantIdOrderByCreatedAtDesc(gestorPrincipal.tenantId(), pageable);
         return new org.springframework.data.domain.PageImpl<>(
                 toResponses(plans.getContent()), pageable, plans.getTotalElements());
+    }
+
+    /** Spec 11, gap "progresso em tempo real pro gestor" — leitura de uma rota específica com
+     *  as paradas já resolvidas, pra tela de detalhe fazer poll periódico e mostrar o avanço
+     *  do motorista sem precisar recarregar a lista inteira. */
+    @Transactional(readOnly = true)
+    public RoutePlanResponse getForGestor(JwtPrincipal gestorPrincipal, UUID routePlanId) {
+        RoutePlan plan = Lookups.orNotFound(
+                routePlans.findByIdAndTenantId(routePlanId, gestorPrincipal.tenantId()), "Rota não encontrada.");
+        return toResponse(plan);
     }
 
     /** Atribuição direta pela tela de Rotas (spec 02) — nunca reatribui, nunca chamada com
@@ -340,6 +414,12 @@ public class RoutePlanService {
                 if (passengerNotifications.notificarConfirmacao(plan)) {
                     plan.marcarPassageirosNotificados();
                 }
+            }
+            // Spec 11, gap "push consistente": o caminho pelo chat já notifica o motorista
+            // sozinho (ChatService), com uma mensagem que referencia a conversa — não duplicar
+            // aqui. O caminho direto pela tela de Rotas não tinha NENHUM aviso até aqui.
+            if (!"chat".equals(origem)) {
+                notificarMotoristaSobreAtribuicao(driverId);
             }
         }
         return toResponse(plan);
@@ -466,6 +546,15 @@ public class RoutePlanService {
             throw new NotFoundException("Parada não encontrada.");
         }
         passengerNotifications.notificarManualmente(plan, stop);
+    }
+
+    /** Fire-and-forget, mesmo raciocínio de {@link PassengerNotificationService} — sem device
+     *  registrado, é no-op silencioso (ver {@link PushNotificationService#notifyUser}). */
+    private void notificarMotoristaSobreAtribuicao(UUID driverId) {
+        UUID recipientUserId = drivers.findById(driverId).map(Driver::getAppUserId).orElse(null);
+        if (recipientUserId != null) {
+            pushNotifications.notifyUser(recipientUserId, "Nova rota atribuída", "Você tem uma nova rota atribuída.");
+        }
     }
 
     private RoutePlanResponse toResponse(RoutePlan plan) {

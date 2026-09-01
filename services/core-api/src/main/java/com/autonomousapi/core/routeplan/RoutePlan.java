@@ -44,7 +44,10 @@ public class RoutePlan {
     @Column(name = "categoria", nullable = false, length = 10, updatable = false)
     private RouteCategoria categoria;
 
-    @Column(name = "data_execucao", nullable = false, updatable = false)
+    /** {@code updatable=false} removido (spec 11, gap "edição de rota já atribuída") — só
+     *  {@link RoutePlanService#update} muda este campo, e só quando a rota ainda está
+     *  {@code PLANEJADA}. */
+    @Column(name = "data_execucao", nullable = false)
     private LocalDate dataExecucao;
 
     @Column(name = "valor")
@@ -97,6 +100,14 @@ public class RoutePlan {
 
     public void designarMotorista(UUID driverId) {
         this.driverId = driverId;
+    }
+
+    /** Spec 11, gap "edição de rota já atribuída" — só chamado por
+     *  {@link RoutePlanService#update}, que já garante {@code status == PLANEJADA} antes. */
+    public void editarPlanejamento(UUID vehicleId, LocalDate dataExecucao, BigDecimal valor) {
+        this.vehicleId = vehicleId;
+        this.dataExecucao = dataExecucao;
+        this.valor = valor;
     }
 
     /** Chamado só na criação (RoutePlanService.create), nunca recalculado depois. */

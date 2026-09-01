@@ -708,13 +708,24 @@
       "cancelar": "Cancelar",
       "salvando": "Guardando...",
       "criarRota": "Crear ruta",
+      "cancelarRota": "Cancelar ruta",
+      "confirmarCancelamento": "¿Cancelar esta ruta? Esta acción no se puede deshacer.",
+      "editarRota": "Editar ruta",
+      "salvarEdicao": "Guardar cambios",
+      "verProgresso": "Ver progreso",
+      "progressoTitulo": "Progreso de la ruta",
+      "paradaConcluidaEm": "Completada a las {{hora}}",
+      "paradaPendente": "Pendiente",
+      "fallbackHaversineAviso": "Sugerencia simplificada — el cálculo de ruta real (OSRM) no estaba disponible, este orden usa distancia en línea recta.",
       "toasts": {
         "falhaCarregar": "Error al cargar las rutas", "falhaSugerir": "Error al sugerir el orden",
         "dataNoPassado": "La fecha de ejecución no puede ser en el pasado.",
         "transferExige2Paradas": "El transfer requiere exactamente 2 paradas: origen y destino.",
         "criada": "Ruta creada.", "falhaCriar": "Error al crear la ruta",
+        "editada": "Ruta actualizada.", "falhaEditar": "Error al editar la ruta",
         "idaSalvaRevisarVolta": "Ida guardada — revisa la vuelta.",
-        "falhaSalvarPassageiro": "Error al guardar el contacto del pasajero"
+        "falhaSalvarPassageiro": "Error al guardar el contacto del pasajero",
+        "rotaCancelada": "Ruta cancelada.", "falhaCancelar": "Error al cancelar la ruta"
       }
     },
     "vehicleDetail": {

@@ -121,4 +121,18 @@ cada uma:
 - [x] App mobile mostra a rota atribuída e permite concluir parada (gap prioridade 1) — `MinhaRotaScreen.tsx`, substituindo o buscador de endereço genérico que existia antes.
 - [x] As duas race conditions (`completeStop`, `assignDriver`) corrigidas com lock pessimista (`findForUpdateById`).
 - [x] Fuso `America/Sao_Paulo` fixado na validação de `dataExecucao`.
-- [ ] Gaps restantes do levantamento (push consistente entre os dois caminhos de atribuição, gestor ver progresso em tempo real, fallback OSRM visível pro gestor, edição de rota pós-criação) priorizados e viram itens novos em `08-decisoes-tecnicas-pendentes.md`, conforme o tamanho de cada um — próxima fatia.
+- [x] Gaps restantes do levantamento, implementados (2026-09-01):
+      - **Push consistente**: atribuição pela tela de Rotas agora notifica o motorista por
+        push (mesmo texto/padrão já usado pelo chat) — `RoutePlanService.assignDriver`
+        chama `notificarMotoristaSobreAtribuicao` quando `origem != "chat"` (o caminho do
+        chat já notificava sozinho, sem duplicar).
+      - **Progresso em tempo real pro gestor**: `GET /v1/routes/plans/{id}` novo +
+        painel de detalhe (`RoutePlansPage.tsx`, "Ver progresso") com poll a cada 5s
+        mostrando cada parada com status/hora de conclusão.
+      - **Fallback do OSRM visível pro gestor**: `RouteMatrixService.Matriz.fonte`, antes
+        descartado, agora chega até `SuggestOrderResponse.fallbackHaversine` — o front
+        mostra um aviso quando a ordem sugerida veio de distância em linha reta.
+      - **Edição de rota já atribuída**: `PUT /v1/routes/plans/{id}` — só rota ainda
+        `PLANEJADA` (categoria e motorista não editáveis; rota `EM_ANDAMENTO` continua
+        cancelar+recriar ou cancelar pelo chat). Novo evento `route_plan_event.tipo =
+        EDITADA`.
