@@ -407,12 +407,19 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
   const selected = conversations.find((c) => c.id === selectedId);
 
+  // Abaixo de `md`, lista e conversa viram 2 painéis sobrepostos (position: absolute, cada
+  // um 100% do container) que deslizam pra dentro/fora via transição CSS pura — mesma
+  // técnica do WhatsApp Web em tela estreita. Em `md`+ os painéis voltam ao normal
+  // (position: static, lado a lado) via classes do Tailwind — puro CSS, sem JS decidindo
+  // largura de tela (nenhuma detecção de breakpoint em JS, só `md:` do Tailwind, que nunca
+  // erra por causa de timing de emulação de viewport). `motion-reduce:transition-none`
+  // respeita a preferência do sistema sem precisar de hook nenhum.
   return (
-    <div className="flex h-full gap-3 overflow-hidden p-3">
+    <div className="relative flex h-full overflow-hidden md:gap-3 md:p-3">
       <Card
         className={cn(
-          'flex w-full shrink-0 flex-col overflow-hidden md:w-72',
-          selectedId != null && 'hidden md:flex',
+          'absolute inset-3 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out motion-reduce:transition-none md:static md:inset-auto md:w-72 md:shrink-0 md:translate-x-0',
+          selectedId != null ? '-translate-x-full' : 'translate-x-0',
         )}
       >
         <div className="flex items-center justify-between border-b border-border p-4">
@@ -469,7 +476,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         </div>
       </Card>
 
-      <Card className={cn('flex-1 flex-col overflow-hidden', selectedId == null ? 'hidden md:flex' : 'flex')}>
+      <Card
+        className={cn(
+          'absolute inset-3 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out motion-reduce:transition-none md:static md:inset-auto md:flex-1 md:translate-x-0',
+          selectedId != null ? 'translate-x-0' : 'translate-x-full',
+        )}
+      >
         {!selected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <MessagesSquare className="size-6 text-muted-foreground/60" />
