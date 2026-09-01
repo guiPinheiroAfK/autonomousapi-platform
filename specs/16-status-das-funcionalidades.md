@@ -32,9 +32,10 @@ contra o texto dos specs.
   cancela nem mexe fora de rota), `VISUALIZADOR` (só leitura) — spec 15.
 - ✅ **Convite de equipe** por e-mail (token, aceite define senha) — mesmo padrão do convite
   de motorista (ADR 0013).
-- 📋 **Chat entre membros da equipe** (Gestor↔Despachante, etc.) — hoje o chat só modela
-  Gestor↔Motorista (ADR 0015/0022); expandir pra equipe é ideia registrada, não é spec
-  ainda.
+- ✅ **Chat entre membros da equipe** — qualquer membro (Gestor/Despachante/Visualizador)
+  com qualquer outro do mesmo tenant, aditivo ao chat Gestor↔Motorista existente (ADR
+  0023). Motorista fica de fora; ações de rota (anexar/cancelar/trocar) continuam só na
+  conversa com o motorista.
 
 ## Frota (veículos)
 
@@ -92,9 +93,9 @@ contra o texto dos specs.
   pendente** de criar o bot (`@BotFather`) e configurar `TELEGRAM_BOT_TOKEN`/
   `TELEGRAM_BOT_USERNAME`/`TELEGRAM_WEBHOOK_SECRET` — mesmo padrão do Google OAuth (spec
   08, item 13).
-- 📋 **Gaps priorizados restantes do levantamento de rota** — push consistente entre os dois
-  caminhos de atribuição, gestor acompanhar progresso em tempo real, fallback do OSRM
-  visível pro gestor, edição de rota já atribuída (hoje o paliativo é cancelar e recriar) —
+- ✅ **Gaps priorizados do levantamento de rota** — push consistente entre os dois caminhos
+  de atribuição, gestor acompanhar progresso em tempo real (painel com poll), fallback do
+  OSRM visível pro gestor, edição de rota já `PLANEJADA` (`PUT /v1/routes/plans/{id}`) —
   spec 11, DoD, último item.
 
 ## Chat (mensagens gestor↔motorista)
@@ -106,7 +107,7 @@ contra o texto dos specs.
   enviada, excluir até 35min; reação com paleta fixa de 6 emojis (ADR 0022).
 - ✅ **Layout mobile de uma tela por vez** (lista OU conversa, com slide), coluna de
   mensagens centralizada em tela larga.
-- 📋 **Chat entre membros da equipe** — ver seção "Equipe e permissões" acima.
+- ✅ **Chat entre membros da equipe** — ver seção "Equipe e permissões" acima (ADR 0023).
 - 📋 **Anexo de mídia** — texto puro por design; fica pra quando (se) virar pedido real (ADR
   0015, "reavaliar quando").
 

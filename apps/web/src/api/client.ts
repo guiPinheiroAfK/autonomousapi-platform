@@ -71,6 +71,7 @@ export type RouteResponse = Schemas['RouteResponse'];
 export type RouteStep = Schemas['RouteStep'];
 export type PlaceResponse = Schemas['PlaceResponse'];
 export type ChatConversationResponse = Schemas['ChatConversationResponse'];
+export type TeamMemberOptionResponse = Schemas['TeamMemberOptionResponse'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type ChatReactionResponse = Schemas['ChatReactionResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
@@ -82,7 +83,9 @@ export type StopInput = Schemas['StopInput'];
 export type RoutePlanResponse = Schemas['RoutePlanResponse'];
 export type RouteStopResponse = Schemas['RouteStopResponse'];
 export type SuggestOrderRequest = Schemas['SuggestOrderRequest'];
+export type SuggestOrderResponse = Schemas['SuggestOrderResponse'];
 export type CreateRoutePlanRequest = Schemas['CreateRoutePlanRequest'];
+export type UpdateRoutePlanRequest = Schemas['UpdateRoutePlanRequest'];
 export type AssignDriverRequest = Schemas['AssignDriverRequest'];
 export type RouteCategoria = 'ROTA' | 'TRANSFER';
 export type CollectionPointRequest = Schemas['CollectionPointRequest'];
@@ -713,6 +716,15 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    /** Chat em equipe (V33) — qualquer membro (Gestor/Despachante/Visualizador) com
+     *  qualquer outro do mesmo tenant. Idempotente por par. */
+    createTeamConversation: (body: { otherUserId: string }) =>
+      request<ChatConversationResponse>('/v1/chat/team-conversations', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    /** Quem dá pra iniciar uma conversa de equipe (seletor "nova conversa"). */
+    listTeamMembers: () => request<TeamMemberOptionResponse[]>('/v1/chat/team-members'),
     listMessages: (conversationId: string) =>
       request<ChatMessageResponse[]>(`/v1/chat/conversations/${conversationId}/messages`),
     sendMessage: (conversationId: string, body: SendMessageRequest) =>
@@ -782,14 +794,22 @@ export const coreApi = {
   /** Rota multi-parada (spec 02, spec 07 item 8). suggestOrder é stateless — a ordem
    *  sugerida é sempre revisada pelo gestor antes de create persistir. */
   routePlans: {
+    /** `fallbackHaversine` (spec 11, gap "fallback do OSRM visível pro gestor") avisa quando
+     *  a ordem sugerida veio da distância em linha reta, não da distância real de rota. */
     suggestOrder: (body: SuggestOrderRequest) =>
-      request<StopInput[]>('/v1/routes/plans/suggest-order', { method: 'POST', body: JSON.stringify(body) }),
+      request<SuggestOrderResponse>('/v1/routes/plans/suggest-order', { method: 'POST', body: JSON.stringify(body) }),
     create: (body: CreateRoutePlanRequest) =>
       request<RoutePlanResponse>('/v1/routes/plans', { method: 'POST', body: JSON.stringify(body) }),
     /** Paginado (cleanup de performance). `size` alto cobre o volume típico de rotas
      *  numa request só, mesmo padrão de `vehicles.list`. */
     list: (page = 0, size = 100) =>
       request<PageResponse<RoutePlanResponse>>(`/v1/routes/plans?page=${page}&size=${size}`),
+    /** Spec 11, gap "progresso em tempo real" — usado pro painel de detalhe fazer poll. */
+    getOne: (id: string) => request<RoutePlanResponse>(`/v1/routes/plans/${id}`),
+    /** Spec 11, gap "edição de rota já atribuída" — só funciona pra PLANEJADA (400 caso
+     *  contrário, ver mensagem do backend). */
+    update: (id: string, body: UpdateRoutePlanRequest) =>
+      request<RoutePlanResponse>(`/v1/routes/plans/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     assign: (id: string, body: AssignDriverRequest) =>
       request<RoutePlanResponse>(`/v1/routes/plans/${id}/assign`, { method: 'POST', body: JSON.stringify(body) }),
     /** Cancelamento direto — só funciona pra PLANEJADA (ADR 0021). Rota já EM_ANDAMENTO

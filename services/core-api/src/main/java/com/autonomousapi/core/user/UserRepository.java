@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     /** Gestores/admins do tenant — usado por BudgetAlertJob pra notificar quem gerencia a frota. */
     List<User> findAllByTenantIdAndRoleIn(UUID tenantId, List<Role> roles);
+
+    Optional<User> findByIdAndTenantId(UUID id, UUID tenantId);
 }

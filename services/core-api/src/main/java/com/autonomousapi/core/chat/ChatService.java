@@ -3,6 +3,7 @@ package com.autonomousapi.core.chat;
 import com.autonomousapi.core.chat.dto.ChatConversationResponse;
 import com.autonomousapi.core.chat.dto.ChatMessageResponse;
 import com.autonomousapi.core.chat.dto.ChatReactionResponse;
+import com.autonomousapi.core.chat.dto.TeamMemberOptionResponse;
 import com.autonomousapi.core.driver.CurrentDriverResolver;
 import com.autonomousapi.core.driver.Driver;
 import com.autonomousapi.core.driver.DriverRepository;
@@ -15,9 +16,14 @@ import com.autonomousapi.core.routeplan.RoutePlanService;
 import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.tenant.TenantRepository;
+import com.autonomousapi.core.user.Role;
+import com.autonomousapi.core.user.User;
+import com.autonomousapi.core.user.UserRepository;
 import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,6 +53,7 @@ public class ChatService {
     private final DriverRepository drivers;
     private final VehicleRepository vehicles;
     private final TenantRepository tenants;
+    private final UserRepository users;
     private final CurrentDriverResolver driverResolver;
     private final PushNotificationService pushNotificationService;
     private final RoutePlanService routePlanService;
@@ -60,6 +67,7 @@ public class ChatService {
             DriverRepository drivers,
             VehicleRepository vehicles,
             TenantRepository tenants,
+            UserRepository users,
             CurrentDriverResolver driverResolver,
             PushNotificationService pushNotificationService,
             RoutePlanService routePlanService,
@@ -71,6 +79,7 @@ public class ChatService {
         this.drivers = drivers;
         this.vehicles = vehicles;
         this.tenants = tenants;
+        this.users = users;
         this.driverResolver = driverResolver;
         this.pushNotificationService = pushNotificationService;
         this.routePlanService = routePlanService;
@@ -101,14 +110,61 @@ public class ChatService {
                 null, null);
     }
 
-    /** Gestor vê as próprias conversas; motorista vê as conversas em que é o motorista. */
+    /**
+     * V33, chat em equipe: qualquer membro (GESTOR_FROTA/ADMIN/DESPACHANTE/VISUALIZADOR)
+     * pode conversar com qualquer outro do mesmo tenant — ideia registrada desde a spec 07/
+     * ADR 0015, implementada agora como conversa aditiva (mesmo {@code chat_conversation},
+     * {@code kind = EQUIPE}). Motorista fica de fora (a conversa dele já tem seu próprio
+     * caminho, gestor↔motorista). Idempotente por par, ordem canônica evita duas linhas
+     * pro mesmo par em chamadas concorrentes ou nas duas direções.
+     */
+    @Transactional
+    public ChatConversationResponse getOrCreateTeamConversation(JwtPrincipal principal, UUID otherUserId) {
+        if (otherUserId.equals(principal.userId())) {
+            throw new ChatMessageActionInvalidException("Não é possível iniciar uma conversa consigo mesmo.");
+        }
+        User other = Lookups.orNotFound(
+                users.findByIdAndTenantId(otherUserId, principal.tenantId()), "Membro da equipe não encontrado.");
+        if (other.getRole() == Role.MOTORISTA) {
+            throw new ChatMessageActionInvalidException(
+                    "Motorista usa a conversa gestor-motorista, não o chat de equipe.");
+        }
+
+        UUID a = principal.userId().compareTo(otherUserId) <= 0 ? principal.userId() : otherUserId;
+        UUID b = principal.userId().compareTo(otherUserId) <= 0 ? otherUserId : principal.userId();
+        ChatConversation conversation = conversations
+                .findByTenantIdAndKindAndGestorUserIdAndParticipantBUserId(
+                        principal.tenantId(), ChatConversationKind.EQUIPE, a, b)
+                .orElseGet(() -> conversations.save(
+                        ChatConversation.novaConversaEquipe(principal.tenantId(), a, b)));
+
+        return toResponse(conversation, principal.userId());
+    }
+
+    /** V33 — lista quem dá pra iniciar uma conversa de equipe: mesmo tenant, habilitado,
+     *  qualquer papel exceto MOTORISTA, exceto o próprio usuário. */
+    @Transactional(readOnly = true)
+    public List<TeamMemberOptionResponse> listTeamMembers(JwtPrincipal principal) {
+        return users.findAllByTenantIdAndRoleIn(
+                        principal.tenantId(), List.of(Role.GESTOR_FROTA, Role.ADMIN, Role.DESPACHANTE, Role.VISUALIZADOR))
+                .stream()
+                .filter(u -> u.isEnabled() && !u.getId().equals(principal.userId()))
+                .map(u -> new TeamMemberOptionResponse(u.getId(), u.getEmail(), u.getRole().name()))
+                .toList();
+    }
+
+    /** Gestor vê as próprias conversas (gestor-motorista + as de equipe em que é o
+     *  "participante A"); motorista vê as conversas em que é o motorista; qualquer membro
+     *  de equipe também vê as conversas de equipe em que é o "participante B" (V33). */
     @Transactional(readOnly = true)
     public List<ChatConversationResponse> listConversations(JwtPrincipal principal) {
-        List<ChatConversation> list = isMotorista(principal)
-                ? conversations.findAllByDriverIdOrderByCreatedAtDesc(driverResolver.resolve(principal).getId())
-                : conversations.findAllByGestorUserIdOrderByCreatedAtDesc(principal.userId());
-
-        return toResponses(list);
+        if (isMotorista(principal)) {
+            return toResponses(conversations.findAllByDriverIdOrderByCreatedAtDesc(driverResolver.resolve(principal).getId()), principal.userId());
+        }
+        List<ChatConversation> list = new ArrayList<>(conversations.findAllByGestorUserIdOrderByCreatedAtDesc(principal.userId()));
+        list.addAll(conversations.findAllByKindAndParticipantBUserId(ChatConversationKind.EQUIPE, principal.userId()));
+        list.sort(Comparator.comparing(ChatConversation::getCreatedAt).reversed());
+        return toResponses(list, principal.userId());
     }
 
     @Transactional(readOnly = true)
@@ -151,9 +207,7 @@ public class ChatService {
         }
         messages.save(message);
 
-        UUID recipientUserId = principal.userId().equals(conversation.getGestorUserId())
-                ? drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null)
-                : conversation.getGestorUserId();
+        UUID recipientUserId = otherParticipantUserId(conversation, principal.userId());
         if (recipientUserId != null) {
             pushNotificationService.notifyUser(recipientUserId, "Nova mensagem", preview(body));
         }
@@ -228,9 +282,7 @@ public class ChatService {
         forwarded.marcarComoEncaminhada(original.getId());
         messages.save(forwarded);
 
-        UUID recipientUserId = principal.userId().equals(target.getGestorUserId())
-                ? drivers.findById(target.getDriverId()).map(Driver::getAppUserId).orElse(null)
-                : target.getGestorUserId();
+        UUID recipientUserId = otherParticipantUserId(target, principal.userId());
         if (recipientUserId != null) {
             pushNotificationService.notifyUser(recipientUserId, "Nova mensagem", preview(original.getBody()));
         }
@@ -279,6 +331,7 @@ public class ChatService {
     @Transactional
     public ChatMessageResponse sendRoutePlanMessage(JwtPrincipal gestorPrincipal, UUID conversationId, UUID routePlanId) {
         ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationId);
+        requireGestorMotorista(conversation);
         RoutePlanResponse plan = routePlanService.assignDriver(
                 gestorPrincipal, routePlanId, conversation.getDriverId(), false, "chat");
 
@@ -303,6 +356,7 @@ public class ChatService {
     @Transactional
     public ChatMessageResponse sendCancelamentoMessage(JwtPrincipal gestorPrincipal, UUID conversationId, UUID routePlanId) {
         ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationId);
+        requireGestorMotorista(conversation);
         routePlanService.cancel(gestorPrincipal, routePlanId, true);
 
         String body = "Rota cancelada.";
@@ -327,6 +381,7 @@ public class ChatService {
     public ChatMessageResponse sendTrocaMotoristaMessage(
             JwtPrincipal gestorPrincipal, UUID conversationIdNovoMotorista, UUID routePlanId) {
         ChatConversation conversation = findAsParticipant(gestorPrincipal, conversationIdNovoMotorista);
+        requireGestorMotorista(conversation);
         routePlanService.assignDriver(gestorPrincipal, routePlanId, conversation.getDriverId(), true, "chat");
 
         String body = "Rota transferida pra você.";
@@ -407,10 +462,19 @@ public class ChatService {
     @Transactional(readOnly = true)
     public boolean isOtherParticipantTyping(JwtPrincipal principal, UUID conversationId) {
         ChatConversation conversation = findAsParticipant(principal, conversationId);
-        UUID otherUserId = principal.userId().equals(conversation.getGestorUserId())
-                ? drivers.findById(conversation.getDriverId()).map(Driver::getAppUserId).orElse(null)
-                : conversation.getGestorUserId();
+        UUID otherUserId = otherParticipantUserId(conversation, principal.userId());
         return otherUserId != null && typingIndicator.isTyping(conversationId, otherUserId);
+    }
+
+    /** Generaliza "quem é o outro lado desta conversa" pros dois kinds (V33) — usado por
+     *  sendMessage/forwardMessage/isOtherParticipantTyping/toResponses. */
+    private UUID otherParticipantUserId(ChatConversation c, UUID viewerUserId) {
+        if (c.getKind() == ChatConversationKind.EQUIPE) {
+            return viewerUserId.equals(c.getGestorUserId()) ? c.getParticipantBUserId() : c.getGestorUserId();
+        }
+        return viewerUserId.equals(c.getGestorUserId())
+                ? drivers.findById(c.getDriverId()).map(Driver::getAppUserId).orElse(null)
+                : c.getGestorUserId();
     }
 
     /** Gestor-only: confirma que o device já persistiu localmente tudo até syncedAt. */
@@ -421,6 +485,15 @@ public class ChatService {
                 .orElseGet(() -> new ChatSyncCursor(gestorPrincipal.userId(), deviceId, syncedAt));
         cursor.avancar(syncedAt);
         syncCursors.save(cursor);
+    }
+
+    /** V33 — as ações de rota (anexar/cancelar/trocar) só existem no chat gestor↔motorista;
+     *  conversa de equipe não tem motorista pra atribuir/notificar. Erro explícito em vez de
+     *  deixar {@code RoutePlanService} falhar com "motorista não encontrado" (driverId nulo). */
+    private void requireGestorMotorista(ChatConversation conversation) {
+        if (conversation.getKind() != ChatConversationKind.GESTOR_MOTORISTA) {
+            throw new ChatMessageActionInvalidException("Ações de rota só existem na conversa com o motorista.");
+        }
     }
 
     private ChatConversation findAsParticipant(JwtPrincipal principal, UUID conversationId) {
@@ -436,31 +509,32 @@ public class ChatService {
         return conversation;
     }
 
-    private ChatConversationResponse toResponse(ChatConversation c) {
-        String driverName = drivers.findById(c.getDriverId()).map(Driver::getName).orElse(null);
-        String vehiclePlate = c.getVehicleId() != null
-                ? vehicles.findById(c.getVehicleId()).map(Vehicle::getPlate).orElse(null)
-                : null;
-        Optional<ChatMessage> last = messages.findFirstByConversationIdAndAindaNoServidorTrueOrderBySentAtDesc(c.getId());
-        return ChatConversationResponse.from(
-                c, driverName, tenantName(c.getTenantId()), vehiclePlate,
-                last.map(ChatMessage::getBody).orElse(null), last.map(ChatMessage::getSentAt).orElse(null));
+    private ChatConversationResponse toResponse(ChatConversation c, UUID viewerUserId) {
+        return toResponses(List.of(c), viewerUserId).get(0);
     }
 
     /**
-     * Versão em lote de {@link #toResponse}: resolve nomes de motorista/veículo/tenant e a
-     * última mensagem de cada conversa com uma query cada, em vez de 3 por conversa
-     * (ver {@code ChatMessageRepository#findAllByConversationIdInAndAindaNoServidorTrueOrderBySentAtDesc}).
+     * Resolve nomes de motorista/veículo/tenant/e-mail e a última mensagem de cada conversa
+     * com uma query cada, em vez de várias por conversa (evita N+1). {@code viewerUserId}
+     * decide, pra conversas EQUIPE, qual dos dois lados do par é "o outro participante"
+     * (V33) — pra GESTOR_MOTORISTA não faz diferença nenhuma.
      */
-    private List<ChatConversationResponse> toResponses(List<ChatConversation> list) {
+    private List<ChatConversationResponse> toResponses(List<ChatConversation> list, UUID viewerUserId) {
         if (list.isEmpty()) {
             return List.of();
         }
-        List<UUID> driverIds = list.stream().map(ChatConversation::getDriverId).distinct().toList();
+        List<UUID> driverIds = list.stream().map(ChatConversation::getDriverId)
+                .filter(java.util.Objects::nonNull).distinct().toList();
         List<UUID> vehicleIds = list.stream().map(ChatConversation::getVehicleId)
                 .filter(java.util.Objects::nonNull).distinct().toList();
         List<UUID> tenantIds = list.stream().map(ChatConversation::getTenantId).distinct().toList();
         List<UUID> conversationIds = list.stream().map(ChatConversation::getId).toList();
+        List<UUID> otherParticipantIds = list.stream()
+                .filter(c -> c.getKind() == ChatConversationKind.EQUIPE)
+                .map(c -> otherParticipantUserId(c, viewerUserId))
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
 
         java.util.Map<UUID, String> driverNames = drivers.findAllById(driverIds).stream()
                 .collect(java.util.stream.Collectors.toMap(Driver::getId, Driver::getName));
@@ -468,6 +542,8 @@ public class ChatService {
                 .collect(java.util.stream.Collectors.toMap(Vehicle::getId, Vehicle::getPlate));
         java.util.Map<UUID, String> tenantNames = tenants.findAllById(tenantIds).stream()
                 .collect(java.util.stream.Collectors.toMap(t -> t.getId(), t -> t.getName()));
+        java.util.Map<UUID, User> otherParticipants = users.findAllById(otherParticipantIds).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, u -> u));
         java.util.Map<UUID, ChatMessage> lastMessageByConversation =
                 messages.findAllByConversationIdInAndAindaNoServidorTrueOrderBySentAtDesc(conversationIds).stream()
                         .collect(java.util.stream.Collectors.toMap(
@@ -476,13 +552,20 @@ public class ChatService {
         return list.stream()
                 .map(c -> {
                     ChatMessage last = lastMessageByConversation.get(c.getId());
+                    String lastBody = last != null ? last.getBody() : null;
+                    Instant lastAt = last != null ? last.getSentAt() : null;
+                    if (c.getKind() == ChatConversationKind.EQUIPE) {
+                        User other = otherParticipants.get(otherParticipantUserId(c, viewerUserId));
+                        return ChatConversationResponse.fromEquipe(
+                                c, other != null ? other.getId() : null, other != null ? other.getEmail() : null,
+                                other != null ? other.getRole().name() : null, lastBody, lastAt);
+                    }
                     return ChatConversationResponse.from(
                             c,
                             driverNames.get(c.getDriverId()),
                             tenantNames.get(c.getTenantId()),
                             c.getVehicleId() != null ? vehiclePlates.get(c.getVehicleId()) : null,
-                            last != null ? last.getBody() : null,
-                            last != null ? last.getSentAt() : null);
+                            lastBody, lastAt);
                 })
                 .toList();
     }

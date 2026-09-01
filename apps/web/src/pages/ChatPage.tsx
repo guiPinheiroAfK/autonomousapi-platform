@@ -14,6 +14,7 @@ import {
   Send,
   Smile,
   Trash2,
+  Users,
   X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,7 @@ import {
   type ChatReactionResponse,
   type DriverResponse,
   type RoutePlanResponse,
+  type TeamMemberOptionResponse,
   type UserResponse,
 } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -44,8 +46,11 @@ const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as co
 
 /** Nome de quem está do outro lado da conversa: gestor vê o motorista, motorista vê a
  *  frota (não existe nome de pessoa pro gestor — ver ChatConversationResponse.tenantName
- *  no backend). Corrige o achado de sessão anterior (rótulo sempre igual a driverName). */
+ *  no backend). Corrige o achado de sessão anterior (rótulo sempre igual a driverName).
+ *  Conversa de equipe (V33) não tem motorista nem tenant do outro lado — o único
+ *  identificador que existe é o e-mail (app_user não tem coluna de nome próprio). */
 function nomeDoOutroLado(c: ChatConversationResponse, user: UserResponse | null): string {
+  if (c.kind === 'EQUIPE') return c.otherParticipantEmail ?? '—';
   if (user?.role === 'MOTORISTA') return c.tenantName ?? '—';
   return c.driverName ?? '—';
 }
@@ -76,6 +81,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [eligibleDrivers, setEligibleDrivers] = useState<DriverResponse[]>([]);
   const [pickedDriverId, setPickedDriverId] = useState('');
+
+  // Chat em equipe (V33) — mesma UI de "iniciar conversa", separado do picker de
+  // motorista porque a lista/endpoint de origem são diferentes.
+  const [teamPickerOpen, setTeamPickerOpen] = useState(false);
+  const [eligibleTeamMembers, setEligibleTeamMembers] = useState<TeamMemberOptionResponse[]>([]);
+  const [pickedTeamMemberId, setPickedTeamMemberId] = useState('');
 
   const [attachOpen, setAttachOpen] = useState(false);
   const [attachableRoutes, setAttachableRoutes] = useState<RoutePlanResponse[]>([]);
@@ -343,6 +354,36 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
     }
   }
 
+  /** V33 — qualquer membro do time (Gestor/Despachante/Visualizador), exceto quem já tem
+   *  conversa aberta com ele (mesmo raciocínio do openPicker de motorista). */
+  function openTeamPicker() {
+    setPickedTeamMemberId('');
+    coreApi.chat
+      .listTeamMembers()
+      .then((res) => {
+        const jaTemConversa = new Set(
+          conversations.filter((c) => c.kind === 'EQUIPE').map((c) => c.otherParticipantUserId),
+        );
+        setEligibleTeamMembers(res.filter((m) => !jaTemConversa.has(m.userId)));
+      })
+      .catch(() => setEligibleTeamMembers([]));
+    setTeamPickerOpen(true);
+  }
+
+  async function handleStartTeamConversation(e: FormEvent) {
+    e.preventDefault();
+    if (!pickedTeamMemberId) return;
+    try {
+      const conv = await coreApi.chat.createTeamConversation({ otherUserId: pickedTeamMemberId });
+      setTeamPickerOpen(false);
+      refreshConversations();
+      setSelectedId(conv.id!);
+      toast.success(t('pages.chat.toasts.conversaIniciada'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.chat.toasts.falhaIniciar'));
+    }
+  }
+
   function openAttach() {
     if (!selected) return;
     setPickedRouteId('');
@@ -424,16 +465,29 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
       >
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="font-display text-sm font-semibold text-foreground">{t('pages.chat.conversas')}</h2>
-          {user?.role !== 'MOTORISTA' && (
-            <button
-              type="button"
-              onClick={openPicker}
-              className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-              title={t('pages.chat.iniciarConversa')}
-            >
-              <MessageCirclePlus className="size-4" />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {(user?.role === 'GESTOR_FROTA' || user?.role === 'ADMIN') && (
+              <button
+                type="button"
+                onClick={openPicker}
+                className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                title={t('pages.chat.iniciarConversa')}
+              >
+                <MessageCirclePlus className="size-4" />
+              </button>
+            )}
+            {/* V33, chat em equipe — qualquer membro (Gestor/Despachante/Visualizador). */}
+            {user?.role !== 'MOTORISTA' && (
+              <button
+                type="button"
+                onClick={openTeamPicker}
+                className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                title={t('pages.chat.iniciarConversaEquipe')}
+              >
+                <Users className="size-4" />
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
@@ -504,6 +558,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               <p className="text-sm font-medium text-foreground">{nomeDoOutroLado(selected, user)}</p>
               {selected.vehiclePlate && (
                 <span className="text-[11px] text-muted-foreground">· {selected.vehiclePlate}</span>
+              )}
+              {selected.kind === 'EQUIPE' && selected.otherParticipantRole && (
+                <span className="text-[11px] text-muted-foreground">· {selected.otherParticipantRole}</span>
               )}
             </div>
 
@@ -785,7 +842,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             )}
             <div className="border-t border-border p-3">
             <form onSubmit={handleSend} className="mx-auto flex max-w-3xl items-center gap-2">
-              {user?.role !== 'MOTORISTA' && !editingId && (
+              {user?.role !== 'MOTORISTA' && selected.kind !== 'EQUIPE' && !editingId && (
                 <button
                   type="button"
                   onClick={openAttach}
@@ -835,6 +892,31 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                 {t('pages.chat.cancelar')}
               </Button>
               <Button type="submit" size="sm" disabled={!pickedDriverId}>
+                {t('pages.chat.iniciar')}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      <Modal open={teamPickerOpen} onClose={() => setTeamPickerOpen(false)} title={t('pages.chat.iniciarConversaEquipe')}>
+        {eligibleTeamMembers.length === 0 ? (
+          <p className="text-xs text-muted-foreground">{t('pages.chat.nenhumMembroDisponivel')}</p>
+        ) : (
+          <form onSubmit={handleStartTeamConversation} className="space-y-3">
+            <Select value={pickedTeamMemberId} onChange={(e) => setPickedTeamMemberId(e.target.value)}>
+              <option value="">{t('pages.chat.selecioneMembro')}</option>
+              {eligibleTeamMembers.map((m) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.email} — {m.role}
+                </option>
+              ))}
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setTeamPickerOpen(false)}>
+                {t('pages.chat.cancelar')}
+              </Button>
+              <Button type="submit" size="sm" disabled={!pickedTeamMemberId}>
                 {t('pages.chat.iniciar')}
               </Button>
             </div>

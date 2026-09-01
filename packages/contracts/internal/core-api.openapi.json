@@ -207,12 +207,82 @@
         }
       }
     },
+    "/v1/routes/plans/{id}": {
+      "get": {
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "getOne",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlanResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "route-plan-controller"
+        ],
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoutePlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlanResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/passengers/{id}": {
       "put": {
         "tags": [
           "passenger-controller"
         ],
-        "operationId": "update_2",
+        "operationId": "update_3",
         "parameters": [
           {
             "name": "id",
@@ -304,7 +374,7 @@
         "tags": [
           "driver-controller"
         ],
-        "operationId": "update_3",
+        "operationId": "update_4",
         "parameters": [
           {
             "name": "id",
@@ -367,7 +437,7 @@
         "tags": [
           "collection-point-controller"
         ],
-        "operationId": "update_4",
+        "operationId": "update_5",
         "parameters": [
           {
             "name": "id",
@@ -1374,10 +1444,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StopInput"
-                  }
+                  "$ref": "#/components/schemas/SuggestOrderResponse"
                 }
               }
             }
@@ -2165,6 +2232,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CollectionPointResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/team-conversations": {
+      "post": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "createTeamConversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTeamConversationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationResponse"
                 }
               }
             }
@@ -3621,6 +3718,29 @@
         }
       }
     },
+    "/v1/chat/team-members": {
+      "get": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "listTeamMembers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeamMemberOptionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/charging-stations": {
       "get": {
         "tags": [
@@ -4290,6 +4410,195 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "StopInput": {
+        "required": [
+          "tipo"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "COLETA",
+              "ENTREGA"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "collectionPointId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "janelaInicio": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "janelaFim": {
+            "type": "string",
+            "example": "18:00:00"
+          },
+          "passengerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateRoutePlanRequest": {
+        "required": [
+          "dataExecucao",
+          "stops"
+        ],
+        "type": "object",
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dataExecucao": {
+            "type": "string",
+            "format": "date"
+          },
+          "valor": {
+            "type": "number"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopInput"
+            }
+          }
+        }
+      },
+      "RoutePlanResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANEJADA",
+              "EM_ANDAMENTO",
+              "CONCLUIDA",
+              "CANCELADA"
+            ]
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "ROTA",
+              "TRANSFER"
+            ]
+          },
+          "dataExecucao": {
+            "type": "string",
+            "format": "date"
+          },
+          "valor": {
+            "type": "number"
+          },
+          "custoEstimado": {
+            "type": "number"
+          },
+          "margemRealizada": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteStopResponse"
+            }
+          },
+          "viagemId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "RouteStopResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "COLETA",
+              "ENTREGA"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "collectionPointId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "janelaInicio": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "janelaFim": {
+            "type": "string",
+            "example": "18:00:00"
+          },
+          "ordemSugerida": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ordemRealExecutada": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concluidaEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "passengerId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -4984,169 +5293,6 @@
           }
         }
       },
-      "StopInput": {
-        "required": [
-          "tipo"
-        ],
-        "type": "object",
-        "properties": {
-          "tipo": {
-            "type": "string",
-            "enum": [
-              "COLETA",
-              "ENTREGA"
-            ]
-          },
-          "label": {
-            "type": "string"
-          },
-          "lat": {
-            "type": "number",
-            "format": "double"
-          },
-          "lon": {
-            "type": "number",
-            "format": "double"
-          },
-          "collectionPointId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "janelaInicio": {
-            "type": "string",
-            "example": "08:00:00"
-          },
-          "janelaFim": {
-            "type": "string",
-            "example": "18:00:00"
-          },
-          "passengerId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "RoutePlanResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverName": {
-            "type": "string"
-          },
-          "vehicleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "vehiclePlate": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PLANEJADA",
-              "EM_ANDAMENTO",
-              "CONCLUIDA",
-              "CANCELADA"
-            ]
-          },
-          "categoria": {
-            "type": "string",
-            "enum": [
-              "ROTA",
-              "TRANSFER"
-            ]
-          },
-          "dataExecucao": {
-            "type": "string",
-            "format": "date"
-          },
-          "valor": {
-            "type": "number"
-          },
-          "custoEstimado": {
-            "type": "number"
-          },
-          "margemRealizada": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "stops": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RouteStopResponse"
-            }
-          },
-          "viagemId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "RouteStopResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "tipo": {
-            "type": "string",
-            "enum": [
-              "COLETA",
-              "ENTREGA"
-            ]
-          },
-          "label": {
-            "type": "string"
-          },
-          "lat": {
-            "type": "number",
-            "format": "double"
-          },
-          "lon": {
-            "type": "number",
-            "format": "double"
-          },
-          "collectionPointId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "janelaInicio": {
-            "type": "string",
-            "example": "08:00:00"
-          },
-          "janelaFim": {
-            "type": "string",
-            "example": "18:00:00"
-          },
-          "ordemSugerida": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "ordemRealExecutada": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "concluidaEm": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "passengerId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
       "AssignDriverRequest": {
         "required": [
           "driverId"
@@ -5170,6 +5316,20 @@
             "items": {
               "$ref": "#/components/schemas/StopInput"
             }
+          }
+        }
+      },
+      "SuggestOrderResponse": {
+        "type": "object",
+        "properties": {
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopInput"
+            }
+          },
+          "fallbackHaversine": {
+            "type": "boolean"
           }
         }
       },
@@ -5323,6 +5483,68 @@
           }
         }
       },
+      "CreateTeamConversationRequest": {
+        "required": [
+          "otherUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "otherUserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ChatConversationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "otherParticipantUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "otherParticipantEmail": {
+            "type": "string"
+          },
+          "otherParticipantRole": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastMessageBody": {
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SyncCursorRequest": {
         "required": [
           "deviceId",
@@ -5352,43 +5574,6 @@
           "vehicleId": {
             "type": "string",
             "format": "uuid"
-          }
-        }
-      },
-      "ChatConversationResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverName": {
-            "type": "string"
-          },
-          "tenantName": {
-            "type": "string"
-          },
-          "vehicleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "vehiclePlate": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastMessageBody": {
-            "type": "string"
-          },
-          "lastMessageAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -6299,6 +6484,21 @@
           "diasRestantes": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "TeamMemberOptionResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
           }
         }
       },

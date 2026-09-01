@@ -66,10 +66,12 @@ class RoutePlanServiceTest {
     private final RouteCostEstimator costEstimator = mock(RouteCostEstimator.class);
     private final com.autonomousapi.core.passenger.notification.PassengerNotificationService passengerNotifications =
             mock(com.autonomousapi.core.passenger.notification.PassengerNotificationService.class);
+    private final com.autonomousapi.core.push.PushNotificationService pushNotifications =
+            mock(com.autonomousapi.core.push.PushNotificationService.class);
 
     private final RoutePlanService service = new RoutePlanService(routePlans, routeStops, routePlanEvents, drivers,
             vehicles, collectionPoints, passengers, driverResolver, routeMatrix, optimizer, costEstimator,
-            passengerNotifications);
+            passengerNotifications, pushNotifications);
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID gestorUserId = UUID.randomUUID();
@@ -91,7 +93,7 @@ class RoutePlanServiceTest {
         StopInput coleta2 = new StopInput(StopType.COLETA, "Coleta 2", -23.560, -46.650, null, null, null, null);
         StopInput entrega = new StopInput(StopType.ENTREGA, "Entrega", -23.5615, -46.6561, null, null, null, null);
 
-        List<StopInput> ordenado = service.suggestOrder(gestorPrincipal, List.of(entrega, coleta1, coleta2));
+        List<StopInput> ordenado = service.suggestOrder(gestorPrincipal, List.of(entrega, coleta1, coleta2)).stops();
 
         assertEquals(StopType.COLETA, ordenado.get(0).tipo());
         assertEquals(StopType.COLETA, ordenado.get(1).tipo());
@@ -108,11 +110,14 @@ class RoutePlanServiceTest {
         StopInput b = new StopInput(StopType.COLETA, "B", -23.010, -46.000, null, null, null, null);
         StopInput c = new StopInput(StopType.COLETA, "C", -23.020, -46.000, null, null, null, null);
 
-        List<StopInput> ordenado = service.suggestOrder(gestorPrincipal, List.of(a, c, b));
+        com.autonomousapi.core.routeplan.dto.SuggestOrderResponse resposta =
+                service.suggestOrder(gestorPrincipal, List.of(a, c, b));
 
-        assertEquals("A", ordenado.get(0).label());
-        assertEquals("B", ordenado.get(1).label());
-        assertEquals("C", ordenado.get(2).label());
+        assertEquals("A", resposta.stops().get(0).label());
+        assertEquals("B", resposta.stops().get(1).label());
+        assertEquals("C", resposta.stops().get(2).label());
+        // Geo-api indisponível no teste força o fallback — spec 11, gap "fallback visível".
+        assertEquals(true, resposta.fallbackHaversine());
     }
 
     @Test
@@ -288,6 +293,92 @@ class RoutePlanServiceTest {
         RoutePlanResponse resp = service.assignDriver(gestorPrincipal, routePlanId, d.getId());
 
         assertEquals(d.getId(), resp.driverId());
+    }
+
+    @Test
+    void assignDriverPelaTelaDeRotasNotificaMotoristaPorPush() {
+        // Spec 11, gap "push consistente" — o caminho direto pela tela (origem default,
+        // não "chat") não avisava o motorista até esta entrega.
+        UUID routePlanId = UUID.randomUUID();
+        Driver d = driver("Eduardo");
+        UUID appUserId = UUID.randomUUID();
+        d.linkAppUser(appUserId);
+        RoutePlan plan = routePlan(null);
+        when(routePlans.findForUpdateById(routePlanId)).thenReturn(Optional.of(plan));
+        when(drivers.findByIdAndTenantId(d.getId(), tenantId)).thenReturn(Optional.of(d));
+        when(drivers.findById(d.getId())).thenReturn(Optional.of(d));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId())).thenReturn(List.of());
+
+        service.assignDriver(gestorPrincipal, routePlanId, d.getId());
+
+        org.mockito.Mockito.verify(pushNotifications).notifyUser(
+                org.mockito.ArgumentMatchers.eq(appUserId), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void assignDriverViaChatNaoDuplicaPushQueOChatJaEnvia() {
+        UUID routePlanId = UUID.randomUUID();
+        Driver d = driver("Eduardo");
+        d.linkAppUser(UUID.randomUUID());
+        RoutePlan plan = routePlan(null);
+        when(routePlans.findForUpdateById(routePlanId)).thenReturn(Optional.of(plan));
+        when(drivers.findByIdAndTenantId(d.getId(), tenantId)).thenReturn(Optional.of(d));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId())).thenReturn(List.of());
+
+        service.assignDriver(gestorPrincipal, routePlanId, d.getId(), false, "chat");
+
+        org.mockito.Mockito.verify(pushNotifications, org.mockito.Mockito.never())
+                .notifyUser(any(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void getForGestorDevolveRotaDoTenant() {
+        UUID routePlanId = UUID.randomUUID();
+        RoutePlan plan = routePlan(null);
+        when(routePlans.findByIdAndTenantId(routePlanId, tenantId)).thenReturn(Optional.of(plan));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId())).thenReturn(List.of());
+
+        RoutePlanResponse resp = service.getForGestor(gestorPrincipal, routePlanId);
+
+        assertEquals(plan.getId(), resp.id());
+    }
+
+    @Test
+    void getForGestorLancaNotFoundParaRotaDeOutroTenant() {
+        UUID routePlanId = UUID.randomUUID();
+        when(routePlans.findByIdAndTenantId(routePlanId, tenantId)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service.getForGestor(gestorPrincipal, routePlanId));
+    }
+
+    @Test
+    void updateSubstituiParadasEDadosDeUmaRotaAindaPlanejada() {
+        UUID routePlanId = UUID.randomUUID();
+        RoutePlan plan = routePlan(null);
+        when(routePlans.findForUpdateById(routePlanId)).thenReturn(Optional.of(plan));
+        when(routeStops.findAllByRoutePlanIdOrderByOrdemSugeridaAsc(plan.getId())).thenReturn(List.of());
+        StopInput novaParada = new StopInput(StopType.COLETA, "Nova parada", -23.5, -46.6, null, null, null, null);
+        LocalDate novaData = HOJE.plusDays(3);
+
+        RoutePlanResponse resp = service.update(
+                gestorPrincipal, routePlanId, null, novaData, new BigDecimal("500.00"), List.of(novaParada));
+
+        assertEquals(novaData, resp.dataExecucao());
+        org.mockito.Mockito.verify(routeStops).deleteAllByRoutePlanId(plan.getId());
+        org.mockito.Mockito.verify(routeStops).save(any());
+        org.mockito.Mockito.verify(routePlanEvents).save(any());
+    }
+
+    @Test
+    void updateRejeitaRotaJaEmAndamento() {
+        UUID routePlanId = UUID.randomUUID();
+        RoutePlan plan = routePlan(null);
+        plan.avancarStatus(RoutePlanStatus.EM_ANDAMENTO);
+        when(routePlans.findForUpdateById(routePlanId)).thenReturn(Optional.of(plan));
+        StopInput s = new StopInput(StopType.COLETA, "Parada", -23.5, -46.6, null, null, null, null);
+
+        assertThrows(RoutePlanInvalidException.class,
+                () -> service.update(gestorPrincipal, routePlanId, null, HOJE, null, List.of(s)));
     }
 
     @Test

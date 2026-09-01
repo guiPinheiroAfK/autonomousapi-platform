@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/routes/plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOne"];
+        put: operations["update_2"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/passengers/{id}": {
         parameters: {
             query?: never;
@@ -60,7 +76,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_2"];
+        put: operations["update_3"];
         post?: never;
         delete: operations["delete_3"];
         options?: never;
@@ -76,7 +92,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_1"];
-        put: operations["update_3"];
+        put: operations["update_4"];
         post?: never;
         delete: operations["delete_4"];
         options?: never;
@@ -92,7 +108,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_4"];
+        put: operations["update_5"];
         post?: never;
         delete?: never;
         options?: never;
@@ -654,6 +670,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["ativar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/team-conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createTeamConversation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1396,6 +1428,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/chat/team-members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listTeamMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/charging-stations": {
         parameters: {
             query?: never;
@@ -1682,6 +1730,80 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        StopInput: {
+            /** @enum {string} */
+            tipo: "COLETA" | "ENTREGA";
+            label?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lon?: number;
+            /** Format: uuid */
+            collectionPointId?: string;
+            /** @example 08:00:00 */
+            janelaInicio?: string;
+            /** @example 18:00:00 */
+            janelaFim?: string;
+            /** Format: uuid */
+            passengerId?: string;
+        };
+        UpdateRoutePlanRequest: {
+            /** Format: uuid */
+            vehicleId?: string;
+            /** Format: date */
+            dataExecucao: string;
+            valor?: number;
+            stops: components["schemas"]["StopInput"][];
+        };
+        RoutePlanResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            driverId?: string;
+            driverName?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            vehiclePlate?: string;
+            /** @enum {string} */
+            status?: "PLANEJADA" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
+            /** @enum {string} */
+            categoria?: "ROTA" | "TRANSFER";
+            /** Format: date */
+            dataExecucao?: string;
+            valor?: number;
+            custoEstimado?: number;
+            margemRealizada?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            stops?: components["schemas"]["RouteStopResponse"][];
+            /** Format: uuid */
+            viagemId?: string;
+        };
+        RouteStopResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            tipo?: "COLETA" | "ENTREGA";
+            label?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lon?: number;
+            /** Format: uuid */
+            collectionPointId?: string;
+            /** @example 08:00:00 */
+            janelaInicio?: string;
+            /** @example 18:00:00 */
+            janelaFim?: string;
+            /** Format: int32 */
+            ordemSugerida?: number;
+            /** Format: int32 */
+            ordemRealExecutada?: number;
+            /** Format: date-time */
+            concluidaEm?: string;
+            /** Format: uuid */
+            passengerId?: string;
+        };
         PassengerRequest: {
             nome: string;
             telefone: string;
@@ -1919,78 +2041,16 @@ export interface components {
             /** Format: uuid */
             viagemId?: string;
         };
-        StopInput: {
-            /** @enum {string} */
-            tipo: "COLETA" | "ENTREGA";
-            label?: string;
-            /** Format: double */
-            lat?: number;
-            /** Format: double */
-            lon?: number;
-            /** Format: uuid */
-            collectionPointId?: string;
-            /** @example 08:00:00 */
-            janelaInicio?: string;
-            /** @example 18:00:00 */
-            janelaFim?: string;
-            /** Format: uuid */
-            passengerId?: string;
-        };
-        RoutePlanResponse: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            driverId?: string;
-            driverName?: string;
-            /** Format: uuid */
-            vehicleId?: string;
-            vehiclePlate?: string;
-            /** @enum {string} */
-            status?: "PLANEJADA" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
-            /** @enum {string} */
-            categoria?: "ROTA" | "TRANSFER";
-            /** Format: date */
-            dataExecucao?: string;
-            valor?: number;
-            custoEstimado?: number;
-            margemRealizada?: number;
-            /** Format: date-time */
-            createdAt?: string;
-            stops?: components["schemas"]["RouteStopResponse"][];
-            /** Format: uuid */
-            viagemId?: string;
-        };
-        RouteStopResponse: {
-            /** Format: uuid */
-            id?: string;
-            /** @enum {string} */
-            tipo?: "COLETA" | "ENTREGA";
-            label?: string;
-            /** Format: double */
-            lat?: number;
-            /** Format: double */
-            lon?: number;
-            /** Format: uuid */
-            collectionPointId?: string;
-            /** @example 08:00:00 */
-            janelaInicio?: string;
-            /** @example 18:00:00 */
-            janelaFim?: string;
-            /** Format: int32 */
-            ordemSugerida?: number;
-            /** Format: int32 */
-            ordemRealExecutada?: number;
-            /** Format: date-time */
-            concluidaEm?: string;
-            /** Format: uuid */
-            passengerId?: string;
-        };
         AssignDriverRequest: {
             /** Format: uuid */
             driverId: string;
         };
         SuggestOrderRequest: {
             stops: components["schemas"]["StopInput"][];
+        };
+        SuggestOrderResponse: {
+            stops?: components["schemas"]["StopInput"][];
+            fallbackHaversine?: boolean;
         };
         RegisterDeviceRequest: {
             token: string;
@@ -2046,6 +2106,31 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        CreateTeamConversationRequest: {
+            /** Format: uuid */
+            otherUserId: string;
+        };
+        ChatConversationResponse: {
+            /** Format: uuid */
+            id?: string;
+            kind?: string;
+            /** Format: uuid */
+            driverId?: string;
+            driverName?: string;
+            tenantName?: string;
+            /** Format: uuid */
+            vehicleId?: string;
+            vehiclePlate?: string;
+            /** Format: uuid */
+            otherParticipantUserId?: string;
+            otherParticipantEmail?: string;
+            otherParticipantRole?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            lastMessageBody?: string;
+            /** Format: date-time */
+            lastMessageAt?: string;
+        };
         SyncCursorRequest: {
             deviceId: string;
             /** Format: date-time */
@@ -2056,22 +2141,6 @@ export interface components {
             driverId: string;
             /** Format: uuid */
             vehicleId?: string;
-        };
-        ChatConversationResponse: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            driverId?: string;
-            driverName?: string;
-            tenantName?: string;
-            /** Format: uuid */
-            vehicleId?: string;
-            vehiclePlate?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            lastMessageBody?: string;
-            /** Format: date-time */
-            lastMessageAt?: string;
         };
         SendRoutePlanRequest: {
             /** Format: uuid */
@@ -2393,6 +2462,12 @@ export interface components {
             /** Format: int64 */
             diasRestantes?: number;
         };
+        TeamMemberOptionResponse: {
+            /** Format: uuid */
+            userId?: string;
+            email?: string;
+            role?: string;
+        };
         ChargingStationItem: {
             /** Format: uuid */
             id?: string;
@@ -2583,7 +2658,55 @@ export interface operations {
             };
         };
     };
+    getOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"];
+                };
+            };
+        };
+    };
     update_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoutePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoutePlanResponse"];
+                };
+            };
+        };
+    };
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2651,7 +2774,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2697,7 +2820,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3345,7 +3468,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["StopInput"][];
+                    "*/*": components["schemas"]["SuggestOrderResponse"];
                 };
             };
         };
@@ -3910,6 +4033,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CollectionPointResponse"];
+                };
+            };
+        };
+    };
+    createTeamConversation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTeamConversationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatConversationResponse"];
                 };
             };
         };
@@ -5023,6 +5170,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DriverLicenseAlertResponse"][];
+                };
+            };
+        };
+    };
+    listTeamMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TeamMemberOptionResponse"][];
                 };
             };
         };

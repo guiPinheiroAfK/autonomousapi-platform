@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, Link as LinkIcon, MapPin, Plus, Sparkles, Trash2, Truck, UserRound } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  Circle,
+  Link as LinkIcon,
+  ListChecks,
+  MapPin,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  Truck,
+  UserRound,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   coreApi,
@@ -63,6 +77,19 @@ export function RoutePlansPage() {
   const [suggesting, setSuggesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  // Spec 11, gap "fallback do OSRM visível pro gestor" — avisa quando a sugestão veio da
+  // distância em linha reta, não da distância real de rota (OSRM fora do ar/incompleto).
+  const [fallbackAviso, setFallbackAviso] = useState(false);
+
+  // Spec 11, gap "edição de rota já atribuída" — reusa o mesmo modal/formulário de criar;
+  // não-nulo é o que diferencia "criando" de "editando" em confirmar(). Só PLANEJADA pode
+  // ser editada (o backend recusa o resto); categoria e motorista não são editáveis aqui.
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+
+  // Spec 11, gap "progresso em tempo real pro gestor" — painel de detalhe com poll enquanto
+  // aberto; fecha o poll assim que progressoPlanId volta a null.
+  const [progressoPlanId, setProgressoPlanId] = useState<string | null>(null);
+  const [progressoPlan, setProgressoPlan] = useState<RoutePlanResponse | null>(null);
 
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
@@ -157,7 +184,35 @@ export function RoutePlansPage() {
 
   useEffect(refresh, []);
 
+  // Spec 11, gap "progresso em tempo real" — enquanto o painel de detalhe está aberto,
+  // busca a rota de novo a cada 5s (mesmo intervalo já validado no poll do chat).
+  useEffect(() => {
+    if (!progressoPlanId) {
+      setProgressoPlan(null);
+      return;
+    }
+    let cancelado = false;
+    function poll() {
+      coreApi.routePlans
+        .getOne(progressoPlanId!)
+        .then((r) => {
+          if (!cancelado) setProgressoPlan(r);
+        })
+        .catch(() => {
+          // Silencioso — o poll seguinte tenta de novo; não vale interromper o painel por
+          // uma falha pontual de rede.
+        });
+    }
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
+  }, [progressoPlanId]);
+
   function openCreate() {
+    setEditingPlanId(null);
     setCategoria('ROTA');
     setDataExecucao(hojeISO());
     setValor('');
@@ -171,6 +226,7 @@ export function RoutePlansPage() {
     setCustoEstimado(null);
     setValorSugerido(null);
     setFormError('');
+    setFallbackAviso(false);
     setIdaEVolta(false);
     setPernaVolta(false);
     setViagemIdAtual(null);
@@ -181,6 +237,51 @@ export function RoutePlansPage() {
     coreApi.drivers.list().then((res) => setDrivers(res.content.filter((d) => d.hasLogin)));
     // Paginado (spec de escala) — size grande cobre a frota inteira na maioria dos tenants,
     // já que esta tela usa a lista pra popular o seletor de veículo da rota.
+    coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
+    coreApi.collectionPoints.list().then(setCollectionPoints);
+    coreApi.passengers.list().then(setPassengers);
+    setModalOpen(true);
+  }
+
+  /** Spec 11, gap "edição de rota já atribuída" — reabre o mesmo formulário pré-preenchido
+   *  com o estado atual da rota. Motorista/categoria não são editáveis aqui (motorista tem
+   *  seu próprio caminho de reatribuição via chat, categoria trocar é efetivamente outra
+   *  rota) — por isso não usa o mesmo fluxo de ida-e-volta nem o seletor de motorista. */
+  function openEdit(plan: RoutePlanResponse) {
+    setEditingPlanId(plan.id!);
+    setCategoria(plan.categoria!);
+    setDataExecucao(plan.dataExecucao!);
+    setValor(plan.valor != null ? maskMoedaBR(String(Math.round(plan.valor * 100))) : '');
+    setParadas(
+      (plan.stops ?? []).map((s, i) => ({
+        key: `${s.id}-${i}`,
+        tipo: s.tipo!,
+        label: s.label!,
+        lat: s.lat!,
+        lon: s.lon!,
+        collectionPointId: s.collectionPointId,
+        janelaInicio: s.janelaInicio,
+        janelaFim: s.janelaFim,
+        passengerId: s.passengerId,
+      })),
+    );
+    setNovoTipo('COLETA');
+    setFonteParada('avulso');
+    setEnderecoAvulso(null);
+    setPontoEscolhidoId('');
+    setDriverId(plan.driverId ?? '');
+    setVehicleId(plan.vehicleId ?? '');
+    setCustoEstimado(null);
+    setValorSugerido(null);
+    setFormError('');
+    setFallbackAviso(false);
+    setIdaEVolta(false);
+    setPernaVolta(false);
+    setViagemIdAtual(null);
+    setPassengerIdSelecionado('');
+    setNovoPassageiroAberto(false);
+    setNovoPassageiroNome('');
+    setNovoPassageiroTelefone('');
     coreApi.vehicles.list(0, 500).then((res) => setVehicles(res.content));
     coreApi.collectionPoints.list().then(setCollectionPoints);
     coreApi.passengers.list().then(setPassengers);
@@ -301,13 +402,15 @@ export function RoutePlansPage() {
     if (paradas.length < 2) return;
     setSuggesting(true);
     setFormError('');
+    setFallbackAviso(false);
     try {
       const sugestao = await coreApi.routePlans.suggestOrder({ stops: paradas });
       // A sugestão devolve os stops sem a `key` local — recasa pela combinação
       // (lat/lon/label), estável o bastante pro tamanho de lista desta tela.
       setParadas((prev) =>
-        sugestao.map((s) => prev.find((p) => p.lat === s.lat && p.lon === s.lon && p.label === s.label)!),
+        (sugestao.stops ?? []).map((s) => prev.find((p) => p.lat === s.lat && p.lon === s.lon && p.label === s.label)!),
       );
+      setFallbackAviso(sugestao.fallbackHaversine ?? false);
     } catch (e) {
       setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaSugerir'));
     } finally {
@@ -327,6 +430,36 @@ export function RoutePlansPage() {
     }
     setSaving(true);
     setFormError('');
+    const stops = paradas.map(({ tipo, label, lat, lon, collectionPointId, janelaInicio, janelaFim, passengerId }) => ({
+      tipo,
+      label,
+      lat,
+      lon,
+      collectionPointId,
+      janelaInicio,
+      janelaFim,
+      passengerId,
+    }));
+
+    if (editingPlanId) {
+      try {
+        await coreApi.routePlans.update(editingPlanId, {
+          vehicleId: vehicleId || undefined,
+          dataExecucao,
+          valor: valor ? parseMoedaBR(valor) : undefined,
+          stops,
+        });
+        toast.success(t('pages.routePlans.toasts.editada'));
+        setModalOpen(false);
+        refresh();
+      } catch (e) {
+        setFormError(e instanceof Error ? e.message : t('pages.routePlans.toasts.falhaEditar'));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     // Ida gera um viagemId novo (spec 13); volta reaproveita o já gerado na ida — o
     // backend só armazena o que chega, nunca gera nada sozinho.
     const viagemId = pernaVolta ? viagemIdAtual ?? undefined : idaEVolta ? crypto.randomUUID() : undefined;
@@ -337,16 +470,7 @@ export function RoutePlansPage() {
         categoria,
         dataExecucao,
         valor: valor ? parseMoedaBR(valor) : undefined,
-        stops: paradas.map(({ tipo, label, lat, lon, collectionPointId, janelaInicio, janelaFim, passengerId }) => ({
-          tipo,
-          label,
-          lat,
-          lon,
-          collectionPointId,
-          janelaInicio,
-          janelaFim,
-          passengerId,
-        })),
+        stops,
         viagemId,
       });
 
@@ -427,26 +551,44 @@ export function RoutePlansPage() {
                 {p.vehiclePlate && <p>{p.vehiclePlate}</p>}
                 <p>{p.dataExecucao}</p>
                 {p.valor != null && <p>R$ {p.valor.toFixed(2)}</p>}
-                {p.status === 'PLANEJADA' && podeCancelar && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="mt-1 h-auto p-0 text-status-danger hover:text-status-danger"
-                    onClick={() =>
-                      deleteWithConfirm({
-                        confirmMessage: t('pages.routePlans.confirmarCancelamento'),
-                        confirmLabel: t('pages.routePlans.cancelarRota'),
-                        remove: () => coreApi.routePlans.cancel(p.id!),
-                        successMessage: t('pages.routePlans.toasts.rotaCancelada'),
-                        fallbackErrorMessage: t('pages.routePlans.toasts.falhaCancelar'),
-                        onSuccess: refresh,
-                      })
-                    }
-                  >
-                    {t('pages.routePlans.cancelarRota')}
-                  </Button>
-                )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {(p.stops?.length ?? 0) > 0 && (
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      onClick={() => setProgressoPlanId(p.id!)}
+                    >
+                      <ListChecks className="size-3.5" /> {t('pages.routePlans.verProgresso')}
+                    </button>
+                  )}
+                  {p.status === 'PLANEJADA' && user?.role !== 'VISUALIZADOR' && (
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      onClick={() => openEdit(p)}
+                    >
+                      <Pencil className="size-3.5" /> {t('pages.routePlans.editarRota')}
+                    </button>
+                  )}
+                  {p.status === 'PLANEJADA' && podeCancelar && (
+                    <button
+                      type="button"
+                      className="text-status-danger hover:text-status-danger"
+                      onClick={() =>
+                        deleteWithConfirm({
+                          confirmMessage: t('pages.routePlans.confirmarCancelamento'),
+                          confirmLabel: t('pages.routePlans.cancelarRota'),
+                          remove: () => coreApi.routePlans.cancel(p.id!),
+                          successMessage: t('pages.routePlans.toasts.rotaCancelada'),
+                          fallbackErrorMessage: t('pages.routePlans.toasts.falhaCancelar'),
+                          onSuccess: refresh,
+                        })
+                      }
+                    >
+                      {t('pages.routePlans.cancelarRota')}
+                    </button>
+                  )}
+                </div>
               </div>
             </Card>
             </StaggerItem>
@@ -457,14 +599,16 @@ export function RoutePlansPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={pernaVolta ? t('pages.routePlans.novaRotaVolta') : t('pages.routePlans.novaRota')}
+        title={editingPlanId ? t('pages.routePlans.editarRota') : pernaVolta ? t('pages.routePlans.novaRotaVolta') : t('pages.routePlans.novaRota')}
         className="max-w-2xl"
       >
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>{t('pages.routePlans.categoria')}</Label>
-              <Select value={categoria} onChange={(e) => setCategoria(e.target.value as RouteCategoria)}>
+              {/* Spec 11: categoria não é editável — trocar ROTA↔TRANSFER é efetivamente
+                  outra rota, não uma edição (backend não aceita mudar isso aqui). */}
+              <Select value={categoria} onChange={(e) => setCategoria(e.target.value as RouteCategoria)} disabled={!!editingPlanId}>
                 {CATEGORIA_OPTIONS.map((c) => (
                   <option key={c} value={c}>
                     {c === 'ROTA' ? t('pages.routePlans.categoriaRota') : t('pages.routePlans.categoriaTransfer')}
@@ -491,7 +635,7 @@ export function RoutePlansPage() {
             </div>
           )}
 
-          {isTransfer && !pernaVolta && (
+          {isTransfer && !pernaVolta && !editingPlanId && (
             <label className="flex items-center gap-2 text-xs text-foreground">
               <input
                 type="checkbox"
@@ -665,23 +809,34 @@ export function RoutePlansPage() {
           )}
 
           {!isTransfer && paradas.length >= 2 && (
-            <Button type="button" variant="secondary" size="sm" onClick={sugerirOrdem} disabled={suggesting}>
-              <Sparkles className="size-3.5" /> {suggesting ? t('pages.routePlans.sugerindo') : t('pages.routePlans.sugerirOrdem')}
-            </Button>
+            <div className="space-y-2">
+              <Button type="button" variant="secondary" size="sm" onClick={sugerirOrdem} disabled={suggesting}>
+                <Sparkles className="size-3.5" /> {suggesting ? t('pages.routePlans.sugerindo') : t('pages.routePlans.sugerirOrdem')}
+              </Button>
+              {/* Spec 11, gap "fallback do OSRM visível pro gestor" — antes disso a
+                  informação existia no backend mas era descartada silenciosamente. */}
+              {fallbackAviso && (
+                <p className="rounded-md border border-status-warning-bg bg-status-warning-bg px-2.5 py-1.5 text-xs text-status-warning">
+                  {t('pages.routePlans.fallbackHaversineAviso')}
+                </p>
+              )}
+            </div>
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label>{t('pages.routePlans.motoristaOpcional')}</Label>
-              <Select value={driverId} onChange={(e) => setDriverId(e.target.value)}>
-                <option value="">{t('pages.routePlans.designarDepois')}</option>
-                {drivers.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {!editingPlanId && (
+              <div>
+                <Label>{t('pages.routePlans.motoristaOpcional')}</Label>
+                <Select value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+                  <option value="">{t('pages.routePlans.designarDepois')}</option>
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
             <div>
               <Label>{t('pages.routePlans.veiculoOpcional')}</Label>
               <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
@@ -723,10 +878,49 @@ export function RoutePlansPage() {
               onClick={confirmar}
               disabled={paradas.length === 0 || (isTransfer && paradas.length !== 2) || saving}
             >
-              {saving ? t('pages.routePlans.salvando') : t('pages.routePlans.criarRota')}
+              {saving ? t('pages.routePlans.salvando') : editingPlanId ? t('pages.routePlans.salvarEdicao') : t('pages.routePlans.criarRota')}
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Spec 11, gap "progresso em tempo real pro gestor" — painel de detalhe com poll a
+          cada 5s enquanto aberto (ver useEffect acima). */}
+      <Modal
+        open={!!progressoPlanId}
+        onClose={() => setProgressoPlanId(null)}
+        title={t('pages.routePlans.progressoTitulo')}
+        className="max-w-md"
+      >
+        {!progressoPlan ? (
+          <p className="text-xs text-muted-foreground">{t('common.carregando')}</p>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{progressoPlan.driverName ?? t('pages.routePlans.semMotoristaDesignado')}</span>
+              <StatusBadgeRotaPlan status={progressoPlan.status} />
+            </div>
+            <ol className="divide-y divide-border rounded-md border border-border">
+              {(progressoPlan.stops ?? []).map((s, i) => (
+                <li key={s.id ?? i} className="flex items-start gap-2 px-3 py-2 text-xs">
+                  {s.concluidaEm ? (
+                    <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-status-success" />
+                  ) : (
+                    <Circle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/50" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-foreground">{s.label}</p>
+                    <p className="text-muted-foreground">
+                      {s.concluidaEm
+                        ? t('pages.routePlans.paradaConcluidaEm', { hora: new Date(s.concluidaEm).toLocaleTimeString() })
+                        : t('pages.routePlans.paradaPendente')}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
       </Modal>
     </div>
   );

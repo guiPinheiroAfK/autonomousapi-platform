@@ -20,4 +20,12 @@ public interface ChatConversationRepository extends JpaRepository<ChatConversati
      *  para toda a base, agrupando por gestor. */
     @Query("select distinct c.gestorUserId from ChatConversation c")
     List<UUID> findDistinctGestorUserIds();
+
+    /** V33, chat em equipe — busca o par já ordenado (ver {@code ChatConversation.novaConversaEquipe}). */
+    Optional<ChatConversation> findByTenantIdAndKindAndGestorUserIdAndParticipantBUserId(
+            UUID tenantId, ChatConversationKind kind, UUID gestorUserId, UUID participantBUserId);
+
+    /** V33 — completa {@link #findAllByGestorUserIdOrderByCreatedAtDesc} pro caso em que o
+     *  usuário é o segundo participante (não o "menor UUID") de uma conversa EQUIPE. */
+    List<ChatConversation> findAllByKindAndParticipantBUserId(ChatConversationKind kind, UUID participantBUserId);
 }

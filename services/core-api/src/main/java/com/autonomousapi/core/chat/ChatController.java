@@ -4,12 +4,14 @@ import com.autonomousapi.core.chat.dto.ChatConversationResponse;
 import com.autonomousapi.core.chat.dto.ChatMessageResponse;
 import com.autonomousapi.core.chat.dto.ChatReactionResponse;
 import com.autonomousapi.core.chat.dto.CreateConversationRequest;
+import com.autonomousapi.core.chat.dto.CreateTeamConversationRequest;
 import com.autonomousapi.core.chat.dto.EditMessageRequest;
 import com.autonomousapi.core.chat.dto.ForwardMessageRequest;
 import com.autonomousapi.core.chat.dto.ReactRequest;
 import com.autonomousapi.core.chat.dto.SendMessageRequest;
 import com.autonomousapi.core.chat.dto.SendRoutePlanRequest;
 import com.autonomousapi.core.chat.dto.SyncCursorRequest;
+import com.autonomousapi.core.chat.dto.TeamMemberOptionResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -54,6 +56,24 @@ public class ChatController {
     @GetMapping("/conversations")
     public List<ChatConversationResponse> listConversations(Authentication auth) {
         return chatService.listConversations(principal(auth));
+    }
+
+    /** V33, chat em equipe: qualquer membro (Gestor/Despachante/Visualizador) inicia (ou
+     *  recupera) uma conversa com qualquer outro do mesmo tenant — motorista fica de fora
+     *  (tem seu próprio caminho gestor-motorista). */
+    @PostMapping("/team-conversations")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    public ChatConversationResponse createTeamConversation(
+            @Valid @RequestBody CreateTeamConversationRequest req, Authentication auth) {
+        return chatService.getOrCreateTeamConversation(principal(auth), req.otherUserId());
+    }
+
+    /** V33 — quem dá pra iniciar uma conversa de equipe (seletor "nova conversa"). */
+    @GetMapping("/team-members")
+    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    public List<TeamMemberOptionResponse> listTeamMembers(Authentication auth) {
+        return chatService.listTeamMembers(principal(auth));
     }
 
     @GetMapping("/conversations/{id}/messages")
