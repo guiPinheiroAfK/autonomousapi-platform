@@ -4,9 +4,11 @@ import com.autonomousapi.core.auth.dto.AcceptInviteRequest;
 import com.autonomousapi.core.auth.dto.ForgotPasswordRequest;
 import com.autonomousapi.core.auth.dto.GoogleAuthRequest;
 import com.autonomousapi.core.auth.dto.LoginRequest;
+import com.autonomousapi.core.auth.dto.LoginResult;
 import com.autonomousapi.core.auth.dto.RefreshRequest;
 import com.autonomousapi.core.auth.dto.ResendVerificationRequest;
 import com.autonomousapi.core.auth.dto.ResetPasswordRequest;
+import com.autonomousapi.core.auth.dto.SelectTenantRequest;
 import com.autonomousapi.core.auth.dto.SignupRequest;
 import com.autonomousapi.core.auth.dto.SignupResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
@@ -71,10 +73,18 @@ public class AuthController {
         authService.resendVerification(req.email());
     }
 
+    /** V34: pode devolver os tokens direto (caso comum) ou uma escolha de tenant, se a
+     *  mesma senha bater em mais de uma conta do e-mail — ver {@link LoginResult}. */
     @PostMapping("/login")
-    public TokenResponse login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
+    public LoginResult login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
         loginRateLimit.verificar(req.email(), http);
         return authService.login(req);
+    }
+
+    /** Completa um login ambíguo (ver {@link #login}). */
+    @PostMapping("/select-tenant")
+    public TokenResponse selectTenant(@Valid @RequestBody SelectTenantRequest req) {
+        return authService.selectTenant(req);
     }
 
     /**

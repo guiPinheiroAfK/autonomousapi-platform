@@ -142,7 +142,9 @@
       "esqueceuSenha": "¿Olvidaste tu contraseña?",
       "semConta": "¿Aún no tienes cuenta?",
       "cadastrarMinhaFrota": "Registrar mi flota",
-      "falha": "Error al iniciar sesión"
+      "falha": "Error al iniciar sesión",
+      "escolherEmpresa": "Tu contraseña coincide en más de una empresa — elige en cuál entrar:",
+      "voltarParaLogin": "Volver"
     },
     "signup": {
       "titulo": "Registrar mi flota",

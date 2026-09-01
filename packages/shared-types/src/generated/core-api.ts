@@ -964,6 +964,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/select-tenant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["selectTenant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/reset-password": {
         parameters: {
             query?: never;
@@ -2199,6 +2215,11 @@ export interface components {
             email?: string;
             message?: string;
         };
+        SelectTenantRequest: {
+            pendingToken: string;
+            /** Format: uuid */
+            tenantId: string;
+        };
         ResetPasswordRequest: {
             token: string;
             newPassword: string;
@@ -2212,6 +2233,20 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        LoginResult: {
+            tokens?: components["schemas"]["TokenResponse"];
+            tenantChoice?: components["schemas"]["TenantChoiceResponse"];
+        };
+        TenantChoiceResponse: {
+            pendingToken?: string;
+            tenants?: components["schemas"]["TenantOption"][];
+        };
+        TenantOption: {
+            /** Format: uuid */
+            tenantId?: string;
+            tenantName?: string;
+            role?: string;
         };
         GoogleAuthRequest: {
             idToken: string;
@@ -4542,6 +4577,30 @@ export interface operations {
             };
         };
     };
+    selectTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SelectTenantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TokenResponse"];
+                };
+            };
+        };
+    };
     resetPassword: {
         parameters: {
             query?: never;
@@ -4629,7 +4688,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["TokenResponse"];
+                    "*/*": components["schemas"]["LoginResult"];
                 };
             };
         };

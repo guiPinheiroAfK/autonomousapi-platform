@@ -142,7 +142,9 @@
       "esqueceuSenha": "Forgot your password?",
       "semConta": "Don't have an account yet?",
       "cadastrarMinhaFrota": "Register my fleet",
-      "falha": "Login failed"
+      "falha": "Login failed",
+      "escolherEmpresa": "Your password matches more than one company — choose which one to enter:",
+      "voltarParaLogin": "Back"
     },
     "signup": {
       "titulo": "Register my fleet",

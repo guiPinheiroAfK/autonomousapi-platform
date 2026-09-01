@@ -25,13 +25,22 @@ contra o texto dos specs.
 - ✅ **Recuperação de senha** por e-mail (spec 08, item 11 — funcional, mas transacional só
   entrega de verdade pro próprio dono da conta até o domínio do Resend ser verificado).
 - ✅ **Trial e bloqueio por assinatura** — `SubscriptionGate` (ADR 0010).
+- ✅ **Conta por empresa, não uma conta pra sempre** — e-mail único por tenant, não mais
+  globalmente (ADR 0024): a mesma pessoa pode ter conta em mais de uma empresa (papel e
+  senha próprios em cada uma). Login testa a senha contra todas as contas do e-mail; se bater
+  em mais de uma (senha reusada em duas empresas), mostra tela de escolha em vez de entrar
+  numa arbitrariamente.
 
 ## Equipe e permissões
 
 - ✅ **Papéis por tenant** — `GESTOR_FROTA` (dono), `DESPACHANTE` (cria/atribui rota, não
   cancela nem mexe fora de rota), `VISUALIZADOR` (só leitura) — spec 15.
 - ✅ **Convite de equipe** por e-mail (token, aceite define senha) — mesmo padrão do convite
-  de motorista (ADR 0013).
+  de motorista (ADR 0013). Convidar um e-mail que já é membro de equipe em OUTRA empresa
+  funciona normalmente desde a ADR 0024 (antes era bloqueado).
+- ✅ **Exclusão real de conta ao remover da equipe** — tenta apagar de verdade (libera o
+  e-mail pra reuso), só cai pra desativar (comportamento de antes) se o alvo já tiver
+  histórico próprio (rota, mensagem, sessão anterior) — ADR 0024.
 - ✅ **Chat entre membros da equipe** — qualquer membro (Gestor/Despachante/Visualizador)
   com qualquer outro do mesmo tenant, aditivo ao chat Gestor↔Motorista existente (ADR
   0023). Motorista fica de fora; ações de rota (anexar/cancelar/trocar) continuam só na

@@ -41,6 +41,9 @@ export type DriverLicenseAlertResponse = Schemas['DriverLicenseAlertResponse'];
 export type TokenResponse = Schemas['TokenResponse'];
 export type UserResponse = Schemas['UserResponse'];
 export type LoginRequest = Schemas['LoginRequest'];
+export type LoginResult = Schemas['LoginResult'];
+export type TenantChoiceResponse = Schemas['TenantChoiceResponse'];
+export type SelectTenantRequest = Schemas['SelectTenantRequest'];
 export type SignupRequest = Schemas['SignupRequest'];
 export type SignupResponse = Schemas['SignupResponse'];
 export type VerifyEmailRequest = Schemas['VerifyEmailRequest'];
@@ -353,8 +356,13 @@ export const coreApi = {
   health: () => request<{ status: string; services?: Record<string, string> }>('/v1/health'),
 
   auth: {
+    /** V34: devolve `tokens` direto no caso comum (uma conta só pra esse e-mail+senha), ou
+     *  `tenantChoice` quando a senha bate em mais de uma conta (tenants diferentes) — nesse
+     *  caso, completa com `selectTenant`. */
     login: (body: LoginRequest) =>
-      request<TokenResponse>('/v1/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+      request<LoginResult>('/v1/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+    selectTenant: (body: SelectTenantRequest) =>
+      request<TokenResponse>('/v1/auth/select-tenant', { method: 'POST', body: JSON.stringify(body) }),
     /** Login ou cadastro via Google, na mesma chamada — o backend decide (e-mail já
      *  cadastrado vira login, novo vira conta nova já habilitada). */
     google: (idToken: string) =>

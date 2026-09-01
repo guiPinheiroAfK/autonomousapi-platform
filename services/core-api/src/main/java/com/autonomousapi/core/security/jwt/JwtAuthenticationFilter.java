@@ -46,6 +46,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(PREFIX.length());
             try {
                 Claims claims = jwtService.parse(token);
+                if ("pending_login".equals(claims.get("purpose", String.class))) {
+                    // V34: token de escolha de tenant no login — nunca autentica requisição
+                    // nenhuma, só serve pra POST /v1/auth/select-tenant (que o valida por
+                    // conta própria, não via SecurityContext).
+                    chain.doFilter(request, response);
+                    return;
+                }
                 UUID userId = UUID.fromString(claims.getSubject());
                 String role = claims.get("role", String.class);
                 String tenantIdClaim = claims.get("tenantId", String.class);

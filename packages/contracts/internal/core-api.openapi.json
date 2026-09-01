@@ -2912,6 +2912,36 @@
         }
       }
     },
+    "/v1/auth/select-tenant": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "selectTenant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectTenantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/auth/reset-password": {
       "post": {
         "tags": [
@@ -3010,7 +3040,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/LoginResult"
                 }
               }
             }
@@ -5765,6 +5795,22 @@
           }
         }
       },
+      "SelectTenantRequest": {
+        "required": [
+          "pendingToken",
+          "tenantId"
+        ],
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "ResetPasswordRequest": {
         "required": [
           "newPassword",
@@ -5815,6 +5861,46 @@
             "type": "string"
           },
           "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResult": {
+        "type": "object",
+        "properties": {
+          "tokens": {
+            "$ref": "#/components/schemas/TokenResponse"
+          },
+          "tenantChoice": {
+            "$ref": "#/components/schemas/TenantChoiceResponse"
+          }
+        }
+      },
+      "TenantChoiceResponse": {
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string"
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantOption"
+            }
+          }
+        }
+      },
+      "TenantOption": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "role": {
             "type": "string"
           }
         }
