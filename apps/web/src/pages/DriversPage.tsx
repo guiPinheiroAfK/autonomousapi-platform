@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Car, Eye, Mail, Plus, Star } from 'lucide-react';
+import { Car, Copy, Eye, Mail, Plus, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   coreApi,
@@ -78,6 +78,9 @@ export function DriversPage() {
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteSent, setInviteSent] = useState('');
   const [inviteError, setInviteError] = useState('');
+  // Sem domínio de e-mail verificado ainda, o link volta na própria resposta — o gestor
+  // copia e manda por fora (WhatsApp etc.) em vez de depender só do e-mail chegar.
+  const [inviteLinkUrl, setInviteLinkUrl] = useState('');
   const [notifyBody, setNotifyBody] = useState('');
   const [notifySending, setNotifySending] = useState(false);
   const [notifySent, setNotifySent] = useState(false);
@@ -208,14 +211,26 @@ export function DriversPage() {
     setInviteSending(true);
     setInviteError('');
     setInviteSent('');
+    setInviteLinkUrl('');
     try {
       const resp = await coreApi.drivers.invite(detail.id!);
       setInviteSent(t('pages.drivers.toasts.conviteEnviado', { email: resp.email }));
+      setInviteLinkUrl(resp.linkUrl ?? '');
       refresh();
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaConvite'));
     } finally {
       setInviteSending(false);
+    }
+  }
+
+  async function copiarLinkConviteMotorista() {
+    if (!inviteLinkUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteLinkUrl);
+      toast.success(t('pages.drivers.toasts.linkCopiado'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('pages.drivers.toasts.falhaCopiarLink'));
     }
   }
 
@@ -542,6 +557,15 @@ export function DriversPage() {
                   )}
                 </div>
                 {inviteSent && <p className="mt-2 text-[11px] text-status-success">{inviteSent}</p>}
+                {inviteLinkUrl && (
+                  <button
+                    type="button"
+                    onClick={copiarLinkConviteMotorista}
+                    className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    <Copy className="size-3" /> {t('pages.drivers.detalhe.copiarLinkConvite')}
+                  </button>
+                )}
                 {inviteError && <p className="mt-2 text-[11px] text-status-danger">{inviteError}</p>}
 
                 {podeEscrever && detail.hasLogin && (

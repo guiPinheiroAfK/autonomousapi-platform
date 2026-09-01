@@ -84,7 +84,9 @@ public class DriverInviteService {
 
         String link = webAppUrl + "/aceitar-convite?token=" + rawToken;
         emailSender.sendDriverInviteEmail(driver.getEmail(), link);
-        return new DriverInviteResponse(driver.getId(), driver.getEmail(), expiresAt);
+        // O link também volta na resposta (só aqui, na criação) — sem domínio de e-mail
+        // verificado ainda, o gestor copia e manda por fora em vez de depender da entrega.
+        return new DriverInviteResponse(driver.getId(), driver.getEmail(), expiresAt, link);
     }
 
     /**

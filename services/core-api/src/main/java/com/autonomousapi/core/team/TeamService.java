@@ -94,7 +94,10 @@ public class TeamService {
 
         String link = webAppUrl + "/aceitar-convite-equipe?token=" + rawToken;
         emailSender.sendTeamInviteEmail(req.email(), req.nome(), link);
-        return TeamInviteResponse.from(invite);
+        // O link também volta na resposta (só aqui, na criação — nunca reconstruível depois,
+        // só o hash fica salvo): sem domínio de e-mail verificado ainda, o gestor copia e
+        // manda por fora (WhatsApp etc.) em vez de depender da entrega chegar.
+        return TeamInviteResponse.from(invite, link);
     }
 
     @Transactional(readOnly = true)

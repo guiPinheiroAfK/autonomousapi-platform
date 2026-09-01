@@ -2042,6 +2042,7 @@ export interface components {
             role?: "GESTOR_FROTA" | "MOTORISTA" | "ADMIN" | "PARCEIRO_API" | "DESPACHANTE" | "VISUALIZADOR";
             /** Format: date-time */
             expiresAt?: string;
+            linkUrl?: string;
         };
         CreateRoutePlanRequest: {
             /** Format: uuid */
@@ -2086,6 +2087,7 @@ export interface components {
             email?: string;
             /** Format: date-time */
             expiresAt?: string;
+            linkUrl?: string;
         };
         AssignVehicleRequest: {
             /** Format: uuid */

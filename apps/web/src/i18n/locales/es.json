@@ -360,7 +360,8 @@
         "confirmarExcluir": "¿Eliminar este conductor?", "excluido": "Conductor eliminado.", "falhaExcluir": "Error al eliminar el conductor",
         "falhaAvaliacao": "Error al registrar la calificación", "conviteEnviado": "Invitación enviada a {{email}}.",
         "falhaConvite": "Error al enviar la invitación", "falhaDesignar": "Error al asignar el vehículo",
-        "falhaEncerrar": "Error al finalizar la asignación", "avisoDoGestor": "Aviso del gestor", "falhaAviso": "Error al enviar el aviso"
+        "falhaEncerrar": "Error al finalizar la asignación", "avisoDoGestor": "Aviso del gestor", "falhaAviso": "Error al enviar el aviso",
+        "linkCopiado": "Enlace de invitación copiado.", "falhaCopiarLink": "Error al copiar el enlace"
       },
       "detalhe": {
         "avaliacaoSoGestor": "Calificación (visible solo para el gestor)",
@@ -370,6 +371,7 @@
         "cadastreEmailConvidar": "Registra un correo para invitar",
         "enviando": "Enviando...",
         "convidar": "Invitar",
+        "copiarLinkConvite": "Copiar enlace de invitación (sin dominio verificado, el correo puede no llegar)",
         "avisoRapidoPlaceholder": "Enviar un aviso rápido por la app...",
         "enviar": "Enviar",
         "avisoEnviado": "Aviso enviado.",
@@ -655,13 +657,16 @@
         "nome": "Nombre", "nomePlaceholder": "Maria Silva",
         "email": "Correo", "emailPlaceholder": "maria@tuflota.com",
         "papel": "Papel",
-        "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar invitación"
+        "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar invitación",
+        "convitePronto": "Invitación creada. Sin dominio de correo verificado aún — copia el enlace abajo y envíalo por otro medio (WhatsApp, etc.) — solo aparece aquí una vez.",
+        "copiarLink": "Copiar enlace", "fechar": "Cerrar"
       },
       "toasts": {
         "falhaCarregar": "Error al cargar el equipo", "convidado": "Invitación enviada.",
         "falhaConvidar": "Error al enviar la invitación", "papelAtualizado": "Papel actualizado.",
         "falhaAtualizarPapel": "Error al actualizar el papel", "removido": "Acceso eliminado.",
-        "falhaRemover": "Error al eliminar el acceso"
+        "falhaRemover": "Error al eliminar el acceso", "linkCopiado": "Enlace de invitación copiado.",
+        "falhaCopiarLink": "Error al copiar el enlace"
       }
     },
     "chargingStations": {
