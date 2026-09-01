@@ -157,6 +157,20 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 
 **Status:** investigado e documentado (2026-08-30); correção pendente, sem bloqueio atual.
 
+## 16. Máscara de digitação em campos numéricos — telefone, CNH, valores em R$
+
+**Situação identificada:** campos numéricos (telefone, CNH, valores em R$ de custos/orçamento/OS/FIPE/sinistro) aceitavam texto livre, sem formatar enquanto o usuário digita — telefone e CNH sem nenhum padrão visual, valor em R$ sem separador de milhar/centavo até o campo perder foco.
+
+**Decisão:** módulo próprio (`apps/web/src/lib/masks.ts`, com testes) em vez de lib externa — funções puras que recebem o valor bruto do input (já formatado ou não, funciona colando texto também) e devolvem o texto formatado, sempre reextraindo só os dígitos primeiro:
+- `maskTelefoneBR` — formata `(DDD) NNNNN-NNNN` (ou `NNNN-NNNN` pra fixo) enquanto digita, decide sozinho o corte pelo tamanho já digitado.
+- `maskCnh` — só dígitos, cap em 11 (tamanho fixo do número da CNH).
+- `maskMoedaBR`/`parseMoedaBR` — moeda estilo "caixa eletrônico" (dígitos enchem da direita pra esquerda, os dois últimos são sempre centavos), com separador de milhar.
+- `maskInteiroComSeparador`/`parseInteiroComSeparador` — inteiro com separador de milhar (odômetro/km), sem parte decimal.
+
+**Escopo aplicado:** telefone e CNH em `DriversPage.tsx`; valores em R$ em `CostsPage.tsx` (despesas e orçamento), `VehicleCostsPage.tsx`, `RoutePlansPage.tsx` (valor combinado de transfer), `WorkOrdersPage.tsx` (item de OS), `VehicleDetailPage.tsx` (FIPE e custo de reparo do sinistro) e o contato de passageiro cadastrado inline em `RoutePlansPage.tsx`. Campos `type="number"` puramente numéricos sem necessidade de separador visual (ano do veículo, km avulso) ficaram fora — já têm bloqueio de caractere não-numérico nativo do navegador, não precisavam de mais.
+
+**Status:** implementado (2026-08-31).
+
 ## Definition of Done
 
 - [x] Rota `/frota/:id` no ar substituindo o dialog, com breadcrumb, botão voltar e acesso direto por link funcionando (PR #44).
@@ -173,3 +187,4 @@ Cosmético, sem dependência de API — usa o campo `tipo` que o veículo já te
 - [x] Login com Google e refresh token silencioso implementados no código; ativação em produção pendente de Client ID (item 13).
 - [x] Otimizações de fetch do front (cache TTL, prefetch, dedupe, guarda de resposta obsoleta, update otimista) implementadas (item 14).
 - [ ] `npm audit` da raiz zerado (upgrade do Expo SDK, sessão própria com teste manual do mobile) — item 15.
+- [x] Máscara de digitação em telefone, CNH e valores em R$ nos campos numéricos do web (item 16).

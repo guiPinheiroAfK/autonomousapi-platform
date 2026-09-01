@@ -5,7 +5,9 @@ viária como subproduto, base para licenciamento de API a empresas de mobilidade
 
 > **Fonte de verdade do produto:** a pasta [`specs/`](./specs). Leia `specs/00-visao-geral.md`
 > até `specs/05-roadmap-fases.md`, nessa ordem, antes de implementar qualquer coisa.
-> Trabalhe **uma fase por vez** (`specs/05-roadmap-fases.md`).
+> Trabalhe **uma fase por vez** (`specs/05-roadmap-fases.md`). Pra saber rápido o que já
+> está pronto, pela metade ou ainda não começou, sem ler spec por spec, veja
+> [`specs/16-status-das-funcionalidades.md`](./specs/16-status-das-funcionalidades.md).
 
 ## Estrutura
 
