@@ -544,11 +544,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
         ) : (
           <>
             <div className="border-b border-border p-4">
-              {/* Mesma coluna mx-auto max-w-3xl do corpo da conversa abaixo — sem isso, o
+              {/* Mesma coluna mx-auto max-w-5xl do corpo da conversa abaixo — sem isso, o
                   avatar/nome ficava colado na borda esquerda do painel enquanto as
                   mensagens ficavam centralizadas numa coluna mais estreita, os dois nunca
                   alinhavam verticalmente (achado: sensação de "torto"/"não centralizado"). */}
-              <div className="mx-auto flex max-w-3xl items-center gap-2.5">
+              <div className="mx-auto flex max-w-5xl items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => setSelectedId(null)}
@@ -572,7 +572,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4" onClick={closeMenus}>
-            <div className="mx-auto flex max-w-3xl flex-col space-y-2">
+            <div className="mx-auto flex max-w-5xl flex-col space-y-2">
               {messages.length === 0 && (
                 <p className="pt-8 text-center text-xs text-muted-foreground">{t('pages.chat.nenhumaMensagem')}</p>
               )}
@@ -635,8 +635,8 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                 const menu = (menuAberto || paletaAberta) && (
                   <div
                     className={cn(
-                      'absolute top-7 z-10 min-w-[9rem] rounded-md border border-border bg-popover p-1 text-xs shadow-lg',
-                      mine ? 'right-0' : 'left-0',
+                      'absolute top-7 z-10 min-w-[9rem] origin-top animate-in rounded-md border border-border bg-popover p-1 text-xs shadow-lg fade-in-0 zoom-in-95 duration-150',
+                      mine ? 'right-0 origin-top-right' : 'left-0 origin-top-left',
                     )}
                   >
                     {paletaAberta ? (
@@ -828,7 +828,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
             {replyingTo && (
               <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
-                <div className="mx-auto flex max-w-3xl items-center gap-2">
+                <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground">
@@ -850,7 +850,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             )}
             {editingId && (
               <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
-                <div className="mx-auto flex max-w-3xl items-center gap-2">
+                <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
                   <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
                   <button
@@ -864,7 +864,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               </div>
             )}
             <div className="border-t border-border p-3">
-            <form onSubmit={handleSend} className="mx-auto flex max-w-3xl items-center gap-2">
+            <form onSubmit={handleSend} className="mx-auto flex max-w-5xl items-center gap-2">
               {user?.role !== 'MOTORISTA' && selected.kind !== 'EQUIPE' && !editingId && (
                 <button
                   type="button"
