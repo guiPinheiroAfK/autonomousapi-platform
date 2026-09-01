@@ -360,7 +360,8 @@
         "confirmarExcluir": "Delete this driver?", "excluido": "Driver deleted.", "falhaExcluir": "Failed to delete driver",
         "falhaAvaliacao": "Failed to record rating", "conviteEnviado": "Invite sent to {{email}}.",
         "falhaConvite": "Failed to send invite", "falhaDesignar": "Failed to assign vehicle",
-        "falhaEncerrar": "Failed to end assignment", "avisoDoGestor": "Message from manager", "falhaAviso": "Failed to send message"
+        "falhaEncerrar": "Failed to end assignment", "avisoDoGestor": "Message from manager", "falhaAviso": "Failed to send message",
+        "linkCopiado": "Invite link copied.", "falhaCopiarLink": "Failed to copy link"
       },
       "detalhe": {
         "avaliacaoSoGestor": "Rating (visible only to the manager)",
@@ -370,6 +371,7 @@
         "cadastreEmailConvidar": "Add an email to invite",
         "enviando": "Sending...",
         "convidar": "Invite",
+        "copiarLinkConvite": "Copy invite link (no verified domain yet, the email may not arrive)",
         "avisoRapidoPlaceholder": "Send a quick message via the app...",
         "enviar": "Send",
         "avisoEnviado": "Message sent.",
@@ -655,13 +657,16 @@
         "nome": "Name", "nomePlaceholder": "Maria Silva",
         "email": "Email", "emailPlaceholder": "maria@yourfleet.com",
         "papel": "Role",
-        "cancelar": "Cancel", "enviando": "Sending...", "enviarConvite": "Send invite"
+        "cancelar": "Cancel", "enviando": "Sending...", "enviarConvite": "Send invite",
+        "convitePronto": "Invite created. No verified email domain yet — copy the link below and send it another way (WhatsApp, etc.) — it only shows here once.",
+        "copiarLink": "Copy link", "fechar": "Close"
       },
       "toasts": {
         "falhaCarregar": "Error loading team", "convidado": "Invite sent.",
         "falhaConvidar": "Failed to send invite", "papelAtualizado": "Role updated.",
         "falhaAtualizarPapel": "Failed to update role", "removido": "Access removed.",
-        "falhaRemover": "Failed to remove access"
+        "falhaRemover": "Failed to remove access", "linkCopiado": "Invite link copied.",
+        "falhaCopiarLink": "Failed to copy link"
       }
     },
     "chargingStations": {

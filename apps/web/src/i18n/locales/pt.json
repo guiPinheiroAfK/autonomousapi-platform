@@ -360,7 +360,8 @@
         "falhaAvaliacao": "Falha ao registrar avaliação", "conviteEnviado": "Convite enviado para {{email}}.",
         "falhaConvite": "Falha ao enviar convite", "falhaDesignar": "Falha ao designar veículo",
         "falhaEncerrar": "Falha ao encerrar designação", "avisoDoGestor": "Aviso do gestor", "falhaAviso": "Falha ao enviar aviso",
-        "avaliacaoExcluida": "Avaliação excluída.", "falhaExcluirAvaliacao": "Falha ao excluir avaliação"
+        "avaliacaoExcluida": "Avaliação excluída.", "falhaExcluirAvaliacao": "Falha ao excluir avaliação",
+        "linkCopiado": "Link do convite copiado.", "falhaCopiarLink": "Falha ao copiar o link"
       },
       "detalhe": {
         "avaliacaoSoGestor": "Avaliação (visível só para o gestor)",
@@ -370,6 +371,7 @@
         "cadastreEmailConvidar": "Cadastre um e-mail para convidar",
         "enviando": "Enviando...",
         "convidar": "Convidar",
+        "copiarLinkConvite": "Copiar link do convite (sem domínio verificado, o e-mail pode não chegar)",
         "avisoRapidoPlaceholder": "Mandar um aviso rápido pelo app...",
         "enviar": "Enviar",
         "avisoEnviado": "Aviso enviado.",
@@ -673,13 +675,16 @@
         "nome": "Nome", "nomePlaceholder": "Maria Silva",
         "email": "E-mail", "emailPlaceholder": "maria@suafrota.com.br",
         "papel": "Papel",
-        "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar convite"
+        "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar convite",
+        "convitePronto": "Convite criado. Sem domínio de e-mail verificado ainda, copie o link abaixo e mande por fora (WhatsApp, etc.) — ele só aparece aqui uma vez.",
+        "copiarLink": "Copiar link", "fechar": "Fechar"
       },
       "toasts": {
         "falhaCarregar": "Erro ao carregar equipe", "convidado": "Convite enviado.",
         "falhaConvidar": "Falha ao enviar convite", "papelAtualizado": "Papel atualizado.",
         "falhaAtualizarPapel": "Falha ao atualizar papel", "removido": "Acesso removido.",
-        "falhaRemover": "Falha ao remover acesso"
+        "falhaRemover": "Falha ao remover acesso", "linkCopiado": "Link do convite copiado.",
+        "falhaCopiarLink": "Falha ao copiar o link"
       }
     },
     "chargingStations": {
