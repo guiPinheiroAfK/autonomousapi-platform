@@ -71,6 +71,7 @@ export type RouteResponse = Schemas['RouteResponse'];
 export type RouteStep = Schemas['RouteStep'];
 export type PlaceResponse = Schemas['PlaceResponse'];
 export type ChatConversationResponse = Schemas['ChatConversationResponse'];
+export type TeamMemberOptionResponse = Schemas['TeamMemberOptionResponse'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type ChatReactionResponse = Schemas['ChatReactionResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
@@ -715,6 +716,15 @@ export const coreApi = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    /** Chat em equipe (V33) — qualquer membro (Gestor/Despachante/Visualizador) com
+     *  qualquer outro do mesmo tenant. Idempotente por par. */
+    createTeamConversation: (body: { otherUserId: string }) =>
+      request<ChatConversationResponse>('/v1/chat/team-conversations', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    /** Quem dá pra iniciar uma conversa de equipe (seletor "nova conversa"). */
+    listTeamMembers: () => request<TeamMemberOptionResponse[]>('/v1/chat/team-members'),
     listMessages: (conversationId: string) =>
       request<ChatMessageResponse[]>(`/v1/chat/conversations/${conversationId}/messages`),
     sendMessage: (conversationId: string, body: SendMessageRequest) =>

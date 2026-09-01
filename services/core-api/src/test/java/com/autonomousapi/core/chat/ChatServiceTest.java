@@ -26,6 +26,7 @@ import com.autonomousapi.core.routeplan.dto.RoutePlanResponse;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.tenant.Tenant;
 import com.autonomousapi.core.tenant.TenantRepository;
+import com.autonomousapi.core.user.UserRepository;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -55,13 +56,14 @@ class ChatServiceTest {
     private final DriverRepository drivers = mock(DriverRepository.class);
     private final VehicleRepository vehicles = mock(VehicleRepository.class);
     private final TenantRepository tenants = mock(TenantRepository.class);
+    private final UserRepository users = mock(UserRepository.class);
     private final CurrentDriverResolver driverResolver = mock(CurrentDriverResolver.class);
     private final PushNotificationService pushNotificationService = mock(PushNotificationService.class);
     private final RoutePlanService routePlanService = mock(RoutePlanService.class);
     private final TypingIndicatorService typingIndicator = new TypingIndicatorService();
 
     private final ChatService service = new ChatService(
-            conversations, messages, reactions, syncCursors, drivers, vehicles, tenants, driverResolver,
+            conversations, messages, reactions, syncCursors, drivers, vehicles, tenants, users, driverResolver,
             pushNotificationService, routePlanService, typingIndicator);
 
     private final UUID tenantId = UUID.randomUUID();
@@ -450,5 +452,92 @@ class ChatServiceTest {
 
         assertThrows(ChatMessageActionInvalidException.class,
                 () -> service.reactToMessage(gestorPrincipal, conversationId, antiga.getId(), "👍"));
+    }
+
+    // --- V33: chat em equipe ---
+
+    @Test
+    void getOrCreateTeamConversationRejeitaConversarConsigoMesmo() {
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.getOrCreateTeamConversation(gestorPrincipal, gestorUserId));
+    }
+
+    @Test
+    void getOrCreateTeamConversationRejeitaMotorista() {
+        UUID motoristaUserId = UUID.randomUUID();
+        com.autonomousapi.core.user.User motoristaUser =
+                new com.autonomousapi.core.user.User(tenantId, "motorista@teste.local", "hash", com.autonomousapi.core.user.Role.MOTORISTA);
+        setField(motoristaUser, "id", motoristaUserId);
+        when(users.findByIdAndTenantId(motoristaUserId, tenantId)).thenReturn(Optional.of(motoristaUser));
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.getOrCreateTeamConversation(gestorPrincipal, motoristaUserId));
+    }
+
+    @Test
+    void getOrCreateTeamConversationOrdenaOParDeFormaCanonicaIndependenteDeQuemInicia() {
+        UUID despachanteUserId = UUID.randomUUID();
+        com.autonomousapi.core.user.User despachante = new com.autonomousapi.core.user.User(
+                tenantId, "despachante@teste.local", "hash", com.autonomousapi.core.user.Role.DESPACHANTE);
+        setField(despachante, "id", despachanteUserId);
+        when(users.findByIdAndTenantId(despachanteUserId, tenantId)).thenReturn(Optional.of(despachante));
+        when(users.findAllById(any())).thenReturn(List.of(despachante));
+        when(conversations.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UUID menor = gestorUserId.compareTo(despachanteUserId) <= 0 ? gestorUserId : despachanteUserId;
+        UUID maior = gestorUserId.compareTo(despachanteUserId) <= 0 ? despachanteUserId : gestorUserId;
+        when(conversations.findByTenantIdAndKindAndGestorUserIdAndParticipantBUserId(
+                        tenantId, ChatConversationKind.EQUIPE, menor, maior))
+                .thenReturn(Optional.empty());
+
+        ChatConversationResponse resp = service.getOrCreateTeamConversation(gestorPrincipal, despachanteUserId);
+
+        assertEquals("EQUIPE", resp.kind());
+        assertEquals(despachanteUserId, resp.otherParticipantUserId());
+        assertEquals("despachante@teste.local", resp.otherParticipantEmail());
+    }
+
+    @Test
+    void getOrCreateTeamConversationEIdempotentePorPar() {
+        UUID despachanteUserId = UUID.randomUUID();
+        UUID menor = gestorUserId.compareTo(despachanteUserId) <= 0 ? gestorUserId : despachanteUserId;
+        UUID maior = gestorUserId.compareTo(despachanteUserId) <= 0 ? despachanteUserId : gestorUserId;
+        ChatConversation existente = ChatConversation.novaConversaEquipe(tenantId, menor, maior);
+        com.autonomousapi.core.user.User despachante = new com.autonomousapi.core.user.User(
+                tenantId, "despachante@teste.local", "hash", com.autonomousapi.core.user.Role.DESPACHANTE);
+        setField(despachante, "id", despachanteUserId);
+        when(users.findByIdAndTenantId(despachanteUserId, tenantId)).thenReturn(Optional.of(despachante));
+        when(conversations.findByTenantIdAndKindAndGestorUserIdAndParticipantBUserId(
+                        tenantId, ChatConversationKind.EQUIPE, menor, maior))
+                .thenReturn(Optional.of(existente));
+
+        ChatConversationResponse resp = service.getOrCreateTeamConversation(gestorPrincipal, despachanteUserId);
+
+        assertEquals(existente.getId(), resp.id());
+        verify(conversations, never()).save(any());
+    }
+
+    @Test
+    void sendRoutePlanMessageRejeitaConversaDeEquipe() {
+        UUID conversationId = UUID.randomUUID();
+        UUID outroUserId = UUID.randomUUID();
+        ChatConversation conv = ChatConversation.novaConversaEquipe(tenantId, gestorUserId, outroUserId);
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.sendRoutePlanMessage(gestorPrincipal, conversationId, UUID.randomUUID()));
+    }
+
+    @Test
+    void sendMessageEmConversaDeEquipeNotificaOOutroParticipante() {
+        UUID conversationId = UUID.randomUUID();
+        UUID outroUserId = UUID.randomUUID();
+        ChatConversation conv = ChatConversation.novaConversaEquipe(tenantId, gestorUserId, outroUserId);
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.sendMessage(gestorPrincipal, conversationId, "oi equipe", null);
+
+        verify(pushNotificationService).notifyUser(eq(outroUserId), any(), any());
     }
 }

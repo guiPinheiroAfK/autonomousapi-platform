@@ -513,6 +513,9 @@
     "chat": {
       "conversas": "Conversaciones",
       "iniciarConversa": "Iniciar conversación",
+      "iniciarConversaEquipe": "Conversar con el equipo",
+      "nenhumMembroDisponivel": "Todo el equipo ya tiene una conversación contigo.",
+      "selecioneMembro": "Selecciona un miembro del equipo...",
       "nenhumaConversa": "Aún no hay conversaciones.",
       "semMensagensAinda": "Sin mensajes aún",
       "selecioneOuInicie": "Selecciona una conversación o inicia una nueva.",

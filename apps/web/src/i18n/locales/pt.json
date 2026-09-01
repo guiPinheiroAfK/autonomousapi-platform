@@ -525,6 +525,9 @@
     "chat": {
       "conversas": "Conversas",
       "iniciarConversa": "Iniciar conversa",
+      "iniciarConversaEquipe": "Conversar com a equipe",
+      "nenhumMembroDisponivel": "Todo mundo da equipe já tem uma conversa com você.",
+      "selecioneMembro": "Selecione um membro da equipe...",
       "nenhumaConversa": "Nenhuma conversa ainda.",
       "semMensagensAinda": "Sem mensagens ainda",
       "selecioneOuInicie": "Selecione uma conversa ou inicie uma nova.",

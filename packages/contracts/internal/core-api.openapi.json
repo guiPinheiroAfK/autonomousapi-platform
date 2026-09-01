@@ -2239,6 +2239,36 @@
         }
       }
     },
+    "/v1/chat/team-conversations": {
+      "post": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "createTeamConversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTeamConversationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/chat/sync-cursor": {
       "post": {
         "tags": [
@@ -3680,6 +3710,29 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/DriverLicenseAlertResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chat/team-members": {
+      "get": {
+        "tags": [
+          "chat-controller"
+        ],
+        "operationId": "listTeamMembers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeamMemberOptionResponse"
                   }
                 }
               }
@@ -5430,6 +5483,68 @@
           }
         }
       },
+      "CreateTeamConversationRequest": {
+        "required": [
+          "otherUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "otherUserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ChatConversationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "otherParticipantUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "otherParticipantEmail": {
+            "type": "string"
+          },
+          "otherParticipantRole": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastMessageBody": {
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SyncCursorRequest": {
         "required": [
           "deviceId",
@@ -5459,43 +5574,6 @@
           "vehicleId": {
             "type": "string",
             "format": "uuid"
-          }
-        }
-      },
-      "ChatConversationResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverName": {
-            "type": "string"
-          },
-          "tenantName": {
-            "type": "string"
-          },
-          "vehicleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "vehiclePlate": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastMessageBody": {
-            "type": "string"
-          },
-          "lastMessageAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -6406,6 +6484,21 @@
           "diasRestantes": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "TeamMemberOptionResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
           }
         }
       },
