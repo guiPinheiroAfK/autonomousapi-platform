@@ -24,6 +24,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +49,7 @@ public class TeamService {
     private final UserRepository users;
     private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
+    private final UserHardDeleteAttempt hardDeleteAttempt;
     private final Duration inviteTtl;
     private final String webAppUrl;
     private final SecureRandom random = new SecureRandom();
@@ -57,12 +59,14 @@ public class TeamService {
             UserRepository users,
             EmailSender emailSender,
             PasswordEncoder passwordEncoder,
+            UserHardDeleteAttempt hardDeleteAttempt,
             @Value("${app.auth.team-invite-ttl-hours}") long inviteTtlHours,
             @Value("${app.auth.web-app-url}") String webAppUrl) {
         this.invites = invites;
         this.users = users;
         this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
+        this.hardDeleteAttempt = hardDeleteAttempt;
         this.inviteTtl = Duration.ofHours(inviteTtlHours);
         this.webAppUrl = webAppUrl;
     }
@@ -70,7 +74,12 @@ public class TeamService {
     @Transactional
     public TeamInviteResponse invite(JwtPrincipal gestorPrincipal, CreateTeamInviteRequest req) {
         validarPapelDeEquipe(req.role());
-        if (users.existsByEmail(req.email())) {
+        // V34: e-mail é único por tenant, não mais globalmente — bloqueia só se já for
+        // membro ATIVO desta empresa (uma pessoa pode ter conta em várias empresas, e um
+        // membro removido antes pode ser convidado de novo — accept() reativa a linha).
+        if (users.findByEmailAndTenantId(req.email(), gestorPrincipal.tenantId())
+                .filter(User::isEnabled)
+                .isPresent()) {
             throw new EmailAlreadyUsedException();
         }
         // Invalida convite pendente anterior pro mesmo e-mail — evita dois convites vivos
@@ -113,13 +122,26 @@ public class TeamService {
         return TeamMemberResponse.from(alvo);
     }
 
+    /**
+     * V34: tenta apagar de verdade primeiro (libera o e-mail pra reuso — em outro tenant, ou
+     * reconvidando pra este mesmo depois) — só cai pro desativar de antes se o alvo já tiver
+     * histórico próprio (rota criada, mensagem enviada, refresh token de uma sessão anterior,
+     * etc. — qualquer FK sem {@code ON DELETE} recusa o DELETE). A tentativa roda numa
+     * transação própria ({@link UserHardDeleteAttempt}) — tentar dentro desta mesma transação
+     * marcaria ela inteira como rollback-only assim que o Postgres recusasse (achado ao vivo:
+     * a resposta virava 401 genérico em vez do 204 esperado, mesmo capturando a exceção).
+     */
     @Transactional
     public void remove(JwtPrincipal gestorPrincipal, UUID userId) {
         if (userId.equals(gestorPrincipal.userId())) {
             throw new InvalidTeamRoleException("Você não pode remover a si mesmo.");
         }
         User alvo = membroDoTenant(gestorPrincipal, userId);
-        alvo.setEnabled(false);
+        try {
+            hardDeleteAttempt.tryDelete(alvo.getId());
+        } catch (DataIntegrityViolationException e) {
+            alvo.setEnabled(false);
+        }
     }
 
     /**
@@ -133,10 +155,22 @@ public class TeamService {
         if (!invite.isUsable()) {
             throw new InvalidTeamInviteTokenException();
         }
-        if (users.existsByEmail(invite.getEmail())) {
-            throw new EmailAlreadyUsedException();
+        // V34: se já existe uma linha (e-mail, tenant) desabilitada — foi removido antes e
+        // está sendo convidado de novo pra mesma empresa — reativa em vez de inserir outra
+        // (evita colidir com a constraint por-tenant e preserva o histórico da conta antiga).
+        User alvo = users.findByEmailAndTenantId(invite.getEmail(), invite.getTenantId())
+                .orElse(null);
+        if (alvo != null) {
+            if (alvo.isEnabled()) {
+                throw new EmailAlreadyUsedException();
+            }
+            alvo.setEnabled(true);
+            alvo.mudarPapelDeEquipe(invite.getRole());
+            alvo.setPasswordHash(passwordEncoder.encode(rawPassword));
+            users.save(alvo);
+        } else {
+            users.save(new User(invite.getTenantId(), invite.getEmail(), passwordEncoder.encode(rawPassword), invite.getRole()));
         }
-        users.save(new User(invite.getTenantId(), invite.getEmail(), passwordEncoder.encode(rawPassword), invite.getRole()));
         invite.markUsed();
     }
 

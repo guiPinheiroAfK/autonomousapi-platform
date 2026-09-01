@@ -1,13 +1,15 @@
 package com.autonomousapi.core.auth;
 
 import com.autonomousapi.core.auth.dto.LoginRequest;
+import com.autonomousapi.core.auth.dto.LoginResult;
+import com.autonomousapi.core.auth.dto.SelectTenantRequest;
 import com.autonomousapi.core.auth.dto.SignupRequest;
 import com.autonomousapi.core.auth.dto.SignupResponse;
+import com.autonomousapi.core.auth.dto.TenantChoiceResponse;
 import com.autonomousapi.core.auth.dto.TokenResponse;
 import com.autonomousapi.core.billing.Subscription;
 import com.autonomousapi.core.billing.SubscriptionRepository;
 import com.autonomousapi.core.email.EmailSender;
-import com.autonomousapi.core.error.EmailAlreadyUsedException;
 import com.autonomousapi.core.error.GoogleAuthNotConfiguredException;
 import com.autonomousapi.core.error.InvalidCredentialsException;
 import com.autonomousapi.core.error.InvalidPasswordResetTokenException;
@@ -24,6 +26,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -35,6 +39,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HexFormat;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -118,9 +124,9 @@ public class AuthService {
      */
     @Transactional
     public SignupResponse signup(SignupRequest req) {
-        if (users.existsByEmail(req.email())) {
-            throw new EmailAlreadyUsedException();
-        }
+        // V34: cadastro sempre cria um tenant novo — nunca colide com a constraint por-tenant
+        // de app_user.email, mesmo que esse e-mail já seja membro de equipe em outro lugar
+        // (decisão explícita: uma pessoa pode ter uma conta por empresa em que participa).
         Tenant tenant = tenants.save(new Tenant(req.tenantName()));
         User user = new User(
                 tenant.getId(),
@@ -164,7 +170,12 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        User user = users.findByEmail(email).orElseGet(() -> criarUsuarioViaGoogle(email, payload));
+        // V34: e-mail pode ter mais de uma conta (tenants diferentes). Google só prova posse
+        // do e-mail, não escolhe entre elas — pega a primeira (mesmo comportamento de antes
+        // pro caso comum de uma conta só; ambiguidade real de qual tenant fica pra decisão
+        // futura, não vale a pena um segundo fluxo de escolha só pra Google login agora).
+        List<User> candidatos = users.findAllByEmail(email);
+        User user = candidatos.isEmpty() ? criarUsuarioViaGoogle(email, payload) : candidatos.get(0);
         if (!user.isEnabled()) {
             // Conta existia via signup por senha, esperando confirmação por e-mail — o
             // login com Google já prova posse do mesmo jeito, não faz sentido travar aqui.
@@ -231,9 +242,12 @@ public class AuthService {
      */
     @Transactional
     public void resendVerification(String email) {
-        users.findByEmail(email)
+        // V34: e-mail pode ter mais de uma conta — reenvia pra todas que ainda estão
+        // pendentes de confirmação (cada uma é uma empresa diferente, cada uma pode estar
+        // esperando confirmação independente).
+        users.findAllByEmail(email).stream()
                 .filter(user -> !user.isEnabled())
-                .ifPresent(this::sendVerificationEmail);
+                .forEach(this::sendVerificationEmail);
     }
 
     private void sendVerificationEmail(User user) {
@@ -254,7 +268,9 @@ public class AuthService {
      */
     @Transactional
     public void forgotPassword(String email) {
-        users.findByEmail(email).ifPresent(user -> {
+        // V34: e-mail pode ter mais de uma conta — manda link de redefinição pra cada uma
+        // (senha é independente por tenant, então "esqueci a senha" precisa resolver todas).
+        users.findAllByEmail(email).forEach(user -> {
             passwordResetTokens.findAllByUserIdAndUsedAtIsNull(user.getId())
                     .forEach(PasswordResetToken::markUsed);
 
@@ -291,12 +307,69 @@ public class AuthService {
         refreshTokens.revokeAllForUser(user.getId());
     }
 
+    /**
+     * V34: um e-mail pode ter mais de uma conta (tenants diferentes, senha própria em cada
+     * uma). Testa a senha contra TODAS as linhas do e-mail, sem short-circuit no primeiro
+     * match — mantém o tempo de resposta estável independente de quantas contas existem, e
+     * a mesma {@link InvalidCredentialsException} cobre tanto "e-mail não existe" quanto
+     * "senha errada em todas", igual antes (nunca revela quais e-mails têm conta).
+     *
+     * <p>Se a senha bate em exatamente uma conta, emite os tokens direto (caso comum). Se
+     * bate em mais de uma (a pessoa reusou a mesma senha em duas empresas — plausível, já
+     * que cada aceite de convite pede senha nova, não há sincronização entre elas), devolve
+     * um token curto de "escolha de empresa" em vez de tokens de acesso — ver
+     * {@link #selectTenant}.
+     */
     @Transactional
-    public TokenResponse login(LoginRequest req) {
-        User user = users.findByEmail(req.email()).orElseThrow(InvalidCredentialsException::new);
-        if (!user.isEnabled() || !passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+    public LoginResult login(LoginRequest req) {
+        List<User> candidatos = users.findAllByEmail(req.email()).stream()
+                .filter(User::isEnabled)
+                .filter(u -> passwordEncoder.matches(req.password(), u.getPasswordHash()))
+                .toList();
+        if (candidatos.isEmpty()) {
             throw new InvalidCredentialsException();
         }
+        if (candidatos.size() == 1) {
+            return LoginResult.tokens(issueTokens(candidatos.get(0)));
+        }
+        return LoginResult.chooseTenant(issuePendingTenantChoice(req.email(), candidatos));
+    }
+
+    private TenantChoiceResponse issuePendingTenantChoice(String email, List<User> candidatos) {
+        List<UUID> tenantIds = candidatos.stream().map(User::getTenantId).toList();
+        String pendingToken = jwtService.issuePendingLoginToken(email, tenantIds);
+        List<TenantChoiceResponse.TenantOption> opcoes = candidatos.stream()
+                .map(u -> new TenantChoiceResponse.TenantOption(
+                        u.getTenantId(), tenantName(u.getTenantId()), u.getRole().name()))
+                .toList();
+        return new TenantChoiceResponse(pendingToken, opcoes);
+    }
+
+    private String tenantName(UUID tenantId) {
+        return tenants.findById(tenantId).map(Tenant::getName).orElse(null);
+    }
+
+    /** Completa um login ambíguo (ver {@link #login}) — o pending token já prova que a senha
+     *  bateu em todas as contas listadas nele; só falta escolher qual tenant usar. */
+    @Transactional
+    public TokenResponse selectTenant(SelectTenantRequest req) {
+        Claims claims;
+        try {
+            claims = jwtService.parsePendingLoginToken(req.pendingToken());
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidCredentialsException();
+        }
+        String email = claims.getSubject();
+        @SuppressWarnings("unchecked")
+        List<String> tenantIdsClaim = claims.get("tenantIds", List.class);
+        boolean tenantPermitido = tenantIdsClaim != null
+                && tenantIdsClaim.stream().anyMatch(id -> id.equals(req.tenantId().toString()));
+        if (!tenantPermitido) {
+            throw new InvalidCredentialsException();
+        }
+        User user = users.findByEmailAndTenantId(email, req.tenantId())
+                .filter(User::isEnabled)
+                .orElseThrow(InvalidCredentialsException::new);
         return issueTokens(user);
     }
 

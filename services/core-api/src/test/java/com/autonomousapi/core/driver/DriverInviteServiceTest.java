@@ -54,7 +54,7 @@ class DriverInviteServiceTest {
         comEmail.update("João", "12345678901", null, DriverStatus.ATIVO, null, "joao@frota.com");
         UUID id = comEmail.getId();
         when(drivers.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(comEmail));
-        when(users.existsByEmail("joao@frota.com")).thenReturn(true);
+        when(users.existsByEmailAndTenantId("joao@frota.com", tenantId)).thenReturn(true);
 
         assertThrows(EmailAlreadyUsedException.class, () -> service.invite(principal, id));
         verify(invites, never()).save(any());
@@ -66,7 +66,7 @@ class DriverInviteServiceTest {
         comEmail.update("João", "12345678901", null, DriverStatus.ATIVO, null, "joao@frota.com");
         UUID id = comEmail.getId();
         when(drivers.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(comEmail));
-        when(users.existsByEmail("joao@frota.com")).thenReturn(false);
+        when(users.existsByEmailAndTenantId("joao@frota.com", tenantId)).thenReturn(false);
         when(invites.findAllByDriverIdAndUsedAtIsNull(id)).thenReturn(List.of());
 
         service.invite(principal, id);
@@ -96,7 +96,7 @@ class DriverInviteServiceTest {
         DriverInvite invite = new DriverInvite(driver.getId(), "hash", Instant.now().plusSeconds(3600));
         when(invites.findByTokenHash(anyString())).thenReturn(Optional.of(invite));
         when(drivers.findById(driver.getId())).thenReturn(Optional.of(driver));
-        when(users.existsByEmail("joao@frota.com")).thenReturn(false);
+        when(users.existsByEmailAndTenantId("joao@frota.com", tenantId)).thenReturn(false);
         when(passwordEncoder.encode("senha1234")).thenReturn("hashed");
 
         service.accept("tok", "senha1234");

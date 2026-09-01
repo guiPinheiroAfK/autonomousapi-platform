@@ -34,6 +34,9 @@ public class SecurityConfig {
             "/v1/auth/verify-email",
             "/v1/auth/resend-verification",
             "/v1/auth/login",
+            // V34: completa um login ambíguo — a prova de posse é o pending token (curto,
+            // validado por conta própria em AuthService.selectTenant), não um Bearer normal.
+            "/v1/auth/select-tenant",
             "/v1/auth/google",
             "/v1/auth/forgot-password",
             "/v1/auth/reset-password",

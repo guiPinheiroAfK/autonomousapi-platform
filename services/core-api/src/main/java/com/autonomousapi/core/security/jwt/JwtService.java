@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,10 @@ import org.springframework.stereotype.Service;
 /** Emite e valida access tokens JWT (HS256). Stateless: nada de sessão no servidor. */
 @Service
 public class JwtService {
+
+    /** V34, login com múltiplas contas: janela curta de propósito — só serve pra completar
+     *  um login que já teve a senha validada, escolhendo entre os tenants candidatos. */
+    private static final Duration PENDING_LOGIN_TTL = Duration.ofMinutes(5);
 
     private final SecretKey key;
     private final Duration accessTtl;
@@ -50,5 +55,37 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    /**
+     * V34, login com múltiplas contas: quando a mesma senha bate em mais de uma conta do
+     * e-mail (tenants diferentes), o login não emite tokens de acesso direto — emite este
+     * token curto, trocado em {@code POST /v1/auth/select-tenant} por um par de tokens de
+     * verdade pro tenant escolhido. A senha já foi validada contra todos os candidatos antes
+     * de chegar aqui — possuir este token prova exatamente isso, nada mais fraco que o login
+     * normal. Mesma chave/assinatura do access token, só um TTL bem mais curto e uma claim
+     * {@code purpose} que {@link JwtAuthenticationFilter} recusa em qualquer endpoint
+     * protegido comum.
+     */
+    public String issuePendingLoginToken(String email, List<UUID> tenantIds) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(email)
+                .claim("purpose", "pending_login")
+                .claim("tenantIds", tenantIds.stream().map(UUID::toString).toList())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(PENDING_LOGIN_TTL)))
+                .signWith(key)
+                .compact();
+    }
+
+    /** Valida o token de {@link #issuePendingLoginToken} — assinatura/expiração (herdado de
+     *  {@link #parse}) e o propósito. Lança JwtException se inválido ou não for desse tipo. */
+    public Claims parsePendingLoginToken(String token) {
+        Claims claims = parse(token);
+        if (!"pending_login".equals(claims.get("purpose", String.class))) {
+            throw new io.jsonwebtoken.JwtException("Token não é de escolha de tenant.");
+        }
+        return claims;
     }
 }

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
+import type { TenantChoiceResponse } from '../api/client';
 import {
   AuthLayout,
   BotaoPublico,
@@ -17,11 +18,20 @@ interface Props {
 
 export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword }: Props) {
   const { t } = useTranslation();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, selectTenant, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // V34: preenchido só no caso raro de a mesma senha bater em mais de uma conta do e-mail
+  // (tenants diferentes) — o login não loga direto, pede pra escolher qual empresa.
+  const [tenantChoice, setTenantChoice] = useState<TenantChoiceResponse | null>(null);
+
+  const papelLabel: Record<string, string> = {
+    GESTOR_FROTA: t('pages.team.papel.gestor'),
+    DESPACHANTE: t('pages.team.papel.despachante'),
+    VISUALIZADOR: t('pages.team.papel.visualizador'),
+  };
 
   /**
    * Dispara o download do chunk do Dashboard (mesmo specifier do `lazy()` em App.tsx —
@@ -41,7 +51,21 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
     setSubmitting(true);
     prefetchDashboard();
     try {
-      await login({ email, password });
+      const choice = await login({ email, password });
+      if (choice) setTenantChoice(choice);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.login.falha'));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSelectTenant(tenantId: string) {
+    if (!tenantChoice) return;
+    setError('');
+    setSubmitting(true);
+    try {
+      await selectTenant(tenantChoice.pendingToken!, tenantId);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.login.falha'));
     } finally {
@@ -73,6 +97,33 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
       }
       onVoltar={onVoltarParaHome}
     >
+      {/* V34: e-mail com conta em mais de uma empresa e a mesma senha nas duas — pede pra
+          escolher em vez de entrar numa arbitrariamente. Substitui o formulário normal,
+          não some (o e-mail/senha já foram validados, só falta escolher o tenant). */}
+      {tenantChoice ? (
+        <div className="mt-8 space-y-3">
+          <p className="text-[14px] text-[var(--tinta-suave)]">{t('auth.login.escolherEmpresa')}</p>
+          {tenantChoice.tenants?.map((opcao) => (
+            <BotaoPublico
+              key={opcao.tenantId}
+              type="button"
+              disabled={submitting}
+              onClick={() => handleSelectTenant(opcao.tenantId!)}
+            >
+              {opcao.tenantName} — {papelLabel[opcao.role!] ?? opcao.role}
+            </BotaoPublico>
+          ))}
+          {error && <ErroPublico>{error}</ErroPublico>}
+          <button
+            type="button"
+            onClick={() => setTenantChoice(null)}
+            className="link-sublinhado text-[13px] text-[var(--tinta-suave)]"
+          >
+            {t('auth.login.voltarParaLogin')}
+          </button>
+        </div>
+      ) : (
+      <>
       {/* O bloco inteiro some sem VITE_GOOGLE_CLIENT_ID configurado — sem isso, sobraria
           um divisor "ou" solto sem nenhum botão acima dele. */}
       {isGoogleSignInEnabled && (
@@ -131,6 +182,8 @@ export function LoginPage({ onGoToSignup, onVoltarParaHome, onGoToForgotPassword
           {t('auth.login.cadastrarMinhaFrota')}
         </button>
       </p>
+      </>
+      )}
     </AuthLayout>
   );
 }

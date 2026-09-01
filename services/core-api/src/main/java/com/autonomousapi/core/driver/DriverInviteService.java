@@ -68,9 +68,10 @@ public class DriverInviteService {
         if (driver.getEmail() == null || driver.getEmail().isBlank()) {
             throw new DriverEmailRequiredException();
         }
-        // Se o e-mail já é um login (motorista já convidado/ativo ou colisão com outra conta),
-        // não faz sentido reconvidar para um e-mail que já autentica.
-        if (users.existsByEmail(driver.getEmail())) {
+        // Se o e-mail já é um login NESTE tenant (motorista já convidado/ativo), não faz
+        // sentido reconvidar. V34: e-mail é único por tenant, não mais globalmente — a mesma
+        // pessoa pode já ter conta em outra empresa sem problema nenhum aqui.
+        if (users.existsByEmailAndTenantId(driver.getEmail(), driver.getTenantId())) {
             throw new EmailAlreadyUsedException();
         }
 
@@ -103,7 +104,7 @@ public class DriverInviteService {
         if (driver.getEmail() == null || driver.getEmail().isBlank()) {
             throw new InvalidDriverInviteTokenException();
         }
-        if (users.existsByEmail(driver.getEmail())) {
+        if (users.existsByEmailAndTenantId(driver.getEmail(), driver.getTenantId())) {
             throw new EmailAlreadyUsedException();
         }
 

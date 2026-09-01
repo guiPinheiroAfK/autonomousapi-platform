@@ -8,6 +8,7 @@ import {
   type LoginRequest,
   type SignupRequest,
   type SignupResponse,
+  type TenantChoiceResponse,
   type TokenResponse,
   type UserResponse,
 } from '../api/client';
@@ -18,7 +19,10 @@ const REFRESH_STORAGE_KEY = 'autonomousapi.refreshToken';
 interface AuthState {
   user: UserResponse | null;
   loading: boolean;
-  login: (body: LoginRequest) => Promise<void>;
+  /** V34: devolve `null` quando já loga direto (caso comum); devolve a escolha de tenant
+   *  quando a senha bate em mais de uma conta do e-mail — completar com `selectTenant`. */
+  login: (body: LoginRequest) => Promise<TenantChoiceResponse | null>;
+  selectTenant: (pendingToken: string, tenantId: string) => Promise<void>;
   /** Login OU cadastro via Google, na mesma chamada — o backend decide. */
   loginWithGoogle: (idToken: string) => Promise<void>;
   /** Não loga automaticamente (ADR 0011) — devolve a mensagem de "confirme seu e-mail". */
@@ -95,8 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await coreApi.auth.me());
   }
 
-  async function login(body: LoginRequest) {
-    await afterAuth(await coreApi.auth.login(body));
+  async function login(body: LoginRequest): Promise<TenantChoiceResponse | null> {
+    const result = await coreApi.auth.login(body);
+    if (result.tokens) {
+      await afterAuth(result.tokens);
+      return null;
+    }
+    return result.tenantChoice ?? null;
+  }
+
+  async function selectTenant(pendingToken: string, tenantId: string) {
+    await afterAuth(await coreApi.auth.selectTenant({ pendingToken, tenantId }));
   }
 
   async function loginWithGoogle(idToken: string) {
@@ -119,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, signup, verifyEmail, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, selectTenant, loginWithGoogle, signup, verifyEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

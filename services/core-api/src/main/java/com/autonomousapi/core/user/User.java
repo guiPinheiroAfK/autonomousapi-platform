@@ -9,7 +9,9 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Usuário do core-api. Pertence a um tenant (exceto admin de plataforma). */
+/** Usuário do core-api. Pertence a um tenant (exceto admin de plataforma). {@code email} é
+ *  único por tenant, não mais globalmente (V34) — uma pessoa pode ter uma linha (papel e
+ *  senha próprios) por empresa em que participa. */
 @Entity
 @Table(name = "app_user")
 public class User {
@@ -22,7 +24,7 @@ public class User {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(name = "email", nullable = false, length = 255)
     private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)

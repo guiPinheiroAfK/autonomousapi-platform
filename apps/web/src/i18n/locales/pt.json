@@ -142,7 +142,9 @@
       "esqueceuSenha": "Esqueceu a senha?",
       "semConta": "Ainda não tem conta?",
       "cadastrarMinhaFrota": "Cadastrar minha frota",
-      "falha": "Falha no login"
+      "falha": "Falha no login",
+      "escolherEmpresa": "Sua senha é a mesma em mais de uma empresa — escolha em qual entrar:",
+      "voltarParaLogin": "Voltar"
     },
     "signup": {
       "titulo": "Cadastrar minha frota",
