@@ -33,6 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ChatService {
 
+    /** Prazo pra editar/excluir a própria mensagem, contado de {@code sentAt} — pedido do
+     *  Guilherme, editar/apagar algo de horas atrás confunde quem já leu e reagiu ao
+     *  original. Excluir tem folga maior que editar de propósito (arrependimento de "mandei
+     *  a mensagem errada" é mais comum que "preciso corrigir o texto" depois de um tempo). */
+    private static final java.time.Duration EDIT_WINDOW = java.time.Duration.ofMinutes(20);
+    private static final java.time.Duration DELETE_WINDOW = java.time.Duration.ofMinutes(35);
+
     private final ChatConversationRepository conversations;
     private final ChatMessageRepository messages;
     private final ChatMessageReactionRepository reactions;
@@ -155,18 +162,27 @@ public class ChatService {
     }
 
     /** Só o autor, só {@code TEXTO}, só enquanto ainda na janela de retenção (V31) — fora
-     *  disso o outro lado não teria como ver a edição (poll só busca {@code aindaNoServidor}). */
+     *  disso o outro lado não teria como ver a edição (poll só busca {@code aindaNoServidor}).
+     *  Também só até {@link #EDIT_WINDOW} depois de enviada (pedido do Guilherme — editar
+     *  uma mensagem de horas atrás confunde quem já leu e reagiu ao texto original). */
     @Transactional
     public ChatMessageResponse editMessage(JwtPrincipal principal, UUID conversationId, UUID messageId, String novoBody) {
         ChatMessage message = findEditableOwnMessage(principal, conversationId, messageId);
+        if (Instant.now().isAfter(message.getSentAt().plus(EDIT_WINDOW))) {
+            throw new ChatMessageActionInvalidException("Prazo pra editar esta mensagem já passou (20 minutos).");
+        }
         message.editar(novoBody);
         return ChatMessageResponse.from(message);
     }
 
-    /** Mesmas guardas de {@link #editMessage} — soft delete, ver {@link ChatMessage#apagar}. */
+    /** Mesmas guardas de {@link #editMessage} (autor, TEXTO, ainda retida), mas com janela
+     *  de tempo própria — {@link #DELETE_WINDOW}, mais folgada que a de editar. */
     @Transactional
     public ChatMessageResponse deleteMessage(JwtPrincipal principal, UUID conversationId, UUID messageId) {
         ChatMessage message = findEditableOwnMessage(principal, conversationId, messageId);
+        if (Instant.now().isAfter(message.getSentAt().plus(DELETE_WINDOW))) {
+            throw new ChatMessageActionInvalidException("Prazo pra excluir esta mensagem já passou (35 minutos).");
+        }
         message.apagar();
         return ChatMessageResponse.from(message);
     }
