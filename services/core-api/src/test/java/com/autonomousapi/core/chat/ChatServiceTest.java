@@ -27,12 +27,26 @@ import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.tenant.Tenant;
 import com.autonomousapi.core.tenant.TenantRepository;
 import com.autonomousapi.core.vehicle.VehicleRepository;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ChatServiceTest {
+
+    /** Mesmo padrão de {@code ChatCleanupJobTest} pra "enviar" uma mensagem no passado —
+     *  o construtor de {@link ChatMessage} sempre usa {@code Instant.now()}, sem isso não
+     *  dá pra testar a janela de tempo de editar/excluir. */
+    private static void setField(Object target, String field, Object value) {
+        try {
+            Field f = target.getClass().getDeclaredField(field);
+            f.setAccessible(true);
+            f.set(target, value);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private final ChatConversationRepository conversations = mock(ChatConversationRepository.class);
     private final ChatMessageRepository messages = mock(ChatMessageRepository.class);
@@ -333,6 +347,38 @@ class ChatServiceTest {
 
         assertEquals(null, resp.body());
         org.junit.jupiter.api.Assertions.assertNotNull(resp.deletedAt());
+    }
+
+    @Test
+    void editMessageRejeitaAposPrazoDe20Minutos() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage minha = new ChatMessage(conv.getId(), gestorUserId, "texto original");
+        setField(minha, "sentAt", java.time.Instant.now().minus(21, java.time.temporal.ChronoUnit.MINUTES));
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(minha.getId(), conv.getId())).thenReturn(Optional.of(minha));
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.editMessage(gestorPrincipal, conversationId, minha.getId(), "texto corrigido"));
+    }
+
+    @Test
+    void deleteMessageFuncionaAos30MinutosMasRejeitaAos36() {
+        UUID conversationId = UUID.randomUUID();
+        ChatConversation conv = new ChatConversation(tenantId, gestorUserId, UUID.randomUUID(), null);
+        ChatMessage aos30 = new ChatMessage(conv.getId(), gestorUserId, "texto original");
+        setField(aos30, "sentAt", java.time.Instant.now().minus(30, java.time.temporal.ChronoUnit.MINUTES));
+        ChatMessage aos36 = new ChatMessage(conv.getId(), gestorUserId, "outro texto");
+        setField(aos36, "sentAt", java.time.Instant.now().minus(36, java.time.temporal.ChronoUnit.MINUTES));
+        when(conversations.findByIdAndTenantId(conversationId, tenantId)).thenReturn(Optional.of(conv));
+        when(messages.findByIdAndConversationId(aos30.getId(), conv.getId())).thenReturn(Optional.of(aos30));
+        when(messages.findByIdAndConversationId(aos36.getId(), conv.getId())).thenReturn(Optional.of(aos36));
+
+        ChatMessageResponse resp = service.deleteMessage(gestorPrincipal, conversationId, aos30.getId());
+        assertEquals(null, resp.body());
+
+        assertThrows(ChatMessageActionInvalidException.class,
+                () -> service.deleteMessage(gestorPrincipal, conversationId, aos36.getId()));
     }
 
     @Test

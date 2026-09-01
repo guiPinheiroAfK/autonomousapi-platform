@@ -549,7 +549,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                   );
                 }
                 const apagada = m.deletedAt != null;
-                const podeEditarOuExcluir = mine && !apagada && m.stillOnServer;
+                // Prazo pra editar/excluir a própria mensagem (pedido do Guilherme) — o
+                // backend também recusa depois desses minutos, isso aqui só evita mostrar
+                // um botão que ia dar erro. Excluir tem folga maior que editar de propósito.
+                const minutosDesdeEnvio = m.sentAt ? (Date.now() - new Date(m.sentAt).getTime()) / 60000 : Infinity;
+                const podeEditar = mine && !apagada && m.stillOnServer && minutosDesdeEnvio <= 20;
+                const podeExcluir = mine && !apagada && m.stillOnServer && minutosDesdeEnvio <= 35;
                 const podeEncaminhar = !apagada && conversations.some((c) => c.id !== selectedId);
                 const menuAberto = openMenuId === m.id;
                 const paletaAberta = reactingId === m.id;
@@ -608,23 +613,23 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                             <ForwardIcon className="size-3.5" /> {t('pages.chat.encaminhar')}
                           </button>
                         )}
-                        {podeEditarOuExcluir && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => startEdit(m)}
-                              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary"
-                            >
-                              <Pencil className="size-3.5" /> {t('pages.chat.editar')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteMessage(m)}
-                              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-status-danger hover:bg-secondary"
-                            >
-                              <Trash2 className="size-3.5" /> {t('pages.chat.excluir')}
-                            </button>
-                          </>
+                        {podeEditar && (
+                          <button
+                            type="button"
+                            onClick={() => startEdit(m)}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-secondary"
+                          >
+                            <Pencil className="size-3.5" /> {t('pages.chat.editar')}
+                          </button>
+                        )}
+                        {podeExcluir && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(m)}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-status-danger hover:bg-secondary"
+                          >
+                            <Trash2 className="size-3.5" /> {t('pages.chat.excluir')}
+                          </button>
                         )}
                       </div>
                     )}
