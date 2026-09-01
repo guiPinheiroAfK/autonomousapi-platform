@@ -714,6 +714,7 @@ export const coreApi = {
     changeRole: (userId: string, body: ChangeTeamRoleRequest) =>
       request<TeamMemberResponse>(`/v1/team/${userId}/role`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (userId: string) => request<void>(`/v1/team/${userId}`, { method: 'DELETE' }),
+    cancelInvite: (inviteId: string) => request<void>(`/v1/team/invites/${inviteId}`, { method: 'DELETE' }),
   },
 
   /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */

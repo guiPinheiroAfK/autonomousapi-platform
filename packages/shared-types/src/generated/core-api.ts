@@ -1572,6 +1572,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/team/invites/{inviteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["cancelInvite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/expenses/{id}": {
         parameters: {
             query?: never;
@@ -2032,6 +2048,7 @@ export interface components {
             nome: string;
             /** @enum {string} */
             role: "GESTOR_FROTA" | "MOTORISTA" | "ADMIN" | "PARCEIRO_API" | "DESPACHANTE" | "VISUALIZADOR";
+            enviarPorEmail?: boolean;
         };
         TeamInviteResponse: {
             /** Format: uuid */
@@ -5387,6 +5404,26 @@ export interface operations {
             header?: never;
             path: {
                 userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                inviteId: string;
             };
             cookie?: never;
         };

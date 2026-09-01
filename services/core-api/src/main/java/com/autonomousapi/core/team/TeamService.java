@@ -5,6 +5,7 @@ import com.autonomousapi.core.error.EmailAlreadyUsedException;
 import com.autonomousapi.core.error.InvalidTeamInviteTokenException;
 import com.autonomousapi.core.error.InvalidTeamRoleException;
 import com.autonomousapi.core.error.Lookups;
+import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.team.dto.CreateTeamInviteRequest;
 import com.autonomousapi.core.team.dto.TeamInviteResponse;
@@ -93,11 +94,25 @@ public class TeamService {
                 gestorPrincipal.userId(), sha256Hex(rawToken), expiresAt));
 
         String link = webAppUrl + "/aceitar-convite-equipe?token=" + rawToken;
-        emailSender.sendTeamInviteEmail(req.email(), req.nome(), link);
+        // Nulo (clientes antigos) mantém o comportamento de sempre enviar.
+        if (!Boolean.FALSE.equals(req.enviarPorEmail())) {
+            emailSender.sendTeamInviteEmail(req.email(), req.nome(), link);
+        }
         // O link também volta na resposta (só aqui, na criação — nunca reconstruível depois,
         // só o hash fica salvo): sem domínio de e-mail verificado ainda, o gestor copia e
         // manda por fora (WhatsApp etc.) em vez de depender da entrega chegar.
         return TeamInviteResponse.from(invite, link);
+    }
+
+    /** Cancela um convite ainda pendente — mesmo efeito de reconvidar o mesmo e-mail
+     *  (invalida via {@code markUsed}), só que sem precisar preencher o form de novo. */
+    @Transactional
+    public void cancelInvite(JwtPrincipal gestorPrincipal, UUID inviteId) {
+        TeamInvite invite = Lookups.orNotFound(invites.findById(inviteId), "Convite não encontrado.");
+        if (!invite.getTenantId().equals(gestorPrincipal.tenantId())) {
+            throw new NotFoundException("Convite não encontrado.");
+        }
+        invite.markUsed();
     }
 
     @Transactional(readOnly = true)

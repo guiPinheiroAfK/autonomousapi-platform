@@ -668,6 +668,8 @@
       "pendente": "Pendente",
       "remover": "Remover",
       "confirmarRemover": "Remover o acesso deste integrante? Ele não vai mais conseguir entrar.",
+      "cancelarConvite": "Cancelar convite",
+      "confirmarCancelarConvite": "Cancelar este convite? O link para de funcionar imediatamente.",
       "papel": {
         "gestor": "Gestor", "despachante": "Despachante", "visualizador": "Visualizador"
       },
@@ -677,14 +679,16 @@
         "papel": "Papel",
         "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar convite",
         "convitePronto": "Convite criado. Sem domínio de e-mail verificado ainda, copie o link abaixo e mande por fora (WhatsApp, etc.) — ele só aparece aqui uma vez.",
-        "copiarLink": "Copiar link", "fechar": "Fechar"
+        "copiarLink": "Copiar link", "fechar": "Fechar",
+        "enviarPorEmail": "Também enviar por e-mail (pode não chegar, sem domínio verificado ainda)"
       },
       "toasts": {
         "falhaCarregar": "Erro ao carregar equipe", "convidado": "Convite enviado.",
         "falhaConvidar": "Falha ao enviar convite", "papelAtualizado": "Papel atualizado.",
         "falhaAtualizarPapel": "Falha ao atualizar papel", "removido": "Acesso removido.",
         "falhaRemover": "Falha ao remover acesso", "linkCopiado": "Link do convite copiado.",
-        "falhaCopiarLink": "Falha ao copiar o link"
+        "falhaCopiarLink": "Falha ao copiar o link",
+        "conviteCancelado": "Convite cancelado.", "falhaCancelarConvite": "Falha ao cancelar convite"
       }
     },
     "chargingStations": {
