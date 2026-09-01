@@ -507,7 +507,8 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               )}
             </div>
 
-            <div className="flex-1 space-y-2 overflow-y-auto p-4" onClick={closeMenus}>
+            <div className="flex-1 overflow-y-auto p-4" onClick={closeMenus}>
+            <div className="mx-auto flex max-w-3xl flex-col space-y-2">
               {messages.length === 0 && (
                 <p className="pt-8 text-center text-xs text-muted-foreground">{t('pages.chat.nenhumaMensagem')}</p>
               )}
@@ -695,21 +696,19 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                         </p>
                       </div>
                       {Object.keys(contagemPorEmoji).length > 0 && (
-                        <div className="flex flex-wrap gap-1">
+                        <div className={cn('-mt-2.5 flex flex-wrap gap-0.5 px-1', mine && 'justify-end')}>
                           {Object.entries(contagemPorEmoji).map(([emoji, n]) => (
                             <button
                               key={emoji}
                               type="button"
                               onClick={() => handleReact(m, emoji)}
                               className={cn(
-                                'flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px]',
-                                minhaReacao?.emoji === emoji
-                                  ? 'border-primary bg-primary/10'
-                                  : 'border-border bg-secondary/60',
+                                'flex items-center gap-0.5 rounded-full border bg-card px-1 py-0.5 leading-none shadow-sm',
+                                minhaReacao?.emoji === emoji ? 'border-primary' : 'border-border',
                               )}
                             >
-                              <span>{emoji}</span>
-                              {n > 1 && <span className="text-muted-foreground">{n}</span>}
+                              <span className="text-[11px] leading-none">{emoji}</span>
+                              {n > 1 && <span className="text-[9px] leading-none text-muted-foreground">{n}</span>}
                             </button>
                           ))}
                         </div>
@@ -740,41 +739,47 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               )}
               <div ref={bottomRef} />
             </div>
+            </div>
 
             {replyingTo && (
-              <div className="flex items-center gap-2 border-t border-border bg-secondary/40 px-3 py-2 text-xs">
-                <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground">
-                    {t('pages.chat.respondendoA', {
-                      nome: replyingTo.senderUserId === user?.id ? (user?.email ?? '') : nomeDoOutroLado(selected, user),
-                    })}
-                  </p>
-                  <p className="truncate text-muted-foreground">{replyingTo.body}</p>
+              <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+                <div className="mx-auto flex max-w-3xl items-center gap-2">
+                  <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">
+                      {t('pages.chat.respondendoA', {
+                        nome: replyingTo.senderUserId === user?.id ? (user?.email ?? '') : nomeDoOutroLado(selected, user),
+                      })}
+                    </p>
+                    <p className="truncate text-muted-foreground">{replyingTo.body}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyingTo(null)}
+                    className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setReplyingTo(null)}
-                  className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
               </div>
             )}
             {editingId && (
-              <div className="flex items-center gap-2 border-t border-border bg-secondary/40 px-3 py-2 text-xs">
-                <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
-                <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
+              <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+                <div className="mx-auto flex max-w-3xl items-center gap-2">
+                  <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
+                  <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
               </div>
             )}
-            <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-border p-3">
+            <div className="border-t border-border p-3">
+            <form onSubmit={handleSend} className="mx-auto flex max-w-3xl items-center gap-2">
               {user?.role !== 'MOTORISTA' && !editingId && (
                 <button
                   type="button"
@@ -802,6 +807,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                 <Send className="size-4" />
               </Button>
             </form>
+            </div>
           </>
         )}
       </Card>
