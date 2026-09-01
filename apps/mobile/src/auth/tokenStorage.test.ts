@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { clearTokens, loadAccessToken, saveTokens } from './tokenStorage';
+import { clearTokens, loadAccessToken, loadRefreshToken, saveTokens } from './tokenStorage';
 
 jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(),
@@ -38,6 +38,19 @@ describe('loadAccessToken', () => {
   it('devolve null quando não há sessão salva', async () => {
     mockedSecureStore.getItemAsync.mockResolvedValue(null);
     expect(await loadAccessToken()).toBeNull();
+  });
+});
+
+describe('loadRefreshToken', () => {
+  it('devolve o refresh token salvo', async () => {
+    mockedSecureStore.getItemAsync.mockResolvedValue('refresh-456');
+    expect(await loadRefreshToken()).toBe('refresh-456');
+    expect(mockedSecureStore.getItemAsync).toHaveBeenCalledWith('autonomousapi.refreshToken');
+  });
+
+  it('devolve null quando não há sessão salva', async () => {
+    mockedSecureStore.getItemAsync.mockResolvedValue(null);
+    expect(await loadRefreshToken()).toBeNull();
   });
 });
 

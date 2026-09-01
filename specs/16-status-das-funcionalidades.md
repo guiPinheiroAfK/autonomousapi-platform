@@ -161,6 +161,11 @@ contra o texto dos specs.
   read-only, ocorrência, histórico de viagem, chat (spec 07).
 - ✅ **Rastreamento de GPS sobrevive à troca de aba** — hook levantado pra `HomeTabs`, achado
   e corrigido nesta sessão (bug de perda de dado, não só performance).
+- ✅ **Refresh de sessão silencioso** — o app salvava o refresh token no SecureStore desde o
+  início, mas nunca o usava (achado nesta sessão numa segunda revisão); access token
+  expirado (15min) jogava pro login de novo mesmo com refresh token de 30 dias ainda
+  válido guardado à toa. Corrigido espelhando o client web: `request()` tenta renovar a
+  sessão sozinho num 401 antes de desistir.
 - 📋 **Ações novas do chat (responder/editar/excluir/encaminhar/reagir) só no navegador** —
   o app nativo (`apps/mobile`) ainda não ganhou essas ações (ADR 0022, "fora de escopo").
 

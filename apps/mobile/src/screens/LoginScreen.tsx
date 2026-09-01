@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { coreApi, setAuthToken, type TokenResponse } from '../api/client';
+import { coreApi, setAuthToken, setRefreshToken, type TokenResponse } from '../api/client';
 import { saveTokens } from '../auth/tokenStorage';
 
 interface Props {
@@ -26,6 +26,7 @@ export function LoginScreen({ onLogin }: Props) {
     try {
       const tokens = await coreApi.login(email.trim(), password);
       setAuthToken(tokens.accessToken);
+      setRefreshToken(tokens.refreshToken);
       await saveTokens(tokens.accessToken, tokens.refreshToken);
       onLogin(tokens);
     } catch (e) {
