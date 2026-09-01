@@ -595,7 +595,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                       key={m.id}
                       className={cn('flex animate-in fade-in slide-in-from-bottom-1 duration-200', mine ? 'justify-end' : 'justify-start')}
                     >
-                      <div className="max-w-[75%] rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-sm shadow-sm">
+                      <div className="max-w-[75%] rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-[13px] shadow-sm">
                         <p className="flex items-center gap-1.5 break-words font-medium text-foreground">
                           <RouteIcon className="size-3.5 shrink-0 text-primary" /> {m.body}
                         </p>
@@ -729,7 +729,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     <div className={cn('flex flex-col gap-1', mine ? 'items-end' : 'items-start')}>
                       <div
                         className={cn(
-                          'max-w-[70%] rounded-2xl px-3.5 py-2 text-sm shadow-sm',
+                          'max-w-[70%] rounded-2xl px-3.5 py-2 text-[13px] shadow-sm',
                           apagada
                             ? 'border border-dashed border-border text-muted-foreground italic'
                             : mine
@@ -784,12 +784,16 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                               type="button"
                               onClick={() => handleReact(m, emoji)}
                               className={cn(
-                                'flex items-center gap-0.5 rounded-full border bg-card px-1 py-0.5 leading-none shadow-sm',
+                                'flex items-center gap-1 rounded-full border bg-card px-1.5 py-1 leading-none shadow-sm',
                                 minhaReacao?.emoji === emoji ? 'border-primary' : 'border-border',
                               )}
                             >
-                              <span className="text-[11px] leading-none">{emoji}</span>
-                              {n > 1 && <span className="text-[9px] leading-none text-muted-foreground">{n}</span>}
+                              {/* Emoji colorido do Windows/macOS só renderiza nítido em
+                                  certos tamanhos "de bitmap" — 11px caía num tamanho
+                                  interpolado e borrado; 14px é próximo o bastante de um
+                                  tamanho nativo (achado do Guilherme: "baixa qualidade"). */}
+                              <span className="text-sm leading-none">{emoji}</span>
+                              {n > 1 && <span className="text-[10px] leading-none text-muted-foreground">{n}</span>}
                             </button>
                           ))}
                         </div>
