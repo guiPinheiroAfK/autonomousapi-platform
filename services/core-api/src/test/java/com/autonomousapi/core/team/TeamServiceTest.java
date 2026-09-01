@@ -81,6 +81,40 @@ class TeamServiceTest {
         verify(emailSender).sendTeamInviteEmail(eq("novo@teste.local"), eq("Novo Despachante"), any());
     }
 
+    /** Sem domínio verificado ainda, o gestor pode pular o envio e só copiar o link. */
+    @Test
+    void convitePulaEmailQuandoEnviarPorEmailEhFalse() {
+        when(invites.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        var req = new CreateTeamInviteRequest("novo@teste.local", "Novo", Role.VISUALIZADOR, false);
+
+        var resp = service.invite(gestor, req);
+
+        assertEquals(true, resp.linkUrl() != null && !resp.linkUrl().isBlank());
+        verify(emailSender, org.mockito.Mockito.never()).sendTeamInviteEmail(any(), any(), any());
+    }
+
+    @Test
+    void cancelInviteMarcaComoUsadoParaSumirDaListaDePendentes() {
+        TeamInvite convite = new TeamInvite(
+                tenantId, "pendente@teste.local", "Pendente", Role.VISUALIZADOR, gestor.userId(),
+                "hash-qualquer", java.time.Instant.now().plusSeconds(3600));
+        when(invites.findById(convite.getId())).thenReturn(Optional.of(convite));
+
+        service.cancelInvite(gestor, convite.getId());
+
+        assertFalse(convite.isUsable());
+    }
+
+    @Test
+    void cancelInviteDeOutroTenantDevolveNotFound() {
+        TeamInvite convite = new TeamInvite(
+                UUID.randomUUID(), "pendente@teste.local", "Pendente", Role.VISUALIZADOR, gestor.userId(),
+                "hash-qualquer", java.time.Instant.now().plusSeconds(3600));
+        when(invites.findById(convite.getId())).thenReturn(Optional.of(convite));
+
+        assertThrows(NotFoundException.class, () -> service.cancelInvite(gestor, convite.getId()));
+    }
+
     @Test
     void aceiteComTokenExpiradoLancaExcecaoClara() {
         TeamInvite expirado = new TeamInvite(

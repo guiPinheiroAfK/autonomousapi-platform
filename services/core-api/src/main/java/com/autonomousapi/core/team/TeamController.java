@@ -56,6 +56,12 @@ public class TeamController {
         teamService.remove(principal(auth), userId);
     }
 
+    @DeleteMapping("/invites/{inviteId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelInvite(@PathVariable UUID inviteId, Authentication auth) {
+        teamService.cancelInvite(principal(auth), inviteId);
+    }
+
     private JwtPrincipal principal(Authentication auth) {
         return (JwtPrincipal) auth.getPrincipal();
     }

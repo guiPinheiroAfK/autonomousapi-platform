@@ -650,6 +650,8 @@
       "pendente": "Pendiente",
       "remover": "Eliminar",
       "confirmarRemover": "¿Eliminar el acceso de este integrante? Ya no podrá iniciar sesión.",
+      "cancelarConvite": "Cancelar invitación",
+      "confirmarCancelarConvite": "¿Cancelar esta invitación? El enlace deja de funcionar de inmediato.",
       "papel": {
         "gestor": "Dueño", "despachante": "Despachante", "visualizador": "Visualizador"
       },
@@ -659,14 +661,16 @@
         "papel": "Papel",
         "cancelar": "Cancelar", "enviando": "Enviando...", "enviarConvite": "Enviar invitación",
         "convitePronto": "Invitación creada. Sin dominio de correo verificado aún — copia el enlace abajo y envíalo por otro medio (WhatsApp, etc.) — solo aparece aquí una vez.",
-        "copiarLink": "Copiar enlace", "fechar": "Cerrar"
+        "copiarLink": "Copiar enlace", "fechar": "Cerrar",
+        "enviarPorEmail": "También enviar por correo (puede no llegar, sin dominio verificado aún)"
       },
       "toasts": {
         "falhaCarregar": "Error al cargar el equipo", "convidado": "Invitación enviada.",
         "falhaConvidar": "Error al enviar la invitación", "papelAtualizado": "Papel actualizado.",
         "falhaAtualizarPapel": "Error al actualizar el papel", "removido": "Acceso eliminado.",
         "falhaRemover": "Error al eliminar el acceso", "linkCopiado": "Enlace de invitación copiado.",
-        "falhaCopiarLink": "Error al copiar el enlace"
+        "falhaCopiarLink": "Error al copiar el enlace",
+        "conviteCancelado": "Invitación cancelada.", "falhaCancelarConvite": "Error al cancelar la invitación"
       }
     },
     "chargingStations": {

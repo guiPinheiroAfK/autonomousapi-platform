@@ -3973,6 +3973,30 @@
         }
       }
     },
+    "/v1/team/invites/{inviteId}": {
+      "delete": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "cancelInvite",
+        "parameters": [
+          {
+            "name": "inviteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/v1/expenses/{id}": {
       "delete": {
         "tags": [
@@ -5248,6 +5272,9 @@
               "DESPACHANTE",
               "VISUALIZADOR"
             ]
+          },
+          "enviarPorEmail": {
+            "type": "boolean"
           }
         }
       },

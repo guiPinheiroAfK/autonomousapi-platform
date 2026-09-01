@@ -31,6 +31,9 @@ export function TeamPage() {
   const [email, setEmail] = useState('');
   const [nome, setNome] = useState('');
   const [role, setRole] = useState<TeamRole>('VISUALIZADOR');
+  // Sem domínio verificado ainda, mandar e-mail que provavelmente não chega é ruído — o
+  // gestor pode pular e só copiar o link (padrão: manda, é o comportamento de sempre).
+  const [enviarPorEmail, setEnviarPorEmail] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   // Sem domínio de e-mail verificado ainda, o link do convite volta na própria resposta —
@@ -51,6 +54,7 @@ export function TeamPage() {
     setEmail('');
     setNome('');
     setRole('VISUALIZADOR');
+    setEnviarPorEmail(true);
     setFormError('');
     setInviteLinkUrl(null);
     setModalOpen(true);
@@ -61,7 +65,7 @@ export function TeamPage() {
     setSaving(true);
     setFormError('');
     try {
-      const resp = await coreApi.team.invite({ email: email.trim(), nome: nome.trim(), role });
+      const resp = await coreApi.team.invite({ email: email.trim(), nome: nome.trim(), role, enviarPorEmail });
       toast.success(t('pages.team.toasts.convidado'));
       // Fica no modal mostrando o link em vez de fechar — é a única vez que ele existe em
       // texto puro (só o hash fica salvo depois), então é agora ou nunca pra copiar.
@@ -101,6 +105,17 @@ export function TeamPage() {
       remove: () => coreApi.team.remove(userId),
       successMessage: t('pages.team.toasts.removido'),
       fallbackErrorMessage: t('pages.team.toasts.falhaRemover'),
+      onSuccess: refresh,
+    });
+  }
+
+  function cancelarConvite(inviteId: string) {
+    deleteWithConfirm({
+      confirmMessage: t('pages.team.confirmarCancelarConvite'),
+      confirmLabel: t('pages.team.cancelarConvite'),
+      remove: () => coreApi.team.cancelInvite(inviteId),
+      successMessage: t('pages.team.toasts.conviteCancelado'),
+      fallbackErrorMessage: t('pages.team.toasts.falhaCancelarConvite'),
       onSuccess: refresh,
     });
   }
@@ -192,7 +207,17 @@ export function TeamPage() {
                       </p>
                       <p className="text-muted-foreground">{papelLabel[c.role!] ?? c.role}</p>
                     </div>
-                    <Badge variant="outline">{t('pages.team.pendente')}</Badge>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="outline">{t('pages.team.pendente')}</Badge>
+                      <button
+                        type="button"
+                        onClick={() => cancelarConvite(c.id!)}
+                        title={t('pages.team.cancelarConvite')}
+                        className="text-muted-foreground hover:text-status-danger"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -248,6 +273,15 @@ export function TeamPage() {
               ))}
             </Select>
           </div>
+          <label className="flex items-center gap-2 text-xs text-foreground">
+            <input
+              type="checkbox"
+              checked={enviarPorEmail}
+              onChange={(e) => setEnviarPorEmail(e.target.checked)}
+              className="size-3.5 rounded border-input"
+            />
+            {t('pages.team.form.enviarPorEmail')}
+          </label>
           {formError && <p className="text-xs text-status-danger">{formError}</p>}
           <div className="flex justify-end gap-2 border-t border-border pt-3">
             <Button type="button" variant="ghost" size="sm" onClick={() => setModalOpen(false)}>

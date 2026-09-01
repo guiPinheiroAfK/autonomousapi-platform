@@ -650,6 +650,8 @@
       "pendente": "Pending",
       "remover": "Remove",
       "confirmarRemover": "Remove this member's access? They won't be able to log in anymore.",
+      "cancelarConvite": "Cancel invite",
+      "confirmarCancelarConvite": "Cancel this invite? The link stops working immediately.",
       "papel": {
         "gestor": "Owner", "despachante": "Dispatcher", "visualizador": "Viewer"
       },
@@ -659,14 +661,16 @@
         "papel": "Role",
         "cancelar": "Cancel", "enviando": "Sending...", "enviarConvite": "Send invite",
         "convitePronto": "Invite created. No verified email domain yet — copy the link below and send it another way (WhatsApp, etc.) — it only shows here once.",
-        "copiarLink": "Copy link", "fechar": "Close"
+        "copiarLink": "Copy link", "fechar": "Close",
+        "enviarPorEmail": "Also send by email (may not arrive, no verified domain yet)"
       },
       "toasts": {
         "falhaCarregar": "Error loading team", "convidado": "Invite sent.",
         "falhaConvidar": "Failed to send invite", "papelAtualizado": "Role updated.",
         "falhaAtualizarPapel": "Failed to update role", "removido": "Access removed.",
         "falhaRemover": "Failed to remove access", "linkCopiado": "Invite link copied.",
-        "falhaCopiarLink": "Failed to copy link"
+        "falhaCopiarLink": "Failed to copy link",
+        "conviteCancelado": "Invite cancelled.", "falhaCancelarConvite": "Failed to cancel invite"
       }
     },
     "chargingStations": {
