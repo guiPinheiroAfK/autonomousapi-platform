@@ -144,13 +144,24 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
+/** Módulos com permissão configurável por usuário (ADR 0025) — espelha o enum do backend. */
+export type ModuloPermissao =
+  | 'FROTA'
+  | 'ORDENS_SERVICO'
+  | 'MOTORISTAS'
+  | 'MENSAGENS'
+  | 'ROTAS'
+  | 'CUSTOS'
+  | 'RELATORIOS'
+  | 'PARCEIROS'
+  | 'RECARGA';
+
 /**
- * Fora do fluxo de rota, criar/editar/excluir (frota, motorista, custo, OS, manutenção,
- * etc.) é Gestor-only — Despachante/Visualizador só leem. O backend já bloqueia essas
- * escritas com 403 pra quem não é `GESTOR_FROTA`/`ADMIN`; isso só esconde o botão que ia
- * dar erro (spec 15, fast-follow).
+ * ADR 0025 — "esta pessoa pode ver/escrever neste módulo?". Só esconde o que ia dar 403:
+ * quem decide de verdade é o `@PreAuthorize` do backend, a partir das permissões que vêm
+ * dentro do próprio JWT. Aqui a lista chega por `/v1/auth/me`.
  */
-export function usePodeEscrever(): boolean {
+export function usePode(modulo: ModuloPermissao, acao: 'VER' | 'ESCREVER'): boolean {
   const { user } = useAuth();
-  return user?.role === 'GESTOR_FROTA' || user?.role === 'ADMIN';
+  return (user?.permissions ?? []).includes(`${modulo}_${acao}`);
 }

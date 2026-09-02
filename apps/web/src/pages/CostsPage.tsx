@@ -13,7 +13,7 @@ import {
   type RoutePlanResponse,
   type VehicleResponse,
 } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { StatusBadgeCusto } from '../components/shared/StatusBadge';
 import { StatCard } from '../components/shared/StatCard';
 import { PlacaBR } from '../components/shared/PlacaBR';
@@ -235,7 +235,7 @@ const EXPENSES_PAGE_SIZE = 20;
 
 function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('CUSTOS', 'ESCREVER');
   const [entries, setEntries] = useState<FleetExpenseEntryResponse[]>([]);
   const [categoriaFiltro, setCategoriaFiltro] = useState<ExpenseCategory | 'todas'>('todas');
   const [page, setPage] = useState(0);
@@ -537,7 +537,7 @@ function DespesasTab({ vehicles }: { vehicles: VehicleResponse[] }) {
 
 function OrcamentoTab({ vehicles }: { vehicles: VehicleResponse[] }) {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('CUSTOS', 'ESCREVER');
   const [budgets, setBudgets] = useState<BudgetResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);

@@ -207,6 +207,76 @@
         }
       }
     },
+    "/v1/team/{userId}/permissions": {
+      "get": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "permissions",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberPermissionsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "team-controller"
+        ],
+        "operationId": "updatePermissions",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamPermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberPermissionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/routes/plans/{id}": {
       "get": {
         "tags": [
@@ -4467,6 +4537,84 @@
           }
         }
       },
+      "UpdateTeamPermissionsRequest": {
+        "required": [
+          "permissoes"
+        ],
+        "type": "object",
+        "properties": {
+          "permissoes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "permissao": {
+            "type": "string"
+          },
+          "modulo": {
+            "type": "string",
+            "enum": [
+              "FROTA",
+              "ORDENS_SERVICO",
+              "MOTORISTAS",
+              "MENSAGENS",
+              "ROTAS",
+              "CUSTOS",
+              "RELATORIOS",
+              "PARCEIROS",
+              "RECARGA"
+            ]
+          },
+          "acao": {
+            "type": "string",
+            "enum": [
+              "VER",
+              "ESCREVER"
+            ]
+          },
+          "concedida": {
+            "type": "boolean"
+          },
+          "padraoDoPapel": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TeamMemberPermissionsResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "GESTOR_FROTA",
+              "MOTORISTA",
+              "ADMIN",
+              "PARCEIRO_API",
+              "DESPACHANTE",
+              "VISUALIZADOR"
+            ]
+          },
+          "ajustavel": {
+            "type": "boolean"
+          },
+          "permissoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
       "StopInput": {
         "required": [
           "tipo"
@@ -6706,6 +6854,12 @@
           "tenantId": {
             "type": "string",
             "format": "uuid"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

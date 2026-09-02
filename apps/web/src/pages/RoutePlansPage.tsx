@@ -26,7 +26,7 @@ import {
   type StopInput,
   type VehicleResponse,
 } from '../api/client';
-import { useAuth, usePodeEscrever } from '../auth/AuthContext';
+import { useAuth, usePode } from '../auth/AuthContext';
 import { BuscaEndereco } from '../components/shared/BuscaEndereco';
 import { StatusBadgeRotaPlan } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
@@ -60,7 +60,7 @@ export function RoutePlansPage() {
   const podeCancelar = user?.role === 'GESTOR_FROTA' || user?.role === 'ADMIN';
   // Excluir contato do cadastro (diferente de criar um novo) é Gestor-only (spec 15) —
   // Despachante monta rota e cadastra passageiro novo, mas não apaga o cadastro de ninguém.
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('ROTAS', 'ESCREVER');
   const [plans, setPlans] = useState<RoutePlanResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -1,13 +1,18 @@
 package com.autonomousapi.core.security.jwt;
 
+import com.autonomousapi.core.user.Role;
+import com.autonomousapi.core.user.permission.Permission;
+import com.autonomousapi.core.user.permission.RolePermissionDefaults;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,16 +41,39 @@ public class JwtService {
         this.accessTtl = Duration.ofMinutes(accessTtlMinutes);
     }
 
-    public String issueAccessToken(UUID userId, String role, UUID tenantId) {
+    /**
+     * ADR 0025: além do papel, o token carrega a lista de permissões efetivas — o filtro as
+     * transforma em authorities, então {@code @PreAuthorize} decide sem ir ao banco, como
+     * já fazia com o papel. Custo assumido: mudança de permissão só vale no próximo token
+     * (até 15 min), igual ao que remover alguém da equipe já fazia.
+     */
+    public String issueAccessToken(UUID userId, String role, UUID tenantId, Collection<String> permissions) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("role", role)
                 .claim("tenantId", tenantId == null ? null : tenantId.toString())
+                .claim("perms", List.copyOf(permissions))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(accessTtl)))
                 .signWith(key)
                 .compact();
+    }
+
+    /**
+     * Atalho para "token com as permissões padrão deste papel" — usado onde não há usuário
+     * carregado pra consultar override (e nos testes de autorização por papel). O caminho
+     * normal de login passa a lista efetiva explicitamente, ver
+     * {@code AuthService.issueTokens}.
+     */
+    public String issueAccessToken(UUID userId, String role, UUID tenantId) {
+        Set<Permission> padrao;
+        try {
+            padrao = RolePermissionDefaults.forRole(Role.valueOf(role));
+        } catch (IllegalArgumentException ex) {
+            padrao = Set.of();
+        }
+        return issueAccessToken(userId, role, tenantId, padrao.stream().map(Permission::name).toList());
     }
 
     /** Valida a assinatura/expiração e devolve as claims. Lança JwtException se inválido. */

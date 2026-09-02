@@ -33,20 +33,20 @@ public class BudgetController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_ESCREVER')")
     public BudgetResponse create(@Valid @RequestBody BudgetRequest req, Authentication auth) {
         return budgetService.create(principal(auth), req);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_VER')")
     public List<BudgetResponse> list(Authentication auth) {
         return budgetService.list(principal(auth));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_ESCREVER')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         budgetService.delete(principal(auth), id);
     }

@@ -34,7 +34,7 @@ public class CollectionPointController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public CollectionPointResponse create(@Valid @RequestBody CollectionPointRequest req, Authentication auth) {
         return service.create(principal(auth), req);
     }
@@ -42,27 +42,27 @@ public class CollectionPointController {
     /** {@code all=true} devolve inclusive os inativos (tela de cadastro); por padrão só ativos
      *  (é o que a tela de montar rota consome). */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_VER')")
     public List<CollectionPointResponse> list(
             @RequestParam(defaultValue = "false") boolean all, Authentication auth) {
         return all ? service.listAll(principal(auth)) : service.listActive(principal(auth));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public CollectionPointResponse update(
             @PathVariable UUID id, @Valid @RequestBody CollectionPointRequest req, Authentication auth) {
         return service.update(principal(auth), id, req);
     }
 
     @PostMapping("/{id}/ativar")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public CollectionPointResponse ativar(@PathVariable UUID id, Authentication auth) {
         return service.setAtivo(principal(auth), id, true);
     }
 
     @PostMapping("/{id}/desativar")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public CollectionPointResponse desativar(@PathVariable UUID id, Authentication auth) {
         return service.setAtivo(principal(auth), id, false);
     }

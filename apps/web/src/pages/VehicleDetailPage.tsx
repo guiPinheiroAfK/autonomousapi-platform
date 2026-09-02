@@ -12,7 +12,7 @@ import {
   type VehicleResponse,
   type WorkOrderResponse,
 } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgeSeveridade, StatusBadgeVeiculo } from '../components/shared/StatusBadge';
 import { VehicleTypeIcon } from '../components/shared/VehicleTypeIcon';
@@ -37,7 +37,7 @@ interface Props {
  */
 export function VehicleDetailPage({ vehicleId, onBack }: Props) {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('FROTA', 'ESCREVER');
   const [vehicle, setVehicle] = useState<VehicleResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);

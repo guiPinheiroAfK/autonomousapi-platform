@@ -36,11 +36,12 @@ public class WorkOrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ORDENS_SERVICO_ESCREVER')")
     public WorkOrderResponse create(@Valid @RequestBody WorkOrderRequest req, Authentication auth) {
         return workOrderService.create(principal(auth), req);
     }
 
+    @PreAuthorize("hasAuthority('PERM_ORDENS_SERVICO_VER')")
     @GetMapping
     public PageResponse<WorkOrderResponse> list(
             @RequestParam(required = false) UUID vehicleId,
@@ -53,7 +54,7 @@ public class WorkOrderController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ORDENS_SERVICO_ESCREVER')")
     public WorkOrderResponse update(
             @PathVariable UUID id, @Valid @RequestBody WorkOrderRequest req, Authentication auth) {
         return workOrderService.update(principal(auth), id, req);
@@ -61,7 +62,7 @@ public class WorkOrderController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ORDENS_SERVICO_ESCREVER')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         workOrderService.delete(principal(auth), id);
     }

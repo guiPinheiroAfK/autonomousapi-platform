@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/team/{userId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["permissions"];
+        put: operations["updatePermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/routes/plans/{id}": {
         parameters: {
             query?: never;
@@ -1762,6 +1778,26 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        UpdateTeamPermissionsRequest: {
+            permissoes: string[];
+        };
+        Item: {
+            permissao?: string;
+            /** @enum {string} */
+            modulo?: "FROTA" | "ORDENS_SERVICO" | "MOTORISTAS" | "MENSAGENS" | "ROTAS" | "CUSTOS" | "RELATORIOS" | "PARCEIROS" | "RECARGA";
+            /** @enum {string} */
+            acao?: "VER" | "ESCREVER";
+            concedida?: boolean;
+            padraoDoPapel?: boolean;
+        };
+        TeamMemberPermissionsResponse: {
+            /** Format: uuid */
+            userId?: string;
+            /** @enum {string} */
+            role?: "GESTOR_FROTA" | "MOTORISTA" | "ADMIN" | "PARCEIRO_API" | "DESPACHANTE" | "VISUALIZADOR";
+            ajustavel?: boolean;
+            permissoes?: components["schemas"]["Item"][];
+        };
         StopInput: {
             /** @enum {string} */
             tipo: "COLETA" | "ENTREGA";
@@ -2556,6 +2592,7 @@ export interface components {
             role?: string;
             /** Format: uuid */
             tenantId?: string;
+            permissions?: string[];
         };
         AffiliatePartnerResponse: {
             /** Format: uuid */
@@ -2708,6 +2745,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["TeamMemberResponse"];
+                };
+            };
+        };
+    };
+    permissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TeamMemberPermissionsResponse"];
+                };
+            };
+        };
+    };
+    updatePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTeamPermissionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TeamMemberPermissionsResponse"];
                 };
             };
         };

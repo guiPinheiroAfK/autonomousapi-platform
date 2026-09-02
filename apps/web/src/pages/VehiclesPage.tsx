@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleOff, Eye, Plus, Truck, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type VehicleRequest, type VehicleResponse } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 import { PlacaBR } from '../components/shared/PlacaBR';
@@ -42,7 +42,7 @@ const VEHICLES_PAGE_SIZE = 20;
 
 export function VehiclesPage({ onViewCosts, onViewDetail }: Props) {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('FROTA', 'ESCREVER');
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [form, setForm] = useState<VehicleRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);

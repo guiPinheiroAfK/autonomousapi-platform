@@ -46,14 +46,14 @@ public class RoutePlanController {
     /** Stateless — não persiste nada, só devolve a sugestão pro gestor revisar. Despachante
      *  (spec 15) também cria/atribui rota, então também precisa sugerir ordem. */
     @PostMapping("/suggest-order")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public SuggestOrderResponse suggestOrder(@Valid @RequestBody SuggestOrderRequest req, Authentication auth) {
         return routePlanService.suggestOrder(principal(auth), req.stops());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public RoutePlanResponse create(@Valid @RequestBody CreateRoutePlanRequest req, Authentication auth) {
         return routePlanService.create(
                 principal(auth), req.driverId(), req.vehicleId(), req.categoria(), req.dataExecucao(),
@@ -63,7 +63,7 @@ public class RoutePlanController {
     /** Leitura aberta pros três papéis de gestão (spec 15) — Visualizador só lê, mas
      *  precisa ver a lista igual aos outros dois. */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_VER')")
     public PageResponse<RoutePlanResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -75,7 +75,7 @@ public class RoutePlanController {
 
     /** Spec 11, gap "progresso em tempo real" — tela de detalhe da rota faz poll aqui. */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_VER')")
     public RoutePlanResponse getOne(@PathVariable UUID id, Authentication auth) {
         return routePlanService.getForGestor(principal(auth), id);
     }
@@ -83,14 +83,14 @@ public class RoutePlanController {
     /** Spec 11, gap "edição de rota já atribuída" — só funciona pra PLANEJADA (400 caso
      *  contrário). Despachante também edita (mesmo grupo de escrita de {@code create}). */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public RoutePlanResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateRoutePlanRequest req, Authentication auth) {
         return routePlanService.update(
                 principal(auth), id, req.vehicleId(), req.dataExecucao(), req.valor(), req.stops());
     }
 
     @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public RoutePlanResponse assign(@PathVariable UUID id, @Valid @RequestBody AssignDriverRequest req, Authentication auth) {
         return routePlanService.assignDriver(principal(auth), id, req.driverId());
     }
@@ -98,7 +98,12 @@ public class RoutePlanController {
     /** Cancelamento direto — só funciona pra PLANEJADA (ADR 0021). Rota já EM_ANDAMENTO
      *  devolve 400 explicando que precisa passar pelo chat. Despachante não cancela (spec
      *  15) — de propósito sem DESPACHANTE aqui, diferente dos outros endpoints de escrita
-     *  desta classe. */
+     *  desta classe.
+     *
+     *  <p>ADR 0025: continua por PAPEL, não por permissão de módulo. Cancelar cai dentro de
+     *  "Rotas / escrever", e Despachante tem essa permissão por padrão — trocar por
+     *  {@code PERM_ROTAS_ESCREVER} daria a ele um poder que a spec 15 tira de propósito.
+     *  Lista completa do que continua exclusivo do dono da conta na ADR 0025. */
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
     public RoutePlanResponse cancel(@PathVariable UUID id, Authentication auth) {

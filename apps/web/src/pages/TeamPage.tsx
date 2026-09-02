@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Copy, Mail, Plus, Trash2, UserCog } from 'lucide-react';
+import { Copy, Mail, Plus, SlidersHorizontal, Trash2, UserCog } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { coreApi, type TeamOverviewResponse, type TeamRole } from '../api/client';
+import {
+  coreApi,
+  type TeamMemberPermissionsResponse,
+  type TeamOverviewResponse,
+  type TeamRole,
+} from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -14,6 +19,19 @@ import { toast } from '../lib/toast';
 import { deleteWithConfirm } from '../lib/confirm';
 
 const PAPEIS_CONVIDAVEIS: TeamRole[] = ['DESPACHANTE', 'VISUALIZADOR'];
+
+/** ADR 0025 — mesma ordem do menu lateral, que é como o gestor pensa sobre o sistema. */
+const MODULOS = [
+  'FROTA',
+  'ORDENS_SERVICO',
+  'MOTORISTAS',
+  'MENSAGENS',
+  'ROTAS',
+  'CUSTOS',
+  'RELATORIOS',
+  'PARCEIROS',
+  'RECARGA',
+] as const;
 
 /**
  * Equipe e permissões (spec 15) — Gestor-only (garantido por RequireGestorTotal em App.tsx
@@ -120,6 +138,49 @@ export function TeamPage() {
     });
   }
 
+  // ADR 0025 — ajuste fino de permissão do integrante selecionado.
+  const [permAlvo, setPermAlvo] = useState<{ userId: string; email: string } | null>(null);
+  const [permEstado, setPermEstado] = useState<TeamMemberPermissionsResponse | null>(null);
+  const [permMarcadas, setPermMarcadas] = useState<Set<string>>(new Set());
+  const [permSalvando, setPermSalvando] = useState(false);
+
+  function abrirPermissoes(userId: string, email: string) {
+    setPermAlvo({ userId, email });
+    setPermEstado(null);
+    coreApi.team
+      .permissions(userId)
+      .then((resp) => {
+        setPermEstado(resp);
+        setPermMarcadas(new Set((resp.permissoes ?? []).filter((p) => p.concedida).map((p) => p.permissao!)));
+      })
+      .catch((e: unknown) =>
+        toast.error(e instanceof Error ? e.message : t('pages.team.toasts.falhaCarregarPermissoes')),
+      );
+  }
+
+  function alternarPermissao(chave: string) {
+    setPermMarcadas((atual) => {
+      const proxima = new Set(atual);
+      if (proxima.has(chave)) proxima.delete(chave);
+      else proxima.add(chave);
+      return proxima;
+    });
+  }
+
+  async function salvarPermissoes() {
+    if (!permAlvo) return;
+    setPermSalvando(true);
+    try {
+      await coreApi.team.updatePermissions(permAlvo.userId, { permissoes: [...permMarcadas] });
+      toast.success(t('pages.team.toasts.permissoesSalvas'));
+      setPermAlvo(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('pages.team.toasts.falhaSalvarPermissoes'));
+    } finally {
+      setPermSalvando(false);
+    }
+  }
+
   const papelLabel: Record<string, string> = {
     GESTOR_FROTA: t('pages.team.papel.gestor'),
     DESPACHANTE: t('pages.team.papel.despachante'),
@@ -176,6 +237,16 @@ export function TeamPage() {
                           </option>
                         ))}
                       </Select>
+                      {/* ADR 0025 — o papel acima é o padrão; aqui o gestor abre o ajuste
+                          fino por módulo desse integrante específico. */}
+                      <button
+                        type="button"
+                        onClick={() => abrirPermissoes(m.id!, m.email ?? '')}
+                        title={t('pages.team.permissoes.abrir')}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <SlidersHorizontal className="size-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => remover(m.id!)}
@@ -292,6 +363,56 @@ export function TeamPage() {
             </Button>
           </div>
         </div>
+        )}
+      </Modal>
+
+      {/* ADR 0025 — ajuste fino por módulo. As caixas partem do padrão do papel; o que o
+          gestor mudar aqui vira override e vale no próximo token do integrante (≤15 min). */}
+      <Modal
+        open={!!permAlvo}
+        onClose={() => setPermAlvo(null)}
+        title={t('pages.team.permissoes.titulo', { email: permAlvo?.email ?? '' })}
+      >
+        {!permEstado ? (
+          <p className="text-xs text-muted-foreground">{t('common.carregando')}</p>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">{t('pages.team.permissoes.explicacao')}</p>
+            <div className="divide-y divide-border rounded-md border border-border">
+              {MODULOS.map((modulo) => {
+                const ver = `${modulo}_VER`;
+                const escrever = `${modulo}_ESCREVER`;
+                return (
+                  <div key={modulo} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <p className="min-w-0 flex-1 truncate text-xs text-foreground">
+                      {t(`pages.team.permissoes.modulo.${modulo}`)}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-4">
+                      {[ver, escrever].map((chave) => (
+                        <label key={chave} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <input
+                            type="checkbox"
+                            checked={permMarcadas.has(chave)}
+                            onChange={() => alternarPermissao(chave)}
+                            className="size-3.5 accent-primary"
+                          />
+                          {chave.endsWith('_VER') ? t('pages.team.permissoes.ver') : t('pages.team.permissoes.escrever')}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-border pt-3">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setPermAlvo(null)}>
+                {t('pages.team.form.cancelar')}
+              </Button>
+              <Button type="button" size="sm" onClick={salvarPermissoes} disabled={permSalvando}>
+                {permSalvando ? t('pages.team.form.enviando') : t('pages.team.permissoes.salvar')}
+              </Button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>

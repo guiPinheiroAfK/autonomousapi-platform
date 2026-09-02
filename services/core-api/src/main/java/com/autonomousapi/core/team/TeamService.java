@@ -9,11 +9,15 @@ import com.autonomousapi.core.error.NotFoundException;
 import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.team.dto.CreateTeamInviteRequest;
 import com.autonomousapi.core.team.dto.TeamInviteResponse;
+import com.autonomousapi.core.team.dto.TeamMemberPermissionsResponse;
 import com.autonomousapi.core.team.dto.TeamMemberResponse;
 import com.autonomousapi.core.team.dto.TeamOverviewResponse;
 import com.autonomousapi.core.user.Role;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
+import com.autonomousapi.core.user.permission.Permission;
+import com.autonomousapi.core.user.permission.RolePermissionDefaults;
+import com.autonomousapi.core.user.permission.UserPermissionService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,8 +26,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,6 +59,7 @@ public class TeamService {
     private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
     private final UserHardDeleteAttempt hardDeleteAttempt;
+    private final UserPermissionService permissions;
     private final Duration inviteTtl;
     private final String webAppUrl;
     private final SecureRandom random = new SecureRandom();
@@ -61,6 +70,7 @@ public class TeamService {
             EmailSender emailSender,
             PasswordEncoder passwordEncoder,
             UserHardDeleteAttempt hardDeleteAttempt,
+            UserPermissionService permissions,
             @Value("${app.auth.team-invite-ttl-hours}") long inviteTtlHours,
             @Value("${app.auth.web-app-url}") String webAppUrl) {
         this.invites = invites;
@@ -68,6 +78,7 @@ public class TeamService {
         this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
         this.hardDeleteAttempt = hardDeleteAttempt;
+        this.permissions = permissions;
         this.inviteTtl = Duration.ofHours(inviteTtlHours);
         this.webAppUrl = webAppUrl;
     }
@@ -137,7 +148,47 @@ public class TeamService {
         }
         User alvo = membroDoTenant(gestorPrincipal, userId);
         alvo.mudarPapelDeEquipe(novoPapel);
+        // ADR 0025: trocar o papel zera os ajustes finos. O padrão do papel novo é outro, e
+        // manter override antigo por cima produziria uma combinação que ninguém escolheu
+        // conscientemente (ex.: "Visualizador que escreve em Custos" sobrando de quando a
+        // pessoa era Despachante).
+        permissions.replaceOverrides(userId, novoPapel, RolePermissionDefaults.forRole(novoPapel));
         return TeamMemberResponse.from(alvo);
+    }
+
+    /** ADR 0025 — catálogo inteiro com o estado atual, pra tela desenhar as caixas. */
+    @Transactional(readOnly = true)
+    public TeamMemberPermissionsResponse permissoes(JwtPrincipal gestorPrincipal, UUID userId) {
+        User alvo = membroDoTenant(gestorPrincipal, userId);
+        return TeamMemberPermissionsResponse.of(
+                alvo.getId(), alvo.getRole(), permissions.effectiveFor(alvo));
+    }
+
+    /**
+     * ADR 0025 — ajuste fino por usuário. Só Despachante/Visualizador: mexer na permissão do
+     * dono da conta (ou do próprio gestor logado) seria uma forma de se trancar pra fora do
+     * próprio sistema.
+     */
+    @Transactional
+    public TeamMemberPermissionsResponse atualizarPermissoes(
+            JwtPrincipal gestorPrincipal, UUID userId, List<String> permissoesDesejadas) {
+        if (userId.equals(gestorPrincipal.userId())) {
+            throw new InvalidTeamRoleException("Você não pode mudar as próprias permissões.");
+        }
+        User alvo = membroDoTenant(gestorPrincipal, userId);
+        if (!RolePermissionDefaults.permiteAjuste(alvo.getRole())) {
+            throw new InvalidTeamRoleException(
+                    "Só é possível ajustar permissão de Despachante ou Visualizador.");
+        }
+        // Nome desconhecido é ignorado em vez de derrubar a requisição — cliente de versão
+        // antiga/nova não pode travar a tela de equipe (mesma tolerância de Permission.porNome).
+        Set<Permission> desejadas = permissoesDesejadas.stream()
+                .map(Permission::porNome)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(Permission.class)));
+
+        Set<Permission> efetivas = permissions.replaceOverrides(alvo.getId(), alvo.getRole(), desejadas);
+        return TeamMemberPermissionsResponse.of(alvo.getId(), alvo.getRole(), efetivas);
     }
 
     /**

@@ -52,7 +52,7 @@ public class DriverController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public DriverResponse create(@Valid @RequestBody DriverRequest req, Authentication auth) {
         return driverService.create(principal(auth), req);
     }
@@ -66,7 +66,7 @@ public class DriverController {
      * escopo"). Fechado junto por já estarmos revisando o shell por papel.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_VER')")
     public PageResponse<DriverResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -83,7 +83,7 @@ public class DriverController {
      * nunca por aqui.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_VER')")
     public DriverResponse get(@PathVariable UUID id, Authentication auth) {
         return driverService.get(principal(auth), id);
     }
@@ -92,13 +92,13 @@ public class DriverController {
      *  (spec 15) — mesmo motivo do {@link #list}: CNH de outros motoristas não é dado do
      *  motorista logado. */
     @GetMapping("/license-expiring")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_VER')")
     public List<DriverLicenseAlertResponse> licenseExpiring(Authentication auth) {
         return driverService.licenseExpiring(principal(auth));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public DriverResponse update(
             @PathVariable UUID id, @Valid @RequestBody DriverRequest req, Authentication auth) {
         return driverService.update(principal(auth), id, req);
@@ -106,21 +106,21 @@ public class DriverController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         driverService.delete(principal(auth), id);
     }
 
     /** Envia o convite de acesso ao app para o e-mail do motorista (ADR 0013). */
     @PostMapping("/{id}/invite")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public DriverInviteResponse invite(@PathVariable UUID id, Authentication auth) {
         return inviteService.invite(principal(auth), id);
     }
 
     /** Designa um veículo ao motorista (ADR 0014). */
     @PostMapping("/{id}/assignment")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public DriverAssignmentResponse assign(
             @PathVariable UUID id, @Valid @RequestBody AssignVehicleRequest req, Authentication auth) {
         return assignmentService.assign(principal(auth), id, req.vehicleId());
@@ -129,12 +129,13 @@ public class DriverController {
     /** Encerra a designação ativa do motorista. */
     @PostMapping("/{id}/assignment/end")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public void endAssignment(@PathVariable UUID id, Authentication auth) {
         assignmentService.end(principal(auth), id);
     }
 
     /** Designação ativa do motorista (null se não houver). Leitura do tenant. */
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_VER')")
     @GetMapping("/{id}/assignment")
     public DriverAssignmentResponse activeAssignment(@PathVariable UUID id, Authentication auth) {
         return assignmentService.activeForDriver(principal(auth), id);
@@ -143,7 +144,7 @@ public class DriverController {
     /** Aviso do gestor pro motorista, via push (spec 07 item 5, ADR 0016). */
     @PostMapping("/{id}/notify")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MOTORISTAS_ESCREVER')")
     public void notify(
             @PathVariable UUID id, @Valid @RequestBody NotifyDriverRequest req, Authentication auth) {
         notificationService.notify(principal(auth), id, req.title(), req.body());

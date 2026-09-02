@@ -189,3 +189,17 @@ rota pro `DESPACHANTE` nos poucos endpoints que já são `@PreAuthorize("hasAnyR
 - [x] Fast-follow: esconder botão de criar/editar/excluir nas telas fora de rotas pro
       Despachante/Visualizador — o backend já bloqueia a escrita (403), o que faltava era só
       a tela não mostrar um botão que ia dar erro.
+
+## Evolução: permissão por módulo, por usuário (ADR 0025, 2026-09-02)
+
+Os três papéis desta spec continuam existindo, mas deixaram de ser o fim da história: agora
+são o **padrão** de um sistema de permissão por módulo (ver/alterar), ajustável por pessoa na
+própria tela de Equipe. O pedido veio da prática — "esse despachante mexe em frota também,
+mas não vê custo" não é nem Despachante nem Visualizador.
+
+Nada do que está descrito acima mudou de comportamento: os padrões de cada papel reproduzem
+exatamente o que esta spec definiu, e só a diferença em relação a eles é persistida. Quem
+nunca ajustar permissão nenhuma não percebe diferença.
+
+Detalhes (módulos, o que continua exclusivo do dono da conta, e por que a mudança leva até 15
+minutos pra valer) em [ADR 0025](../docs/adr/0025-permissao-por-modulo-por-usuario.md).

@@ -29,6 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/v1/drivers/{driverId}/ratings")
+// ADR 0025: continua por PAPEL, fora do sistema de permissão por módulo. Avaliação cairia em
+// "Motoristas / ver", que Despachante e Visualizador têm por padrão — e a spec 06 é explícita
+// que a nota é visível só a quem contratou. Abrir isso por engano seria justamente o vazamento
+// que a regra existe pra impedir.
 @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
 public class DriverRatingController {
 

@@ -4,13 +4,14 @@ import {
   Route,
   BrowserRouter as Router,
   Routes,
+  useLocation,
   useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from './auth/AuthContext';
+import { useAuth, type ModuloPermissao } from './auth/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -88,11 +89,22 @@ function RequireToken({ children }: { children: (token: string) => ReactNode }) 
   return <>{children(token)}</>;
 }
 
-/** Defesa em profundidade (spec 07): o Dashboard analítico de frota nunca deve renderizar
- *  pra um token MOTORISTA, mesmo que a sidebar já esconda a opção — alguém digitando a URL
- *  na mão não pode contornar isso. */
-function RequireGestor({ user, children }: { user: UserResponse; children: ReactNode }) {
+/**
+ * Defesa em profundidade (spec 07 + ADR 0025): tela do painel nunca renderiza pra um token
+ * MOTORISTA, e só renderiza pra quem tem "ver" no módulo dela — a sidebar já esconde o
+ * item, isso aqui cobre quem digita a URL na mão.
+ */
+function RequireModulo({
+  user,
+  modulo,
+  children,
+}: {
+  user: UserResponse;
+  modulo: ModuloPermissao;
+  children: ReactNode;
+}) {
   if (user.role === 'MOTORISTA') return <Navigate to={ROUTES.home} replace />;
+  if (!(user.permissions ?? []).includes(`${modulo}_VER`)) return <Navigate to={ROUTES.home} replace />;
   return <>{children}</>;
 }
 
@@ -220,39 +232,43 @@ function PublicRoutes() {
         }
       />
       <Route
-        path={ROUTES.acceptInvite}
-        element={
-          <RequireToken>
-            {(token) => (
-              <AcceptInvitePage
-                token={token}
-                onGoToLogin={() => navigate(ROUTES.login)}
-                onVoltarParaHome={() => navigate(ROUTES.home)}
-              />
-            )}
-          </RequireToken>
-        }
-      />
-      <Route
-        path={ROUTES.acceptTeamInvite}
-        element={
-          <RequireToken>
-            {(token) => (
-              <AcceptInvitePage
-                token={token}
-                tipo="equipe"
-                onGoToLogin={() => navigate(ROUTES.login)}
-                onVoltarParaHome={() => navigate(ROUTES.home)}
-              />
-            )}
-          </RequireToken>
-        }
-      />
-      <Route
         path="*"
         element={<LandingPage onEntrar={() => navigate(ROUTES.login)} onCriarConta={() => navigate(ROUTES.signup)} />}
       />
     </Routes>
+  );
+}
+
+/**
+ * Convite chega por link de e-mail e precisa funcionar mesmo com o navegador já logado
+ * numa OUTRA conta — achado ao vivo (2026-09-02): dois convidados clicaram o link estando
+ * logados na própria conta e caíram direto no dashboard deles, o convite nunca chegou a
+ * processar. Causa: `AppRoutes` decidia a árvore inteira por `user ? Authenticated :
+ * Public` — a árvore autenticada não tem rota de aceite de convite, então o catch-all dela
+ * (linha ~408) mandava de volta pra home antes do formulário aparecer. Por isso este gate é
+ * chamado ANTES dessa decisão em `AppRoutes`, não fica dentro de `PublicRoutes`.
+ *
+ * "Ir para login" desloga a sessão antiga primeiro — sem isso, `AppRoutes` via `user`
+ * ainda truthy (a conta antiga) e voltava a cair no dashboard errado em vez do formulário
+ * de login, pro convidado nem conseguir entrar na conta nova recém-criada.
+ */
+function AcceptInviteGate({ tipo }: { tipo?: 'motorista' | 'equipe' }) {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  return (
+    <RequireToken>
+      {(token) => (
+        <AcceptInvitePage
+          token={token}
+          tipo={tipo}
+          onGoToLogin={() => {
+            logout();
+            navigate(ROUTES.login);
+          }}
+          onVoltarParaHome={() => navigate(ROUTES.home)}
+        />
+      )}
+    </RequireToken>
   );
 }
 
@@ -270,65 +286,65 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
         <Route
           path={ROUTES.vehicles}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="FROTA">
               <VehiclesRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path="/frota/:vehicleId"
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="FROTA">
               <VehicleDetailRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path="/frota/:vehicleId/custos"
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="FROTA">
               <VehicleCostsRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.drivers}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="MOTORISTAS">
               <DriversPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.workOrders}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ORDENS_SERVICO">
               <WorkOrdersPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.maintenance}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ORDENS_SERVICO">
               <MaintenancePage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.reports}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="RELATORIOS">
               <ReportsRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.expenses}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="CUSTOS">
               <CostsPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
@@ -350,41 +366,41 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
         <Route
           path={ROUTES.affiliates}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="PARCEIROS">
               <AffiliatesPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.chargingStations}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="RECARGA">
               <ChargingStationsPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.routes}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ROTAS">
               <RoutesPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.routePlans}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ROTAS">
               <RoutePlansPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.collectionPoints}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ROTAS">
               <CollectionPointsPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         {/* Motorista */}
@@ -413,7 +429,12 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return null;
+  // Checado antes da decisão logado/não-logado de propósito — ver comentário em
+  // AcceptInviteGate.
+  if (location.pathname === ROUTES.acceptInvite) return <AcceptInviteGate tipo="motorista" />;
+  if (location.pathname === ROUTES.acceptTeamInvite) return <AcceptInviteGate tipo="equipe" />;
   return user ? <AuthenticatedRoutes user={user} /> : <PublicRoutes />;
 }
 

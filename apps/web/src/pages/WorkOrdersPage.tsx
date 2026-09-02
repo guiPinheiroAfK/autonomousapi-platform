@@ -9,7 +9,7 @@ import {
   type WorkOrderRequest,
   type WorkOrderResponse,
 } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { PRIORIDADE_OS_OPTIONS, STATUS_OS_OPTIONS, TIPO_OS_OPTIONS } from '../lib/workOrderLabels';
 import { PlacaBR } from '../components/shared/PlacaBR';
 import { StatusBadgeOS, StatusBadgePrioridade } from '../components/shared/StatusBadge';
@@ -47,7 +47,7 @@ const EMPTY_FORM: WorkOrderRequest = {
 
 export function WorkOrdersPage() {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('ORDENS_SERVICO', 'ESCREVER');
   const [orders, setOrders] = useState<WorkOrderResponse[]>([]);
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);

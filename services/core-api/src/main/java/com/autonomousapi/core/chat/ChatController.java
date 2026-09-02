@@ -53,6 +53,7 @@ public class ChatController {
         return chatService.getOrCreateConversation(principal(auth), req.driverId(), req.vehicleId());
     }
 
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_VER')")
     @GetMapping("/conversations")
     public List<ChatConversationResponse> listConversations(Authentication auth) {
         return chatService.listConversations(principal(auth));
@@ -63,7 +64,7 @@ public class ChatController {
      *  (tem seu próprio caminho gestor-motorista). */
     @PostMapping("/team-conversations")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER') and !hasRole('MOTORISTA')")
     public ChatConversationResponse createTeamConversation(
             @Valid @RequestBody CreateTeamConversationRequest req, Authentication auth) {
         return chatService.getOrCreateTeamConversation(principal(auth), req.otherUserId());
@@ -71,16 +72,18 @@ public class ChatController {
 
     /** V33 — quem dá pra iniciar uma conversa de equipe (seletor "nova conversa"). */
     @GetMapping("/team-members")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_VER') and !hasRole('MOTORISTA')")
     public List<TeamMemberOptionResponse> listTeamMembers(Authentication auth) {
         return chatService.listTeamMembers(principal(auth));
     }
 
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_VER')")
     @GetMapping("/conversations/{id}/messages")
     public List<ChatMessageResponse> listMessages(@PathVariable UUID id, Authentication auth) {
         return chatService.listMessages(principal(auth), id);
     }
 
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @PostMapping("/conversations/{id}/messages")
     @ResponseStatus(HttpStatus.CREATED)
     public ChatMessageResponse sendMessage(
@@ -89,6 +92,7 @@ public class ChatController {
     }
 
     /** Só o autor, só {@code TEXTO}, só enquanto ainda na janela de retenção do servidor (V31). */
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @PutMapping("/conversations/{id}/messages/{messageId}")
     public ChatMessageResponse editMessage(
             @PathVariable UUID id, @PathVariable UUID messageId,
@@ -97,6 +101,7 @@ public class ChatController {
     }
 
     /** Apagar pra todo mundo (sem "apagar só pra mim") — mesmas guardas de {@link #editMessage}. */
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @DeleteMapping("/conversations/{id}/messages/{messageId}")
     public ChatMessageResponse deleteMessage(
             @PathVariable UUID id, @PathVariable UUID messageId, Authentication auth) {
@@ -105,6 +110,7 @@ public class ChatController {
 
     /** Encaminha pra outra conversa da mesma pessoa — sem a restrição de janela de retenção
      *  (cria mensagem nova, não depende de a original ainda estar retida). */
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @PostMapping("/conversations/{id}/messages/{messageId}/forward")
     @ResponseStatus(HttpStatus.CREATED)
     public ChatMessageResponse forwardMessage(
@@ -114,6 +120,7 @@ public class ChatController {
     }
 
     /** Upsert — substitui a reação anterior desta pessoa, se houver. */
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @PutMapping("/conversations/{id}/messages/{messageId}/reaction")
     public List<ChatReactionResponse> react(
             @PathVariable UUID id, @PathVariable UUID messageId,
@@ -121,6 +128,7 @@ public class ChatController {
         return chatService.reactToMessage(principal(auth), id, messageId, req.emoji());
     }
 
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @DeleteMapping("/conversations/{id}/messages/{messageId}/reaction")
     public List<ChatReactionResponse> removeReaction(
             @PathVariable UUID id, @PathVariable UUID messageId, Authentication auth) {
@@ -176,6 +184,7 @@ public class ChatController {
 
     /** Marca como lidas as mensagens do outro participante ainda não lidas — chamado ao
      *  abrir/revisitar a conversa, por qualquer um dos dois lados. */
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @PostMapping("/conversations/{id}/read")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markAsRead(@PathVariable UUID id, Authentication auth) {
@@ -183,12 +192,14 @@ public class ChatController {
     }
 
     /** Ping de "estou digitando" — efêmero (ver TypingIndicatorService), qualquer participante. */
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_ESCREVER')")
     @PostMapping("/conversations/{id}/typing")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void typing(@PathVariable UUID id, Authentication auth) {
         chatService.registerTyping(principal(auth), id);
     }
 
+    @PreAuthorize("hasAuthority('PERM_MENSAGENS_VER')")
     @GetMapping("/conversations/{id}/typing")
     public boolean isOtherTyping(@PathVariable UUID id, Authentication auth) {
         return chatService.isOtherParticipantTyping(principal(auth), id);

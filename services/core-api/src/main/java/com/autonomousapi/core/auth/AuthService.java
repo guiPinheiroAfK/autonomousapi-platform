@@ -22,6 +22,8 @@ import com.autonomousapi.core.tenant.TenantRepository;
 import com.autonomousapi.core.user.Role;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
+import com.autonomousapi.core.user.permission.Permission;
+import com.autonomousapi.core.user.permission.UserPermissionService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -60,6 +62,7 @@ public class AuthService {
     private final SubscriptionRepository subscriptions;
     private final EmailSender emailSender;
     private final NotificationWebhookSender notificationWebhookSender;
+    private final UserPermissionService permissions;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Duration refreshTtl;
@@ -80,6 +83,7 @@ public class AuthService {
             SubscriptionRepository subscriptions,
             EmailSender emailSender,
             NotificationWebhookSender notificationWebhookSender,
+            UserPermissionService permissions,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${app.jwt.refresh-ttl-days}") long refreshTtlDays,
@@ -96,6 +100,7 @@ public class AuthService {
         this.subscriptions = subscriptions;
         this.emailSender = emailSender;
         this.notificationWebhookSender = notificationWebhookSender;
+        this.permissions = permissions;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTtl = Duration.ofDays(refreshTtlDays);
@@ -391,8 +396,15 @@ public class AuthService {
     }
 
     private TokenResponse issueTokens(User user) {
+        // ADR 0025: permissão efetiva (padrão do papel ± ajuste por usuário) é resolvida
+        // aqui, na emissão — é o único momento em que o sistema vai ao banco por causa de
+        // permissão. Como refresh() também passa por aqui, ajuste feito pelo gestor entra
+        // em vigor no próximo access token (≤15 min), sem deslogar ninguém.
+        List<String> permissoes = permissions.effectiveFor(user).stream()
+                .map(Permission::name)
+                .toList();
         String access = jwtService.issueAccessToken(
-                user.getId(), user.getRole().name(), user.getTenantId());
+                user.getId(), user.getRole().name(), user.getTenantId(), permissoes);
         String rawRefresh = generateRawToken();
         refreshTokens.save(new RefreshToken(
                 user.getId(), sha256Hex(rawRefresh), Instant.now().plus(refreshTtl)));

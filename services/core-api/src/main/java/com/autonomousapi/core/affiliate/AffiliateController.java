@@ -7,6 +7,7 @@ import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,11 +26,13 @@ public class AffiliateController {
         this.affiliateService = affiliateService;
     }
 
+    @PreAuthorize("hasAuthority('PERM_PARCEIROS_VER')")
     @GetMapping("/partners")
     public List<AffiliatePartnerResponse> listPartners() {
         return affiliateService.listPartners();
     }
 
+    @PreAuthorize("hasAuthority('PERM_PARCEIROS_VER')")
     @PostMapping("/partners/{partnerId}/click")
     public AffiliateClickResponse click(
             @PathVariable UUID partnerId, @RequestBody(required = false) AffiliateClickRequest req,

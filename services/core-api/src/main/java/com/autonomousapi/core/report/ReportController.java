@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +28,7 @@ public class ReportController {
         this.workOrderService = workOrderService;
     }
 
+    @PreAuthorize("hasAuthority('PERM_RELATORIOS_VER')")
     @GetMapping(value = "/costs.csv", produces = "text/csv")
     public ResponseEntity<byte[]> costsCsv(Authentication auth) {
         JwtPrincipal principal = (JwtPrincipal) auth.getPrincipal();
@@ -43,6 +45,7 @@ public class ReportController {
     }
 
     /** Custo de manutenção por tipo (12 meses) + ranking de veículo, a partir de Ordem de Serviço real. */
+    @PreAuthorize("hasAuthority('PERM_RELATORIOS_VER')")
     @GetMapping("/maintenance-summary")
     public WorkOrderReportResponse maintenanceSummary(Authentication auth) {
         return workOrderService.maintenanceSummary((JwtPrincipal) auth.getPrincipal());

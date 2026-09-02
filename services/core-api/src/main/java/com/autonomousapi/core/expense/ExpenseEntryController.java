@@ -46,7 +46,7 @@ public class ExpenseEntryController {
 
     @PostMapping("/vehicles/{vehicleId}/costs")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_ESCREVER')")
     public ExpenseEntryResponse addEntry(
             @PathVariable UUID vehicleId,
             @Valid @RequestBody ExpenseEntryRequest req,
@@ -54,11 +54,13 @@ public class ExpenseEntryController {
         return expenseService.create(principal(auth), vehicleId, req);
     }
 
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_VER')")
     @GetMapping("/vehicles/{vehicleId}/costs")
     public List<ExpenseEntryResponse> list(@PathVariable UUID vehicleId, Authentication auth) {
         return expenseService.list(principal(auth), vehicleId);
     }
 
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_VER')")
     @GetMapping("/vehicles/{vehicleId}/cost-summary")
     public ExpenseSummaryResponse summary(@PathVariable UUID vehicleId, Authentication auth) {
         return expenseService.summary(principal(auth), vehicleId);
@@ -66,7 +68,7 @@ public class ExpenseEntryController {
 
     @DeleteMapping("/vehicles/{vehicleId}/costs/{costId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_ESCREVER')")
     public void delete(@PathVariable UUID vehicleId, @PathVariable UUID costId, Authentication auth) {
         expenseService.delete(principal(auth), costId);
     }
@@ -74,7 +76,7 @@ public class ExpenseEntryController {
     /** Nova despesa, com ou sem veículo (frota) — usada pela aba "Custos" (spec 10). */
     @PostMapping("/expenses")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_ESCREVER')")
     public ExpenseEntryResponse createFleetExpense(@Valid @RequestBody ExpenseEntryRequest req, Authentication auth) {
         return expenseService.create(principal(auth), null, req);
     }
@@ -82,6 +84,7 @@ public class ExpenseEntryController {
     /** {@code size} limitado a {@value #MAX_PAGE_SIZE} — mesma razão do /v1/vehicles: sob
      *  carga, 10 mil lançamentos de despesa devolvidos de uma vez era o segundo maior gargalo
      *  no load test (p99 ~140ms, picos de 330-370ms). */
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_VER')")
     @GetMapping("/expenses")
     public PageResponse<FleetExpenseEntryResponse> fleetExpenses(
             @RequestParam(required = false) ExpenseCategory categoria,
@@ -93,6 +96,7 @@ public class ExpenseEntryController {
                 principal(auth), categoria, PageRequest.of(Math.max(page, 0), cappedSize)));
     }
 
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_VER')")
     @GetMapping("/expenses/summary")
     public List<CategoryTotal> summaryByCategory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -103,7 +107,7 @@ public class ExpenseEntryController {
 
     @DeleteMapping("/expenses/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_ESCREVER')")
     public void deleteFleetExpense(@PathVariable UUID id, Authentication auth) {
         expenseService.delete(principal(auth), id);
     }

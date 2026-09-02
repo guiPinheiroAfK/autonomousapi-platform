@@ -1,5 +1,6 @@
 package com.autonomousapi.core.security.jwt;
 
+import com.autonomousapi.core.user.permission.Permission;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -7,10 +8,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -59,9 +62,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID tenantId = tenantIdClaim == null ? null : UUID.fromString(tenantIdClaim);
 
                 var principal = new JwtPrincipal(userId, tenantId, role);
-                var authority = new SimpleGrantedAuthority("ROLE_" + role);
+                // ADR 0025: papel continua virando ROLE_x (endpoints de dono da conta ainda
+                // olham só o papel); cada permissão efetiva vira uma authority PERM_x ao
+                // lado, o que faz hasAuthority(...) funcionar no @PreAuthorize sem
+                // PermissionEvaluator customizado e sem consulta por requisição.
+                List<GrantedAuthority> authorities = new ArrayList<>();
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                for (String permission : permissoesDaClaim(claims)) {
+                    authorities.add(new SimpleGrantedAuthority(Permission.AUTHORITY_PREFIX + permission));
+                }
                 var authentication = new UsernamePasswordAuthenticationToken(
-                        principal, null, List.of(authority));
+                        principal, null, List.copyOf(authorities));
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (JwtException | IllegalArgumentException ex) {
@@ -71,5 +82,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    /**
+     * Token emitido antes da ADR 0025 não tem a claim {@code perms} — nesse caso a pessoa
+     * fica só com o papel até o token renovar (≤15 min), em vez de ser deslogada ou de
+     * quebrar com ClassCastException no deploy. Mesma tolerância pra valor inesperado
+     * dentro da lista.
+     */
+    private static List<String> permissoesDaClaim(Claims claims) {
+        Object bruto = claims.get("perms");
+        if (!(bruto instanceof List<?> lista)) {
+            return List.of();
+        }
+        return lista.stream().filter(String.class::isInstance).map(String.class::cast).toList();
     }
 }
