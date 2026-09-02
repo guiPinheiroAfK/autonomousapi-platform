@@ -593,9 +593,9 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                   return (
                     <div
                       key={m.id}
-                      className={cn('flex animate-in fade-in slide-in-from-bottom-1 duration-200', mine ? 'justify-end' : 'justify-start')}
+                      className={cn('flex animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out', mine ? 'justify-end' : 'justify-start')}
                     >
-                      <div className="max-w-[75%] rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-[13px] shadow-sm">
+                      <div className="w-fit max-w-md rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-[13px] shadow-sm">
                         <p className="flex items-center gap-1.5 break-words font-medium text-foreground">
                           <RouteIcon className="size-3.5 shrink-0 text-primary" /> {m.body}
                         </p>
@@ -640,13 +640,16 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     )}
                   >
                     {paletaAberta ? (
-                      <div className="flex items-center gap-1 p-1">
-                        {REACTION_EMOJIS.map((emoji) => (
+                      <div className="flex items-center gap-0.5 p-1">
+                        {REACTION_EMOJIS.map((emoji, i) => (
                           <button
                             key={emoji}
                             type="button"
                             onClick={() => handleReact(m, emoji)}
-                            className="flex size-7 items-center justify-center rounded-md text-base hover:bg-secondary"
+                            style={{ animationDelay: `${i * 30}ms` }}
+                            // Estilo iMessage: emoji "sobe" e cresce no hover — sem isso a
+                            // paleta ficava uma grade estática, sem graça nenhuma de tocar.
+                            className="flex size-8 origin-bottom animate-in items-center justify-center rounded-md text-lg zoom-in-50 transition-transform duration-150 fade-in hover:-translate-y-1.5 hover:scale-125 hover:bg-secondary"
                           >
                             {emoji}
                           </button>
@@ -707,7 +710,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                   <div
                     key={m.id}
                     className={cn(
-                      'group flex animate-in items-start gap-1 fade-in slide-in-from-bottom-1 duration-200',
+                      'group flex animate-in items-start gap-1 fade-in slide-in-from-bottom-2 duration-300 ease-out',
                       mine ? 'justify-end' : 'justify-start',
                     )}
                   >
@@ -729,7 +732,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     <div className={cn('flex flex-col gap-1', mine ? 'items-end' : 'items-start')}>
                       <div
                         className={cn(
-                          'max-w-[70%] rounded-2xl px-3.5 py-2 text-[13px] shadow-sm',
+                          // max-width fixo (não %) de propósito — % dentro de flex
+                          // aninhado (row > col > bolha) colapsava a largura pra ~47px
+                          // mesmo com texto curtíssimo, achado ao vivo (mensagens de 3-5
+                          // letras quebrando em 3 linhas verticais).
+                          'w-fit max-w-md rounded-2xl px-3.5 py-2 text-[13px] shadow-sm',
                           apagada
                             ? 'border border-dashed border-border text-muted-foreground italic'
                             : mine
@@ -784,7 +791,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                               type="button"
                               onClick={() => handleReact(m, emoji)}
                               className={cn(
-                                'flex items-center gap-1 rounded-full border bg-card px-1.5 py-1 leading-none shadow-sm',
+                                'flex animate-in items-center gap-1 rounded-full border bg-card px-1.5 py-1 leading-none shadow-sm zoom-in-50 duration-200 hover:scale-110',
                                 minhaReacao?.emoji === emoji ? 'border-primary' : 'border-border',
                               )}
                             >
@@ -831,7 +838,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             </div>
 
             {replyingTo && (
-              <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+              <div className="animate-in border-t border-border bg-secondary/40 px-3 py-2 text-xs fade-in slide-in-from-bottom-2 duration-200">
                 <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
@@ -853,7 +860,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               </div>
             )}
             {editingId && (
-              <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+              <div className="animate-in border-t border-border bg-secondary/40 px-3 py-2 text-xs fade-in slide-in-from-bottom-2 duration-200">
                 <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
                   <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
