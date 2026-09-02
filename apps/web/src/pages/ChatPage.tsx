@@ -838,7 +838,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             </div>
 
             {replyingTo && (
-              <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+              <div className="animate-in border-t border-border bg-secondary/40 px-3 py-2 text-xs fade-in slide-in-from-bottom-2 duration-200">
                 <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
@@ -860,7 +860,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               </div>
             )}
             {editingId && (
-              <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
+              <div className="animate-in border-t border-border bg-secondary/40 px-3 py-2 text-xs fade-in slide-in-from-bottom-2 duration-200">
                 <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
                   <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
