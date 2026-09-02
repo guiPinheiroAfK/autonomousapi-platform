@@ -543,29 +543,36 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-2.5 border-b border-border p-4">
-              <button
-                type="button"
-                onClick={() => setSelectedId(null)}
-                aria-label={t('pages.chat.voltar')}
-                className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
-              >
-                <ArrowLeft className="size-4" />
-              </button>
-              <Avatar className="size-8">
-                <AvatarFallback>{iniciais(nomeDoOutroLado(selected, user))}</AvatarFallback>
-              </Avatar>
-              <p className="text-sm font-medium text-foreground">{nomeDoOutroLado(selected, user)}</p>
-              {selected.vehiclePlate && (
-                <span className="text-[11px] text-muted-foreground">· {selected.vehiclePlate}</span>
-              )}
-              {selected.kind === 'EQUIPE' && selected.otherParticipantRole && (
-                <span className="text-[11px] text-muted-foreground">· {selected.otherParticipantRole}</span>
-              )}
+            <div className="border-b border-border p-4">
+              {/* Mesma coluna mx-auto max-w-5xl do corpo da conversa abaixo — sem isso, o
+                  avatar/nome ficava colado na borda esquerda do painel enquanto as
+                  mensagens ficavam centralizadas numa coluna mais estreita, os dois nunca
+                  alinhavam verticalmente (achado: sensação de "torto"/"não centralizado"). */}
+              <div className="mx-auto flex max-w-5xl items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  aria-label={t('pages.chat.voltar')}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
+                >
+                  <ArrowLeft className="size-4" />
+                </button>
+                <Avatar className="size-9">
+                  <AvatarFallback>{iniciais(nomeDoOutroLado(selected, user))}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{nomeDoOutroLado(selected, user)}</p>
+                  {(selected.vehiclePlate || (selected.kind === 'EQUIPE' && selected.otherParticipantRole)) && (
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {selected.vehiclePlate ?? selected.otherParticipantRole}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4" onClick={closeMenus}>
-            <div className="mx-auto flex max-w-3xl flex-col space-y-2">
+            <div className="mx-auto flex max-w-5xl flex-col space-y-2">
               {messages.length === 0 && (
                 <p className="pt-8 text-center text-xs text-muted-foreground">{t('pages.chat.nenhumaMensagem')}</p>
               )}
@@ -584,10 +591,13 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                   const ehSolicitacao =
                     m.messageType === 'SOLICITACAO_CANCELAMENTO' || m.messageType === 'SOLICITACAO_TROCA_MOTORISTA';
                   return (
-                    <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
-                      <div className="max-w-[75%] rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-xs">
-                        <p className="flex items-center gap-1.5 font-medium text-foreground">
-                          <RouteIcon className="size-3.5 text-primary" /> {m.body}
+                    <div
+                      key={m.id}
+                      className={cn('flex animate-in fade-in slide-in-from-bottom-1 duration-200', mine ? 'justify-end' : 'justify-start')}
+                    >
+                      <div className="max-w-[75%] rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-[13px] shadow-sm">
+                        <p className="flex items-center gap-1.5 break-words font-medium text-foreground">
+                          <RouteIcon className="size-3.5 shrink-0 text-primary" /> {m.body}
                         </p>
                         {m.routePlanId && (!ehSolicitacao || user?.role !== 'MOTORISTA') && (
                           <button
@@ -625,8 +635,8 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                 const menu = (menuAberto || paletaAberta) && (
                   <div
                     className={cn(
-                      'absolute top-7 z-10 min-w-[9rem] rounded-md border border-border bg-popover p-1 text-xs shadow-lg',
-                      mine ? 'right-0' : 'left-0',
+                      'absolute top-7 z-10 min-w-[9rem] origin-top animate-in rounded-md border border-border bg-popover p-1 text-xs shadow-lg fade-in-0 zoom-in-95 duration-150',
+                      mine ? 'right-0 origin-top-right' : 'left-0 origin-top-left',
                     )}
                   >
                     {paletaAberta ? (
@@ -694,7 +704,13 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                 );
 
                 return (
-                  <div key={m.id} className={cn('group flex items-start gap-1', mine ? 'justify-end' : 'justify-start')}>
+                  <div
+                    key={m.id}
+                    className={cn(
+                      'group flex animate-in items-start gap-1 fade-in slide-in-from-bottom-1 duration-200',
+                      mine ? 'justify-end' : 'justify-start',
+                    )}
+                  >
                     {!mine && !apagada && (
                       <div className="relative shrink-0">
                         <button
@@ -713,7 +729,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     <div className={cn('flex flex-col gap-1', mine ? 'items-end' : 'items-start')}>
                       <div
                         className={cn(
-                          'max-w-[70%] rounded-lg px-3 py-2 text-xs',
+                          'max-w-[70%] rounded-2xl px-3.5 py-2 text-[13px] shadow-sm',
                           apagada
                             ? 'border border-dashed border-border text-muted-foreground italic'
                             : mine
@@ -744,7 +760,10 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                         {apagada ? (
                           <p>{t('pages.chat.mensagemApagada')}</p>
                         ) : (
-                          <p>{m.body}</p>
+                          // Sem isso, texto sem espaço (URL longa, string colada) estourava
+                          // a bolha em vez de quebrar linha — achado ao vivo (medido via
+                          // scrollWidth > clientWidth no DOM real).
+                          <p className="whitespace-pre-wrap break-words">{m.body}</p>
                         )}
                         <p
                           className={cn(
@@ -765,12 +784,16 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                               type="button"
                               onClick={() => handleReact(m, emoji)}
                               className={cn(
-                                'flex items-center gap-0.5 rounded-full border bg-card px-1 py-0.5 leading-none shadow-sm',
+                                'flex items-center gap-1 rounded-full border bg-card px-1.5 py-1 leading-none shadow-sm',
                                 minhaReacao?.emoji === emoji ? 'border-primary' : 'border-border',
                               )}
                             >
-                              <span className="text-[11px] leading-none">{emoji}</span>
-                              {n > 1 && <span className="text-[9px] leading-none text-muted-foreground">{n}</span>}
+                              {/* Emoji colorido do Windows/macOS só renderiza nítido em
+                                  certos tamanhos "de bitmap" — 11px caía num tamanho
+                                  interpolado e borrado; 14px é próximo o bastante de um
+                                  tamanho nativo (achado do Guilherme: "baixa qualidade"). */}
+                              <span className="text-sm leading-none">{emoji}</span>
+                              {n > 1 && <span className="text-[10px] leading-none text-muted-foreground">{n}</span>}
                             </button>
                           ))}
                         </div>
@@ -795,8 +818,12 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                 );
               })}
               {otherTyping && (
-                <div className="flex justify-start">
-                  <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{t('pages.chat.digitando')}</div>
+                <div className="flex animate-in justify-start fade-in duration-200">
+                  <div className="flex items-center gap-1 rounded-2xl bg-muted px-3.5 py-2.5 shadow-sm">
+                    <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:-0.3s]" />
+                    <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:-0.15s]" />
+                    <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" />
+                  </div>
                 </div>
               )}
               <div ref={bottomRef} />
@@ -805,7 +832,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
 
             {replyingTo && (
               <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
-                <div className="mx-auto flex max-w-3xl items-center gap-2">
+                <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground">
@@ -827,7 +854,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
             )}
             {editingId && (
               <div className="border-t border-border bg-secondary/40 px-3 py-2 text-xs">
-                <div className="mx-auto flex max-w-3xl items-center gap-2">
+                <div className="mx-auto flex max-w-5xl items-center gap-2">
                   <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
                   <p className="flex-1 font-medium text-foreground">{t('pages.chat.editar')}</p>
                   <button
@@ -841,7 +868,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
               </div>
             )}
             <div className="border-t border-border p-3">
-            <form onSubmit={handleSend} className="mx-auto flex max-w-3xl items-center gap-2">
+            <form onSubmit={handleSend} className="mx-auto flex max-w-5xl items-center gap-2">
               {user?.role !== 'MOTORISTA' && selected.kind !== 'EQUIPE' && !editingId && (
                 <button
                   type="button"
