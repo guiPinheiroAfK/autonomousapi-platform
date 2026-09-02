@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapPin, Plus, Power } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type CollectionPointResponse, type PlaceResponse } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { BuscaEndereco } from '../components/shared/BuscaEndereco';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -20,7 +20,7 @@ import { StaggerGroup, StaggerItem } from '../components/shared/Stagger';
  */
 export function CollectionPointsPage() {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('ROTAS', 'ESCREVER');
   const [pontos, setPontos] = useState<CollectionPointResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

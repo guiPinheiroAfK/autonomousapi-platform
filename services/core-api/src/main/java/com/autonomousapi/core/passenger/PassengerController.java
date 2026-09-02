@@ -36,26 +36,26 @@ public class PassengerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public PassengerResponse create(@Valid @RequestBody PassengerRequest req, Authentication auth) {
         return service.create(principal(auth), req);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE', 'VISUALIZADOR')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_VER')")
     public List<PassengerResponse> list(Authentication auth) {
         return service.list(principal(auth));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public PassengerResponse update(@PathVariable UUID id, @Valid @RequestBody PassengerRequest req, Authentication auth) {
         return service.update(principal(auth), id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         service.delete(principal(auth), id);
     }
@@ -63,14 +63,14 @@ public class PassengerController {
     /** Link/QR pra vincular o Telegram do passageiro (spec 14) — Despachante também pode
      *  ver, é ele quem mais monta rota e cadastra contato novo na hora. */
     @GetMapping("/{id}/telegram-link")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public TelegramLinkResponse telegramLink(@PathVariable UUID id, Authentication auth) {
         return service.telegramLink(principal(auth), id);
     }
 
     /** Gera um token novo — usado se o gestor quiser reenviar o link (spec 14). */
     @PostMapping("/{id}/telegram-link")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN', 'DESPACHANTE')")
+    @PreAuthorize("hasAuthority('PERM_ROTAS_ESCREVER')")
     public TelegramLinkResponse regenerateTelegramLink(@PathVariable UUID id, Authentication auth) {
         return service.regenerateTelegramLink(principal(auth), id);
     }

@@ -7,6 +7,7 @@ import com.autonomousapi.core.vehicle.Vehicle;
 import com.autonomousapi.core.vehicle.VehicleRepository;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +43,7 @@ public class RouteController {
      * deixa os dois campos null — nunca falha o preview por causa disso, custo é informação
      * complementar à rota, não um requisito dela.
      */
+    @PreAuthorize("hasAuthority('PERM_ROTAS_VER')")
     @GetMapping("/preview")
     public RouteResponse preview(
             @RequestParam double fromLat,

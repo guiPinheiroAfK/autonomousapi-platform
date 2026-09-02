@@ -32,12 +32,13 @@ public class VehicleConditionController {
 
     @PostMapping("/incidents")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_FROTA_ESCREVER')")
     public VehicleIncidentResponse registerIncident(
             @PathVariable UUID vehicleId, @Valid @RequestBody VehicleIncidentRequest req, Authentication auth) {
         return conditionService.registerIncident(principal(auth), vehicleId, req);
     }
 
+    @PreAuthorize("hasAuthority('PERM_FROTA_VER')")
     @GetMapping("/incidents")
     public List<VehicleIncidentResponse> listIncidents(@PathVariable UUID vehicleId, Authentication auth) {
         return conditionService.listIncidents(principal(auth), vehicleId);
@@ -45,11 +46,12 @@ public class VehicleConditionController {
 
     @DeleteMapping("/incidents/{incidentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_FROTA_ESCREVER')")
     public void deleteIncident(@PathVariable UUID vehicleId, @PathVariable UUID incidentId, Authentication auth) {
         conditionService.deleteIncident(principal(auth), vehicleId, incidentId);
     }
 
+    @PreAuthorize("hasAuthority('PERM_FROTA_VER')")
     @GetMapping("/condition-score")
     public VehicleConditionScoreResponse score(@PathVariable UUID vehicleId, Authentication auth) {
         return conditionService.score(principal(auth), vehicleId);

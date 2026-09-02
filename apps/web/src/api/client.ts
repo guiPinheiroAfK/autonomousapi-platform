@@ -75,6 +75,8 @@ export type RouteStep = Schemas['RouteStep'];
 export type PlaceResponse = Schemas['PlaceResponse'];
 export type ChatConversationResponse = Schemas['ChatConversationResponse'];
 export type TeamMemberOptionResponse = Schemas['TeamMemberOptionResponse'];
+export type TeamMemberPermissionsResponse = Schemas['TeamMemberPermissionsResponse'];
+export type UpdateTeamPermissionsRequest = Schemas['UpdateTeamPermissionsRequest'];
 export type ChatMessageResponse = Schemas['ChatMessageResponse'];
 export type ChatReactionResponse = Schemas['ChatReactionResponse'];
 export type CreateConversationRequest = Schemas['CreateConversationRequest'];
@@ -715,6 +717,13 @@ export const coreApi = {
       request<TeamMemberResponse>(`/v1/team/${userId}/role`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (userId: string) => request<void>(`/v1/team/${userId}`, { method: 'DELETE' }),
     cancelInvite: (inviteId: string) => request<void>(`/v1/team/invites/${inviteId}`, { method: 'DELETE' }),
+    /** ADR 0025 — catálogo de permissões do membro com o estado atual de cada uma. */
+    permissions: (userId: string) => request<TeamMemberPermissionsResponse>(`/v1/team/${userId}/permissions`),
+    updatePermissions: (userId: string, body: UpdateTeamPermissionsRequest) =>
+      request<TeamMemberPermissionsResponse>(`/v1/team/${userId}/permissions`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
   },
 
   /** Mini-chat gestor↔motorista (ADR 0015). Aberto a gestor e motorista — isolamento é no backend. */

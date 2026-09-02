@@ -10,7 +10,7 @@ import {
   type DriverResponse,
   type VehicleResponse,
 } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { StatusBadgeMotorista } from '../components/shared/StatusBadge';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
@@ -51,7 +51,7 @@ function categoriaCnh(cnh: string): string {
 
 export function DriversPage() {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('MOTORISTAS', 'ESCREVER');
   const [drivers, setDrivers] = useState<DriverResponse[]>([]);
   const [form, setForm] = useState<DriverRequest>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);

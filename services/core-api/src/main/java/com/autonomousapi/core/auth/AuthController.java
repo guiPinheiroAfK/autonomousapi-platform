@@ -20,6 +20,7 @@ import com.autonomousapi.core.security.ratelimit.LoginRateLimitGuard;
 import com.autonomousapi.core.team.TeamService;
 import com.autonomousapi.core.user.User;
 import com.autonomousapi.core.user.UserRepository;
+import com.autonomousapi.core.user.permission.UserPermissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -41,18 +42,21 @@ public class AuthController {
     private final LoginRateLimitGuard loginRateLimit;
     private final DriverInviteService driverInviteService;
     private final TeamService teamService;
+    private final UserPermissionService permissions;
 
     public AuthController(
             AuthService authService,
             UserRepository users,
             LoginRateLimitGuard loginRateLimit,
             DriverInviteService driverInviteService,
-            TeamService teamService) {
+            TeamService teamService,
+            UserPermissionService permissions) {
         this.authService = authService;
         this.users = users;
         this.loginRateLimit = loginRateLimit;
         this.driverInviteService = driverInviteService;
         this.teamService = teamService;
+        this.permissions = permissions;
     }
 
     @PostMapping("/signup")
@@ -139,6 +143,9 @@ public class AuthController {
     public UserResponse me(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
         User user = Lookups.orNotFound(users.findById(userId), "Usuário não encontrado.");
-        return UserResponse.from(user);
+        // ADR 0025: recalculado do banco em vez de lido do token — o front usa isso pra
+        // esconder botão, e a tela recarregada logo após um ajuste do gestor mostra o estado
+        // novo sem esperar o token renovar (a AUTORIZAÇÃO de verdade continua no token).
+        return UserResponse.from(user, permissions.effectiveFor(user));
     }
 }

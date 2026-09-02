@@ -34,7 +34,15 @@ contra o texto dos specs.
 ## Equipe e permissões
 
 - ✅ **Papéis por tenant** — `GESTOR_FROTA` (dono), `DESPACHANTE` (cria/atribui rota, não
-  cancela nem mexe fora de rota), `VISUALIZADOR` (só leitura) — spec 15.
+  cancela nem mexe fora de rota), `VISUALIZADOR` (só leitura) — spec 15. Continuam existindo
+  como **padrão**, agora ajustável por pessoa (abaixo).
+- ✅ **Permissão por módulo, ajustável por usuário** (ADR 0025) — na tela de Equipe, o gestor
+  abre um integrante e marca módulo a módulo o que ele pode **ver** e **alterar** (Frota, OS,
+  Motoristas, Mensagens, Rotas, Custos, Relatórios, Parceiros, Recarga). O papel define o
+  padrão; só a diferença é guardada, então quem não mexer em nada continua exatamente como
+  antes. Vale no próximo token da pessoa (≤15 min), igual ao que remover da equipe já fazia.
+  Equipe, Assinatura, cancelamento de rota e avaliação de motorista continuam exclusivos do
+  dono da conta — motivo de cada um na ADR.
 - ✅ **Convite de equipe** por e-mail (token, aceite define senha) — mesmo padrão do convite
   de motorista (ADR 0013). Convidar um e-mail que já é membro de equipe em OUTRA empresa
   funciona normalmente desde a ADR 0024 (antes era bloqueado).

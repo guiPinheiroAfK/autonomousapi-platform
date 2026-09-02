@@ -35,8 +35,10 @@ class TeamServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final EmailSender emailSender = mock(EmailSender.class);
     private final UserHardDeleteAttempt hardDeleteAttempt = mock(UserHardDeleteAttempt.class);
+    private final com.autonomousapi.core.user.permission.UserPermissionService permissions =
+            mock(com.autonomousapi.core.user.permission.UserPermissionService.class);
     private final TeamService service = new TeamService(
-            invites, users, emailSender, new BCryptPasswordEncoder(), hardDeleteAttempt, 72, "http://localhost:5173");
+            invites, users, emailSender, new BCryptPasswordEncoder(), hardDeleteAttempt, permissions, 72, "http://localhost:5173");
 
     private final UUID tenantId = UUID.randomUUID();
     private final JwtPrincipal gestor = new JwtPrincipal(UUID.randomUUID(), tenantId, "GESTOR_FROTA");

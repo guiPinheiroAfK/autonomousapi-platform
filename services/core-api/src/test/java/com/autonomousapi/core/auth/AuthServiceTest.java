@@ -48,13 +48,15 @@ class AuthServiceTest {
     private final SubscriptionRepository subscriptions = mock(SubscriptionRepository.class);
     private final EmailSender emailSender = mock(EmailSender.class);
     private final NotificationWebhookSender notificationWebhookSender = mock(NotificationWebhookSender.class);
+    private final com.autonomousapi.core.user.permission.UserPermissionService permissions =
+            mock(com.autonomousapi.core.user.permission.UserPermissionService.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final JwtService jwtService = mock(JwtService.class);
 
     private AuthService service() {
         return new AuthService(
                 users, tenants, refreshTokens, verificationTokens, passwordResetTokens, subscriptions, emailSender,
-                notificationWebhookSender, passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180", "");
+                notificationWebhookSender, permissions, passwordEncoder, jwtService, 30, 15, 24, 60, "http://localhost:5180", "");
     }
 
     /** GOOGLE_CLIENT_ID vazio (padrão dev/demo) — o botão nem aparece no front, mas o
@@ -103,7 +105,7 @@ class AuthServiceTest {
         User user = new User(UUID.randomUUID(), "gestor@frota.com", "hash", Role.GESTOR_FROTA);
         when(users.findAllByEmail("gestor@frota.com")).thenReturn(List.of(user));
         when(passwordEncoder.matches("senha123", "hash")).thenReturn(true);
-        when(jwtService.issueAccessToken(any(), anyString(), any())).thenReturn("access-token");
+        when(jwtService.issueAccessToken(any(), anyString(), any(), any())).thenReturn("access-token");
 
         LoginResult result = service().login(new LoginRequest("gestor@frota.com", "senha123"));
 
@@ -162,7 +164,7 @@ class AuthServiceTest {
         when(claims.get("tenantIds", List.class)).thenReturn(List.of(tenantId.toString()));
         when(jwtService.parsePendingLoginToken("pending-token")).thenReturn(claims);
         when(users.findByEmailAndTenantId("duas@frota.com", tenantId)).thenReturn(Optional.of(user));
-        when(jwtService.issueAccessToken(any(), anyString(), any())).thenReturn("access-token");
+        when(jwtService.issueAccessToken(any(), anyString(), any(), any())).thenReturn("access-token");
 
         TokenResponse resp = service().selectTenant(new SelectTenantRequest("pending-token", tenantId));
 
@@ -202,7 +204,7 @@ class AuthServiceTest {
 
         when(verificationTokens.findByTokenHash(sha256Hex(rawToken))).thenReturn(Optional.of(storedToken));
         when(users.findById(userId)).thenReturn(Optional.of(user));
-        when(jwtService.issueAccessToken(any(), anyString(), any())).thenReturn("access-token");
+        when(jwtService.issueAccessToken(any(), anyString(), any(), any())).thenReturn("access-token");
 
         TokenResponse response = service().verifyEmail(rawToken);
 

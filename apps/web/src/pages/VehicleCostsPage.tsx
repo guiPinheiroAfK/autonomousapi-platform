@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { coreApi, type ExpenseEntryRequest, type ExpenseEntryResponse, type ExpenseSummaryResponse } from '../api/client';
-import { usePodeEscrever } from '../auth/AuthContext';
+import { usePode } from '../auth/AuthContext';
 import { StatusBadgeCusto } from '../components/shared/StatusBadge';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
@@ -42,7 +42,7 @@ interface Props {
 
 export function VehicleCostsPage({ vehicleId, onBack }: Props) {
   const { t } = useTranslation();
-  const podeEscrever = usePodeEscrever();
+  const podeEscrever = usePode('CUSTOS', 'ESCREVER');
   // Busca a placa em vez de receber por prop: essa tela agora tem URL própria
   // (/frota/:id/custos), então precisa se sustentar sozinha num F5 ou link direto —
   // o vehicleId da URL é o único dado garantido, o resto (placa) o front tem que buscar.

@@ -30,12 +30,13 @@ public class VehicleMarketValueController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_FROTA_ESCREVER')")
     public VehicleMarketValueResponse record(
             @PathVariable UUID vehicleId, @Valid @RequestBody VehicleMarketValueRequest req, Authentication auth) {
         return marketValueService.record(principal(auth), vehicleId, req);
     }
 
+    @PreAuthorize("hasAuthority('PERM_FROTA_VER')")
     @GetMapping
     public ResponseEntity<VehicleMarketValueResponse> latest(@PathVariable UUID vehicleId, Authentication auth) {
         return marketValueService.latest(principal(auth), vehicleId)

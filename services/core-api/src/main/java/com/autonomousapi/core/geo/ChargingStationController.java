@@ -1,6 +1,7 @@
 package com.autonomousapi.core.geo;
 
 import com.autonomousapi.core.geo.dto.ChargingStationsResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +22,7 @@ public class ChargingStationController {
         this.geoApiClient = geoApiClient;
     }
 
+    @PreAuthorize("hasAuthority('PERM_RECARGA_VER')")
     @GetMapping
     public ChargingStationsResponse list(
             @RequestParam(required = false) Double lat,

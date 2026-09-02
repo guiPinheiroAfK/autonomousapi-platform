@@ -4,8 +4,10 @@ import com.autonomousapi.core.security.jwt.JwtPrincipal;
 import com.autonomousapi.core.team.dto.ChangeTeamRoleRequest;
 import com.autonomousapi.core.team.dto.CreateTeamInviteRequest;
 import com.autonomousapi.core.team.dto.TeamInviteResponse;
+import com.autonomousapi.core.team.dto.TeamMemberPermissionsResponse;
 import com.autonomousapi.core.team.dto.TeamMemberResponse;
 import com.autonomousapi.core.team.dto.TeamOverviewResponse;
+import com.autonomousapi.core.team.dto.UpdateTeamPermissionsRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -54,6 +56,20 @@ public class TeamController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remove(@PathVariable UUID userId, Authentication auth) {
         teamService.remove(principal(auth), userId);
+    }
+
+    /** ADR 0025 — catálogo de permissões do membro com o estado atual de cada uma. */
+    @GetMapping("/{userId}/permissions")
+    public TeamMemberPermissionsResponse permissions(@PathVariable UUID userId, Authentication auth) {
+        return teamService.permissoes(principal(auth), userId);
+    }
+
+    /** ADR 0025 — recebe o estado final desejado das caixas; o servidor guarda só o que
+     *  difere do padrão do papel. Vale no próximo access token do membro (≤15 min). */
+    @PutMapping("/{userId}/permissions")
+    public TeamMemberPermissionsResponse updatePermissions(
+            @PathVariable UUID userId, @Valid @RequestBody UpdateTeamPermissionsRequest req, Authentication auth) {
+        return teamService.atualizarPermissoes(principal(auth), userId, req.permissoes());
     }
 
     @DeleteMapping("/invites/{inviteId}")

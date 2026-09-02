@@ -26,6 +26,7 @@ import type { UserResponse } from '../../api/client';
 import { Marca } from '../shared/Logo';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes';
+import type { ModuloPermissao } from '../../auth/AuthContext';
 
 interface NavItem {
   path: string;
@@ -39,25 +40,28 @@ interface NavItem {
   /** Assunto de dono de conta (spec 15) — some do menu pra Despachante/Visualizador,
    *  não só GESTOR_FROTA/ADMIN (o backend também recusa, isso aqui é só a tela). */
   gestorTotalOnly?: boolean;
+  /** ADR 0025 — some do menu pra quem não tem "ver" nesse módulo. Sem isso, revogar o
+   *  acesso deixava o item no menu levando a uma tela que só respondia 403. */
+  modulo?: ModuloPermissao;
 }
 
 const NAV_OPERACAO: NavItem[] = [
   { path: ROUTES.home, labelKey: 'app.sidebar.nav.dashboard', icon: LayoutDashboard, prefetch: () => import('../../pages/DashboardPage') },
-  { path: ROUTES.vehicles, labelKey: 'app.sidebar.nav.frota', icon: Car, prefetch: () => import('../../pages/VehiclesPage') },
-  { path: ROUTES.workOrders, labelKey: 'app.sidebar.nav.ordensServico', icon: ClipboardList, prefetch: () => import('../../pages/WorkOrdersPage') },
-  { path: ROUTES.drivers, labelKey: 'app.sidebar.nav.motoristas', icon: Users, prefetch: () => import('../../pages/DriversPage') },
-  { path: ROUTES.chat, labelKey: 'app.sidebar.nav.mensagens', icon: MessageCircle, prefetch: () => import('../../pages/ChatPage') },
-  { path: ROUTES.routes, labelKey: 'app.sidebar.nav.rotas', icon: Navigation, prefetch: () => import('../../pages/RoutesPage') },
-  { path: ROUTES.routePlans, labelKey: 'app.sidebar.nav.coletaEntrega', icon: MapPinned, prefetch: () => import('../../pages/RoutePlansPage') },
-  { path: ROUTES.collectionPoints, labelKey: 'app.sidebar.nav.pontosColeta', icon: MapPin, prefetch: () => import('../../pages/CollectionPointsPage') },
+  { path: ROUTES.vehicles, labelKey: 'app.sidebar.nav.frota', icon: Car, prefetch: () => import('../../pages/VehiclesPage'), modulo: 'FROTA' },
+  { path: ROUTES.workOrders, labelKey: 'app.sidebar.nav.ordensServico', icon: ClipboardList, prefetch: () => import('../../pages/WorkOrdersPage'), modulo: 'ORDENS_SERVICO' },
+  { path: ROUTES.drivers, labelKey: 'app.sidebar.nav.motoristas', icon: Users, prefetch: () => import('../../pages/DriversPage'), modulo: 'MOTORISTAS' },
+  { path: ROUTES.chat, labelKey: 'app.sidebar.nav.mensagens', icon: MessageCircle, prefetch: () => import('../../pages/ChatPage'), modulo: 'MENSAGENS' },
+  { path: ROUTES.routes, labelKey: 'app.sidebar.nav.rotas', icon: Navigation, prefetch: () => import('../../pages/RoutesPage'), modulo: 'ROTAS' },
+  { path: ROUTES.routePlans, labelKey: 'app.sidebar.nav.coletaEntrega', icon: MapPinned, prefetch: () => import('../../pages/RoutePlansPage'), modulo: 'ROTAS' },
+  { path: ROUTES.collectionPoints, labelKey: 'app.sidebar.nav.pontosColeta', icon: MapPin, prefetch: () => import('../../pages/CollectionPointsPage'), modulo: 'ROTAS' },
 ];
 
 const NAV_GESTAO: NavItem[] = [
-  { path: ROUTES.maintenance, labelKey: 'app.sidebar.nav.manutencao', icon: Wrench, prefetch: () => import('../../pages/MaintenancePage') },
-  { path: ROUTES.expenses, labelKey: 'app.sidebar.nav.custos', icon: Wallet, prefetch: () => import('../../pages/CostsPage') },
-  { path: ROUTES.reports, labelKey: 'app.sidebar.nav.relatorios', icon: BarChart3, prefetch: () => import('../../pages/ReportsPage') },
-  { path: ROUTES.affiliates, labelKey: 'app.sidebar.nav.parceiros', icon: Handshake, prefetch: () => import('../../pages/AffiliatesPage') },
-  { path: ROUTES.chargingStations, labelKey: 'app.sidebar.nav.pontosRecarga', icon: Plug, prefetch: () => import('../../pages/ChargingStationsPage') },
+  { path: ROUTES.maintenance, labelKey: 'app.sidebar.nav.manutencao', icon: Wrench, prefetch: () => import('../../pages/MaintenancePage'), modulo: 'ORDENS_SERVICO' },
+  { path: ROUTES.expenses, labelKey: 'app.sidebar.nav.custos', icon: Wallet, prefetch: () => import('../../pages/CostsPage'), modulo: 'CUSTOS' },
+  { path: ROUTES.reports, labelKey: 'app.sidebar.nav.relatorios', icon: BarChart3, prefetch: () => import('../../pages/ReportsPage'), modulo: 'RELATORIOS' },
+  { path: ROUTES.affiliates, labelKey: 'app.sidebar.nav.parceiros', icon: Handshake, prefetch: () => import('../../pages/AffiliatesPage'), modulo: 'PARCEIROS' },
+  { path: ROUTES.chargingStations, labelKey: 'app.sidebar.nav.pontosRecarga', icon: Plug, prefetch: () => import('../../pages/ChargingStationsPage'), modulo: 'RECARGA' },
   { path: ROUTES.billing, labelKey: 'app.sidebar.nav.assinatura', icon: CreditCard, prefetch: () => import('../../pages/BillingPage'), gestorTotalOnly: true },
   { path: ROUTES.team, labelKey: 'app.sidebar.nav.equipe', icon: UserCog, prefetch: () => import('../../pages/TeamPage'), gestorTotalOnly: true },
 ];
@@ -127,7 +131,13 @@ export function Sidebar({ user, open, onClose }: SidebarProps) {
   const motorista = user.role === 'MOTORISTA';
   const gestorTotal = user.role === 'GESTOR_FROTA' || user.role === 'ADMIN';
   const { pathname } = useLocation();
-  const navGestaoVisivel = NAV_GESTAO.filter((item) => !item.gestorTotalOnly || gestorTotal);
+  // ADR 0025: item sem permissão de "ver" no módulo some do menu — deixá-lo visível levaria
+  // a uma tela que só responde 403.
+  const permissoes = user.permissions ?? [];
+  const visivel = (item: NavItem) =>
+    (!item.gestorTotalOnly || gestorTotal) && (!item.modulo || permissoes.includes(`${item.modulo}_VER`));
+  const navOperacaoVisivel = NAV_OPERACAO.filter(visivel);
+  const navGestaoVisivel = NAV_GESTAO.filter(visivel);
 
   useEffect(() => {
     if (!open) return;
@@ -181,7 +191,7 @@ export function Sidebar({ user, open, onClose }: SidebarProps) {
             <NavSection title={t('app.sidebar.meuTrabalho')} items={NAV_MOTORISTA} pathname={pathname} />
           ) : (
             <>
-              <NavSection title={t('app.sidebar.operacao')} items={NAV_OPERACAO} pathname={pathname} />
+              <NavSection title={t('app.sidebar.operacao')} items={navOperacaoVisivel} pathname={pathname} />
               <NavSection title={t('app.sidebar.gestao')} items={navGestaoVisivel} pathname={pathname} />
             </>
           )}

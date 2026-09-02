@@ -46,7 +46,7 @@ public class VehicleController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_FROTA_ESCREVER')")
     public VehicleResponse create(@Valid @RequestBody VehicleRequest req, Authentication auth) {
         return vehicleService.create(principal(auth), req);
     }
@@ -57,6 +57,7 @@ public class VehicleController {
      *  marca/modelo) e {@code status} são opcionais — sem eles eram filtrados em memória
      *  no front sobre a frota inteira; com paginação isso "escondia" veículo fora da
      *  página atual, então o filtro precisou virar server-side junto com a paginação. */
+    @PreAuthorize("hasAuthority('PERM_FROTA_VER')")
     @GetMapping
     public PageResponse<VehicleResponse> list(
             @RequestParam(required = false) String search,
@@ -69,25 +70,28 @@ public class VehicleController {
                 principal(auth), search, status, PageRequest.of(Math.max(page, 0), cappedSize)));
     }
 
+    @PreAuthorize("hasAuthority('PERM_FROTA_VER')")
     @GetMapping("/{id}")
     public VehicleResponse get(@PathVariable UUID id, Authentication auth) {
         return vehicleService.get(principal(auth), id);
     }
 
     /** Veículos com manutenção vencida ou a vencer (alerta, spec 05 Fase 1). */
+    @PreAuthorize("hasAuthority('PERM_FROTA_VER')")
     @GetMapping("/maintenance-due")
     public List<VehicleMaintenanceAlertResponse> maintenanceDue(Authentication auth) {
         return vehicleService.maintenanceDue(principal(auth));
     }
 
     /** Custo somado por mês, últimos 6 meses, em toda a frota (gráfico de tendência do dashboard). */
+    @PreAuthorize("hasAuthority('PERM_CUSTOS_VER')")
     @GetMapping("/cost-trend")
     public List<MonthlyCostResponse> costTrend(Authentication auth) {
         return expenseService.monthlyTrend(principal(auth));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_FROTA_ESCREVER')")
     public VehicleResponse update(
             @PathVariable UUID id, @Valid @RequestBody VehicleRequest req, Authentication auth) {
         return vehicleService.update(principal(auth), id, req);
@@ -95,7 +99,7 @@ public class VehicleController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('GESTOR_FROTA', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_FROTA_ESCREVER')")
     public void delete(@PathVariable UUID id, Authentication auth) {
         vehicleService.delete(principal(auth), id);
     }

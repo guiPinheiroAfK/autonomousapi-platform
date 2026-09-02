@@ -11,7 +11,7 @@ import {
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from './auth/AuthContext';
+import { useAuth, type ModuloPermissao } from './auth/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -89,11 +89,22 @@ function RequireToken({ children }: { children: (token: string) => ReactNode }) 
   return <>{children(token)}</>;
 }
 
-/** Defesa em profundidade (spec 07): o Dashboard analítico de frota nunca deve renderizar
- *  pra um token MOTORISTA, mesmo que a sidebar já esconda a opção — alguém digitando a URL
- *  na mão não pode contornar isso. */
-function RequireGestor({ user, children }: { user: UserResponse; children: ReactNode }) {
+/**
+ * Defesa em profundidade (spec 07 + ADR 0025): tela do painel nunca renderiza pra um token
+ * MOTORISTA, e só renderiza pra quem tem "ver" no módulo dela — a sidebar já esconde o
+ * item, isso aqui cobre quem digita a URL na mão.
+ */
+function RequireModulo({
+  user,
+  modulo,
+  children,
+}: {
+  user: UserResponse;
+  modulo: ModuloPermissao;
+  children: ReactNode;
+}) {
   if (user.role === 'MOTORISTA') return <Navigate to={ROUTES.home} replace />;
+  if (!(user.permissions ?? []).includes(`${modulo}_VER`)) return <Navigate to={ROUTES.home} replace />;
   return <>{children}</>;
 }
 
@@ -275,65 +286,65 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
         <Route
           path={ROUTES.vehicles}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="FROTA">
               <VehiclesRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path="/frota/:vehicleId"
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="FROTA">
               <VehicleDetailRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path="/frota/:vehicleId/custos"
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="FROTA">
               <VehicleCostsRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.drivers}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="MOTORISTAS">
               <DriversPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.workOrders}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ORDENS_SERVICO">
               <WorkOrdersPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.maintenance}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ORDENS_SERVICO">
               <MaintenancePage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.reports}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="RELATORIOS">
               <ReportsRoute />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.expenses}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="CUSTOS">
               <CostsPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
@@ -355,41 +366,41 @@ function AuthenticatedRoutes({ user }: { user: UserResponse }) {
         <Route
           path={ROUTES.affiliates}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="PARCEIROS">
               <AffiliatesPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.chargingStations}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="RECARGA">
               <ChargingStationsPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.routes}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ROTAS">
               <RoutesPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.routePlans}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ROTAS">
               <RoutePlansPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         <Route
           path={ROUTES.collectionPoints}
           element={
-            <RequireGestor user={user}>
+            <RequireModulo user={user} modulo="ROTAS">
               <CollectionPointsPage />
-            </RequireGestor>
+            </RequireModulo>
           }
         />
         {/* Motorista */}
