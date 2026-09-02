@@ -595,7 +595,7 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                       key={m.id}
                       className={cn('flex animate-in fade-in slide-in-from-bottom-1 duration-200', mine ? 'justify-end' : 'justify-start')}
                     >
-                      <div className="max-w-[75%] rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-[13px] shadow-sm">
+                      <div className="w-fit max-w-md rounded-2xl border border-border bg-secondary/60 px-3.5 py-2.5 text-[13px] shadow-sm">
                         <p className="flex items-center gap-1.5 break-words font-medium text-foreground">
                           <RouteIcon className="size-3.5 shrink-0 text-primary" /> {m.body}
                         </p>
@@ -729,7 +729,11 @@ export function ChatPage({ onOpenActiveRoute }: Props) {
                     <div className={cn('flex flex-col gap-1', mine ? 'items-end' : 'items-start')}>
                       <div
                         className={cn(
-                          'max-w-[70%] rounded-2xl px-3.5 py-2 text-[13px] shadow-sm',
+                          // max-width fixo (não %) de propósito — % dentro de flex
+                          // aninhado (row > col > bolha) colapsava a largura pra ~47px
+                          // mesmo com texto curtíssimo, achado ao vivo (mensagens de 3-5
+                          // letras quebrando em 3 linhas verticais).
+                          'w-fit max-w-md rounded-2xl px-3.5 py-2 text-[13px] shadow-sm',
                           apagada
                             ? 'border border-dashed border-border text-muted-foreground italic'
                             : mine
