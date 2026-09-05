@@ -2,8 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import {
   coreApi,
   setAuthToken,
-  setRefreshToken,
-  setTokensRefreshedHandler,
   setUnauthorizedHandler,
   type LoginRequest,
   type SignupRequest,
@@ -14,7 +12,6 @@ import {
 } from '../api/client';
 
 const STORAGE_KEY = 'autonomousapi.accessToken';
-const REFRESH_STORAGE_KEY = 'autonomousapi.refreshToken';
 
 interface AuthState {
   user: UserResponse | null;
@@ -43,59 +40,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Registrado antes do efeito de restauração de sessão abaixo, para que um 401
-  // já disparado durante a própria restauração (token salvo expirado, e o refresh
-  // silencioso também falhou — ex. os 30 dias do refresh token já passaram) seja coberto.
+  // Registrado antes do efeito de restauração de sessão abaixo, para que um 401 já
+  // disparado durante a própria restauração (token salvo expirado) seja coberto.
   useEffect(() => {
     setUnauthorizedHandler(logout);
-    // Toda vez que o client renova os tokens sozinho (access token expirado no meio de
-    // uma navegação, refresh token de 30 dias ainda válido), persiste o par novo — sem
-    // isso, o refresh silencioso funcionaria na aba aberta mas o próximo F5 voltaria a
-    // usar o access token velho já expirado do localStorage.
-    setTokensRefreshedHandler(persistTokens);
-    return () => {
-      setUnauthorizedHandler(null);
-      setTokensRefreshedHandler(null);
-    };
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   useEffect(() => {
     const storedAccess = localStorage.getItem(STORAGE_KEY);
-    const storedRefresh = localStorage.getItem(REFRESH_STORAGE_KEY);
-    if (!storedAccess || !storedRefresh) {
+    if (!storedAccess) {
       setLoading(false);
       return;
     }
     setAuthToken(storedAccess);
-    setRefreshToken(storedRefresh);
-    // Access token de 15min quase sempre já expirou entre uma visita e outra — o refresh
-    // silencioso dentro de `request` (client.ts) cobre isso sozinho no primeiro 401 que
-    // este `.me()` tomar, sem precisar de nenhum código especial aqui pra esse caso.
+    // Sem refresh silencioso (de propósito — a pessoa deve ser deslogada quando o access
+    // token de 15min expira): se o token salvo já expirou, este `.me()` toma 401 e
+    // `onUnauthorizedHandler` (registrado acima) já limpa a sessão sozinho.
     coreApi.auth
       .me()
       .then(setUser)
       .catch(() => {
         clearStoredTokens();
         setAuthToken(null);
-        setRefreshToken(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  function persistTokens(accessToken: string, refreshToken: string) {
+  function persistTokens(accessToken: string) {
     localStorage.setItem(STORAGE_KEY, accessToken);
-    localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
   }
 
   function clearStoredTokens() {
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(REFRESH_STORAGE_KEY);
   }
 
   async function afterAuth(tokens: TokenResponse) {
-    persistTokens(tokens.accessToken!, tokens.refreshToken!);
+    persistTokens(tokens.accessToken!);
     setAuthToken(tokens.accessToken!);
-    setRefreshToken(tokens.refreshToken!);
     setUser(await coreApi.auth.me());
   }
 
@@ -127,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     clearStoredTokens();
     setAuthToken(null);
-    setRefreshToken(null);
     setUser(null);
   }
 
