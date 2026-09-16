@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Health agregado exposto ao frontend. O web chama SÓ este endpoint (spec 01);
  * o core-api é quem verifica o geo-api internamente e agrega o resultado.
+ *
+ * Aggregated health exposed to the frontend. The web app calls ONLY this endpoint
+ * (spec 01); core-api is the one that checks geo-api internally and aggregates the result.
  */
 @RestController
 @RequestMapping("/v1")
